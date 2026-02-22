@@ -1,0 +1,295 @@
+<div class="inbox-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="fas fa-inbox"></i> Bandeja de Entrada
+        <span class="unread-total" *ngIf="totalUnread > 0">{{ totalUnread }}</span>
+      </h1>
+      <p class="page-subtitle">Consultas y mensajes recibidos desde los flujos del bot</p>
+    </div>
+    <button class="btn-refresh" (click)="loadFlows()">
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Recargar
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Cargando bandeja...
+  </div>
+
+  <!-- No flows configured -->
+  <div *ngIf="!loading && tabs.length === 0" class="empty-state">
+    <i class="fas fa-inbox"></i>
+    <p>No hay flujos con bandeja configurada.</p>
+    <p class="empty-hint">Los flujos que guardan en colecciones distintas a "applicants" aparecen aquí automáticamente.</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading && tabs.length > 0">
+    <!-- Flow Tabs -->
+    <div class="tabs">
+      <button *ngFor="let tab of tabs; let i = index"
+              class="tab" [class.active]="activeTabIndex === i" (click)="switchTab(i)">
+        <i class="fas" [ngClass]="getTabIcon(tab.type)"></i>
+        {{ tab.flowName }}
+        <span class="tab-badge" *ngIf="tab.unreadCount > 0">{{ tab.unreadCount }}</span>
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar" *ngIf="activeTab">
+      <div class="search-box" *ngIf="viewMode === 'list'">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="searchTerm" (input)="applyFilters()"
+               placeholder="Buscar en mensajes..." />
+      </div>
+      <div class="filter-group" *ngIf="viewMode === 'list'">
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option value="all">Todos</option>
+          <option value="pending">Nuevos</option>
+          <option value="read">Leídos</option>
+          <option value="resolved">Resueltos</option>
+        </select>
+      </div>
+      <div class="view-toggle" *ngIf="activeTab.isAppointment">
+        <button class="toggle-btn" [class.active]="viewMode === 'calendar'" (click)="toggleView('calendar')">
+          <i class="fas fa-calendar-alt"></i> Calendario
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode === 'list'" (click)="toggleView('list')">
+          <i class="fas fa-list"></i> Lista
+        </button>
+      </div>
+    </div>
+
+    <!-- Active tab content -->
+    <div *ngIf="activeTab">
+      <div *ngIf="activeTab.loading" class="loading-state">
+        <i class="fas fa-spinner fa-spin"></i> Cargando...
+      </div>
+
+      <!-- ==================== CALENDAR VIEW ==================== -->
+      <div *ngIf="!activeTab.loading && viewMode === 'calendar'" class="cal-layout" [class.sidebar-open]="selectedCalendarDay">
+        <!-- Left: Calendar -->
+        <div class="cal-left">
+          <div class="calendar-section">
+            <div class="calendar-nav">
+              <button class="cal-nav-btn" (click)="prevMonth()"><i class="fas fa-chevron-left"></i></button>
+              <span class="cal-month-label">{{ calendarMonthLabel }}</span>
+              <button class="cal-nav-btn" (click)="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+              <button class="cal-today-btn" (click)="goToday()">Hoy</button>
+            </div>
+            <div class="gcal-grid">
+              <div class="gcal-weekday" *ngFor="let d of weekDays">{{ d }}</div>
+              <div *ngFor="let day of calendarDays"
+                   class="gcal-cell"
+                   [class.gcal-today]="day.isToday"
+                   [class.gcal-other-month]="!day.isCurrentMonth"
+                   [class.gcal-selected]="selectedCalendarDay?.label === day.label"
+                   (click)="selectCalendarDay(day)">
+                <div class="gcal-cell-header">
+                  <span class="gcal-day-num" [class.gcal-today-num]="day.isToday">{{ day.dayNum }}</span>
+                  <span class="gcal-cell-count" *ngIf="day.appointments.length > 0">{{ day.appointments.length }}</span>
+                </div>
+                <div class="gcal-events">
+                  <div *ngFor="let appt of day.appointments.slice(0, 2)"
+                       class="gcal-event"
+                       [class.gcal-event-pending]="appt.status === 'pending'"
+                       [class.gcal-event-read]="appt.status === 'read'"
+                       [class.gcal-event-resolved]="appt.status === 'resolved'"
+                       (click)="openDetail(appt, activeTab); $event.stopPropagation()">
+                    <span class="gcal-event-time">{{ getAppointmentTime(appt) }}</span>
+                    <span class="gcal-event-name">{{ getPersonName(appt) }}</span>
+                  </div>
+                  <div class="gcal-more" *ngIf="day.appointments.length > 2"
+                       (click)="selectCalendarDay(day); $event.stopPropagation()">
+                    +{{ day.appointments.length - 2 }} más
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Day Sidebar -->
+        <div class="cal-sidebar" *ngIf="selectedCalendarDay">
+          <div class="cal-sidebar-header">
+            <div class="cal-sidebar-title">
+              <span class="cal-sidebar-daynum">{{ selectedCalendarDay.dayNum }}</span>
+              <div>
+                <h4>{{ selectedCalendarDay.date | date:'EEEE':'':'es' }}</h4>
+                <span class="cal-sidebar-month">{{ selectedCalendarDay.date | date:'MMMM yyyy':'':'es' }}</span>
+              </div>
+            </div>
+            <button class="cal-sidebar-close" (click)="selectedCalendarDay = null">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="cal-sidebar-count">
+            {{ selectedCalendarDay.appointments.length }} cita{{ selectedCalendarDay.appointments.length !== 1 ? 's' : '' }}
+          </div>
+          <div class="cal-sidebar-body">
+            <div class="cal-sidebar-empty" *ngIf="selectedCalendarDay.appointments.length === 0">
+              <i class="fas fa-calendar-check"></i>
+              <p>Sin citas este día</p>
+            </div>
+            <div *ngFor="let appt of selectedCalendarDay.appointments"
+                 class="cal-appt-card" [class.unread]="appt.status === 'pending'"
+                 (click)="openDetail(appt, activeTab)">
+              <div class="cal-appt-time">
+                <span class="appt-hour">{{ getAppointmentTime(appt) }}</span>
+                <span class="appt-duration" *ngIf="getAppointmentDuration(appt)">{{ getAppointmentDuration(appt) }}</span>
+              </div>
+              <div class="cal-appt-info">
+                <strong>{{ getPersonName(appt) }}</strong>
+                <span class="appt-motivo" *ngIf="appt.motivo">{{ appt.motivo }}</span>
+                <a *ngIf="appt.phoneNumber" [href]="getWhatsAppLink(appt.phoneNumber)" target="_blank"
+                   class="phone-link" (click)="$event.stopPropagation()">
+                  <i class="fab fa-whatsapp"></i> {{ appt.phoneNumber }}
+                </a>
+              </div>
+              <div class="cal-appt-actions" (click)="$event.stopPropagation()">
+                <span class="badge" [ngClass]="'badge-' + appt.status">{{ getStatusLabel(appt.status) }}</span>
+                <button *ngIf="appt.status !== 'resolved'" class="btn-mini-resolve"
+                        (click)="markAsResolved(appt, activeTab)" title="Marcar resuelto">
+                  <i class="fas fa-check"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== LIST VIEW ==================== -->
+      <ng-container *ngIf="viewMode === 'list'">
+        <div *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length === 0" class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <p>No hay mensajes{{ statusFilter !== 'all' ? ' con este filtro' : '' }}</p>
+        </div>
+
+        <div class="messages-list" *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length > 0">
+          <div *ngFor="let item of activeTab.filteredSubmissions"
+               class="message-card" [class.unread]="item.status === 'pending'"
+               (click)="openDetail(item, activeTab)">
+            <div class="message-left">
+              <div class="message-avatar" [class.avatar-unread]="item.status === 'pending'">
+                <i class="fas fa-user"></i>
+              </div>
+            </div>
+            <div class="message-body">
+              <div class="message-top">
+                <strong class="message-name">{{ getPersonName(item) }}</strong>
+                <span class="message-date">{{ formatDate(item.createdAt) }}</span>
+              </div>
+              <div class="message-preview">
+                <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
+                  <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 80 ? f.value.substring(0, 80) + '...' : f.value }}
+                </span>
+              </div>
+              <div class="message-bottom">
+                <span class="badge" [ngClass]="'badge-' + item.status">
+                  {{ getStatusLabel(item.status) }}
+                </span>
+                <a *ngIf="item.phoneNumber" [href]="getWhatsAppLink(item.phoneNumber)" target="_blank"
+                   class="phone-link" (click)="$event.stopPropagation()">
+                  <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
+                </a>
+              </div>
+            </div>
+            <div class="message-actions" (click)="$event.stopPropagation()">
+              <button *ngIf="item.status !== 'resolved'" class="btn-icon btn-resolve"
+                      (click)="markAsResolved(item, activeTab)" title="Marcar como resuelto">
+                <i class="fas fa-check-circle"></i>
+              </button>
+              <a *ngIf="item.phoneNumber"
+                 [href]="getWhatsAppMessageLink(item.phoneNumber, getPersonName(item))"
+                 target="_blank" class="btn-icon btn-wa" title="Responder por WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="results-count" *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length > 0">
+          {{ activeTab.filteredSubmissions.length }} de {{ activeTab.submissions.length }} mensajes
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- ==================== DETAIL MODAL ==================== -->
+  <div class="modal-overlay" *ngIf="selectedItem" (click)="closeDetail()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>
+          <i class="fas" [ngClass]="selectedTab ? getTabIcon(selectedTab.type) : 'fa-inbox'"></i>
+          {{ selectedTab?.flowName || 'Detalle' }}
+        </h3>
+        <button class="modal-close" (click)="closeDetail()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-row" *ngFor="let field of getItemFields(selectedItem, selectedTab)">
+          <label>{{ field.label }}</label>
+          <span [class.detail-long]="field.value.length > 60">{{ field.value }}</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedItem.phoneNumber">
+          <label>Teléfono</label>
+          <a [href]="getWhatsAppLink(selectedItem.phoneNumber)" target="_blank" class="whatsapp-link">
+            <i class="fab fa-whatsapp"></i> {{ selectedItem.phoneNumber }}
+          </a>
+        </div>
+        <div class="detail-row">
+          <label>Recibido</label>
+          <span>{{ formatDate(selectedItem.createdAt) }}</span>
+        </div>
+        <div class="detail-row">
+          <label>Estado</label>
+          <span class="badge" [ngClass]="'badge-' + selectedItem.status">
+            {{ getStatusLabel(selectedItem.status) }}
+          </span>
+        </div>
+      </div>
+      <!-- Reschedule Form -->
+      <div class="reschedule-form" *ngIf="showReschedule">
+        <div class="reschedule-header">
+          <i class="fas fa-calendar-alt"></i> Reagendar cita
+        </div>
+        <div class="reschedule-fields">
+          <div class="reschedule-field">
+            <label>Nueva fecha</label>
+            <input type="date" [(ngModel)]="rescheduleDate" />
+          </div>
+          <div class="reschedule-field">
+            <label>Nueva hora</label>
+            <input type="time" [(ngModel)]="rescheduleTime" />
+          </div>
+        </div>
+        <div class="reschedule-actions">
+          <button class="btn-reschedule-confirm" (click)="confirmReschedule()"
+                  [disabled]="rescheduleSaving || !rescheduleDate || !rescheduleTime">
+            <i class="fas" [class.fa-check]="!rescheduleSaving" [class.fa-spinner]="rescheduleSaving" [class.fa-spin]="rescheduleSaving"></i>
+            Confirmar
+          </button>
+          <button class="btn-reschedule-cancel" (click)="cancelReschedule()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button *ngIf="selectedTab?.isAppointment && selectedItem.status !== 'resolved' && !showReschedule"
+                class="btn-modal btn-reschedule-full"
+                (click)="openReschedule()">
+          <i class="fas fa-calendar-alt"></i> Reagendar
+        </button>
+        <a *ngIf="selectedItem.phoneNumber"
+           [href]="getWhatsAppMessageLink(selectedItem.phoneNumber, getPersonName(selectedItem))"
+           target="_blank" class="btn-modal btn-wa-full">
+          <i class="fab fa-whatsapp"></i> Responder por WhatsApp
+        </a>
+        <button *ngIf="selectedItem.status !== 'resolved' && selectedTab"
+                class="btn-modal btn-resolve-full"
+                (click)="markAsResolved(selectedItem, selectedTab); closeDetail()">
+          <i class="fas fa-check-circle"></i> Marcar como Resuelto
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

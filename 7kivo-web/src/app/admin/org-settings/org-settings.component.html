@@ -1,0 +1,186 @@
+<div class="settings-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-cog"></i> Configuración</h1>
+      <p class="page-subtitle">Configura tu organización y la integración con WhatsApp</p>
+    </div>
+  </div>
+
+  <div class="toast toast-success" *ngIf="notice"><i class="fas fa-check-circle"></i> {{ notice }}</div>
+  <div class="toast toast-error" *ngIf="error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'general'" (click)="activeTab = 'general'">
+      <i class="fas fa-building"></i> Organización
+    </button>
+    <button class="tab" [class.active]="activeTab === 'whatsapp'" (click)="activeTab = 'whatsapp'">
+      <i class="fab fa-whatsapp"></i> Bot WhatsApp
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Cargando configuración...
+  </div>
+
+  <!-- GENERAL TAB -->
+  <div *ngIf="!loading && activeTab === 'general'" class="tab-content">
+    <!-- Org ID Card -->
+    <div class="config-card org-id-card">
+      <div class="card-header">
+        <div class="card-icon fingerprint"><i class="fas fa-fingerprint"></i></div>
+        <div>
+          <h3>ID de Organización</h3>
+          <p>Usa este valor en el <code>.env</code> del bot como <code>ORG_ID</code></p>
+        </div>
+      </div>
+      <div class="org-id-value">
+        <code>{{ orgId }}</code>
+        <button class="btn-copy" (click)="copyOrgId()" [class.copied]="copied">
+          <i class="fas" [class.fa-copy]="!copied" [class.fa-check]="copied"></i>
+          {{ copied ? 'Copiado' : 'Copiar' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Org Details Card -->
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon blue"><i class="fas fa-building"></i></div>
+        <div>
+          <h3>Datos de la Organización</h3>
+          <p>Información general de tu empresa</p>
+        </div>
+      </div>
+      <div class="config-form">
+        <!-- Logo Upload -->
+        <div class="logo-upload-section">
+          <label class="form-label-top">Logo de la empresa</label>
+          <div class="logo-upload-row">
+            <div class="logo-preview-box" [class.has-logo]="logoPreview">
+              <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo" />
+              <i *ngIf="!logoPreview" class="fas fa-image"></i>
+            </div>
+            <div class="logo-upload-actions">
+              <label class="btn-upload">
+                <i class="fas fa-upload"></i> {{ logoPreview ? 'Cambiar logo' : 'Subir logo' }}
+                <input type="file" accept="image/*" (change)="onLogoSelected($event)" hidden />
+              </label>
+              <button class="btn-remove-logo" *ngIf="logoPreview" (click)="removeLogo()">
+                <i class="fas fa-trash"></i> Quitar
+              </button>
+              <span class="logo-hint">PNG, JPG o WebP. Máximo 2 MB. Se almacena en Firebase Storage.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre de la Organización</label>
+            <input type="text" [(ngModel)]="generalConfig.orgName" placeholder="Mi Empresa" />
+          </div>
+          <div class="form-group">
+            <label>Industria / Rubro</label>
+            <select [(ngModel)]="generalConfig.industry">
+              <option value="general">General</option>
+              <option value="education">Educación</option>
+              <option value="healthcare">Salud</option>
+              <option value="retail">Comercio / Retail</option>
+              <option value="services">Servicios</option>
+              <option value="restaurant">Restaurante / Comida</option>
+              <option value="realestate">Bienes Raíces</option>
+              <option value="technology">Tecnología</option>
+              <option value="other">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea [(ngModel)]="generalConfig.description" rows="3" placeholder="Breve descripción de tu organización"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bot Settings Card -->
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon purple"><i class="fas fa-robot"></i></div>
+        <div>
+          <h3>Configuración del Bot</h3>
+          <p>Parámetros de comportamiento del bot</p>
+        </div>
+      </div>
+      <div class="config-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>URL del Bot API</label>
+            <input type="text" [(ngModel)]="generalConfig.botApiUrl" placeholder="https://tu-bot-url.com" />
+            <span class="hint">URL donde está desplegado el servidor del bot</span>
+          </div>
+          <div class="form-group">
+            <label>Timeout de Inactividad</label>
+            <div class="input-with-suffix">
+              <input type="number" [(ngModel)]="generalConfig.inactivityTimeout" placeholder="180000" />
+              <span class="suffix">ms</span>
+            </div>
+            <span class="hint">180000 = 3 minutos antes de cerrar sesión</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Personal (fallback 24h)</label>
+          <div class="input-with-icon">
+            <i class="fab fa-whatsapp"></i>
+            <input type="text" [(ngModel)]="generalConfig.personalWhatsApp" placeholder="503XXXXXXXX" />
+          </div>
+          <span class="hint">Se usa cuando expira la ventana de 24h para contactar al usuario</span>
+        </div>
+        <button class="btn-save" (click)="saveGeneral()" [disabled]="saving">
+          <i class="fas" [class.fa-save]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
+          {{ saving ? 'Guardando...' : 'Guardar Configuración' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHATSAPP TAB -->
+  <div *ngIf="!loading && activeTab === 'whatsapp'" class="tab-content">
+    <div class="info-banner">
+      <i class="fas fa-info-circle"></i>
+      <p>Estas credenciales se obtienen desde tu <a href="https://developers.facebook.com" target="_blank">Meta for Developers</a> dashboard.
+        El bot las usará para enviar y recibir mensajes de WhatsApp.</p>
+    </div>
+
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon green"><i class="fab fa-whatsapp"></i></div>
+        <div>
+          <h3>Credenciales WhatsApp Business API</h3>
+          <p>Conecta tu número de WhatsApp Business</p>
+        </div>
+      </div>
+      <div class="config-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone Number ID</label>
+            <input type="text" [(ngModel)]="whatsappConfig.phoneNumberId" placeholder="Tu Phone Number ID de Meta" />
+          </div>
+          <div class="form-group">
+            <label>API Version</label>
+            <input type="text" [(ngModel)]="whatsappConfig.version" placeholder="v21.0" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-key"></i> Access Token</label>
+          <input type="password" [(ngModel)]="whatsappConfig.token" placeholder="Tu Token de acceso permanente" />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-shield-alt"></i> Verify Token (webhook)</label>
+          <input type="text" [(ngModel)]="whatsappConfig.verifyToken" placeholder="Token de verificación del webhook" />
+        </div>
+        <button class="btn-save btn-save-wa" (click)="saveWhatsApp()" [disabled]="saving">
+          <i class="fas" [class.fa-save]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
+          {{ saving ? 'Guardando...' : 'Guardar Credenciales WhatsApp' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
