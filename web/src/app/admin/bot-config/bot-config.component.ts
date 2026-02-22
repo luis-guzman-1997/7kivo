@@ -19,7 +19,7 @@ interface BotMessage {
 export class BotConfigComponent implements OnInit {
   messages: BotMessage[] = [];
   contactInfo: any = {};
-  scheduleInfo: any = {};
+  scheduleInfo: any = { days: [] };
   generalInfo: any = {};
   config: any = {};
 
@@ -31,6 +31,8 @@ export class BotConfigComponent implements OnInit {
 
   editingMessageId: string | null = null;
   editContent = '';
+
+  readonly WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   constructor(private firebaseService: FirebaseService) {}
 
@@ -51,9 +53,9 @@ export class BotConfigComponent implements OnInit {
 
       this.messages = messages as BotMessage[];
       this.contactInfo = contact || {};
-      this.scheduleInfo = schedule || {};
       this.generalInfo = general || {};
       this.config = config || {};
+      this.initSchedule(schedule);
     } catch (err) {
       console.error('Error loading bot config:', err);
     } finally {
@@ -140,11 +142,42 @@ export class BotConfigComponent implements OnInit {
     }
   }
 
+  initSchedule(raw: any): void {
+    if (raw && raw.days && Array.isArray(raw.days)) {
+      const mapped = this.WEEK_DAYS.map(name => {
+        const existing = raw.days.find((d: any) => d.name === name);
+        return existing
+          ? { name, active: !!existing.active, shifts: existing.shifts && existing.shifts.length ? [...existing.shifts] : [{ from: '08:00', to: '17:00' }] }
+          : { name, active: false, shifts: [{ from: '08:00', to: '17:00' }] };
+      });
+      this.scheduleInfo = { days: mapped };
+    } else {
+      this.scheduleInfo = {
+        days: this.WEEK_DAYS.map(name => ({ name, active: false, shifts: [{ from: '08:00', to: '17:00' }] }))
+      };
+    }
+  }
+
+  hasActiveDays(): boolean {
+    return this.scheduleInfo.days && this.scheduleInfo.days.some((d: any) => d.active);
+  }
+
+  addShift(dayIndex: number): void {
+    this.scheduleInfo.days[dayIndex].shifts.push({ from: '08:00', to: '17:00' });
+  }
+
+  removeShift(dayIndex: number, shiftIndex: number): void {
+    const shifts = this.scheduleInfo.days[dayIndex].shifts;
+    if (shifts.length > 1) {
+      shifts.splice(shiftIndex, 1);
+    }
+  }
+
   async saveScheduleInfo(): Promise<void> {
     this.saving = true;
     try {
       await this.firebaseService.updateInfo('schedule', this.scheduleInfo);
-      this.saveNotice = 'Información de horarios actualizada';
+      this.saveNotice = 'Horarios de atención actualizados';
       setTimeout(() => this.saveNotice = '', 3000);
     } catch (err) {
       this.saveError = 'Error al guardar horarios';

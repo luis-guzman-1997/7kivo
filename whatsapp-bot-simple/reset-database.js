@@ -1,15 +1,16 @@
 /**
- * Reset Database Script - Dynamic Collections Architecture
+ * Reset Database Script - ICZ Sonsonate
  * 
- * Creates or resets an organization in Firestore with:
+ * Resets data for an existing organization:
  * - Dynamic collection definitions (_collections/)
- * - Pre-populated data (programas, etc.)
- * - Dynamic flows (browse, registration, inquiry)
+ * - Pre-populated data (programas, instrumentos)
+ * - Dynamic flows (browse programs, registration)
  * - Menu configuration
  * - Bot messages
  * - Info (contact, schedule, general)
  * 
- * PRESERVES: WhatsApp credentials and user mappings
+ * PRESERVES: WhatsApp credentials, user mappings, org config doc
+ * DOES NOT TOUCH: admin user (admin@canzion.com)
  * 
  * Usage: node reset-database.js
  */
@@ -30,7 +31,7 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
 
 const db = admin.firestore();
 const ORG_ID = process.env.ORG_ID || process.env.SCHOOL_ID || "demo";
-const ORG_NAME = process.env.ORG_NAME || "Instituto CanZion Sonsonate";
+const ORG_NAME = "Instituto CanZion Sonsonate";
 const ts = admin.firestore.FieldValue.serverTimestamp;
 
 console.log(`\n========================================`);
@@ -106,18 +107,18 @@ async function resetDatabase() {
       await batch.commit();
     }
 
-    // 2. Clean current org data
+    // 2. Clean current org data (preserving whatsapp config)
     console.log("2. Limpiando datos de la organización...");
     const collectionsToClean = [
       "_collections", "contacts", "clients", "applicants", "students", "teacherRequests",
       "flows", "botMessages", "programs", "instruments", "courseTypes", "admins",
-      "inquiries", "programas", "aspirantes", "consultas"
+      "inquiries", "programas", "instrumentos", "aspirantes", "consultas"
     ];
     for (const col of collectionsToClean) {
       const count = await deleteCollection(orgRef.collection(col));
       if (count > 0) console.log(`   - ${col}: ${count} docs`);
     }
-    for (const docName of ["general", "menu", "whatsapp"]) {
+    for (const docName of ["general", "menu"]) {
       const d = await orgRef.collection("config").doc(docName).get();
       if (d.exists) await d.ref.delete();
     }
@@ -125,21 +126,24 @@ async function resetDatabase() {
       const d = await orgRef.collection("info").doc(docName).get();
       if (d.exists) await d.ref.delete();
     }
+
+    // Clean conversations (includes chat messages + bot sessions)
+    console.log("   Limpiando conversaciones y sesiones...");
     const convCount = await deleteConversationsDeep(orgRef);
-    if (convCount > 0) console.log(`   - conversations: ${convCount} docs`);
+    console.log(`   - conversations: ${convCount} docs (mensajes + sesiones)`);
     console.log("   Limpieza completada.\n");
 
-    // 3. Organization document
-    console.log("3. Creando organización...");
+    // 3. Organization document (update, not overwrite)
+    console.log("3. Actualizando organización...");
     await orgRef.set({
       name: ORG_NAME, orgId: ORG_ID, industry: "educacion", active: true, createdAt: ts()
-    });
+    }, { merge: true });
 
     // 4. Config: general
     console.log("4. Configuración general...");
     await orgRef.collection("config").doc("general").set({
-      orgName: ORG_NAME, description: "Escuela de música y artes",
-      industry: "educacion", welcomeMessage: `Bienvenido a ${ORG_NAME}`,
+      orgName: ORG_NAME, description: "Escuela de música cristiana con enfoque en adoración y formación musical integral.",
+      industry: "educacion", welcomeMessage: `¡Bienvenido a *${ORG_NAME}*! 🎵`,
       inactivityTimeout: 180000, personalWhatsApp: "", botApiUrl: "http://localhost:3005",
       createdAt: ts()
     });
@@ -159,78 +163,66 @@ async function resetDatabase() {
       });
     }
 
+    // ==================== COLLECTIONS ====================
+
     // 6. Collection definitions (_collections/)
     console.log("6. Creando definiciones de colecciones...");
 
-    const programasDefRef = await orgRef.collection("_collections").add({
-      name: "Programas", slug: "programas", description: "Programas educativos musicales",
+    await orgRef.collection("_collections").add({
+      name: "Programas", slug: "programas", description: "Cursos disponibles en ICZ Sonsonate",
+      displayField: "nombre",
+      fields: [
+        { key: "nombre", label: "Nombre del Curso", type: "text", required: true },
+        { key: "edad", label: "Rango de Edad", type: "text", required: true },
+        { key: "duracion", label: "Duración", type: "text", required: false },
+        { key: "descripcion", label: "Descripción", type: "text", required: false }
+      ],
+      createdAt: ts(), updatedAt: ts()
+    });
+
+    await orgRef.collection("_collections").add({
+      name: "Instrumentos", slug: "instrumentos", description: "Instrumentos disponibles",
+      displayField: "nombre",
+      fields: [
+        { key: "nombre", label: "Instrumento", type: "text", required: true }
+      ],
+      createdAt: ts(), updatedAt: ts()
+    });
+
+    await orgRef.collection("_collections").add({
+      name: "Aspirantes", slug: "aspirantes", description: "Personas interesadas en inscribirse",
       displayField: "nombre",
       fields: [
         { key: "nombre", label: "Nombre", type: "text", required: true },
-        { key: "edad", label: "Rango de Edad", type: "text", required: false },
-        { key: "duracion", label: "Duración", type: "text", required: false },
-        { key: "enfoque", label: "Enfoque", type: "text", required: false },
-        { key: "notaEdad", label: "Nota de Edad", type: "text", required: false },
-        { key: "incluye", label: "Incluye", type: "list", required: false },
-        { key: "nota", label: "Nota adicional", type: "text", required: false }
+        { key: "edad", label: "Edad", type: "text", required: true },
+        { key: "curso", label: "Curso", type: "reference", refCollection: "programas", required: true },
+        { key: "instrumento", label: "Instrumento", type: "reference", refCollection: "instrumentos", required: true }
       ],
       createdAt: ts(), updatedAt: ts()
     });
 
-    await orgRef.collection("_collections").add({
-      name: "Aspirantes", slug: "aspirantes", description: "Personas interesadas en estudiar",
-      displayField: "fullName",
-      fields: [
-        { key: "fullName", label: "Nombre Completo", type: "text", required: true },
-        { key: "programa", label: "Programa", type: "reference", refCollection: "programas", required: false },
-        { key: "email", label: "Email", type: "text", required: false },
-        { key: "comentario", label: "Comentario", type: "text", required: false }
-      ],
-      createdAt: ts(), updatedAt: ts()
-    });
+    console.log("   3 colecciones: programas, instrumentos, aspirantes\n");
 
-    await orgRef.collection("_collections").add({
-      name: "Consultas", slug: "consultas", description: "Consultas y mensajes recibidos",
-      displayField: "fullName",
-      fields: [
-        { key: "fullName", label: "Nombre", type: "text", required: true },
-        { key: "message", label: "Mensaje", type: "text", required: true }
-      ],
-      createdAt: ts(), updatedAt: ts()
-    });
-
-    console.log("   3 colecciones definidas: programas, aspirantes, consultas\n");
-
-    // 7. Populate programas
+    // 7. Populate programas (based on https://sv.institutocanzion.com/sonsonate)
     console.log("7. Populando programas...");
     const programas = [
       {
-        nombre: "Programa Kids", edad: "6 a 10 años", duracion: "2 años (4 semestres)",
-        enfoque: "Iniciación musical integral para niños",
-        notaEdad: "Niños menores de 6 si saben leer y escribir",
-        incluye: ["Iniciación musical", "Práctica de instrumento", "Ensambles musicales infantiles"],
-        nota: "Programa por instrumento", active: true, order: 1
+        nombre: "Curso Ministerial Musical", edad: "Mayores de 16 años",
+        duracion: "2 años (4 semestres)",
+        descripcion: "Formación musical completa con enfoque en adoración y servicio ministerial.",
+        active: true, order: 1
       },
       {
-        nombre: "Programa Teens", edad: "11 a 15 años", duracion: "2 años (4 semestres)",
-        enfoque: "Desarrollo musical para adolescentes",
-        notaEdad: "",
-        incluye: ["Teoría musical", "Instrumento principal", "Ensambles y bandas juveniles"],
-        nota: "Programa por instrumento", active: true, order: 2
+        nombre: "Teens", edad: "12 a 15 años",
+        duracion: "2 años (4 semestres)",
+        descripcion: "Programa de desarrollo musical para adolescentes.",
+        active: true, order: 2
       },
       {
-        nombre: "Programa Adultos", edad: "16 años en adelante", duracion: "2 años (4 semestres)",
-        enfoque: "Formación musical completa para adultos",
-        notaEdad: "",
-        incluye: ["Teoría y armonía", "Instrumento principal", "Ensambles musicales", "Adoración y servicio"],
-        nota: "Programa por instrumento", active: true, order: 3
-      },
-      {
-        nombre: "Programa Avanzado", edad: "Graduados de programas base", duracion: "1 año (2 semestres)",
-        enfoque: "Especialización y perfeccionamiento musical",
-        notaEdad: "Requiere haber completado programa base",
-        incluye: ["Técnica avanzada", "Composición y arreglos", "Dirección de ensambles", "Masterclasses"],
-        nota: "", active: true, order: 4
+        nombre: "Kids", edad: "6 a 10 años",
+        duracion: "2 años (4 semestres)",
+        descripcion: "Iniciación musical integral para niños.",
+        active: true, order: 3
       }
     ];
     for (const p of programas) {
@@ -238,122 +230,116 @@ async function resetDatabase() {
     }
     console.log(`   ${programas.length} programas creados.\n`);
 
-    // 8. Flows
-    console.log("8. Creando flujos...");
+    // 8. Populate instrumentos
+    console.log("8. Populando instrumentos...");
+    const instrumentos = ["Guitarra", "Batería", "Bajo", "Canto", "Piano"];
+    for (const nombre of instrumentos) {
+      await orgRef.collection("instrumentos").add({ nombre, active: true, createdAt: ts(), updatedAt: ts() });
+    }
+    console.log(`   ${instrumentos.length} instrumentos creados.\n`);
 
-    const browseFlowRef = await orgRef.collection("flows").add({
-      name: "Ver Programas", description: "Navegar y ver detalles de programas disponibles",
+    // ==================== FLOWS ====================
+
+    // 9. Flows
+    console.log("9. Creando flujos...");
+
+    await orgRef.collection("flows").add({
+      name: "Ver Programas", description: "Navegar y ver detalles de cursos disponibles",
       type: "catalog", active: true, order: 1, saveToCollection: "",
-      menuLabel: "Programas", menuDescription: "Ver programas disponibles", showInMenu: true,
+      menuLabel: "Programas", menuDescription: "Ver cursos disponibles", showInMenu: true,
       steps: [
         {
-          id: "s1", type: "browse_collection", prompt: "*Programas Disponibles*\n\nSelecciona un programa para ver detalles:",
+          id: "s1", type: "browse_collection",
+          prompt: "*Cursos Disponibles*\n\nSelecciona un curso para ver detalles:",
           sourceCollection: "programas", displayField: "nombre",
-          detailFields: ["nombre", "edad", "duracion", "enfoque", "notaEdad", "incluye", "nota"],
+          detailFields: ["nombre", "edad", "duracion", "descripcion"],
           fieldKey: "", fieldLabel: "", required: false, validation: {},
           errorMessage: "", optionsSource: "", customOptions: [],
-          buttonText: "Ver programas"
+          buttonText: "Ver cursos"
         }
       ],
       completionMessage: "",
       createdAt: ts(), updatedAt: ts()
     });
 
-    const regFlowRef = await orgRef.collection("flows").add({
-      name: "Registro de Aspirantes", description: "Formulario de registro para nuevos aspirantes",
+    await orgRef.collection("flows").add({
+      name: "Inscríbete", description: "Formulario de inscripción para nuevos aspirantes",
       type: "registration", active: true, order: 2, saveToCollection: "aspirantes",
-      menuLabel: "Registrarse", menuDescription: "Registrar tus datos", showInMenu: true,
+      menuLabel: "Inscríbete", menuDescription: "Registra tus datos", showInMenu: true,
       steps: [
         {
-          id: "s1", type: "text_input", prompt: "Por favor, escribe tu *nombre completo*:",
-          fieldKey: "fullName", fieldLabel: "Nombre Completo", required: true,
+          id: "s1", type: "text_input",
+          prompt: "¡Genial que quieras inscribirte! 🎵\n\nPor favor, escribe tu *nombre completo*:",
+          fieldKey: "nombre", fieldLabel: "Nombre", required: true,
           validation: { minLength: 3 }, errorMessage: "El nombre debe tener al menos 3 caracteres.",
           optionsSource: "custom", customOptions: [], buttonText: "",
           sourceCollection: "", displayField: "", detailFields: []
         },
         {
-          id: "s2", type: "select_list", prompt: "¿En qué programa estás interesado?",
-          fieldKey: "programa", fieldLabel: "Programa", required: true,
+          id: "s2", type: "text_input",
+          prompt: "¿Cuál es tu *edad*?",
+          fieldKey: "edad", fieldLabel: "Edad", required: true,
+          validation: {}, errorMessage: "",
+          optionsSource: "custom", customOptions: [], buttonText: "",
+          sourceCollection: "", displayField: "", detailFields: []
+        },
+        {
+          id: "s3", type: "select_list",
+          prompt: "¿En qué *curso* estás interesado?",
+          fieldKey: "curso", fieldLabel: "Curso", required: true,
           validation: {}, errorMessage: "", optionsSource: "programas",
-          customOptions: [], buttonText: "Ver programas",
+          optionsTitleField: "nombre", optionsDescField: "edad",
+          customOptions: [], buttonText: "Ver cursos",
           sourceCollection: "", displayField: "", detailFields: []
         },
         {
-          id: "s3", type: "text_input", prompt: "Escribe tu *correo electrónico* (o escribe *no* para omitir):",
-          fieldKey: "email", fieldLabel: "Email", required: false,
-          validation: {}, errorMessage: "", optionsSource: "custom",
-          customOptions: [], buttonText: "",
-          sourceCollection: "", displayField: "", detailFields: []
-        },
-        {
-          id: "s4", type: "text_input", prompt: "¿Algún comentario o pregunta? (escribe *no* para omitir):",
-          fieldKey: "comentario", fieldLabel: "Comentario", required: false,
-          validation: {}, errorMessage: "", optionsSource: "custom",
-          customOptions: [], buttonText: "",
+          id: "s4", type: "select_list",
+          prompt: "¿Qué *instrumento* te gustaría aprender?",
+          fieldKey: "instrumento", fieldLabel: "Instrumento", required: true,
+          validation: {}, errorMessage: "", optionsSource: "instrumentos",
+          optionsTitleField: "nombre", optionsDescField: "",
+          customOptions: [], buttonText: "Ver instrumentos",
           sourceCollection: "", displayField: "", detailFields: []
         }
       ],
-      completionMessage: "*¡Registro completado!*\n\nNombre: {fullName}\nPrograma: {programa}\nEmail: {email}\n\nGracias por tu interés en *" + ORG_NAME + "*. Un maestro te contactará pronto.",
+      completionMessage: "*¡Inscripción completada!* ✅\n\n*Nombre:* {nombre}\n*Edad:* {edad}\n*Curso:* {curso}\n*Instrumento:* {instrumento}\n\nGracias por tu interés en *" + ORG_NAME + "*.\nUn maestro te contactará pronto. 🎶",
       createdAt: ts(), updatedAt: ts()
     });
 
-    const consultaFlowRef = await orgRef.collection("flows").add({
-      name: "Consulta General", description: "Para recibir consultas de los usuarios",
-      type: "inquiry", active: true, order: 3, saveToCollection: "consultas",
-      menuLabel: "Hacer una consulta", menuDescription: "Enviar pregunta o comentario", showInMenu: true,
-      steps: [
-        {
-          id: "s1", type: "text_input", prompt: "¿Cuál es tu nombre?",
-          fieldKey: "fullName", fieldLabel: "Nombre", required: true,
-          validation: {}, errorMessage: "", optionsSource: "custom",
-          customOptions: [], buttonText: "",
-          sourceCollection: "", displayField: "", detailFields: []
-        },
-        {
-          id: "s2", type: "text_input", prompt: "Escribe tu consulta o mensaje:",
-          fieldKey: "message", fieldLabel: "Mensaje", required: true,
-          validation: {}, errorMessage: "", optionsSource: "custom",
-          customOptions: [], buttonText: "",
-          sourceCollection: "", displayField: "", detailFields: []
-        }
-      ],
-      completionMessage: "*¡Consulta recibida!*\n\nGracias {fullName}, hemos recibido tu mensaje. Te responderemos a la brevedad.",
-      createdAt: ts(), updatedAt: ts()
-    });
+    console.log("   2 flujos: Ver Programas (browse), Inscríbete (registro)\n");
 
-    console.log("   3 flujos: Ver Programas (browse), Registro (form), Consulta (form)\n");
+    // ==================== MENU ====================
 
-    // 9. Menu config
-    console.log("9. Configuración del menú...");
-    // Need the flow IDs for menu items
+    // 10. Menu config
+    console.log("10. Configuración del menú...");
     const flowsSnap = await orgRef.collection("flows").get();
     const flowDocs = flowsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const browseFlow = flowDocs.find(f => f.name === "Ver Programas");
-    const regFlow = flowDocs.find(f => f.name === "Registro de Aspirantes");
-    const consultaFlow = flowDocs.find(f => f.name === "Consulta General");
+    const regFlow = flowDocs.find(f => f.name === "Inscríbete");
 
     await orgRef.collection("config").doc("menu").set({
-      greeting: `¡Hola{name}!\n\nBienvenido a *${ORG_NAME}*.\n\n¿En qué podemos ayudarte?`,
+      greeting: `¡Hola{name}! 🎵\n\nBienvenido a *${ORG_NAME}*.\n\n¿En qué podemos ayudarte?`,
       menuButtonText: "Ver opciones",
       fallbackMessage: "No entendí tu mensaje. Selecciona una opción del menú.",
-      exitMessage: "¡Hasta luego! Escribe *hola* cuando necesites ayuda.",
+      exitMessage: "¡Hasta luego! Escribe *hola* cuando necesites ayuda. 🎶",
       items: [
-        { id: "m1", type: "flow", flowId: browseFlow?.id || "", label: "Programas", description: "Ver programas disponibles", order: 1, active: true },
-        { id: "m2", type: "builtin", action: "schedule", label: "Horarios", description: "Días y horarios de clase", order: 2, active: true },
-        { id: "m3", type: "builtin", action: "contact", label: "Ubicación", description: "Dirección del instituto", order: 3, active: true },
-        { id: "m4", type: "builtin", action: "general", label: "Información General", description: "Sobre el instituto", order: 4, active: true },
-        { id: "m5", type: "flow", flowId: regFlow?.id || "", label: "Registrarse", description: "Registrar datos como aspirante", order: 5, active: true },
-        { id: "m6", type: "flow", flowId: consultaFlow?.id || "", label: "Hacer Consulta", description: "Enviar pregunta o mensaje", order: 6, active: true }
+        { id: "m1", type: "flow", flowId: browseFlow?.id || "", label: "Programas", description: "Ver cursos disponibles", order: 1, active: true },
+        { id: "m2", type: "flow", flowId: regFlow?.id || "", label: "Inscríbete", description: "Registra tus datos", order: 2, active: true },
+        { id: "m3", type: "builtin", action: "schedule", label: "Horarios", description: "Horarios de atención", order: 3, active: true },
+        { id: "m4", type: "builtin", action: "contact", label: "Ubicación", description: "Dirección del instituto", order: 4, active: true },
+        { id: "m5", type: "builtin", action: "general", label: "Info General", description: "Sobre el instituto", order: 5, active: true }
       ],
       createdAt: ts()
     });
 
-    // 10. Bot messages
-    console.log("10. Mensajes del bot...");
+    // ==================== BOT MESSAGES ====================
+
+    // 11. Bot messages
+    console.log("11. Mensajes del bot...");
     const botMessages = [
-      { key: "greeting", label: "Saludo principal", category: "greeting", description: "Mensaje de bienvenida", content: `¡Hola{name}!\n\nBienvenido a *${ORG_NAME}*.\n\nSelecciona una opción del menú.` },
+      { key: "greeting", label: "Saludo principal", category: "greeting", description: "Mensaje de bienvenida", content: `¡Hola{name}! 🎵\n\nBienvenido a *${ORG_NAME}*.\n\nSelecciona una opción del menú.` },
       { key: "fallback", label: "Mensaje no reconocido", category: "fallback", description: "Cuando el bot no entiende", content: "No entendí tu mensaje.\n\nEscribe *hola* para ver el menú de opciones." },
-      { key: "goodbye", label: "Despedida", category: "general", description: "Mensaje de despedida", content: "¡Hasta luego! Escribe *hola* cuando necesites ayuda." },
+      { key: "goodbye", label: "Despedida", category: "general", description: "Mensaje de despedida", content: "¡Hasta luego! Escribe *hola* cuando necesites ayuda. 🎶" },
       { key: "session_expired", label: "Sesión expirada", category: "general", description: "Sesión cerrada por inactividad", content: "Tu sesión se cerró por inactividad. ¡Hasta luego!\n\nEscribe *hola* cuando necesites ayuda." },
       { key: "cancel", label: "Cancelación", category: "general", description: "Cuando el usuario cancela", content: "Proceso cancelado. Escribe *hola* para volver al menú." }
     ];
@@ -362,53 +348,78 @@ async function resetDatabase() {
     }
     console.log(`   ${botMessages.length} mensajes.\n`);
 
-    // 11. Info
-    console.log("11. Información base...");
+    // ==================== INFO ====================
+
+    // 12. Info
+    console.log("12. Información base...");
     await orgRef.collection("info").doc("contact").set({
-      address: "Colonia La Esperanza, Sonsonate", city: "Sonsonate", country: "El Salvador",
-      phone: "", email: "", attentionHours: "Lunes a Viernes 2:00 PM - 6:00 PM",
+      address: "8va Av. Norte # 6-3, Colonia Aida, Sonsonate",
+      city: "Sonsonate", country: "El Salvador",
+      phone: "6930-7473", email: "sonsonate@institutocanzion.com",
       createdAt: ts()
     });
     await orgRef.collection("info").doc("schedule").set({
-      day: "Sábados", time: "8:00 AM a 12:00 PM",
-      appliesTo: ["Todos los programas"], modality: "Presencial",
+      days: [
+        { name: "Lunes", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
+        { name: "Martes", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
+        { name: "Miércoles", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
+        { name: "Jueves", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
+        { name: "Viernes", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
+        { name: "Sábado", active: true, shifts: [{ from: "08:00", to: "12:00" }] },
+        { name: "Domingo", active: false, shifts: [{ from: "08:00", to: "12:00" }] }
+      ],
       createdAt: ts()
     });
     await orgRef.collection("info").doc("general").set({
-      orgName: ORG_NAME, description: "Escuela de música con enfoque en adoración y formación musical integral.",
-      focus: ["Música", "Adoración", "Formación artística"], modality: "Presencial",
-      instrumentsNote: "Guitarra, Piano, Batería, Bajo, Violín, Voz y más",
-      openToAll: true, createdAt: ts()
+      orgName: ORG_NAME,
+      description: "Escuela de música cristiana con enfoque en adoración y formación musical integral.",
+      focus: ["Música", "Adoración", "Formación artística"],
+      modality: "Presencial",
+      instrumentsNote: "Guitarra, Piano, Batería, Bajo, Canto",
+      openToAll: true,
+      createdAt: ts()
     });
 
-    // 12. Restore admins
-    console.log("12. Restaurando administradores...");
-    const usersSnapshot = await db.collection("users").get();
-    const orgAdmins = usersSnapshot.docs
-      .filter(d => d.data().organizationId === ORG_ID)
-      .map(d => ({ uid: d.id, ...d.data() }));
+    // ==================== ADMINS ====================
 
-    if (orgAdmins.length > 0) {
-      for (const adm of orgAdmins) {
-        await orgRef.collection("admins").add({
-          email: adm.email, name: adm.name || adm.email,
-          role: adm.role || "admin", active: true, createdAt: ts()
-        });
+    // 13. Restore admins
+    console.log("13. Restaurando administradores...");
+    const adminsSnap = await orgRef.collection("admins").get();
+    if (adminsSnap.empty) {
+      const usersSnapshot = await db.collection("users").get();
+      const orgAdmins = usersSnapshot.docs
+        .filter(d => d.data().organizationId === ORG_ID)
+        .map(d => ({ uid: d.id, ...d.data() }));
+
+      if (orgAdmins.length > 0) {
+        for (const adm of orgAdmins) {
+          await orgRef.collection("admins").add({
+            email: adm.email, name: adm.name || adm.email,
+            role: adm.role || "admin", active: true, createdAt: ts()
+          });
+        }
+        console.log(`   ${orgAdmins.length} admin(s):`);
+        orgAdmins.forEach(a => console.log(`     - ${a.email}`));
+      } else {
+        console.log("   Sin admins encontrados en users/.");
       }
-      console.log(`   ${orgAdmins.length} admin(s):`);
-      orgAdmins.forEach(a => console.log(`     - ${a.email}`));
     } else {
-      console.log("   Sin admins. Crea uno desde la web.");
+      console.log(`   ${adminsSnap.size} admin(s) ya existentes (preservados).`);
     }
+
+    // ==================== SUMMARY ====================
 
     console.log(`\n========================================`);
     console.log(`  Reset completado`);
     console.log(`========================================\n`);
-    console.log(`  Org:          ${ORG_ID}`);
-    console.log(`  WhatsApp:     ${savedWAConfig?.token ? 'Preservado' : 'Configurar en web'}`);
-    console.log(`  Colecciones:  programas, aspirantes, consultas`);
-    console.log(`  Flujos:       Ver Programas, Registro, Consulta`);
-    console.log(`  Admins:       ${orgAdmins.length}`);
+    console.log(`  Org:           ${ORG_ID}`);
+    console.log(`  Nombre:        ${ORG_NAME}`);
+    console.log(`  WhatsApp:      ${savedWAConfig?.token ? 'Preservado' : 'Configurar en web'}`);
+    console.log(`  Colecciones:   programas, instrumentos, aspirantes`);
+    console.log(`  Programas:     Curso Ministerial Musical, Teens, Kids`);
+    console.log(`  Instrumentos:  Guitarra, Batería, Bajo, Canto, Piano`);
+    console.log(`  Flujos:        Ver Programas, Inscríbete`);
+    console.log(`  Menú:          Programas | Inscríbete | Horarios | Ubicación | Info`);
     console.log(`\n  Siguiente: npm start\n`);
 
   } catch (error) {

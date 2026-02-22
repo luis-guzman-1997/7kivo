@@ -119,15 +119,9 @@
             <input type="email" [(ngModel)]="contactInfo.email" placeholder="info@empresa.com" />
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label><i class="fas fa-clock"></i> Horarios de Atención</label>
-            <input type="text" [(ngModel)]="contactInfo.attentionHours" placeholder="Lun-Vie 8:00am - 5:00pm" />
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-globe-americas"></i> País</label>
-            <input type="text" [(ngModel)]="contactInfo.country" placeholder="El Salvador" />
-          </div>
+        <div class="form-group">
+          <label><i class="fas fa-globe-americas"></i> País</label>
+          <input type="text" [(ngModel)]="contactInfo.country" placeholder="El Salvador" />
         </div>
         <button class="btn-save-section" (click)="saveContactInfo()" [disabled]="saving">
           <i class="fas fa-save"></i> Guardar Contacto
@@ -140,25 +134,58 @@
       <div class="card-header">
         <div class="card-icon amber"><i class="fas fa-calendar-alt"></i></div>
         <div>
-          <h3>Información de Horarios</h3>
-          <p>Horarios que el bot muestra al usuario</p>
+          <h3>Horarios de Atención</h3>
+          <p>Configura los días y turnos en que atiendes. El bot mostrará esta información.</p>
         </div>
       </div>
       <div class="config-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label><i class="fas fa-calendar-day"></i> Días</label>
-            <input type="text" [(ngModel)]="scheduleInfo.day" placeholder="Lunes a Viernes" />
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-clock"></i> Horario</label>
-            <input type="text" [(ngModel)]="scheduleInfo.time" placeholder="8:00 AM - 5:00 PM" />
+        <div class="schedule-week">
+          <div *ngFor="let day of scheduleInfo.days; let di = index" class="schedule-day" [class.day-active]="day.active">
+            <div class="day-header">
+              <label class="day-toggle">
+                <input type="checkbox" [(ngModel)]="day.active" />
+                <span class="day-name">{{ day.name }}</span>
+              </label>
+              <span class="day-status" *ngIf="!day.active">Cerrado</span>
+            </div>
+            <div class="day-shifts" *ngIf="day.active">
+              <div *ngFor="let shift of day.shifts; let si = index" class="shift-row">
+                <div class="shift-inputs">
+                  <input type="time" [(ngModel)]="shift.from" class="time-input" />
+                  <span class="shift-sep">a</span>
+                  <input type="time" [(ngModel)]="shift.to" class="time-input" />
+                </div>
+                <div class="shift-actions">
+                  <button class="btn-shift-remove" *ngIf="day.shifts.length > 1" (click)="removeShift(di, si)" title="Quitar turno">
+                    <i class="fas fa-minus-circle"></i>
+                  </button>
+                  <button class="btn-shift-add" *ngIf="si === day.shifts.length - 1" (click)="addShift(di)" title="Agregar turno">
+                    <i class="fas fa-plus-circle"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label><i class="fas fa-laptop-house"></i> Modalidad</label>
-          <input type="text" [(ngModel)]="scheduleInfo.modality" placeholder="Presencial / Virtual / Híbrido" />
+
+        <div class="schedule-preview">
+          <div class="preview-header"><i class="fas fa-eye"></i> Vista previa en el bot</div>
+          <div class="preview-body">
+            <strong>📅 Horarios de Atención</strong><br /><br />
+            <ng-container *ngFor="let day of scheduleInfo.days">
+              <ng-container *ngIf="day.active">
+                <strong>{{ day.name }}:</strong>
+                <span *ngFor="let s of day.shifts; let last = last">
+                  {{ s.from }} - {{ s.to }}<span *ngIf="!last"> | </span>
+                </span><br />
+              </ng-container>
+            </ng-container>
+            <em *ngIf="!hasActiveDays()" style="color:#94a3b8;">
+              No hay días activos configurados
+            </em>
+          </div>
         </div>
+
         <button class="btn-save-section" (click)="saveScheduleInfo()" [disabled]="saving">
           <i class="fas fa-save"></i> Guardar Horarios
         </button>

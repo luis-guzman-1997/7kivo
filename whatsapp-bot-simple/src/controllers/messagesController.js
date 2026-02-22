@@ -177,7 +177,7 @@ const buildMenuItems = async () => {
 
   // Fallback: auto-generate from builtins + active flows
   const rows = [
-    { id: "builtin_schedule", title: "Horarios", description: "Ver horarios" },
+    { id: "builtin_schedule", title: "Horarios", description: "Horarios de atención" },
     { id: "builtin_contact", title: "Ubicación", description: "Dirección" },
     { id: "builtin_general", title: "Información General", description: "Sobre nosotros" }
   ];
@@ -196,11 +196,17 @@ const buildMenuItems = async () => {
 
 const sendGreeting = async (phoneNumber, contactName = null) => {
   const menuConfig = await getMenuConfig();
-  const name = contactName ? ` ${contactName}` : "";
+  const session = getSession(phoneNumber);
+  const name = contactName || session?.contactName || "";
+  const nameDisplay = name ? ` ${name}` : "";
+
+  if (contactName) {
+    setSession(phoneNumber, { contactName });
+  }
 
   const greetingTemplate = menuConfig?.greeting ||
     await getMessage("greeting", "¡Hola{name}!\n\nBienvenido. Selecciona una opción:");
-  const greeting = greetingTemplate.replace("{name}", name);
+  const greeting = greetingTemplate.replace("{name}", nameDisplay);
 
   const menuButtonText = menuConfig?.menuButtonText ||
     await getMessage("menu_button_text", "Ver opciones");
@@ -214,6 +220,23 @@ const sendGreeting = async (phoneNumber, contactName = null) => {
 
   const sections = [{ title: "Opciones", rows: menuRows }];
   await sendInteractiveList(greeting, menuButtonText, sections, phoneNumber);
+};
+
+const sendMenu = async (phoneNumber) => {
+  const menuConfig = await getMenuConfig();
+
+  const menuButtonText = menuConfig?.menuButtonText ||
+    await getMessage("menu_button_text", "Ver opciones");
+
+  const menuRows = await buildMenuItems();
+
+  if (menuRows.length === 0) {
+    await sendTextMessage("No hay opciones disponibles.", phoneNumber);
+    return;
+  }
+
+  const sections = [{ title: "Opciones", rows: menuRows }];
+  await sendInteractiveList("¿En qué más puedo ayudarte?", menuButtonText, sections, phoneNumber);
 };
 
 // ==================== INTERACTIVE RESPONSE HANDLER ====================
@@ -244,7 +267,7 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     }
     if (buttonId === "browse_continue" || buttonId === "back_main") {
       if (buttonId === "back_main") {
-        await sendGreeting(phoneNumber);
+        await sendMenu(phoneNumber);
         setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
         return;
       }
@@ -289,7 +312,7 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
 
   // Back to menu
   if (buttonId === "back_main") {
-    await sendGreeting(phoneNumber);
+    await sendMenu(phoneNumber);
     setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
     return;
   }
@@ -300,7 +323,7 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     contact: () => showContact(phoneNumber),
     register: () => startLegacyOrFlowRegistration(phoneNumber),
     general: () => showGeneralInfo(phoneNumber),
-    back_main: () => sendGreeting(phoneNumber)
+    back_main: () => sendMenu(phoneNumber)
   };
 
   if (legacyActions[buttonId]) {
@@ -765,15 +788,17 @@ const showSchedule = async (phoneNumber) => {
   const schedule = await getScheduleInfo();
 
   let info;
-  if (schedule) {
-    info = "*Horarios*\n\n";
-    info += `*Día:* ${schedule.day}\n\n`;
-    info += `*Horario:* ${schedule.time}\n\n`;
-    if (schedule.appliesTo && schedule.appliesTo.length > 0) {
-      info += "*Aplica para todos los programas:*\n";
-      schedule.appliesTo.forEach(p => { info += `• ${p}\n`; });
+  if (schedule && schedule.days && Array.isArray(schedule.days)) {
+    const activeDays = schedule.days.filter(d => d.active);
+    if (activeDays.length > 0) {
+      info = "📅 *Horarios de Atención*\n\n";
+      activeDays.forEach(day => {
+        const shifts = (day.shifts || []).map(s => `${s.from} - ${s.to}`).join(" | ");
+        info += `*${day.name}:* ${shifts}\n`;
+      });
+    } else {
+      info = await getMessage("schedule_info", "Horarios no disponibles. Contacta con la administración.");
     }
-    info += `\n*Modalidad:* ${schedule.modality}`;
   } else {
     info = await getMessage("schedule_info", "Horarios no disponibles. Contacta con la administración.");
   }
@@ -795,8 +820,7 @@ const showContact = async (phoneNumber) => {
     info += `*Dirección:*\n${contact.address}\n\n`;
     if (contact.city) info += `*Ciudad:* ${contact.city}`;
     if (contact.country) info += `, ${contact.country}`;
-    if (contact.city || contact.country) info += "\n\n";
-    if (contact.attentionHours) info += `*Horarios de atención:*\n${contact.attentionHours}`;
+    if (contact.city || contact.country) info += "\n";
   } else {
     info = await getMessage("contact_info", "Información de ubicación no disponible.");
   }
@@ -876,8 +900,11 @@ const handleUserMessage = async (phoneNumber, message, session) => {
   }
 
   // General keywords
-  if (lowerMessage.includes("hola") || lowerMessage.includes("hi") || lowerMessage.includes("menu") || lowerMessage.includes("menú")) {
+  if (lowerMessage.includes("hola") || lowerMessage.includes("hi")) {
     await sendGreeting(phoneNumber);
+    setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+  } else if (lowerMessage.includes("menu") || lowerMessage.includes("menú")) {
+    await sendMenu(phoneNumber);
     setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
   } else if (lowerMessage.includes("horario") || lowerMessage.includes("hora")) {
     await showSchedule(phoneNumber);
