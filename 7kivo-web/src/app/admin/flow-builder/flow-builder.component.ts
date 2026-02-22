@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
+import { AuthService } from '../../services/auth.service';
 
 interface FlowStep {
   id: string;
@@ -69,7 +70,15 @@ export class FlowBuilderComponent implements OnInit {
     { value: 'message', label: 'Mensaje automático', icon: 'fa-comment', desc: 'Envía un mensaje sin esperar respuesta' }
   ];
 
-  constructor(private firebaseService: FirebaseService) {}
+  planLimit = 999;
+
+  constructor(private firebaseService: FirebaseService, public authService: AuthService) {
+    this.planLimit = this.authService.getPlanLimits().flows;
+  }
+
+  get canCreateFlow(): boolean {
+    return this.flows.length < this.planLimit;
+  }
 
   async ngOnInit(): Promise<void> {
     await this.loadData();

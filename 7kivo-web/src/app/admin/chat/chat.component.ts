@@ -48,6 +48,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   botApiUrl = '';
   showSettings = false;
   settingsPhone = '';
+  chatLiveAllowed = true;
 
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
@@ -59,6 +60,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.chatLiveAllowed = this.authService.getPlanLimits().chatLive;
     await this.loadConfig();
 
     this.convsUnsub = this.firebaseService.onConversationsChange((convs) => {

@@ -14,6 +14,7 @@ export class AdminLayoutComponent implements OnDestroy {
   orgName = '';
   orgLogo = '';
   userRole = '';
+  botEnabled = true;
   private subs: Subscription[] = [];
 
   constructor(public authService: AuthService, private router: Router) {
@@ -29,6 +30,9 @@ export class AdminLayoutComponent implements OnDestroy {
       }),
       this.authService.userRole$.subscribe(role => {
         this.userRole = role;
+      }),
+      this.authService.botEnabled$.subscribe(val => {
+        this.botEnabled = val;
       })
     );
   }

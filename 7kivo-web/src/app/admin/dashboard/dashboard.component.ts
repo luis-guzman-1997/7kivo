@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,8 +14,13 @@ export class DashboardComponent implements OnInit {
   collectionStats: { name: string; slug: string; count: number; icon: string }[] = [];
   recentItems: any[] = [];
   loading = true;
+  planName = '';
+  planLimits: any = { flows: 0, collections: 0, admins: 0, chatLive: false };
 
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(private firebaseService: FirebaseService, public authService: AuthService) {
+    this.planName = this.authService.orgPlan || 'Sin plan';
+    this.planLimits = this.authService.getPlanLimits();
+  }
 
   async ngOnInit(): Promise<void> {
     try {

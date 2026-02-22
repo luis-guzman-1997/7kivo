@@ -5,6 +5,25 @@ const getOrgRef = () => {
   return db.collection("organizations").doc(getOrgId());
 };
 
+// ==================== ORG STATUS ====================
+let orgStatusCache = null;
+let orgStatusCacheTs = 0;
+const ORG_STATUS_TTL = 30000;
+
+const getOrgStatus = async () => {
+  const now = Date.now();
+  if (orgStatusCache && now - orgStatusCacheTs < ORG_STATUS_TTL) return orgStatusCache;
+  try {
+    const snap = await db.collection("organizations").doc(getOrgId()).get();
+    orgStatusCache = snap.exists ? snap.data() : {};
+    orgStatusCacheTs = now;
+    return orgStatusCache;
+  } catch (err) {
+    console.error("Error loading org status:", err.message);
+    return orgStatusCache || {};
+  }
+};
+
 // ==================== CACHE ====================
 let messagesCache = {};
 let cacheTimestamp = 0;
@@ -267,5 +286,6 @@ module.exports = {
   getCollectionDef,
   saveFlowSubmission,
   getAppointmentsByDate,
+  getOrgStatus,
   clearCache
 };

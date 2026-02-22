@@ -17,7 +17,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      this.isAdminRoute = event.url.startsWith('/admin');
+      this.isAdminRoute = event.url.startsWith('/admin') || event.url.startsWith('/superadmin');
     });
   }
 

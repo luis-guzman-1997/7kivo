@@ -9,14 +9,11 @@ import { AuthService } from '../../services/auth.service';
 })
 export class OrgSettingsComponent implements OnInit {
   generalConfig: any = {};
-  whatsappConfig: any = {};
   loading = true;
   saving = false;
   notice = '';
   error = '';
-  activeTab = 'general';
   orgId = '';
-  copied = false;
   logoPreview = '';
   logoFile: File | null = null;
   uploadingLogo = false;
@@ -35,12 +32,7 @@ export class OrgSettingsComponent implements OnInit {
   async loadConfig(): Promise<void> {
     this.loading = true;
     try {
-      const [general, whatsapp] = await Promise.all([
-        this.firebaseService.getOrgConfig(),
-        this.firebaseService.getWhatsAppConfig()
-      ]);
-      this.generalConfig = general || {};
-      this.whatsappConfig = whatsapp || {};
+      this.generalConfig = await this.firebaseService.getOrgConfig() || {};
       this.logoPreview = this.generalConfig.orgLogo || '';
     } catch (err) {
       console.error('Error loading config:', err);
@@ -67,29 +59,6 @@ export class OrgSettingsComponent implements OnInit {
       setTimeout(() => this.notice = '', 3000);
     } catch (err) {
       this.error = 'Error al guardar configuración';
-      setTimeout(() => this.error = '', 3000);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  copyOrgId(): void {
-    navigator.clipboard.writeText(this.orgId).then(() => {
-      this.copied = true;
-      setTimeout(() => this.copied = false, 2000);
-    });
-  }
-
-  async saveWhatsApp(): Promise<void> {
-    this.saving = true;
-    this.notice = '';
-    this.error = '';
-    try {
-      await this.firebaseService.saveWhatsAppConfig(this.whatsappConfig);
-      this.notice = 'Configuración de WhatsApp guardada';
-      setTimeout(() => this.notice = '', 3000);
-    } catch (err) {
-      this.error = 'Error al guardar configuración de WhatsApp';
       setTimeout(() => this.error = '', 3000);
     } finally {
       this.saving = false;

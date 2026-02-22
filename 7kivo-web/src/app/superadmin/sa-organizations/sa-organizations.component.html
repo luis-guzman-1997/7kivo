@@ -1,0 +1,362 @@
+<div class="sa-orgs">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Organizaciones</h1>
+      <p class="page-subtitle">{{ organizations.length }} organizaciones registradas</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Buscar organización..." [(ngModel)]="searchTerm" (input)="applyFilter()" />
+    </div>
+    <select class="filter-select" [(ngModel)]="filterStatus" (change)="applyFilter()">
+      <option value="all">Todas</option>
+      <option value="active">Activas</option>
+      <option value="inactive">Inactivas</option>
+      <option value="bot_on">Bot activo</option>
+      <option value="bot_off">Bot inactivo</option>
+    </select>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Cargando organizaciones...
+  </div>
+
+  <div *ngIf="!loading && filteredOrgs.length === 0" class="empty-state">
+    <i class="fas fa-building"></i>
+    <p>No se encontraron organizaciones</p>
+  </div>
+
+  <div class="orgs-table" *ngIf="!loading && filteredOrgs.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Organización</th>
+          <th>Industria</th>
+          <th>Plan</th>
+          <th>Tarifa</th>
+          <th>Estado</th>
+          <th>Bot</th>
+          <th>Creada</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let org of filteredOrgs" (click)="openDetail(org)" class="org-row">
+          <td class="org-name-cell">
+            <img *ngIf="org.orgLogo" [src]="org.orgLogo" class="org-mini-logo" alt="" />
+            <i *ngIf="!org.orgLogo" class="fas fa-building org-mini-icon"></i>
+            <span>{{ org.orgName }}</span>
+          </td>
+          <td><span class="industry-tag">{{ org.industry || 'general' }}</span></td>
+          <td>{{ org.plan || 'Sin plan' }}</td>
+          <td>{{ org.monthlyRate ? '$' + org.monthlyRate.toFixed(2) : '—' }}</td>
+          <td>
+            <button class="toggle-btn" [class.active]="org.active !== false" [class.inactive]="org.active === false"
+              (click)="toggleActive(org); $event.stopPropagation()">
+              {{ org.active !== false ? 'Activa' : 'Inactiva' }}
+            </button>
+          </td>
+          <td>
+            <button class="toggle-btn bot-toggle" [class.bot-on]="org.botEnabled !== false" [class.bot-off]="org.botEnabled === false"
+              (click)="toggleBot(org); $event.stopPropagation()">
+              <i class="fab fa-whatsapp"></i> {{ org.botEnabled !== false ? 'ON' : 'OFF' }}
+            </button>
+          </td>
+          <td class="date-cell">{{ getCreatedDate(org) }}</td>
+          <td>
+            <button class="btn-detail" (click)="openDetail(org); $event.stopPropagation()">
+              <i class="fas fa-eye"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" *ngIf="selectedOrg" (click)="closeDetail()">
+    <div class="modal-content modal-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-info">
+          <img *ngIf="logoPreview" [src]="logoPreview" class="modal-logo" alt="" />
+          <i *ngIf="!logoPreview" class="fas fa-building modal-icon"></i>
+          <div>
+            <h2>{{ selectedOrg.orgName }}</h2>
+            <span class="modal-org-id">ID: {{ selectedOrg.id }}</span>
+          </div>
+        </div>
+        <button class="modal-close" (click)="closeDetail()">&times;</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="modal-tabs">
+        <button [class.tab-active]="detailTab === 'info'" (click)="detailTab = 'info'">
+          <i class="fas fa-info-circle"></i> Info
+        </button>
+        <button [class.tab-active]="detailTab === 'config'" (click)="detailTab = 'config'">
+          <i class="fas fa-cog"></i> Configuración
+        </button>
+        <button [class.tab-active]="detailTab === 'whatsapp'" (click)="detailTab = 'whatsapp'">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </button>
+        <button [class.tab-active]="detailTab === 'admins'" (click)="detailTab = 'admins'">
+          <i class="fas fa-users"></i> Equipo ({{ orgAdmins.length }})
+        </button>
+      </div>
+
+      <div class="notice-bar" *ngIf="notice">
+        <i class="fas fa-check-circle"></i> {{ notice }}
+      </div>
+
+      <div *ngIf="loadingDetail" class="loading-state small">
+        <i class="fas fa-spinner fa-spin"></i> Cargando...
+      </div>
+
+      <div *ngIf="!loadingDetail" class="modal-body">
+        <!-- TAB: Info -->
+        <div *ngIf="detailTab === 'info'">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Estado</label>
+              <span class="status-badge" [class.active]="selectedOrg.active !== false">
+                {{ selectedOrg.active !== false ? 'Activa' : 'Inactiva' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <label>Bot WhatsApp</label>
+              <span class="status-badge" [class.active]="selectedOrg.botEnabled !== false">
+                {{ selectedOrg.botEnabled !== false ? 'Habilitado' : 'Deshabilitado' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <label>Industria</label>
+              <span>{{ selectedOrg.industry || 'general' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Creada</label>
+              <span>{{ getCreatedDate(selectedOrg) }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-section-header">
+              <h3>Plan y Tarifa</h3>
+              <button *ngIf="!editingPlan" class="btn-edit-sm" (click)="startEditPlan()"><i class="fas fa-pen"></i> Editar</button>
+            </div>
+            <div *ngIf="!editingPlan" class="detail-grid">
+              <div class="detail-item">
+                <label>Plan</label>
+                <span>{{ selectedOrg.plan || 'Sin plan' }}
+                  <span class="custom-tag" *ngIf="selectedOrg.customLimits">Personalizado</span>
+                </span>
+              </div>
+              <div class="detail-item">
+                <label>Tarifa Mensual</label>
+                <span>{{ selectedOrg.monthlyRate ? '$' + selectedOrg.monthlyRate.toFixed(2) : '—' }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedOrg.customLimits">
+                <label>Flujos</label>
+                <span>{{ selectedOrg.customLimits.flows }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedOrg.customLimits">
+                <label>Colecciones</label>
+                <span>{{ selectedOrg.customLimits.collections }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedOrg.customLimits">
+                <label>Usuarios</label>
+                <span>{{ selectedOrg.customLimits.admins }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedOrg.customLimits">
+                <label>Chat en vivo</label>
+                <span class="status-badge" [class.active]="selectedOrg.customLimits.chatLive !== false">
+                  {{ selectedOrg.customLimits.chatLive !== false ? 'Habilitado' : 'Solo lectura' }}
+                </span>
+              </div>
+            </div>
+            <div *ngIf="editingPlan" class="edit-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Plan</label>
+                  <select [(ngModel)]="editPlan" (ngModelChange)="onPlanSelectChange()">
+                    <option value="">— Seleccionar plan —</option>
+                    <option *ngFor="let p of platformPlans" [value]="p.name">{{ p.name }} (${{ p.price }})</option>
+                    <option value="Personalizado">Personalizado</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Tarifa Mensual ($)</label>
+                  <input type="number" [(ngModel)]="editMonthlyRate" step="0.01" min="0" />
+                </div>
+              </div>
+
+              <div class="custom-limits-toggle">
+                <label class="toggle-label">
+                  <input type="checkbox" [(ngModel)]="useCustomLimits" />
+                  Límites personalizados (sobreescribe los del plan estándar)
+                </label>
+              </div>
+
+              <div *ngIf="useCustomLimits" class="form-row limits-row">
+                <div class="form-group">
+                  <label>Flujos</label>
+                  <input type="number" [(ngModel)]="editLimits.flows" min="1" />
+                </div>
+                <div class="form-group">
+                  <label>Colecciones</label>
+                  <input type="number" [(ngModel)]="editLimits.collections" min="1" />
+                </div>
+                <div class="form-group">
+                  <label>Usuarios Admin</label>
+                  <input type="number" [(ngModel)]="editLimits.admins" min="1" />
+                </div>
+              </div>
+              <div *ngIf="useCustomLimits" class="custom-limits-toggle">
+                <label class="toggle-label">
+                  <input type="checkbox" [(ngModel)]="editLimits.chatLive" />
+                  Chat en vivo (tomar control de conversaciones y enviar mensajes)
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn-save" (click)="savePlan()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+                <button class="btn-cancel" (click)="cancelEditPlan()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Config -->
+        <div *ngIf="detailTab === 'config'">
+          <div class="detail-section-header">
+            <h3>Configuración General</h3>
+            <button *ngIf="!editingGeneral" class="btn-edit-sm" (click)="startEditGeneral()"><i class="fas fa-pen"></i> Editar</button>
+          </div>
+
+          <div *ngIf="!editingGeneral">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Nombre</label>
+                <span>{{ orgDetail?.orgName || '—' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Industria</label>
+                <span>{{ orgDetail?.industry || 'general' }}</span>
+              </div>
+              <div class="detail-item full">
+                <label>Descripción</label>
+                <span>{{ orgDetail?.description || '—' }}</span>
+              </div>
+              <div class="detail-item full">
+                <label>URL del Bot (API)</label>
+                <span class="mono">{{ orgDetail?.botApiUrl || 'No configurada' }}</span>
+              </div>
+            </div>
+            <div class="logo-preview-row" *ngIf="logoPreview">
+              <label>Logo</label>
+              <img [src]="logoPreview" alt="Logo" class="config-logo-preview" />
+            </div>
+          </div>
+
+          <div *ngIf="editingGeneral" class="edit-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre de la Organización</label>
+                <input type="text" [(ngModel)]="editGeneral.orgName" />
+              </div>
+              <div class="form-group">
+                <label>Industria</label>
+                <input type="text" [(ngModel)]="editGeneral.industry" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Descripción</label>
+              <textarea [(ngModel)]="editGeneral.description" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label>URL del Bot (API)</label>
+              <input type="text" [(ngModel)]="editGeneral.botApiUrl" placeholder="https://tu-bot.com" />
+            </div>
+            <div class="form-group">
+              <label>Logo (max 2 MB)</label>
+              <input type="file" accept="image/*" (change)="onLogoSelected($event)" />
+              <img *ngIf="logoPreview" [src]="logoPreview" class="config-logo-preview mt-8" alt="" />
+            </div>
+            <div class="form-actions">
+              <button class="btn-save" (click)="saveGeneral()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+              <button class="btn-cancel" (click)="cancelEditGeneral()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: WhatsApp -->
+        <div *ngIf="detailTab === 'whatsapp'">
+          <div class="detail-section-header">
+            <h3>Credenciales WhatsApp Cloud API</h3>
+            <button *ngIf="!editingWA" class="btn-edit-sm" (click)="startEditWA()"><i class="fas fa-pen"></i> Editar</button>
+          </div>
+
+          <div *ngIf="!editingWA">
+            <div class="detail-grid">
+              <div class="detail-item full">
+                <label>Access Token</label>
+                <span class="mono">{{ maskToken(orgWhatsApp?.token) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Phone Number ID</label>
+                <span class="mono">{{ orgWhatsApp?.phoneNumberId || '—' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Verify Token</label>
+                <span class="mono">{{ orgWhatsApp?.verifyToken || '—' }}</span>
+              </div>
+            </div>
+            <div class="wa-status">
+              <span class="wa-dot" [class.configured]="orgWhatsApp?.token" [class.not-configured]="!orgWhatsApp?.token"></span>
+              {{ orgWhatsApp?.token ? 'Configurado' : 'Sin configurar' }}
+            </div>
+          </div>
+
+          <div *ngIf="editingWA" class="edit-form">
+            <div class="form-group">
+              <label>Access Token (WhatsApp Cloud API)</label>
+              <textarea [(ngModel)]="editWA.token" rows="3" placeholder="EAAxxxxxxx..."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Phone Number ID</label>
+                <input type="text" [(ngModel)]="editWA.phoneNumberId" placeholder="1234567890" />
+              </div>
+              <div class="form-group">
+                <label>Verify Token</label>
+                <input type="text" [(ngModel)]="editWA.verifyToken" placeholder="mi_token_verificacion" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn-save" (click)="saveWA()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+              <button class="btn-cancel" (click)="cancelEditWA()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Admins -->
+        <div *ngIf="detailTab === 'admins'">
+          <h3>Equipo de la Organización</h3>
+          <div class="admins-list" *ngIf="orgAdmins.length > 0">
+            <div class="admin-row" *ngFor="let adm of orgAdmins">
+              <i class="fas fa-user-circle"></i>
+              <div class="admin-info">
+                <span class="admin-name">{{ adm.name || adm.email }}</span>
+                <span class="admin-email">{{ adm.email }}</span>
+              </div>
+              <span class="role-badge" [class]="'role-' + (adm.role || 'viewer')">{{ adm.role || 'viewer' }}</span>
+            </div>
+          </div>
+          <div *ngIf="orgAdmins.length === 0" class="empty-mini">Sin usuarios registrados</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

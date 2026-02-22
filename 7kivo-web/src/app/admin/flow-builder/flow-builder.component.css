@@ -23,7 +23,9 @@
   transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
 .btn-new-flow:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4); }
+.btn-new-flow:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn-new-flow i { color: white !important; }
+.plan-limit-hint { font-size: 0.78rem; color: #f59e0b; font-weight: 500; background: rgba(245,158,11,0.1); padding: 4px 12px; border-radius: 8px; }
 
 .btn-menu-config {
   display: flex; align-items: center; gap: 8px; padding: 12px 24px;

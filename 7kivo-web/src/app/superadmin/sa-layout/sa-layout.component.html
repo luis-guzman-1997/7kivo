@@ -1,0 +1,78 @@
+<div class="sa-wrapper" [class.sidebar-collapsed]="sidebarCollapsed">
+  <aside class="sa-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-mark">7k</div>
+        <div class="brand-info">
+          <span class="brand-name">7kivo</span>
+          <span class="brand-label">Control Center</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas" [class.fa-angle-left]="!sidebarCollapsed" [class.fa-angle-right]="sidebarCollapsed"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Principal</span>
+      <a routerLink="/superadmin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item-sa">
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <span class="nav-section-label">Gestión</span>
+      <a routerLink="/superadmin/organizaciones" routerLinkActive="active" class="nav-item-sa">
+        <i class="fas fa-building"></i>
+        <span>Organizaciones</span>
+      </a>
+      <a routerLink="/superadmin/facturacion" routerLinkActive="active" class="nav-item-sa">
+        <i class="fas fa-receipt"></i>
+        <span>Facturación</span>
+      </a>
+      <a routerLink="/superadmin/planes" routerLinkActive="active" class="nav-item-sa">
+        <i class="fas fa-layer-group"></i>
+        <span>Planes</span>
+      </a>
+
+      <div class="nav-divider"></div>
+
+      <a routerLink="/" class="nav-item-sa nav-item-secondary">
+        <i class="fas fa-external-link-alt"></i>
+        <span>Ir al sitio</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="user-details">
+          <span class="user-name">Super Admin</span>
+          <span class="user-email">{{ userEmail }}</span>
+        </div>
+      </div>
+      <button class="btn-logout" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Salir</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="sa-main">
+    <header class="sa-topbar">
+      <button class="topbar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="topbar-right">
+        <div class="topbar-env">
+          <span class="env-dot"></span>
+          Producción
+        </div>
+      </div>
+    </header>
+    <div class="sa-content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

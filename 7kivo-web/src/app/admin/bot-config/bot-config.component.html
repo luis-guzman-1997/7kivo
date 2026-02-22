@@ -124,6 +124,49 @@
 
   <!-- ==================== INFO TAB ==================== -->
   <div *ngIf="!loading && activeTab === 'info'" class="tab-content">
+    <!-- General Info -->
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon blue"><i class="fas fa-info-circle"></i></div>
+        <div>
+          <h3>Información General</h3>
+          <p>Datos que el bot comparte cuando el usuario pide información general del negocio</p>
+        </div>
+      </div>
+      <div class="config-form">
+        <div class="form-group">
+          <label><i class="fas fa-building"></i> Nombre</label>
+          <input type="text" [(ngModel)]="generalInfo.name" placeholder="Nombre de tu negocio" />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-align-left"></i> Descripción</label>
+          <textarea [(ngModel)]="generalInfo.description" rows="3" placeholder="Descripción de tu negocio, qué hacen, a qué se dedican..."></textarea>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-list-ul"></i> Enfoque / Servicios</label>
+          <textarea [(ngModel)]="generalInfo.focus" rows="3" placeholder="Uno por línea. Ej:&#10;Formación musical&#10;Adoración&#10;Desarrollo artístico"></textarea>
+          <span class="hint">Escribe cada punto en una línea separada</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-chalkboard-teacher"></i> Modalidad</label>
+            <input type="text" [(ngModel)]="generalInfo.modality" placeholder="Presencial, Virtual, Mixta..." />
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-tags"></i> Servicios / Productos</label>
+            <input type="text" [(ngModel)]="generalInfo.services" placeholder="Ej: Guitarra, Piano, Batería..." />
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-comment-dots"></i> Nota adicional</label>
+          <input type="text" [(ngModel)]="generalInfo.note" placeholder="Ej: Abierto a todos sin discriminación" />
+        </div>
+        <button class="btn-save-section" (click)="saveGeneralInfo()" [disabled]="saving">
+          <i class="fas fa-save"></i> Guardar Información General
+        </button>
+      </div>
+    </div>
+
     <!-- Contact Info -->
     <div class="config-card">
       <div class="card-header">

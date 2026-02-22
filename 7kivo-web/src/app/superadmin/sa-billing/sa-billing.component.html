@@ -1,0 +1,153 @@
+<div class="sa-billing">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Facturación</h1>
+      <p class="page-subtitle">Control de pagos de organizaciones</p>
+    </div>
+    <button class="btn-new" (click)="openNewRecord()">
+      <i class="fas fa-plus"></i> Nuevo Cobro
+    </button>
+  </div>
+
+  <div class="summary-cards">
+    <div class="summary-card pending">
+      <i class="fas fa-clock"></i>
+      <div>
+        <span class="summary-amount">${{ totalPending.toFixed(2) }}</span>
+        <span class="summary-label">Pendiente</span>
+      </div>
+    </div>
+    <div class="summary-card paid">
+      <i class="fas fa-check-circle"></i>
+      <div>
+        <span class="summary-amount">${{ totalPaid.toFixed(2) }}</span>
+        <span class="summary-label">Cobrado</span>
+      </div>
+    </div>
+    <div class="summary-card overdue">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <span class="summary-amount">${{ totalOverdue.toFixed(2) }}</span>
+        <span class="summary-label">Vencido</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Buscar por organización o periodo..." [(ngModel)]="searchTerm" (input)="applyFilter()" />
+    </div>
+    <select class="filter-select" [(ngModel)]="filterStatus" (change)="applyFilter()">
+      <option value="all">Todos</option>
+      <option value="pending">Pendientes</option>
+      <option value="paid">Pagados</option>
+      <option value="overdue">Vencidos</option>
+    </select>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Cargando facturación...
+  </div>
+
+  <div *ngIf="!loading && filteredRecords.length === 0" class="empty-state">
+    <i class="fas fa-file-invoice-dollar"></i>
+    <p>No hay registros de facturación</p>
+    <button class="btn-new-inline" (click)="openNewRecord()">Crear primer cobro</button>
+  </div>
+
+  <div class="billing-table" *ngIf="!loading && filteredRecords.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Organización</th>
+          <th>Periodo</th>
+          <th>Monto</th>
+          <th>Vencimiento</th>
+          <th>Estado</th>
+          <th>Pagado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let record of filteredRecords" [class]="'row-' + record.status">
+          <td class="org-cell">{{ record.orgName || record.orgId }}</td>
+          <td>{{ record.period }}</td>
+          <td class="amount-cell">${{ (record.amount || 0).toFixed(2) }}</td>
+          <td>{{ formatDate(record.dueDate) }}</td>
+          <td>
+            <span class="status-tag" [class]="record.status">{{ getStatusLabel(record.status) }}</span>
+          </td>
+          <td>{{ record.paidAt ? formatDate(record.paidAt) : '—' }}</td>
+          <td class="actions-cell">
+            <button *ngIf="record.status !== 'paid'" class="btn-action pay" (click)="markAsPaid(record)" title="Marcar pagado">
+              <i class="fas fa-check"></i>
+            </button>
+            <button *ngIf="record.status === 'pending'" class="btn-action overdue" (click)="markAsOverdue(record)" title="Marcar vencido">
+              <i class="fas fa-exclamation"></i>
+            </button>
+            <button class="btn-action edit" (click)="editRecord(record)" title="Editar">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="btn-action delete" (click)="deleteRecord(record)" title="Eliminar">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Form Modal -->
+  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingRecord ? 'Editar Cobro' : 'Nuevo Cobro' }}</h2>
+        <button class="modal-close" (click)="closeForm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Organización</label>
+          <select [(ngModel)]="form.orgId" (change)="onOrgSelected()" [disabled]="!!editingRecord">
+            <option value="">Seleccionar...</option>
+            <option *ngFor="let org of organizations" [value]="org.id">{{ org.name || org.id }}</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Periodo</label>
+            <input type="month" [(ngModel)]="form.period" />
+          </div>
+          <div class="form-group">
+            <label>Monto ($)</label>
+            <input type="number" [(ngModel)]="form.amount" step="0.01" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha de Vencimiento</label>
+            <input type="date" [(ngModel)]="form.dueDate" />
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select [(ngModel)]="form.status">
+              <option value="pending">Pendiente</option>
+              <option value="paid">Pagado</option>
+              <option value="overdue">Vencido</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea [(ngModel)]="form.notes" rows="3" placeholder="Notas adicionales..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" (click)="saveRecord()" [disabled]="saving">
+            {{ saving ? 'Guardando...' : (editingRecord ? 'Actualizar' : 'Crear Cobro') }}
+          </button>
+          <button class="btn-cancel" (click)="closeForm()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

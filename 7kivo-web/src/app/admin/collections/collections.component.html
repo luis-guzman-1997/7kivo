@@ -10,9 +10,10 @@
         <h1 class="page-title"><i class="fas fa-database"></i> Colecciones</h1>
         <p class="page-subtitle">Crea y administra las bases de datos que alimentan tus flujos del bot</p>
       </div>
-      <button class="btn-new" *ngIf="canEditSchema" (click)="openNewCollection()">
+      <button class="btn-new" *ngIf="canEditSchema" (click)="openNewCollection()" [disabled]="!canCreateCollection">
         <i class="fas fa-plus"></i> Nueva Colección
       </button>
+      <span class="plan-limit-hint" *ngIf="canEditSchema && !canCreateCollection">Límite del plan: {{ collectionLimit }}</span>
     </div>
 
     <div *ngIf="loading" class="loading-state">

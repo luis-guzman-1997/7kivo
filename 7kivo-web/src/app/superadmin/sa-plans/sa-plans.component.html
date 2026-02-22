@@ -1,0 +1,85 @@
+<div class="sa-plans">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Planes</h1>
+      <p class="page-subtitle">Define los planes de servicio para tus clientes</p>
+    </div>
+    <button class="btn-new" (click)="openNewPlan()">
+      <i class="fas fa-plus"></i> Nuevo Plan
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Cargando planes...
+  </div>
+
+  <div *ngIf="!loading && plans.length === 0" class="empty-state">
+    <i class="fas fa-tags"></i>
+    <p>No hay planes configurados</p>
+    <button class="btn-new-inline" (click)="openNewPlan()">Crear primer plan</button>
+  </div>
+
+  <div class="plans-grid" *ngIf="!loading && plans.length > 0">
+    <div class="plan-card" *ngFor="let plan of plans; let i = index" [class.inactive]="!plan.active">
+      <div class="plan-header">
+        <h3>{{ plan.name }}</h3>
+        <span class="plan-status" [class.active]="plan.active" [class.disabled]="!plan.active">
+          {{ plan.active ? 'Activo' : 'Inactivo' }}
+        </span>
+      </div>
+      <div class="plan-price">
+        <span class="price-amount">${{ (plan.price || 0).toFixed(2) }}</span>
+        <span class="price-period">/ mes</span>
+      </div>
+      <ul class="plan-features" *ngIf="plan.features?.length > 0">
+        <li *ngFor="let feat of plan.features">
+          <i class="fas fa-check"></i> {{ feat }}
+        </li>
+      </ul>
+      <div class="plan-actions">
+        <button class="btn-plan-action edit" (click)="editPlan(i)"><i class="fas fa-pen"></i> Editar</button>
+        <button class="btn-plan-action toggle" (click)="togglePlanActive(i)">
+          <i class="fas" [class.fa-eye]="plan.active" [class.fa-eye-slash]="!plan.active"></i>
+          {{ plan.active ? 'Desactivar' : 'Activar' }}
+        </button>
+        <button class="btn-plan-action delete" (click)="deletePlan(i)"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Modal -->
+  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingIndex !== null ? 'Editar Plan' : 'Nuevo Plan' }}</h2>
+        <button class="modal-close" (click)="closeForm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre del Plan</label>
+          <input type="text" [(ngModel)]="form.name" placeholder="Ej: Básico, Profesional, Enterprise" />
+        </div>
+        <div class="form-group">
+          <label>Precio Mensual ($)</label>
+          <input type="number" [(ngModel)]="form.price" step="0.01" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Características (una por línea)</label>
+          <textarea [(ngModel)]="form.features" rows="5" placeholder="Bot WhatsApp ilimitado&#10;Hasta 5 flujos&#10;Soporte por email"></textarea>
+        </div>
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="form.active" />
+            Plan activo (visible para asignar)
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" (click)="savePlan()" [disabled]="saving">
+            {{ saving ? 'Guardando...' : (editingIndex !== null ? 'Actualizar' : 'Crear Plan') }}
+          </button>
+          <button class="btn-cancel" (click)="closeForm()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

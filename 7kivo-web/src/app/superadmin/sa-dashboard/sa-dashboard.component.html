@@ -1,0 +1,204 @@
+<div class="sa-dashboard">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Panel de Control</h1>
+      <p class="page-subtitle">Vista general de la plataforma 7kivo</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-action-header" (click)="goToOrgs()"><i class="fas fa-building"></i> Organizaciones</button>
+      <button class="btn-action-header primary" (click)="goToBilling()"><i class="fas fa-file-invoice-dollar"></i> Facturación</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <span>Cargando datos de plataforma...</span>
+  </div>
+
+  <div *ngIf="!loading">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card" (click)="goToOrgs()">
+        <div class="kpi-top">
+          <div class="kpi-icon purple"><i class="fas fa-building"></i></div>
+          <span class="kpi-trend" *ngIf="inactiveOrgs > 0">{{ inactiveOrgs }} inactiva{{ inactiveOrgs > 1 ? 's' : '' }}</span>
+        </div>
+        <span class="kpi-value">{{ totalOrgs }}</span>
+        <span class="kpi-label">Organizaciones Registradas</span>
+        <div class="kpi-bar">
+          <div class="kpi-bar-fill green" [style.width.%]="totalOrgs > 0 ? (activeOrgs / totalOrgs) * 100 : 0"></div>
+        </div>
+        <span class="kpi-bar-label">{{ activeOrgs }} activas</span>
+      </div>
+
+      <div class="kpi-card" (click)="goToOrgs()">
+        <div class="kpi-top">
+          <div class="kpi-icon green"><i class="fab fa-whatsapp"></i></div>
+        </div>
+        <span class="kpi-value">{{ botEnabledOrgs }}</span>
+        <span class="kpi-label">Bots Activos</span>
+        <div class="kpi-bar">
+          <div class="kpi-bar-fill blue" [style.width.%]="activeOrgs > 0 ? (botEnabledOrgs / activeOrgs) * 100 : 0"></div>
+        </div>
+        <span class="kpi-bar-label">{{ botDisabledOrgs }} sin bot</span>
+      </div>
+
+      <div class="kpi-card" (click)="goToBilling()">
+        <div class="kpi-top">
+          <div class="kpi-icon emerald"><i class="fas fa-dollar-sign"></i></div>
+        </div>
+        <span class="kpi-value">${{ totalRevenue.toFixed(2) }}</span>
+        <span class="kpi-label">Ingresos Totales</span>
+        <div class="kpi-sub">
+          <span class="kpi-sub-item"><i class="fas fa-calendar-day"></i> ${{ monthlyRevenue.toFixed(2) }} este mes</span>
+        </div>
+      </div>
+
+      <div class="kpi-card alert" *ngIf="pendingPayments + overduePayments > 0" (click)="goToBilling()">
+        <div class="kpi-top">
+          <div class="kpi-icon" [class.orange]="overduePayments === 0" [class.red]="overduePayments > 0">
+            <i class="fas" [class.fa-clock]="overduePayments === 0" [class.fa-exclamation-triangle]="overduePayments > 0"></i>
+          </div>
+        </div>
+        <span class="kpi-value">${{ (totalPending + totalOverdue).toFixed(2) }}</span>
+        <span class="kpi-label">Por Cobrar</span>
+        <div class="kpi-sub">
+          <span class="kpi-sub-item warn" *ngIf="pendingPayments > 0">{{ pendingPayments }} pendiente{{ pendingPayments > 1 ? 's' : '' }}</span>
+          <span class="kpi-sub-item danger" *ngIf="overduePayments > 0">{{ overduePayments }} vencido{{ overduePayments > 1 ? 's' : '' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" *ngIf="pendingPayments + overduePayments === 0" (click)="goToBilling()">
+        <div class="kpi-top">
+          <div class="kpi-icon blue"><i class="fas fa-chart-line"></i></div>
+        </div>
+        <span class="kpi-value">${{ getExpectedMonthlyIncome().toFixed(2) }}</span>
+        <span class="kpi-label">Ingreso Mensual Esperado</span>
+        <div class="kpi-sub">
+          <span class="kpi-sub-item">Basado en tarifas activas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two column layout -->
+    <div class="dashboard-grid">
+      <!-- Left: Orgs + Plan Distribution -->
+      <div class="grid-col">
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title">Organizaciones Recientes</h2>
+            <button class="btn-link" (click)="goToOrgs()">Ver todas <i class="fas fa-arrow-right"></i></button>
+          </div>
+          <div class="org-list" *ngIf="recentOrgs.length > 0">
+            <div class="org-item" *ngFor="let org of recentOrgs">
+              <div class="org-avatar">
+                <img *ngIf="org.orgLogo" [src]="org.orgLogo" alt="" />
+                <i *ngIf="!org.orgLogo" class="fas fa-building"></i>
+              </div>
+              <div class="org-info">
+                <span class="org-name">{{ org.name || org.id }}</span>
+                <span class="org-meta">
+                  <span class="org-industry">{{ org.industry || 'general' }}</span>
+                  <span class="org-plan-tag" *ngIf="org.plan">{{ org.plan }}</span>
+                </span>
+              </div>
+              <div class="org-status-col">
+                <span class="status-dot" [class.active]="org.active !== false" [class.inactive]="org.active === false"></span>
+                <span class="bot-indicator" [class.on]="org.botEnabled !== false" [class.off]="org.botEnabled === false">
+                  <i class="fab fa-whatsapp"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="recentOrgs.length === 0" class="empty-mini">Sin organizaciones registradas</div>
+        </div>
+
+        <div class="section-card" *ngIf="planDistribution.length > 0">
+          <div class="section-header">
+            <h2 class="section-title">Distribución por Plan</h2>
+            <button class="btn-link" (click)="goToPlans()">Editar planes <i class="fas fa-arrow-right"></i></button>
+          </div>
+          <div class="plan-bars">
+            <div class="plan-bar-row" *ngFor="let plan of planDistribution">
+              <div class="plan-bar-label">
+                <span class="plan-name">{{ plan.name }}</span>
+                <span class="plan-count">{{ plan.count }}</span>
+              </div>
+              <div class="plan-bar-track">
+                <div class="plan-bar-fill" [style.width.%]="getPlanBarWidth(plan.count)" [style.background]="plan.color"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Billing + Quick Actions -->
+      <div class="grid-col">
+        <div class="section-card" *ngIf="pendingBilling.length > 0">
+          <div class="section-header">
+            <h2 class="section-title">Cobros Pendientes</h2>
+            <button class="btn-link" (click)="goToBilling()">Ver todos <i class="fas fa-arrow-right"></i></button>
+          </div>
+          <div class="billing-list">
+            <div class="billing-item" *ngFor="let b of pendingBilling" [class.overdue]="b.status === 'overdue'">
+              <div class="billing-left">
+                <span class="billing-org">{{ b.orgName || b.orgId }}</span>
+                <span class="billing-period">{{ b.period }}</span>
+              </div>
+              <div class="billing-right">
+                <span class="billing-amount">${{ (b.amount || 0).toFixed(2) }}</span>
+                <span class="billing-status" [class]="b.status">
+                  {{ b.status === 'overdue' ? 'Vencido' : 'Pendiente' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card quick-actions">
+          <h2 class="section-title">Acciones Rápidas</h2>
+          <div class="actions-grid">
+            <button class="action-btn" (click)="goToOrgs()">
+              <i class="fas fa-building"></i>
+              <span>Gestionar Organizaciones</span>
+            </button>
+            <button class="action-btn" (click)="goToBilling()">
+              <i class="fas fa-file-invoice-dollar"></i>
+              <span>Registrar Cobro</span>
+            </button>
+            <button class="action-btn" (click)="goToPlans()">
+              <i class="fas fa-tags"></i>
+              <span>Configurar Planes</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="section-card income-card">
+          <h2 class="section-title">Resumen de Ingresos</h2>
+          <div class="income-rows">
+            <div class="income-row">
+              <span class="income-label">Ingreso mensual esperado</span>
+              <span class="income-value">${{ getExpectedMonthlyIncome().toFixed(2) }}</span>
+            </div>
+            <div class="income-row">
+              <span class="income-label">Cobrado este mes</span>
+              <span class="income-value green">${{ monthlyRevenue.toFixed(2) }}</span>
+            </div>
+            <div class="income-row">
+              <span class="income-label">Total histórico cobrado</span>
+              <span class="income-value">${{ totalRevenue.toFixed(2) }}</span>
+            </div>
+            <div class="income-row" *ngIf="totalPending > 0">
+              <span class="income-label">Pendiente de cobro</span>
+              <span class="income-value orange">${{ totalPending.toFixed(2) }}</span>
+            </div>
+            <div class="income-row" *ngIf="totalOverdue > 0">
+              <span class="income-label">Cobro vencido</span>
+              <span class="income-value red">${{ totalOverdue.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

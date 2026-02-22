@@ -13,9 +13,12 @@ const {
   getCollectionItem,
   getCollectionDef,
   saveFlowSubmission,
-  getAppointmentsByDate
+  getAppointmentsByDate,
+  getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
+
+const disabledNotified = {};
 
 const sendTextMessage = async (text, phoneNumber) => {
   const result = await _rawSendText(text, phoneNumber);
@@ -64,6 +67,17 @@ const requestMessageFromWhatsapp = async (req, res) => {
     }
 
     if (!phoneNumber || !messageObj) {
+      return res.sendStatus(200);
+    }
+
+    const orgStatus = await getOrgStatus();
+    if (orgStatus.active === false || orgStatus.botEnabled === false) {
+      try {
+        await _rawSendText(
+          "Hola, gracias por escribirnos. En este momento no podemos atenderte a través de este canal. Por favor intenta más tarde o contáctanos por otro medio. Disculpa las molestias.",
+          phoneNumber
+        );
+      } catch (e) { /* best effort */ }
       return res.sendStatus(200);
     }
 

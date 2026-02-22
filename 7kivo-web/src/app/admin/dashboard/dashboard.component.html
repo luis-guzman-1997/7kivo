@@ -1,6 +1,14 @@
 <div class="dashboard">
-  <h1 class="page-title">Dashboard</h1>
-  <p class="page-subtitle">Resumen general del sistema</p>
+  <div class="page-header-row">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Resumen general del sistema</p>
+    </div>
+    <div class="plan-badge">
+      <i class="fas fa-layer-group"></i>
+      <span>{{ planName }}</span>
+    </div>
+  </div>
 
   <div *ngIf="loading" class="loading-state">
     <i class="fas fa-spinner fa-spin"></i> Cargando datos...
@@ -37,6 +45,38 @@
           <span class="stat-number">{{ totalAdmins }}</span>
           <span class="stat-label">Administradores</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Plan Usage -->
+    <div class="plan-usage-bar">
+      <div class="usage-item">
+        <span class="usage-label">Flujos</span>
+        <div class="usage-bar-track">
+          <div class="usage-bar-fill" [style.width.%]="(totalFlows / planLimits.flows) * 100"></div>
+        </div>
+        <span class="usage-count">{{ totalFlows }} / {{ planLimits.flows }}</span>
+      </div>
+      <div class="usage-item">
+        <span class="usage-label">Colecciones</span>
+        <div class="usage-bar-track">
+          <div class="usage-bar-fill" [style.width.%]="(totalCollections / planLimits.collections) * 100"></div>
+        </div>
+        <span class="usage-count">{{ totalCollections }} / {{ planLimits.collections > 100 ? 'Sin límite' : planLimits.collections }}</span>
+      </div>
+      <div class="usage-item">
+        <span class="usage-label">Usuarios</span>
+        <div class="usage-bar-track">
+          <div class="usage-bar-fill" [style.width.%]="(totalAdmins / planLimits.admins) * 100"></div>
+        </div>
+        <span class="usage-count">{{ totalAdmins }} / {{ planLimits.admins > 100 ? 'Sin límite' : planLimits.admins }}</span>
+      </div>
+      <div class="usage-item feature-item">
+        <span class="usage-label">Chat en vivo</span>
+        <span class="feature-status" [class.enabled]="planLimits.chatLive" [class.disabled]="!planLimits.chatLive">
+          <i class="fas" [class.fa-check-circle]="planLimits.chatLive" [class.fa-lock]="!planLimits.chatLive"></i>
+          {{ planLimits.chatLive ? 'Habilitado' : 'No incluido' }}
+        </span>
       </div>
     </div>
 

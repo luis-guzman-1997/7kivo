@@ -38,10 +38,11 @@ export class LoginComponent {
     this.error = '';
     try {
       await this.authService.login(this.email, this.password);
-      // Wait briefly for auth state to resolve org
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (this.firebaseService.isOrgSet) {
+      if (this.authService.isSuperAdmin) {
+        this.router.navigate(['/superadmin']);
+      } else if (this.firebaseService.isOrgSet) {
         this.router.navigate(['/admin']);
       } else {
         this.error = 'Tu cuenta no está asociada a ninguna organización.';

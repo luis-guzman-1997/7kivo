@@ -14,9 +14,10 @@
         <button class="btn-menu-config" (click)="toggleMenuConfig()">
           <i class="fas fa-bars"></i> {{ showMenuConfig ? 'Ocultar Menú' : 'Configurar Menú' }}
         </button>
-        <button class="btn-new-flow" (click)="openNewFlow()">
+        <button class="btn-new-flow" (click)="openNewFlow()" [disabled]="!canCreateFlow">
           <i class="fas fa-plus"></i> Nuevo Flujo
         </button>
+        <span class="plan-limit-hint" *ngIf="!canCreateFlow">Límite del plan: {{ planLimit }} flujo{{ planLimit > 1 ? 's' : '' }}</span>
       </div>
     </div>
 

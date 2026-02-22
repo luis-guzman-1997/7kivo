@@ -491,6 +491,79 @@ async function resetDatabase() {
       console.log(`   ${adminsSnap.size} usuario(s) ya existentes (preservados).`);
     }
 
+    // ==================== PLATFORM CONFIG (Super Admin) ====================
+
+    console.log("13. Configuración de plataforma (Super Admin)...");
+
+    const platformPlansRef = db.collection("platformConfig").doc("plans");
+    await platformPlansRef.set({
+      plans: [
+        {
+          name: "Starter",
+          price: 9.99,
+          features: [
+            "Bot WhatsApp con menú interactivo",
+            "1 flujo conversacional",
+            "1 colección de datos",
+            "Bandeja de entrada",
+            "Chat WhatsApp (solo lectura)"
+          ],
+          active: true
+        },
+        {
+          name: "Business",
+          price: 19.99,
+          features: [
+            "Bot WhatsApp con menú interactivo",
+            "Hasta 3 flujos conversacionales",
+            "Hasta 3 colecciones de datos",
+            "Bandeja de entrada con calendario",
+            "Sistema de citas y agenda",
+            "Chat en vivo con clientes",
+            "3 usuarios administradores"
+          ],
+          active: true
+        },
+        {
+          name: "Premium",
+          price: 39.99,
+          features: [
+            "Todo lo de Business",
+            "Hasta 5 flujos conversacionales",
+            "Sistema de citas y agenda",
+            "Hasta 10 colecciones de datos",
+            "Roles y permisos (owner, admin, editor, viewer)",
+            "Logo y marca personalizada",
+            "Horarios de atención configurables",
+            "5 usuarios administradores"
+          ],
+          active: true
+        },
+        {
+          name: "Enterprise",
+          price: 100,
+          features: [
+            "Todo lo de Premium",
+            "Hasta 20 flujos conversacionales",
+            "Colecciones ilimitadas",
+            "Contactos ilimitados",
+            "Usuarios administradores ilimitados",
+            "Configuración avanzada del bot"
+          ],
+          active: true
+        }
+      ],
+      updatedAt: ts()
+    }, { merge: true });
+    console.log("   4 planes configurados (Starter, Business, Premium, Enterprise).");
+
+    await orgRef.update({
+      botEnabled: true,
+      plan: "Business",
+      monthlyRate: 19.99
+    });
+    console.log(`   Org ${ORG_ID}: plan Business, bot habilitado.\n`);
+
     // ==================== SUMMARY ====================
 
     console.log(`\n========================================`);
@@ -505,6 +578,8 @@ async function resetDatabase() {
     console.log(`  Flujos:        Ver Programas, Inscríbete, Agendar Cita`);
     console.log(`  Citas:         Flujo dinámico, duración por tipo (15-45 min)`);
     console.log(`  Menú:          Programas | Inscríbete | Cita | Horarios | Ubicación | Info`);
+    console.log(`  Planes:        Starter ($9.99), Business ($19.99), Premium ($39.99), Enterprise ($100)`);
+    console.log(`  Super Admin:   admin@7kivo.com (crear en Firebase Auth)`);
     console.log(`\n  Siguiente: npm start\n`);
 
   } catch (error) {

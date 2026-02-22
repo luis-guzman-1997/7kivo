@@ -62,6 +62,15 @@ export class CollectionsComponent implements OnInit {
     return role === 'owner' || role === 'admin';
   }
 
+  get canCreateCollection(): boolean {
+    const limit = this.authService.getPlanLimits().collections;
+    return this.collections.length < limit;
+  }
+
+  get collectionLimit(): number {
+    return this.authService.getPlanLimits().collections;
+  }
+
   async ngOnInit(): Promise<void> {
     await this.loadCollections();
   }

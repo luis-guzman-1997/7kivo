@@ -16,9 +16,9 @@ export class AdminUsersComponent implements OnInit {
   formSuccess = '';
 
   availableRoles = [
-    { value: 'admin', label: 'Administrador', desc: 'Acceso completo excepto eliminar al dueño' },
-    { value: 'editor', label: 'Editor', desc: 'Gestiona contactos, chat, bandeja y datos de colecciones (sin esquemas)' },
-    { value: 'viewer', label: 'Solo lectura', desc: 'Ve dashboard, contactos, chat (sin escribir) y bandeja' }
+    { value: 'admin', label: 'Administrador', desc: 'Acceso completo: mensajería, flujos, colecciones, usuarios y datos de empresa' },
+    { value: 'editor', label: 'Editor', desc: 'Dashboard, contactos, chat, bandeja y datos de colecciones' },
+    { value: 'viewer', label: 'Solo lectura', desc: 'Dashboard, contactos, bandeja y chat (solo lectura)' }
   ];
 
   allPermissions = [
@@ -28,9 +28,9 @@ export class AdminUsersComponent implements OnInit {
     { key: 'inbox', label: 'Bandeja de Entrada' },
     { key: 'collections', label: 'Colecciones' },
     { key: 'flows', label: 'Flujos del Bot' },
-    { key: 'bot_config', label: 'Config. del Bot' },
+    { key: 'bot_config', label: 'Mensajería Bot' },
     { key: 'users', label: 'Administradores' },
-    { key: 'settings', label: 'Configuración' }
+    { key: 'settings', label: 'Mi Empresa' }
   ];
 
   newAdmin = {
@@ -44,6 +44,15 @@ export class AdminUsersComponent implements OnInit {
     private firebaseService: FirebaseService,
     public authService: AuthService
   ) {}
+
+  get canAddAdmin(): boolean {
+    const limit = this.authService.getPlanLimits().admins;
+    return this.admins.length < limit;
+  }
+
+  get adminLimit(): number {
+    return this.authService.getPlanLimits().admins;
+  }
 
   async ngOnInit(): Promise<void> {
     await this.loadAdmins();

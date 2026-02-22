@@ -1,0 +1,153 @@
+.sa-billing { max-width: 1200px; }
+
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.page-title { font-size: 1.75rem; font-weight: 700; color: #1e293b; margin: 0; }
+.page-subtitle { color: #64748b; margin: 4px 0 0; }
+
+.btn-new {
+  padding: 10px 20px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: white; font-weight: 600; cursor: pointer; display: flex;
+  align-items: center; gap: 8px; font-size: 0.9rem; transition: opacity 0.2s;
+}
+.btn-new:hover { opacity: 0.9; }
+
+.summary-cards { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+
+.summary-card {
+  flex: 1; min-width: 160px; display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; border-radius: 12px; background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.summary-card i { font-size: 1.5rem; }
+.summary-card.pending i { color: #f59e0b; }
+.summary-card.paid i { color: #10b981; }
+.summary-card.overdue i { color: #ef4444; }
+
+.summary-amount { display: block; font-size: 1.3rem; font-weight: 700; color: #1e293b; }
+.summary-label { font-size: 0.8rem; color: #64748b; }
+
+.toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+
+.search-box {
+  flex: 1; min-width: 200px; display: flex; align-items: center;
+  background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0 14px;
+}
+.search-box i { color: #94a3b8; margin-right: 10px; }
+.search-box input { flex: 1; border: none; outline: none; padding: 10px 0; font-size: 0.9rem; background: transparent; }
+
+.filter-select {
+  padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px;
+  font-size: 0.9rem; color: #475569; background: white; cursor: pointer;
+}
+
+.loading-state { text-align: center; padding: 60px; color: #64748b; }
+.loading-state i { margin-right: 8px; color: #a78bfa; }
+
+.empty-state { text-align: center; padding: 60px; color: #94a3b8; }
+.empty-state i { font-size: 3rem; margin-bottom: 12px; display: block; }
+.btn-new-inline {
+  margin-top: 12px; padding: 8px 20px; border: 2px dashed #cbd5e1;
+  border-radius: 10px; background: none; color: #64748b; cursor: pointer;
+  font-size: 0.9rem;
+}
+.btn-new-inline:hover { border-color: #a78bfa; color: #7c3aed; }
+
+.billing-table {
+  background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8fafc; }
+th {
+  text-align: left; padding: 12px 16px; font-size: 0.8rem;
+  color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+}
+td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color: #334155; }
+
+.org-cell { font-weight: 600; }
+.amount-cell { font-weight: 700; font-family: 'Courier New', monospace; }
+
+.row-overdue { background: rgba(239,68,68,0.03); }
+.row-paid { background: rgba(16,185,129,0.02); }
+
+.status-tag {
+  display: inline-block; font-size: 0.8rem; padding: 4px 12px;
+  border-radius: 20px; font-weight: 600;
+}
+.status-tag.pending { background: rgba(245,158,11,0.1); color: #d97706; }
+.status-tag.paid { background: rgba(16,185,129,0.1); color: #059669; }
+.status-tag.overdue { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+.actions-cell { display: flex; gap: 6px; }
+
+.btn-action {
+  width: 32px; height: 32px; border: none; border-radius: 8px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; transition: all 0.2s;
+}
+.btn-action.pay { background: rgba(16,185,129,0.1); color: #059669; }
+.btn-action.pay:hover { background: rgba(16,185,129,0.2); }
+.btn-action.overdue { background: rgba(245,158,11,0.1); color: #d97706; }
+.btn-action.overdue:hover { background: rgba(245,158,11,0.2); }
+.btn-action.edit { background: rgba(59,130,246,0.1); color: #2563eb; }
+.btn-action.edit:hover { background: rgba(59,130,246,0.2); }
+.btn-action.delete { background: rgba(239,68,68,0.1); color: #dc2626; }
+.btn-action.delete:hover { background: rgba(239,68,68,0.2); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+  z-index: 2000; padding: 20px;
+}
+
+.modal-content {
+  background: white; border-radius: 16px; width: 100%; max-width: 560px;
+  max-height: 85vh; overflow-y: auto;
+}
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; border-bottom: 1px solid #f1f5f9;
+}
+.modal-header h2 { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin: 0; }
+.modal-close { background: none; border: none; font-size: 1.8rem; color: #94a3b8; cursor: pointer; line-height: 1; }
+.modal-close:hover { color: #ef4444; }
+
+.modal-body { padding: 24px; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 0.85rem; color: #475569; margin-bottom: 6px; font-weight: 500; }
+.form-group select,
+.form-group input,
+.form-group textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px;
+  font-size: 0.9rem; box-sizing: border-box; font-family: inherit;
+}
+.form-group select:focus,
+.form-group input:focus,
+.form-group textarea:focus { outline: none; border-color: #a78bfa; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 20px; }
+.btn-save {
+  flex: 1; padding: 12px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: white; font-weight: 600; font-size: 0.95rem; cursor: pointer;
+}
+.btn-save:hover { opacity: 0.9; }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cancel {
+  padding: 12px 24px; border: 1px solid #e2e8f0; border-radius: 10px;
+  background: white; color: #64748b; cursor: pointer; font-size: 0.95rem;
+}
+.btn-cancel:hover { background: #f8fafc; }
+
+@media (max-width: 768px) {
+  .summary-cards { flex-direction: column; }
+  .form-row { grid-template-columns: 1fr; }
+  .actions-cell { flex-wrap: wrap; }
+}

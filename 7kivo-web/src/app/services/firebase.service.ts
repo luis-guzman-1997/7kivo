@@ -434,6 +434,87 @@ export class FirebaseService {
     await updateDoc(docRef, { unreadCount: 0 });
   }
 
+  // ==================== PLATFORM (SUPER ADMIN) ====================
+
+  async getAllOrganizations(): Promise<any[]> {
+    const colRef = collection(this.db, 'organizations');
+    const snapshot = await getDocs(colRef);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async updateOrganization(orgId: string, data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId);
+    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+  }
+
+  async getOrgConfigByOrgId(orgId: string): Promise<any | null> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'general');
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async getOrgAdminsByOrgId(orgId: string): Promise<any[]> {
+    const colRef = collection(this.db, 'organizations', orgId, 'admins');
+    const snapshot = await getDocs(colRef);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async getWhatsAppConfigByOrgId(orgId: string): Promise<any | null> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'whatsapp');
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async saveWhatsAppConfigByOrgId(orgId: string, data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'whatsapp');
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async saveOrgConfigByOrgId(orgId: string, data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'general');
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async uploadFileByPath(file: File, path: string): Promise<string> {
+    const storageRef = ref(this.storage, path);
+    await uploadBytes(storageRef, file);
+    return getDownloadURL(storageRef);
+  }
+
+  async getPlatformBilling(): Promise<any[]> {
+    const colRef = collection(this.db, 'platformBilling');
+    const q = query(colRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async addPlatformBilling(data: DocumentData): Promise<string> {
+    const colRef = collection(this.db, 'platformBilling');
+    const docRef = await addDoc(colRef, { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    return docRef.id;
+  }
+
+  async updatePlatformBilling(billingId: string, data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, 'platformBilling', billingId);
+    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+  }
+
+  async deletePlatformBilling(billingId: string): Promise<void> {
+    const docRef = doc(this.db, 'platformBilling', billingId);
+    await deleteDoc(docRef);
+  }
+
+  async getPlatformPlans(): Promise<any | null> {
+    const docRef = doc(this.db, 'platformConfig', 'plans');
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async savePlatformPlans(plans: any[]): Promise<void> {
+    const docRef = doc(this.db, 'platformConfig', 'plans');
+    await setDoc(docRef, { plans, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
   // ==================== STORAGE ====================
 
   async uploadFile(file: File, path: string): Promise<string> {

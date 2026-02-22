@@ -181,6 +181,20 @@ export class BotConfigComponent implements OnInit {
     }
   }
 
+  async saveGeneralInfo(): Promise<void> {
+    this.saving = true;
+    try {
+      await this.firebaseService.updateInfo('general', this.generalInfo);
+      this.saveNotice = 'Información general actualizada';
+      setTimeout(() => this.saveNotice = '', 3000);
+    } catch (err) {
+      this.saveError = 'Error al guardar información general';
+      setTimeout(() => this.saveError = '', 3000);
+    } finally {
+      this.saving = false;
+    }
+  }
+
   async saveContactInfo(): Promise<void> {
     this.saving = true;
     try {
