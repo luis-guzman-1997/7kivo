@@ -168,6 +168,46 @@
           </div>
         </div>
 
+        <!-- Appointment Slot Config -->
+        <div class="appointment-config">
+          <h4><i class="fas fa-calendar-check"></i> Configuración de Citas</h4>
+          <p class="config-hint">Define la duración de cada cita para que el bot genere los horarios disponibles.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="fas fa-stopwatch"></i> Duración de cita (minutos)</label>
+              <select [(ngModel)]="scheduleInfo.slotDuration">
+                <option [ngValue]="15">15 minutos</option>
+                <option [ngValue]="30">30 minutos</option>
+                <option [ngValue]="45">45 minutos</option>
+                <option [ngValue]="60">60 minutos (1 hora)</option>
+                <option [ngValue]="90">90 minutos (1.5 horas)</option>
+                <option [ngValue]="120">120 minutos (2 horas)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blocked Dates -->
+        <div class="blocked-dates-section">
+          <h4><i class="fas fa-ban"></i> Días sin atención</h4>
+          <p class="config-hint">Fechas específicas en las que no se atenderá (feriados, vacaciones, etc.)</p>
+          <div class="blocked-date-input">
+            <input type="date" [(ngModel)]="newBlockedDate" class="date-input" />
+            <button class="btn-add-date" (click)="addBlockedDate()" [disabled]="!newBlockedDate">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+          <div class="blocked-dates-list" *ngIf="scheduleInfo.blockedDates && scheduleInfo.blockedDates.length > 0">
+            <span *ngFor="let bd of scheduleInfo.blockedDates" class="blocked-date-chip">
+              {{ formatBlockedDate(bd) }}
+              <button (click)="removeBlockedDate(bd)" class="chip-remove"><i class="fas fa-times"></i></button>
+            </span>
+          </div>
+          <p *ngIf="!scheduleInfo.blockedDates || scheduleInfo.blockedDates.length === 0" class="no-blocked">
+            No hay fechas bloqueadas
+          </p>
+        </div>
+
         <div class="schedule-preview">
           <div class="preview-header"><i class="fas fa-eye"></i> Vista previa en el bot</div>
           <div class="preview-body">
@@ -183,6 +223,8 @@
             <em *ngIf="!hasActiveDays()" style="color:#94a3b8;">
               No hay días activos configurados
             </em>
+            <br *ngIf="hasActiveDays()" />
+            <small *ngIf="scheduleInfo.slotDuration">⏱️ Citas de {{ scheduleInfo.slotDuration }} min</small>
           </div>
         </div>
 

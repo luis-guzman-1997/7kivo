@@ -215,6 +215,21 @@ const getCollectionItem = async (collectionName, itemId) => {
   }
 };
 
+// ==================== APPOINTMENTS ====================
+const getAppointmentsByDate = async (fecha, collectionName = "citas") => {
+  try {
+    const col = collectionName || "citas";
+    const snapshot = await getOrgRef().collection(col)
+      .where("_apptFecha", "==", fecha)
+      .where("status", "in", ["confirmed", "pending"])
+      .get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error loading appointments:", error);
+    return [];
+  }
+};
+
 // ==================== SAVE FLOW SUBMISSION ====================
 const saveFlowSubmission = async (collectionName, data) => {
   try {
@@ -251,5 +266,6 @@ module.exports = {
   getCollectionItem,
   getCollectionDef,
   saveFlowSubmission,
+  getAppointmentsByDate,
   clearCache
 };

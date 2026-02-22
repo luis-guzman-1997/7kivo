@@ -80,7 +80,7 @@
               <span class="message-date">{{ formatDate(item.createdAt) }}</span>
             </div>
             <div class="message-preview">
-              <span *ngFor="let f of getItemFields(item).slice(0, 2)" class="preview-field">
+              <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
                 <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 80 ? f.value.substring(0, 80) + '...' : f.value }}
               </span>
             </div>
@@ -125,7 +125,7 @@
         <button class="modal-close" (click)="closeDetail()"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
-        <div class="detail-row" *ngFor="let field of getItemFields(selectedItem)">
+        <div class="detail-row" *ngFor="let field of getItemFields(selectedItem, selectedTab)">
           <label>{{ field.label }}</label>
           <span [class.detail-long]="field.value.length > 60">{{ field.value }}</span>
         </div>

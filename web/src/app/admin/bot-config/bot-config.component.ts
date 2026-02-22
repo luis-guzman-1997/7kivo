@@ -142,20 +142,20 @@ export class BotConfigComponent implements OnInit {
     }
   }
 
+  newBlockedDate = '';
+
   initSchedule(raw: any): void {
-    if (raw && raw.days && Array.isArray(raw.days)) {
-      const mapped = this.WEEK_DAYS.map(name => {
-        const existing = raw.days.find((d: any) => d.name === name);
-        return existing
-          ? { name, active: !!existing.active, shifts: existing.shifts && existing.shifts.length ? [...existing.shifts] : [{ from: '08:00', to: '17:00' }] }
-          : { name, active: false, shifts: [{ from: '08:00', to: '17:00' }] };
-      });
-      this.scheduleInfo = { days: mapped };
-    } else {
-      this.scheduleInfo = {
-        days: this.WEEK_DAYS.map(name => ({ name, active: false, shifts: [{ from: '08:00', to: '17:00' }] }))
-      };
-    }
+    const days = this.WEEK_DAYS.map(name => {
+      const existing = raw?.days?.find((d: any) => d.name === name);
+      return existing
+        ? { name, active: !!existing.active, shifts: existing.shifts?.length ? [...existing.shifts] : [{ from: '08:00', to: '17:00' }] }
+        : { name, active: false, shifts: [{ from: '08:00', to: '17:00' }] };
+    });
+    this.scheduleInfo = {
+      days,
+      slotDuration: raw?.slotDuration || 30,
+      blockedDates: raw?.blockedDates || []
+    };
   }
 
   hasActiveDays(): boolean {
@@ -171,6 +171,25 @@ export class BotConfigComponent implements OnInit {
     if (shifts.length > 1) {
       shifts.splice(shiftIndex, 1);
     }
+  }
+
+  addBlockedDate(): void {
+    if (!this.newBlockedDate) return;
+    if (!this.scheduleInfo.blockedDates.includes(this.newBlockedDate)) {
+      this.scheduleInfo.blockedDates.push(this.newBlockedDate);
+      this.scheduleInfo.blockedDates.sort();
+    }
+    this.newBlockedDate = '';
+  }
+
+  removeBlockedDate(date: string): void {
+    this.scheduleInfo.blockedDates = this.scheduleInfo.blockedDates.filter((d: string) => d !== date);
+  }
+
+  formatBlockedDate(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-');
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
   }
 
   async saveScheduleInfo(): Promise<void> {

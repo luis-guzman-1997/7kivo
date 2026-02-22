@@ -112,7 +112,7 @@ async function resetDatabase() {
     const collectionsToClean = [
       "_collections", "contacts", "clients", "applicants", "students", "teacherRequests",
       "flows", "botMessages", "programs", "instruments", "courseTypes", "admins",
-      "inquiries", "programas", "instrumentos", "aspirantes", "consultas"
+      "inquiries", "programas", "instrumentos", "aspirantes", "consultas", "citas"
     ];
     for (const col of collectionsToClean) {
       const count = await deleteCollection(orgRef.collection(col));
@@ -201,7 +201,22 @@ async function resetDatabase() {
       createdAt: ts(), updatedAt: ts()
     });
 
-    console.log("   3 colecciones: programas, instrumentos, aspirantes\n");
+    await orgRef.collection("_collections").add({
+      name: "Citas", slug: "citas", description: "Citas agendadas desde el bot",
+      displayField: "nombre",
+      fields: [
+        { key: "nombre", label: "Nombre", type: "text", required: true },
+        { key: "edad", label: "Edad", type: "text", required: false },
+        { key: "motivo", label: "Motivo", type: "text", required: false },
+        { key: "phoneNumber", label: "Teléfono", type: "text", required: true },
+        { key: "fecha", label: "Fecha", type: "text", required: true },
+        { key: "hora", label: "Hora", type: "text", required: true },
+        { key: "_apptDuration", label: "Duración (min)", type: "number", required: false }
+      ],
+      createdAt: ts(), updatedAt: ts()
+    });
+
+    console.log("   4 colecciones: programas, instrumentos, aspirantes, citas\n");
 
     // 7. Populate programas (based on https://sv.institutocanzion.com/sonsonate)
     console.log("7. Populando programas...");
@@ -243,14 +258,15 @@ async function resetDatabase() {
     // 9. Flows
     console.log("9. Creando flujos...");
 
+    // --- Flow 1: Ver Programas ---
     await orgRef.collection("flows").add({
-      name: "Ver Programas", description: "Navegar y ver detalles de cursos disponibles",
+      name: "Ver Programas", description: "Explora los cursos musicales disponibles",
       type: "catalog", active: true, order: 1, saveToCollection: "",
-      menuLabel: "Programas", menuDescription: "Ver cursos disponibles", showInMenu: true,
+      menuLabel: "Nuestros Cursos", menuDescription: "Conoce nuestra oferta académica", showInMenu: true,
       steps: [
         {
           id: "s1", type: "browse_collection",
-          prompt: "*Cursos Disponibles*\n\nSelecciona un curso para ver detalles:",
+          prompt: "🎓 *Oferta Académica*\n\nEstos son los cursos que tenemos para ti.\nSelecciona uno para conocer todos los detalles:",
           sourceCollection: "programas", displayField: "nombre",
           detailFields: ["nombre", "edad", "duracion", "descripcion"],
           fieldKey: "", fieldLabel: "", required: false, validation: {},
@@ -262,22 +278,23 @@ async function resetDatabase() {
       createdAt: ts(), updatedAt: ts()
     });
 
+    // --- Flow 2: Inscríbete ---
     await orgRef.collection("flows").add({
-      name: "Inscríbete", description: "Formulario de inscripción para nuevos aspirantes",
+      name: "Inscríbete", description: "Pre-inscripción para nuevos aspirantes",
       type: "registration", active: true, order: 2, saveToCollection: "aspirantes",
-      menuLabel: "Inscríbete", menuDescription: "Registra tus datos", showInMenu: true,
+      menuLabel: "Inscríbete", menuDescription: "Inicia tu proceso de inscripción", showInMenu: true,
       steps: [
         {
           id: "s1", type: "text_input",
-          prompt: "¡Genial que quieras inscribirte! 🎵\n\nPor favor, escribe tu *nombre completo*:",
+          prompt: "🎵 *¡Excelente decisión!*\n\nComencemos con tu pre-inscripción.\n\nEscribe tu *nombre completo*:",
           fieldKey: "nombre", fieldLabel: "Nombre", required: true,
-          validation: { minLength: 3 }, errorMessage: "El nombre debe tener al menos 3 caracteres.",
+          validation: { minLength: 3 }, errorMessage: "Necesitamos al menos 3 caracteres. Escríbelo de nuevo por favor.",
           optionsSource: "custom", customOptions: [], buttonText: "",
           sourceCollection: "", displayField: "", detailFields: []
         },
         {
           id: "s2", type: "text_input",
-          prompt: "¿Cuál es tu *edad*?",
+          prompt: "Perfecto ✨\n\n¿Cuántos *años* tienes?",
           fieldKey: "edad", fieldLabel: "Edad", required: true,
           validation: {}, errorMessage: "",
           optionsSource: "custom", customOptions: [], buttonText: "",
@@ -285,16 +302,16 @@ async function resetDatabase() {
         },
         {
           id: "s3", type: "select_list",
-          prompt: "¿En qué *curso* estás interesado?",
+          prompt: "🎯 ¿Qué *programa* te interesa?\n\nElige el curso que más se adapte a ti:",
           fieldKey: "curso", fieldLabel: "Curso", required: true,
           validation: {}, errorMessage: "", optionsSource: "programas",
           optionsTitleField: "nombre", optionsDescField: "edad",
-          customOptions: [], buttonText: "Ver cursos",
+          customOptions: [], buttonText: "Ver programas",
           sourceCollection: "", displayField: "", detailFields: []
         },
         {
           id: "s4", type: "select_list",
-          prompt: "¿Qué *instrumento* te gustaría aprender?",
+          prompt: "🎸 ¿Qué *instrumento* te gustaría aprender?\n\nElige tu favorito:",
           fieldKey: "instrumento", fieldLabel: "Instrumento", required: true,
           validation: {}, errorMessage: "", optionsSource: "instrumentos",
           optionsTitleField: "nombre", optionsDescField: "",
@@ -302,11 +319,63 @@ async function resetDatabase() {
           sourceCollection: "", displayField: "", detailFields: []
         }
       ],
-      completionMessage: "*¡Inscripción completada!* ✅\n\n*Nombre:* {nombre}\n*Edad:* {edad}\n*Curso:* {curso}\n*Instrumento:* {instrumento}\n\nGracias por tu interés en *" + ORG_NAME + "*.\nUn maestro te contactará pronto. 🎶",
+      completionMessage: "🎉 *¡Pre-inscripción completada!*\n\n📋 *Resumen:*\n─────────────\n👤 *Nombre:* {nombre}\n🎂 *Edad:* {edad}\n🎓 *Curso:* {curso}\n🎵 *Instrumento:* {instrumento}\n─────────────\n\nUn miembro de nuestro equipo te contactará pronto para confirmar tu inscripción.\n\n¡Bienvenido a la familia *" + ORG_NAME + "*! 🎶",
       createdAt: ts(), updatedAt: ts()
     });
 
-    console.log("   2 flujos: Ver Programas (browse), Inscríbete (registro)\n");
+    // --- Flow 3: Agendar Cita ---
+    await orgRef.collection("flows").add({
+      name: "Agendar Cita", description: "Reserva una cita presencial",
+      type: "appointment", active: true, order: 3, saveToCollection: "citas",
+      menuLabel: "Agendar Cita", menuDescription: "Reserva un espacio con nosotros", showInMenu: true,
+      steps: [
+        {
+          id: "s1", type: "text_input",
+          prompt: "📅 *Reserva tu Cita*\n\nVamos a agendar un espacio para ti.\n\nPrimero, escribe tu *nombre completo*:",
+          fieldKey: "nombre", fieldLabel: "Nombre", required: true,
+          validation: { minLength: 3 }, errorMessage: "Necesitamos al menos 3 caracteres. Inténtalo de nuevo.",
+          optionsSource: "custom", customOptions: [], buttonText: "",
+          sourceCollection: "", displayField: "", detailFields: [], timeFieldKey: ""
+        },
+        {
+          id: "s2", type: "text_input",
+          prompt: "¿Cuántos *años* tienes?",
+          fieldKey: "edad", fieldLabel: "Edad", required: true,
+          validation: {}, errorMessage: "",
+          optionsSource: "custom", customOptions: [], buttonText: "",
+          sourceCollection: "", displayField: "", detailFields: [], timeFieldKey: ""
+        },
+        {
+          id: "s3", type: "select_list",
+          prompt: "📌 ¿Cuál es el *motivo* de tu visita?\n\nEsto nos ayuda a prepararnos para atenderte mejor:",
+          fieldKey: "motivo", fieldLabel: "Motivo", required: true,
+          validation: {}, errorMessage: "", optionsSource: "custom",
+          optionsTitleField: "", optionsDescField: "",
+          customOptions: [
+            { label: "Conocer los cursos", value: "info_cursos", description: "Quiero información sobre los programas", duration: 20 },
+            { label: "Formalizar inscripción", value: "inscripcion", description: "Ya me decidí y quiero inscribirme", duration: 30 },
+            { label: "Prueba de nivel", value: "prueba_nivel", description: "Evaluación de conocimiento musical", duration: 45 },
+            { label: "Otro motivo", value: "otro", description: "Consulta o trámite general", duration: 15 }
+          ],
+          buttonText: "Ver motivos",
+          sourceCollection: "", displayField: "", detailFields: [], timeFieldKey: ""
+        },
+        {
+          id: "s4", type: "appointment_slot",
+          prompt: "📆 Ahora elige el *día* que mejor te convenga:\n\nSolo se muestran días con disponibilidad.",
+          fieldKey: "fecha", fieldLabel: "Fecha", required: true,
+          timeFieldKey: "hora",
+          validation: {}, errorMessage: "", optionsSource: "custom",
+          optionsTitleField: "", optionsDescField: "",
+          customOptions: [], buttonText: "Ver días",
+          sourceCollection: "", displayField: "", detailFields: []
+        }
+      ],
+      completionMessage: "✅ *¡Cita confirmada!*\n\n📋 *Tu reserva:*\n─────────────\n👤 *Nombre:* {nombre}\n🎂 *Edad:* {edad}\n📌 *Motivo:* {motivo}\n📆 *Fecha:* {fecha}\n🕐 *Hora:* {hora}\n─────────────\n\nTe esperamos en *" + ORG_NAME + "*.\n📍 8va Av. Norte # 6-3, Col. Aida, Sonsonate\n\n¿Necesitas cancelar o reagendar? Escríbenos y te ayudamos. 🤝",
+      createdAt: ts(), updatedAt: ts()
+    });
+
+    console.log("   3 flujos: Ver Programas, Inscríbete, Agendar Cita\n");
 
     // ==================== MENU ====================
 
@@ -316,42 +385,28 @@ async function resetDatabase() {
     const flowDocs = flowsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const browseFlow = flowDocs.find(f => f.name === "Ver Programas");
     const regFlow = flowDocs.find(f => f.name === "Inscríbete");
+    const apptFlow = flowDocs.find(f => f.name === "Agendar Cita");
 
     await orgRef.collection("config").doc("menu").set({
-      greeting: `¡Hola{name}! 🎵\n\nBienvenido a *${ORG_NAME}*.\n\n¿En qué podemos ayudarte?`,
+      greeting: `¡Hola{name}! 👋🎵\n\nBienvenido a *${ORG_NAME}*\nTu escuela de música en Sonsonate.\n\n¿Cómo podemos ayudarte hoy?`,
       menuButtonText: "Ver opciones",
-      fallbackMessage: "No entendí tu mensaje. Selecciona una opción del menú.",
-      exitMessage: "¡Hasta luego! Escribe *hola* cuando necesites ayuda. 🎶",
+      fallbackMessage: "🤔 No logré entender tu mensaje.\n\nEscribe *hola* para ver todas las opciones disponibles.",
+      exitMessage: "🎶 ¡Hasta pronto!\n\nFue un gusto atenderte. Escribe *hola* cuando quieras volver.\n\n_${ORG_NAME} — Formando adoradores_ 🎵",
       items: [
-        { id: "m1", type: "flow", flowId: browseFlow?.id || "", label: "Programas", description: "Ver cursos disponibles", order: 1, active: true },
-        { id: "m2", type: "flow", flowId: regFlow?.id || "", label: "Inscríbete", description: "Registra tus datos", order: 2, active: true },
-        { id: "m3", type: "builtin", action: "schedule", label: "Horarios", description: "Horarios de atención", order: 3, active: true },
-        { id: "m4", type: "builtin", action: "contact", label: "Ubicación", description: "Dirección del instituto", order: 4, active: true },
-        { id: "m5", type: "builtin", action: "general", label: "Info General", description: "Sobre el instituto", order: 5, active: true }
+        { id: "m1", type: "flow", flowId: browseFlow?.id || "", label: "Nuestros Cursos", description: "Conoce nuestra oferta académica", order: 1, active: true },
+        { id: "m2", type: "flow", flowId: regFlow?.id || "", label: "Inscríbete", description: "Inicia tu pre-inscripción", order: 2, active: true },
+        { id: "m3", type: "flow", flowId: apptFlow?.id || "", label: "Agendar Cita", description: "Reserva un espacio con nosotros", order: 3, active: true },
+        { id: "m4", type: "builtin", action: "schedule", label: "Horarios", description: "Días y horarios de atención", order: 4, active: true },
+        { id: "m5", type: "builtin", action: "contact", label: "Ubicación", description: "Cómo llegar al instituto", order: 5, active: true },
+        { id: "m6", type: "builtin", action: "general", label: "Sobre Nosotros", description: "Conoce nuestra misión", order: 6, active: true }
       ],
       createdAt: ts()
     });
 
-    // ==================== BOT MESSAGES ====================
-
-    // 11. Bot messages
-    console.log("11. Mensajes del bot...");
-    const botMessages = [
-      { key: "greeting", label: "Saludo principal", category: "greeting", description: "Mensaje de bienvenida", content: `¡Hola{name}! 🎵\n\nBienvenido a *${ORG_NAME}*.\n\nSelecciona una opción del menú.` },
-      { key: "fallback", label: "Mensaje no reconocido", category: "fallback", description: "Cuando el bot no entiende", content: "No entendí tu mensaje.\n\nEscribe *hola* para ver el menú de opciones." },
-      { key: "goodbye", label: "Despedida", category: "general", description: "Mensaje de despedida", content: "¡Hasta luego! Escribe *hola* cuando necesites ayuda. 🎶" },
-      { key: "session_expired", label: "Sesión expirada", category: "general", description: "Sesión cerrada por inactividad", content: "Tu sesión se cerró por inactividad. ¡Hasta luego!\n\nEscribe *hola* cuando necesites ayuda." },
-      { key: "cancel", label: "Cancelación", category: "general", description: "Cuando el usuario cancela", content: "Proceso cancelado. Escribe *hola* para volver al menú." }
-    ];
-    for (const msg of botMessages) {
-      await orgRef.collection("botMessages").add({ ...msg, createdAt: ts() });
-    }
-    console.log(`   ${botMessages.length} mensajes.\n`);
-
     // ==================== INFO ====================
 
-    // 12. Info
-    console.log("12. Información base...");
+    // 11. Info
+    console.log("11. Información base...");
     await orgRef.collection("info").doc("contact").set({
       address: "8va Av. Norte # 6-3, Colonia Aida, Sonsonate",
       city: "Sonsonate", country: "El Salvador",
@@ -360,30 +415,32 @@ async function resetDatabase() {
     });
     await orgRef.collection("info").doc("schedule").set({
       days: [
-        { name: "Lunes", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
-        { name: "Martes", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
-        { name: "Miércoles", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
-        { name: "Jueves", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
-        { name: "Viernes", active: true, shifts: [{ from: "14:00", to: "18:00" }] },
+        { name: "Lunes", active: false, shifts: [] },
+        { name: "Martes", active: false, shifts: [] },
+        { name: "Miércoles", active: false, shifts: [] },
+        { name: "Jueves", active: false, shifts: [] },
+        { name: "Viernes", active: false, shifts: [] },
         { name: "Sábado", active: true, shifts: [{ from: "08:00", to: "12:00" }] },
-        { name: "Domingo", active: false, shifts: [{ from: "08:00", to: "12:00" }] }
+        { name: "Domingo", active: false, shifts: [] }
       ],
+      slotDuration: 30,
+      blockedDates: [],
       createdAt: ts()
     });
     await orgRef.collection("info").doc("general").set({
       orgName: ORG_NAME,
-      description: "Escuela de música cristiana con enfoque en adoración y formación musical integral.",
-      focus: ["Música", "Adoración", "Formación artística"],
+      description: "Escuela de música cristiana con enfoque en adoración y formación musical integral. Formamos músicos con excelencia técnica y pasión por el servicio.",
+      focus: ["Formación musical", "Adoración", "Desarrollo artístico integral"],
       modality: "Presencial",
-      instrumentsNote: "Guitarra, Piano, Batería, Bajo, Canto",
+      instrumentsNote: "Guitarra, Piano, Batería, Bajo y Canto",
       openToAll: true,
       createdAt: ts()
     });
 
     // ==================== ADMINS ====================
 
-    // 13. Restore admins
-    console.log("13. Restaurando administradores...");
+    // 12. Restore admins
+    console.log("12. Restaurando administradores...");
     const adminsSnap = await orgRef.collection("admins").get();
     if (adminsSnap.empty) {
       const usersSnapshot = await db.collection("users").get();
@@ -415,11 +472,12 @@ async function resetDatabase() {
     console.log(`  Org:           ${ORG_ID}`);
     console.log(`  Nombre:        ${ORG_NAME}`);
     console.log(`  WhatsApp:      ${savedWAConfig?.token ? 'Preservado' : 'Configurar en web'}`);
-    console.log(`  Colecciones:   programas, instrumentos, aspirantes`);
+    console.log(`  Colecciones:   programas, instrumentos, aspirantes, citas`);
     console.log(`  Programas:     Curso Ministerial Musical, Teens, Kids`);
     console.log(`  Instrumentos:  Guitarra, Batería, Bajo, Canto, Piano`);
-    console.log(`  Flujos:        Ver Programas, Inscríbete`);
-    console.log(`  Menú:          Programas | Inscríbete | Horarios | Ubicación | Info`);
+    console.log(`  Flujos:        Ver Programas, Inscríbete, Agendar Cita`);
+    console.log(`  Citas:         Flujo dinámico, duración por tipo (15-45 min)`);
+    console.log(`  Menú:          Programas | Inscríbete | Cita | Horarios | Ubicación | Info`);
     console.log(`\n  Siguiente: npm start\n`);
 
   } catch (error) {

@@ -13,11 +13,12 @@ interface FlowStep {
   optionsSource: string;
   optionsTitleField: string;
   optionsDescField: string;
-  customOptions: { label: string; value: string; description?: string }[];
+  customOptions: { label: string; value: string; description?: string; duration?: number }[];
   buttonText: string;
   sourceCollection: string;
   displayField: string;
   detailFields: string[];
+  timeFieldKey: string;
 }
 
 interface Flow {
@@ -64,6 +65,7 @@ export class FlowBuilderComponent implements OnInit {
     { value: 'select_list', label: 'Lista de opciones', icon: 'fa-list', desc: 'Menú desplegable con opciones' },
     { value: 'select_buttons', label: 'Botones (máx 3)', icon: 'fa-hand-pointer', desc: 'Botones interactivos' },
     { value: 'browse_collection', label: 'Explorar colección', icon: 'fa-database', desc: 'Navegar y ver detalles de items' },
+    { value: 'appointment_slot', label: 'Selección de cita', icon: 'fa-calendar-check', desc: 'El usuario elige día y hora disponible' },
     { value: 'message', label: 'Mensaje automático', icon: 'fa-comment', desc: 'Envía un mensaje sin esperar respuesta' }
   ];
 
@@ -134,8 +136,13 @@ export class FlowBuilderComponent implements OnInit {
       required: true, validation: {}, errorMessage: '',
       optionsSource: 'custom', optionsTitleField: '', optionsDescField: '',
       customOptions: [], buttonText: 'Ver opciones',
-      sourceCollection: '', displayField: '', detailFields: []
+      sourceCollection: '', displayField: '', detailFields: [],
+      timeFieldKey: ''
     };
+  }
+
+  flowHasAppointmentStep(): boolean {
+    return this.currentFlow.steps.some(s => s.type === 'appointment_slot');
   }
 
   getCollectionFields(slug: string): any[] {
@@ -193,6 +200,7 @@ export class FlowBuilderComponent implements OnInit {
       if (!s.displayField) s.displayField = '';
       if (!s.optionsTitleField) s.optionsTitleField = '';
       if (!s.optionsDescField) s.optionsDescField = '';
+      if (!s.timeFieldKey) s.timeFieldKey = '';
     });
     this.editMode = true;
     this.expandedStepIndex = null;

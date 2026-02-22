@@ -349,3 +349,15 @@
   .editor-actions { flex-direction: column; }
   .btn-save-flow, .btn-cancel-flow { width: 100%; justify-content: center; }
 }
+
+/* Appointment config */
+.appt-config-box { margin-top: 4px; }
+.info-banner-mini {
+  display: flex; gap: 8px; padding: 10px 14px; margin-bottom: 14px;
+  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.15);
+  border-radius: 8px; align-items: flex-start; font-size: 0.82rem; color: #92400e; line-height: 1.5;
+}
+.info-banner-mini i { color: #f59e0b !important; margin-top: 2px; flex-shrink: 0; }
+.hint-mini { display: block; color: #94a3b8; font-size: 0.75rem; margin-top: 4px; }
+.input-duration { max-width: 70px !important; text-align: center; }
+.duration-badge { margin-left: 6px; font-size: 0.7rem; color: #f59e0b; font-weight: 600; }

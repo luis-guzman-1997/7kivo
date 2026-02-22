@@ -27,6 +27,8 @@ export class InboxComponent implements OnInit {
   selectedItem: any = null;
   selectedTab: FlowTab | null = null;
 
+  collectionDefsMap: Record<string, any> = {};
+
   constructor(private firebaseService: FirebaseService) {}
 
   async ngOnInit(): Promise<void> {
@@ -36,14 +38,19 @@ export class InboxComponent implements OnInit {
   async loadFlows(): Promise<void> {
     this.loading = true;
     try {
-      const flows = await this.firebaseService.getFlows();
+      const [flows, colDefs] = await Promise.all([
+        this.firebaseService.getFlows(),
+        this.firebaseService.getCollectionDefs()
+      ]);
 
-      // Filtrar flujos que tienen saveToCollection y NO son "applicants" (esos van en Aspirantes)
-      const inboxFlows = flows.filter(f =>
+      this.collectionDefsMap = {};
+      colDefs.forEach((c: any) => { this.collectionDefsMap[c.slug] = c; });
+
+      const inboxFlows = flows.filter((f: any) =>
         f.saveToCollection && f.saveToCollection !== 'applicants' && f.saveToCollection !== 'contacts'
       );
 
-      this.tabs = inboxFlows.map(f => ({
+      this.tabs = inboxFlows.map((f: any) => ({
         flowId: f.id,
         flowName: f.name,
         collection: f.saveToCollection,
@@ -54,7 +61,6 @@ export class InboxComponent implements OnInit {
         unreadCount: 0
       }));
 
-      // Cargar submissions de cada tab en paralelo
       await Promise.all(this.tabs.map(tab => this.loadTabSubmissions(tab)));
     } catch (err) {
       console.error('Error loading flows:', err);
@@ -156,25 +162,38 @@ export class InboxComponent implements OnInit {
     return item.fullName || item.name || item.nombre || 'Sin nombre';
   }
 
-  getItemFields(item: any): { label: string; value: string }[] {
+  getItemFields(item: any, tab?: FlowTab | null): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [];
     const skip = ['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
-                   'flowId', 'flowName', 'phoneNumber'];
+                   'flowId', 'flowName', 'phoneNumber', 'confirmed'];
+
+    const collection = tab?.collection || this.selectedTab?.collection || '';
+    const colDef = this.collectionDefsMap[collection];
 
     for (const [key, val] of Object.entries(item)) {
       if (skip.includes(key) || val === null || val === undefined || val === '') continue;
       if (typeof val === 'object') continue;
-      fields.push({ label: this.fieldLabel(key), value: String(val) });
+      if (key.startsWith('_')) continue;
+      if (key.endsWith('Id')) continue;
+      fields.push({ label: this.fieldLabel(key, colDef), value: String(val) });
     }
     return fields;
   }
 
-  fieldLabel(key: string): string {
+  fieldLabel(key: string, colDef?: any): string {
+    if (colDef && colDef.fields) {
+      const field = colDef.fields.find((f: any) => f.key === key);
+      if (field && field.label) return field.label;
+    }
+
     const labels: Record<string, string> = {
-      fullName: 'Nombre Completo', name: 'Nombre', age: 'Edad',
-      courseType: 'Tipo de Curso', instrument: 'Instrumento',
+      fullName: 'Nombre Completo', name: 'Nombre', nombre: 'Nombre',
+      age: 'Edad', edad: 'Edad', courseType: 'Tipo de Curso',
+      curso: 'Curso', instrument: 'Instrumento', instrumento: 'Instrumento',
+      motivo: 'Motivo', fecha: 'Fecha', hora: 'Hora',
       comment: 'Comentario', email: 'Email', message: 'Mensaje',
-      question: 'Pregunta', subject: 'Asunto'
+      question: 'Pregunta', subject: 'Asunto', direccion: 'Dirección',
+      telefono: 'Teléfono', descripcion: 'Descripción'
     };
     return labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
   }

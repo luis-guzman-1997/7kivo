@@ -12,7 +12,8 @@ const {
   getCollectionItems,
   getCollectionItem,
   getCollectionDef,
-  saveFlowSubmission
+  saveFlowSubmission,
+  getAppointmentsByDate
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
 
@@ -244,6 +245,16 @@ const sendMenu = async (phoneNumber) => {
 const handleInteractiveResponse = async (phoneNumber, buttonId) => {
   const session = getSession(phoneNumber);
 
+  // Handle appointment_slot steps (within a flow)
+  if (session && session.step === "appt_select_day" && buttonId.startsWith("appt_day_")) {
+    await handleApptDaySelected(phoneNumber, buttonId.substring(9), session);
+    return;
+  }
+  if (session && session.step === "appt_select_time" && buttonId.startsWith("appt_slot_")) {
+    await handleApptSlotSelected(phoneNumber, buttonId.substring(10), session);
+    return;
+  }
+
   // Handle flow select step responses
   if (session && session.step === "flow_select") {
     await handleFlowSelectResponse(phoneNumber, buttonId, session);
@@ -288,7 +299,7 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     return;
   }
 
-  // Builtin actions (schedule, contact, general - programs removed)
+  // Builtin actions
   if (buttonId.startsWith("builtin_")) {
     const action = buttonId.substring(8);
     const builtinActions = {
@@ -408,6 +419,10 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
 
     case "browse_collection":
       await sendBrowseCollection(phoneNumber, flow, step, stepIndex);
+      break;
+
+    case "appointment_slot":
+      await sendAppointmentDays(phoneNumber, flow, step, stepIndex);
       break;
 
     case "message":
@@ -540,7 +555,13 @@ const handleFlowSelectResponse = async (phoneNumber, buttonId, session) => {
     if (found) displayName = getItemDisplayName(found, step, colDef);
   } else if (step.customOptions) {
     const found = step.customOptions.find(o => o.value === selectedValue);
-    if (found) displayName = found.label || selectedValue;
+    if (found) {
+      displayName = found.label || selectedValue;
+      if (found.duration) {
+        session.flowData = session.flowData || {};
+        session.flowData._apptDuration = found.duration;
+      }
+    }
   }
 
   const flowData = { ...session.flowData };
@@ -753,7 +774,6 @@ const completeFlow = async (phoneNumber, flow) => {
   const session = getSession(phoneNumber);
   const flowData = session?.flowData || {};
 
-  // Save to collection if configured
   if (flow.saveToCollection) {
     try {
       const submissionData = {
@@ -762,17 +782,18 @@ const completeFlow = async (phoneNumber, flow) => {
         flowId: flow.id,
         flowName: flow.name
       };
+      if (flowData._apptFecha) submissionData.status = "confirmed";
       await saveFlowSubmission(flow.saveToCollection, submissionData);
     } catch (error) {
       console.error("Error saving flow submission:", error);
     }
   }
 
-  // Build completion message with template variables
   let completionMsg = flow.completionMessage || "Proceso completado. ¡Gracias!";
   completionMsg = completionMsg.replace("{phoneNumber}", phoneNumber);
 
   for (const [key, value] of Object.entries(flowData)) {
+    if (key.startsWith("_")) continue;
     const regex = new RegExp(`\\{${key}\\}`, "g");
     const displayValue = typeof value === "string" ? value.toUpperCase() : String(value);
     completionMsg = completionMsg.replace(regex, displayValue);
@@ -861,6 +882,203 @@ const showGeneralInfo = async (phoneNumber) => {
   await sendInteractiveButtons(info, buttons, phoneNumber);
 };
 
+// ==================== APPOINTMENT SLOT (flow step type) ====================
+
+const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+const generateTimeSlots = (shifts, slotMinutes) => {
+  const slots = [];
+  for (const shift of shifts) {
+    const [fromH, fromM] = shift.from.split(":").map(Number);
+    const [toH, toM] = shift.to.split(":").map(Number);
+    let current = fromH * 60 + fromM;
+    const end = toH * 60 + toM;
+    while (current + slotMinutes <= end) {
+      const hh = String(Math.floor(current / 60)).padStart(2, "0");
+      const mm = String(current % 60).padStart(2, "0");
+      slots.push(`${hh}:${mm}`);
+      current += slotMinutes;
+    }
+  }
+  return slots;
+};
+
+const toMinutes = (timeStr) => {
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+};
+
+const slotsOverlap = (startA, durationA, startB, durationB) => {
+  const a0 = toMinutes(startA), a1 = a0 + durationA;
+  const b0 = toMinutes(startB), b1 = b0 + durationB;
+  return a0 < b1 && b0 < a1;
+};
+
+const getFreeSlots = (allSlots, duration, booked) => {
+  return allSlots.filter(slot => {
+    return !booked.some(b => {
+      const bDuration = b._apptDuration || b.duracion || duration;
+      return slotsOverlap(slot, duration, b._apptHora || b.hora, bDuration);
+    });
+  });
+};
+
+const sendAppointmentDays = async (phoneNumber, flow, step, stepIndex) => {
+  const schedule = await getScheduleInfo();
+  const session = getSession(phoneNumber);
+  const apptDuration = session?.flowData?._apptDuration || schedule?.slotDuration;
+
+  if (!schedule || !schedule.days || !apptDuration) {
+    await sendTextMessage("Las citas no están disponibles en este momento.", phoneNumber);
+    const nextIndex = stepIndex + 1;
+    setSession(phoneNumber, { flowStepIndex: nextIndex });
+    await executeFlowStep(phoneNumber, flow, nextIndex);
+    return;
+  }
+
+  const blockedDates = schedule.blockedDates || [];
+  const saveToCollection = flow.saveToCollection || "";
+  const today = new Date();
+  const availableDays = [];
+
+  for (let i = 1; i <= 30 && availableDays.length < 10; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    const dayName = DAY_NAMES[date.getDay()];
+    const dayConfig = schedule.days.find(d => d.name === dayName);
+    if (!dayConfig || !dayConfig.active) continue;
+
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    if (blockedDates.includes(dateStr)) continue;
+
+    const allSlots = generateTimeSlots(dayConfig.shifts, apptDuration);
+    const booked = await getAppointmentsByDate(dateStr, saveToCollection);
+    const freeSlots = getFreeSlots(allSlots, apptDuration, booked);
+    if (freeSlots.length === 0) continue;
+
+    const label = `${dayName} ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
+    availableDays.push({ dateStr, label, freeCount: freeSlots.length });
+  }
+
+  if (availableDays.length === 0) {
+    await sendTextMessage("No hay días disponibles para citas próximamente.", phoneNumber);
+    setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+    return;
+  }
+
+  const rows = availableDays.map(d => ({
+    id: `appt_day_${d.dateStr}`,
+    title: d.label.substring(0, 24),
+    description: `${d.freeCount} horario${d.freeCount > 1 ? "s" : ""} disponible${d.freeCount > 1 ? "s" : ""}`
+  }));
+
+  setSession(phoneNumber, {
+    step: "appt_select_day",
+    flowId: flow.id,
+    flowStepIndex: stepIndex,
+    flowStartTime: Date.now()
+  });
+
+  const prompt = step.prompt || "📅 Selecciona el día para tu cita:";
+  const sections = [{ title: "Días disponibles", rows }];
+  await sendInteractiveList(prompt, step.buttonText || "Ver días", sections, phoneNumber);
+};
+
+const handleApptDaySelected = async (phoneNumber, dateStr, session) => {
+  const schedule = await getScheduleInfo();
+  if (!schedule) return;
+
+  const flow = await getFlow(session.flowId);
+  if (!flow) return;
+
+  const apptDuration = session.flowData?._apptDuration || schedule.slotDuration;
+  const date = new Date(dateStr + "T12:00:00");
+  const dayName = DAY_NAMES[date.getDay()];
+  const dayConfig = schedule.days.find(d => d.name === dayName);
+  if (!dayConfig) return;
+
+  const saveToCollection = flow.saveToCollection || "";
+  const allSlots = generateTimeSlots(dayConfig.shifts, apptDuration);
+  const booked = await getAppointmentsByDate(dateStr, saveToCollection);
+  const freeSlots = getFreeSlots(allSlots, apptDuration, booked);
+
+  if (freeSlots.length === 0) {
+    await sendTextMessage("Este día ya no tiene horarios disponibles. Selecciona otro.", phoneNumber);
+    await sendAppointmentDays(phoneNumber, flow, flow.steps[session.flowStepIndex], session.flowStepIndex);
+    return;
+  }
+
+  const label = `${dayName} ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
+  const displaySlots = freeSlots.slice(0, 10);
+
+  const rows = displaySlots.map(slot => ({
+    id: `appt_slot_${slot}`,
+    title: slot,
+    description: `${apptDuration} min`
+  }));
+
+  setSession(phoneNumber, {
+    step: "appt_select_time",
+    flowId: flow.id,
+    flowStepIndex: session.flowStepIndex,
+    apptDate: dateStr,
+    apptDateLabel: label,
+    flowStartTime: Date.now()
+  });
+
+  const extra = freeSlots.length > 10 ? `\n_(Mostrando los primeros 10 de ${freeSlots.length} horarios)_` : "";
+  const sections = [{ title: "Horarios", rows }];
+  await sendInteractiveList(
+    `🕐 *Horarios para ${label}*\n\nSelecciona la hora (${apptDuration} min):${extra}`,
+    "Ver horarios",
+    sections,
+    phoneNumber
+  );
+};
+
+const handleApptSlotSelected = async (phoneNumber, timeSlot, session) => {
+  const flow = await getFlow(session.flowId);
+  if (!flow) return;
+
+  const schedule = await getScheduleInfo();
+  const step = flow.steps[session.flowStepIndex];
+  const dateFieldKey = step.fieldKey || "fecha";
+  const timeFieldKey = step.timeFieldKey || "hora";
+  const apptDuration = session.flowData?._apptDuration || schedule?.slotDuration || 30;
+
+  const flowData = { ...session.flowData };
+  flowData[dateFieldKey] = session.apptDateLabel || session.apptDate;
+  flowData[timeFieldKey] = timeSlot;
+
+  const saveToCollection = flow.saveToCollection || "";
+  const existing = await getAppointmentsByDate(session.apptDate, saveToCollection);
+  const hasConflict = existing.some(b => {
+    const bDuration = b._apptDuration || b.duracion || apptDuration;
+    return slotsOverlap(timeSlot, apptDuration, b._apptHora || b.hora, bDuration);
+  });
+
+  if (hasConflict) {
+    await sendTextMessage("⚠️ Ese horario acaba de ser reservado. Selecciona otro.", phoneNumber);
+    await handleApptDaySelected(phoneNumber, session.apptDate, session);
+    return;
+  }
+
+  flowData._apptFecha = session.apptDate;
+  flowData._apptHora = timeSlot;
+  flowData._apptDuration = apptDuration;
+
+  const nextIndex = session.flowStepIndex + 1;
+  setSession(phoneNumber, {
+    step: "flow_pending",
+    flowData,
+    flowStepIndex: nextIndex,
+    flowStartTime: Date.now()
+  });
+
+  await executeFlowStep(phoneNumber, flow, nextIndex);
+};
+
 // ==================== TEXT MESSAGE HANDLER ====================
 
 const handleUserMessage = async (phoneNumber, message, session) => {
@@ -893,8 +1111,9 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
-  // Waiting for select/browse but user typed text
-  if (session.step === "flow_select" || session.step === "flow_browse" || session.step === "flow_browse_detail") {
+  // Waiting for select/browse/appointment but user typed text
+  if (session.step === "flow_select" || session.step === "flow_browse" || session.step === "flow_browse_detail"
+      || session.step === "appt_select_day" || session.step === "appt_select_time") {
     await sendTextMessage("Por favor selecciona una opción del menú.", phoneNumber);
     return;
   }
@@ -914,6 +1133,14 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     await showGeneralInfo(phoneNumber);
   } else if (lowerMessage.includes("registr") || lowerMessage.includes("inscrib")) {
     await startLegacyOrFlowRegistration(phoneNumber);
+  } else if (lowerMessage.includes("cita") || lowerMessage.includes("reserv") || lowerMessage.includes("agendar")) {
+    const flows = await getFlows();
+    const apptFlow = flows.find(f => f.steps && f.steps.some(s => s.type === "appointment_slot"));
+    if (apptFlow) {
+      await startFlow(phoneNumber, apptFlow.id);
+    } else {
+      await sendTextMessage("Las citas no están disponibles.", phoneNumber);
+    }
   } else {
     // Fallback: show menu
     const menuConfig = await getMenuConfig();

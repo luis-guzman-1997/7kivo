@@ -354,6 +354,7 @@
                 <input type="text" [(ngModel)]="opt.label" placeholder="Texto visible" class="input-sm" maxlength="24" />
                 <input type="text" [(ngModel)]="opt.value" placeholder="Valor (ID)" class="input-sm" />
                 <input *ngIf="step.type === 'select_list'" type="text" [(ngModel)]="opt.description" placeholder="Descripción (opcional)" class="input-sm" maxlength="72" />
+                <input *ngIf="flowHasAppointmentStep()" type="number" [(ngModel)]="opt.duration" placeholder="Min." class="input-sm input-duration" min="5" max="480" />
                 <button class="btn-icon-xs btn-danger" (click)="removeCustomOption(step, oi)">
                   <i class="fas fa-times"></i>
                 </button>
@@ -363,6 +364,7 @@
               </button>
               <p class="field-hint" *ngIf="step.type === 'select_buttons'">Máximo 3 opciones para botones (20 caracteres máx. por título).</p>
               <p class="field-hint" *ngIf="step.type === 'select_list'">Título: máx. 24 caracteres. Descripción: máx. 72 caracteres.</p>
+              <p class="field-hint" *ngIf="flowHasAppointmentStep()"><i class="fas fa-clock"></i> <strong>Min.</strong> = duración de la cita en minutos para esa opción. Define cuánto tiempo ocupa cada tipo de cita.</p>
             </div>
 
             <!-- Collection preview -->
@@ -419,7 +421,27 @@
             </div>
           </div>
 
-          <div *ngIf="step.type !== 'message'" class="form-group-config">
+          <!-- Appointment slot config -->
+          <div *ngIf="step.type === 'appointment_slot'" class="appt-config-box">
+            <div class="info-banner-mini">
+              <i class="fas fa-info-circle"></i>
+              <span>Este paso muestra automáticamente los días y horarios disponibles según la configuración de horarios y duración de cita en <strong>Configuración del Bot → Info & Contacto</strong>. No se permiten dobles reservas.</span>
+            </div>
+            <div class="form-row-config">
+              <div class="form-group-config">
+                <label>Campo para la fecha *</label>
+                <input type="text" [(ngModel)]="step.fieldKey" placeholder="fecha" />
+                <span class="hint-mini">Clave donde se guarda la fecha (ej: fecha)</span>
+              </div>
+              <div class="form-group-config">
+                <label>Campo para la hora *</label>
+                <input type="text" [(ngModel)]="step.timeFieldKey" placeholder="hora" />
+                <span class="hint-mini">Clave donde se guarda la hora (ej: hora)</span>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="step.type !== 'message' && step.type !== 'appointment_slot'" class="form-group-config">
             <label>Mensaje de error</label>
             <input type="text" [(ngModel)]="step.errorMessage" placeholder="Respuesta inválida. Intenta de nuevo." />
           </div>
@@ -476,7 +498,7 @@
               <ng-container *ngIf="step.optionsSource === 'custom' && step.customOptions && step.customOptions.length > 0">
                 <div class="preview-option-row" *ngFor="let opt of step.customOptions.slice(0, step.type === 'select_buttons' ? 3 : 10)"
                      [class.btn-pill]="step.type === 'select_buttons'">
-                  <span class="preview-option-title">{{ (opt.label || opt.value).substring(0, step.type === 'select_buttons' ? 20 : 24) }}</span>
+                  <span class="preview-option-title">{{ (opt.label || opt.value).substring(0, step.type === 'select_buttons' ? 20 : 24) }}<small *ngIf="opt.duration" class="duration-badge">{{ opt.duration }}min</small></span>
                   <span class="preview-option-desc" *ngIf="step.type === 'select_list' && opt.description">{{ opt.description.substring(0, 72) }}</span>
                 </div>
               </ng-container>
@@ -493,6 +515,13 @@
                 </span>
               </ng-container>
               <span *ngIf="!step.sourceCollection || getCollectionPreview(step.sourceCollection).length === 0">[Navega y selecciona item]</span>
+            </div>
+          </div>
+          <div class="preview-bot" *ngIf="step.type === 'appointment_slot'">
+            <span class="preview-step-num">{{ i + 1 }}</span>
+            <div class="preview-bubble bot">
+              {{ step.prompt || '📅 Selecciona el día para tu cita:' }}<br/>
+              <small style="color:#94a3b8;">📅 [Días disponibles] → 🕐 [Horarios libres]</small>
             </div>
           </div>
         </div>
