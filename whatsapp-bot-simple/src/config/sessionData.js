@@ -1,10 +1,10 @@
 const { db, admin } = require("./firebase");
-const { getSchoolId } = require("./schoolConfig");
+const { getOrgId } = require("./orgConfig");
 
 const localCache = {};
 
 const getConvRef = (phone) => {
-  return db.collection("schools").doc(getSchoolId())
+  return db.collection("organizations").doc(getOrgId())
     .collection("conversations").doc(phone.replace(/\D/g, ""));
 };
 

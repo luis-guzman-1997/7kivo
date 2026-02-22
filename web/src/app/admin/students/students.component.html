@@ -5,8 +5,8 @@
 
   <div class="page-header">
     <div>
-      <h1 class="page-title"><i class="fas fa-user-graduate"></i> Aspirantes y Estudiantes</h1>
-      <p class="page-subtitle">Gestiona los aspirantes del bot y los estudiantes aceptados</p>
+      <h1 class="page-title"><i class="fas fa-users"></i> Contactos y Clientes</h1>
+      <p class="page-subtitle">Gestiona los contactos del bot y los clientes convertidos</p>
     </div>
   </div>
 
@@ -19,25 +19,25 @@
     </div>
     <div class="mini-stat">
       <i class="fas fa-check-circle"></i>
-      <span class="mini-stat-num">{{ acceptedCount }}</span>
-      <span class="mini-stat-label">Aceptados</span>
+      <span class="mini-stat-num">{{ convertedCount }}</span>
+      <span class="mini-stat-label">Convertidos</span>
     </div>
     <div class="mini-stat">
-      <i class="fas fa-graduation-cap"></i>
-      <span class="mini-stat-num">{{ totalStudentsCount }}</span>
-      <span class="mini-stat-label">Estudiantes</span>
+      <i class="fas fa-user-check"></i>
+      <span class="mini-stat-num">{{ totalClientsCount }}</span>
+      <span class="mini-stat-label">Clientes</span>
     </div>
   </div>
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab" [class.active]="activeTab === 'applicants'" (click)="switchTab('applicants')">
-      <i class="fas fa-user-clock"></i> Aspirantes
+    <button class="tab" [class.active]="activeTab === 'contacts'" (click)="switchTab('contacts')">
+      <i class="fas fa-user-clock"></i> Contactos
       <span class="tab-badge" *ngIf="pendingCount > 0">{{ pendingCount }}</span>
     </button>
-    <button class="tab" [class.active]="activeTab === 'students'" (click)="switchTab('students')">
-      <i class="fas fa-graduation-cap"></i> Estudiantes
-      <span class="tab-badge-green" *ngIf="totalStudentsCount > 0">{{ totalStudentsCount }}</span>
+    <button class="tab" [class.active]="activeTab === 'clients'" (click)="switchTab('clients')">
+      <i class="fas fa-user-check"></i> Clientes
+      <span class="tab-badge-green" *ngIf="totalClientsCount > 0">{{ totalClientsCount }}</span>
     </button>
   </div>
 
@@ -48,20 +48,20 @@
       <input type="text" [(ngModel)]="searchTerm" (input)="applyFilters()"
              placeholder="Buscar por nombre, teléfono..." />
     </div>
-    <div class="filter-group" *ngIf="activeTab === 'applicants'">
+    <div class="filter-group" *ngIf="activeTab === 'contacts'">
       <select [(ngModel)]="statusFilter" (change)="applyFilters()">
         <option value="all">Todos los estados</option>
         <option value="pending">Pendientes</option>
-        <option value="accepted">Aceptados</option>
+        <option value="converted">Convertidos</option>
         <option value="rejected">Rechazados</option>
       </select>
     </div>
-    <div class="filter-group" *ngIf="activeTab === 'students'">
+    <div class="filter-group" *ngIf="activeTab === 'clients'">
       <select [(ngModel)]="statusFilter" (change)="applyFilters()">
         <option value="all">Todos</option>
         <option value="active">Activos</option>
         <option value="inactive">Inactivos</option>
-        <option value="graduated">Graduados</option>
+        <option value="completed">Completados</option>
       </select>
     </div>
     <button class="btn-refresh" (click)="loadAll()">
@@ -74,14 +74,14 @@
     <i class="fas fa-spinner fa-spin"></i> Cargando datos...
   </div>
 
-  <!-- ==================== ASPIRANTES TAB ==================== -->
-  <div *ngIf="!loading && activeTab === 'applicants'">
-    <div *ngIf="filteredApplicants.length === 0" class="empty-state">
+  <!-- ==================== CONTACTS TAB ==================== -->
+  <div *ngIf="!loading && activeTab === 'contacts'">
+    <div *ngIf="filteredContacts.length === 0" class="empty-state">
       <i class="fas fa-inbox"></i>
-      <p>No se encontraron aspirantes</p>
+      <p>No se encontraron contactos</p>
     </div>
 
-    <div class="table-container" *ngIf="filteredApplicants.length > 0">
+    <div class="table-container" *ngIf="filteredContacts.length > 0">
       <table class="data-table">
         <thead>
           <tr>
@@ -95,7 +95,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let a of filteredApplicants" (click)="openDetail(a, 'applicant')">
+          <tr *ngFor="let a of filteredContacts" (click)="openDetail(a, 'contact')">
             <td><strong>{{ getPersonName(a) }}</strong></td>
             <td class="data-preview">
               <span *ngFor="let f of getPersonFields(a).slice(1, 3)" class="data-chip">
@@ -113,7 +113,7 @@
             <td>{{ formatDate(a.createdAt) }}</td>
             <td>
               <span class="badge" [ngClass]="'badge-' + a.status">
-                {{ getApplicantStatusLabel(a.status) }}
+                {{ getContactStatusLabel(a.status) }}
               </span>
             </td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
@@ -123,15 +123,15 @@
                 <i class="fab fa-whatsapp"></i>
               </a>
               <button class="btn-action btn-accept"
-                      *ngIf="a.status !== 'accepted'"
-                      (click)="acceptApplicant(a)"
+                      *ngIf="a.status !== 'converted'"
+                      (click)="convertContact(a)"
                       [disabled]="saving"
-                      title="Aceptar como Estudiante">
+                      title="Convertir a Cliente">
                 <i class="fas fa-user-check"></i>
               </button>
               <button class="btn-action btn-reject"
                       *ngIf="a.status !== 'rejected'"
-                      (click)="rejectApplicant(a)"
+                      (click)="rejectContact(a)"
                       title="Rechazar">
                 <i class="fas fa-times"></i>
               </button>
@@ -140,32 +140,32 @@
         </tbody>
       </table>
     </div>
-    <div class="results-count" *ngIf="filteredApplicants.length > 0">
-      {{ filteredApplicants.length }} de {{ applicants.length }} aspirantes
+    <div class="results-count" *ngIf="filteredContacts.length > 0">
+      {{ filteredContacts.length }} de {{ contacts.length }} contactos
     </div>
   </div>
 
-  <!-- ==================== ESTUDIANTES TAB ==================== -->
-  <div *ngIf="!loading && activeTab === 'students'">
-    <div *ngIf="filteredStudents.length === 0" class="empty-state">
-      <i class="fas fa-graduation-cap"></i>
-      <p>No hay estudiantes aún. Acepta aspirantes para que aparezcan aquí.</p>
+  <!-- ==================== CLIENTS TAB ==================== -->
+  <div *ngIf="!loading && activeTab === 'clients'">
+    <div *ngIf="filteredClients.length === 0" class="empty-state">
+      <i class="fas fa-user-check"></i>
+      <p>No hay clientes aún. Convierte contactos para que aparezcan aquí.</p>
     </div>
 
-    <div class="table-container" *ngIf="filteredStudents.length > 0">
+    <div class="table-container" *ngIf="filteredClients.length > 0">
       <table class="data-table">
         <thead>
           <tr>
             <th>Nombre</th>
             <th>Datos</th>
             <th>Teléfono</th>
-            <th>Aceptado</th>
+            <th>Convertido</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let s of filteredStudents" (click)="openDetail(s, 'student')">
+          <tr *ngFor="let s of filteredClients" (click)="openDetail(s, 'client')">
             <td><strong>{{ getPersonName(s) }}</strong></td>
             <td class="data-preview">
               <span *ngFor="let f of getPersonFields(s).slice(1, 3)" class="data-chip">
@@ -178,10 +178,10 @@
                 <i class="fab fa-whatsapp"></i> {{ s.phoneNumber }}
               </a>
             </td>
-            <td>{{ formatDate(s.acceptedAt || s.createdAt) }}</td>
+            <td>{{ formatDate(s.convertedAt || s.createdAt) }}</td>
             <td>
               <span class="badge" [ngClass]="'badge-' + s.status">
-                {{ getStudentStatusLabel(s.status) }}
+                {{ getClientStatusLabel(s.status) }}
               </span>
             </td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
@@ -195,8 +195,8 @@
         </tbody>
       </table>
     </div>
-    <div class="results-count" *ngIf="filteredStudents.length > 0">
-      {{ filteredStudents.length }} de {{ students.length }} estudiantes
+    <div class="results-count" *ngIf="filteredClients.length > 0">
+      {{ filteredClients.length }} de {{ clients.length }} clientes
     </div>
   </div>
 
@@ -205,8 +205,8 @@
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>
-          <i class="fas" [ngClass]="selectedType === 'applicant' ? 'fa-user-clock' : 'fa-graduation-cap'"></i>
-          {{ selectedType === 'applicant' ? 'Detalle del Aspirante' : 'Detalle del Estudiante' }}
+          <i class="fas" [ngClass]="selectedType === 'contact' ? 'fa-user-clock' : 'fa-user-check'"></i>
+          {{ selectedType === 'contact' ? 'Detalle del Contacto' : 'Detalle del Cliente' }}
         </h3>
         <button class="modal-close" (click)="closeDetail()">
           <i class="fas fa-times"></i>
@@ -230,7 +230,7 @@
         <div class="detail-row">
           <label>Estado</label>
           <span class="badge" [ngClass]="'badge-' + selectedPerson.status">
-            {{ selectedType === 'applicant' ? getApplicantStatusLabel(selectedPerson.status) : getStudentStatusLabel(selectedPerson.status) }}
+            {{ selectedType === 'contact' ? getContactStatusLabel(selectedPerson.status) : getClientStatusLabel(selectedPerson.status) }}
           </span>
         </div>
         <div class="detail-row" *ngIf="selectedPerson.flowName">
@@ -244,11 +244,11 @@
            target="_blank" class="btn-modal btn-whatsapp-full">
           <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
         </a>
-        <button *ngIf="selectedType === 'applicant' && selectedPerson.status !== 'accepted'"
+        <button *ngIf="selectedType === 'contact' && selectedPerson.status !== 'converted'"
                 class="btn-modal btn-accept-full"
-                (click)="acceptApplicant(selectedPerson); closeDetail()"
+                (click)="convertContact(selectedPerson); closeDetail()"
                 [disabled]="saving">
-          <i class="fas fa-user-check"></i> Aceptar como Estudiante
+          <i class="fas fa-user-check"></i> Convertir a Cliente
         </button>
       </div>
     </div>

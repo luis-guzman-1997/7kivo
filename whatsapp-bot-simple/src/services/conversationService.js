@@ -1,11 +1,11 @@
 const { db, admin } = require("../config/firebase");
-const { getSchoolId } = require("../config/schoolConfig");
+const { getOrgId } = require("../config/orgConfig");
 
-const getSchoolRef = () => db.collection("schools").doc(getSchoolId());
+const getOrgRef = () => db.collection("organizations").doc(getOrgId());
 
 const getConversationRef = (phoneNumber) => {
   const cleanPhone = phoneNumber.replace(/\D/g, "");
-  return getSchoolRef().collection("conversations").doc(cleanPhone);
+  return getOrgRef().collection("conversations").doc(cleanPhone);
 };
 
 const saveMessage = async (phoneNumber, text, from, extra = {}) => {
@@ -72,7 +72,7 @@ const setConversationMode = async (phoneNumber, mode, extra = {}) => {
 // ==================== QUERIES ====================
 
 const getConversations = async () => {
-  const snapshot = await getSchoolRef()
+  const snapshot = await getOrgRef()
     .collection("conversations")
     .orderBy("lastMessageAt", "desc")
     .get();

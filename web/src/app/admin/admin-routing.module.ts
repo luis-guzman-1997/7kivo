@@ -10,6 +10,7 @@ import { BotConfigComponent } from './bot-config/bot-config.component';
 import { FlowBuilderComponent } from './flow-builder/flow-builder.component';
 import { InboxComponent } from './inbox/inbox.component';
 import { ChatComponent } from './chat/chat.component';
+import { OrgSettingsComponent } from './org-settings/org-settings.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -19,12 +20,13 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: '', component: DashboardComponent },
-      { path: 'aspirantes', component: StudentsComponent },
+      { path: 'contactos', component: StudentsComponent },
       { path: 'chat', component: ChatComponent },
       { path: 'bandeja', component: InboxComponent },
       { path: 'administradores', component: AdminUsersComponent },
       { path: 'bot', component: BotConfigComponent },
-      { path: 'flujos', component: FlowBuilderComponent }
+      { path: 'flujos', component: FlowBuilderComponent },
+      { path: 'configuracion', component: OrgSettingsComponent }
     ]
   }
 ];

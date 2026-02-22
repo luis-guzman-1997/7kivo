@@ -45,7 +45,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   togglingMode = false;
   error = '';
   personalWhatsApp = '';
-  botApiUrl = environment.botApiUrl;
+  botApiUrl = '';
   showSettings = false;
   settingsPhone = '';
 
@@ -83,9 +83,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   async loadConfig(): Promise<void> {
     try {
-      const config = await this.firebaseService.getSchoolConfig();
+      const config = await this.firebaseService.getOrgConfig();
       this.personalWhatsApp = config?.personalWhatsApp || '';
       this.settingsPhone = this.personalWhatsApp;
+      this.botApiUrl = config?.botApiUrl || this.authService.botApiUrl || (environment as any).defaultBotApiUrl || '';
     } catch (err) {
       console.error('Error loading config:', err);
     }
@@ -309,7 +310,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   async saveSettings(): Promise<void> {
     try {
-      await this.firebaseService.saveSchoolConfig({ personalWhatsApp: this.settingsPhone });
+      await this.firebaseService.saveOrgConfig({ personalWhatsApp: this.settingsPhone });
       this.personalWhatsApp = this.settingsPhone;
       this.showSettings = false;
     } catch (err) {

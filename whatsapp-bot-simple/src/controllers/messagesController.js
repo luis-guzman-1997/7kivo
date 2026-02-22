@@ -200,7 +200,7 @@ const sendGreeting = async (phoneNumber, contactName = null) => {
   const name = contactName ? ` ${contactName}` : "";
 
   const greetingTemplate = menuConfig?.greeting ||
-    await getMessage("greeting", "¡Hola{name}!\n\nBienvenido al *Instituto CanZion Sonsonate*.\n\nSelecciona una opción:");
+    await getMessage("greeting", "¡Hola{name}!\n\nBienvenido. Selecciona una opción:");
   const greeting = greetingTemplate.replace("{name}", name);
 
   const menuButtonText = menuConfig?.menuButtonText ||
@@ -713,7 +713,7 @@ const showGeneralInfo = async (phoneNumber) => {
   let info;
   if (general) {
     info = "*Información General*\n\n";
-    info += `*${general.schoolName}*\n${general.description}\n\n`;
+    info += `*${general.orgName || general.schoolName || ""}*\n${general.description}\n\n`;
     if (general.focus && general.focus.length > 0) {
       info += "*Enfoque:*\n";
       general.focus.forEach(f => { info += `• ${f}\n`; });

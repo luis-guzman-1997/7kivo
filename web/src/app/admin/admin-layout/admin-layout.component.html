@@ -3,8 +3,8 @@
   <aside class="admin-sidebar">
     <div class="sidebar-header">
       <div class="sidebar-brand">
-        <i class="fas fa-music brand-icon"></i>
-        <span class="brand-text">CanZion Admin</span>
+        <i class="fas fa-building brand-icon"></i>
+        <span class="brand-text">{{ orgName || 'Admin' }}</span>
       </div>
       <button class="sidebar-toggle" (click)="toggleSidebar()">
         <i class="fas" [class.fa-angle-left]="!sidebarCollapsed" [class.fa-angle-right]="sidebarCollapsed"></i>
@@ -16,9 +16,9 @@
         <i class="fas fa-tachometer-alt"></i>
         <span>Dashboard</span>
       </a>
-      <a routerLink="/admin/aspirantes" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-user-graduate"></i>
-        <span>Aspirantes</span>
+      <a routerLink="/admin/contactos" routerLinkActive="active" class="nav-item-admin">
+        <i class="fas fa-users"></i>
+        <span>Contactos</span>
       </a>
       <a routerLink="/admin/chat" routerLinkActive="active" class="nav-item-admin">
         <i class="fas fa-comments"></i>
@@ -39,6 +39,10 @@
       <a routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
         <i class="fas fa-project-diagram"></i>
         <span>Flujos del Bot</span>
+      </a>
+      <a routerLink="/admin/configuracion" routerLinkActive="active" class="nav-item-admin">
+        <i class="fas fa-cog"></i>
+        <span>Configuración</span>
       </a>
 
       <div class="nav-divider"></div>

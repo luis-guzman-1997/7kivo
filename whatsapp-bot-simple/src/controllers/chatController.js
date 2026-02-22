@@ -74,7 +74,7 @@ const sendAdminMessage = async (req, res) => {
       return res.status(403).json({
         ok: false,
         error: "24h_window_expired",
-        message: "La ventana de 24 horas expiró. Debe contactar al aspirante desde WhatsApp personal.",
+        message: "La ventana de 24 horas expiró. Debe contactar al usuario desde WhatsApp personal.",
         windowExpiredAt: conversation?.lastUserMessageMs
           ? new Date(conversation.lastUserMessageMs + WINDOW_24H_MS).toISOString()
           : null

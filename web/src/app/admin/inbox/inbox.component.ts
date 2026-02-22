@@ -40,7 +40,7 @@ export class InboxComponent implements OnInit {
 
       // Filtrar flujos que tienen saveToCollection y NO son "applicants" (esos van en Aspirantes)
       const inboxFlows = flows.filter(f =>
-        f.saveToCollection && f.saveToCollection !== 'applicants'
+        f.saveToCollection && f.saveToCollection !== 'applicants' && f.saveToCollection !== 'contacts'
       );
 
       this.tabs = inboxFlows.map(f => ({
@@ -158,7 +158,7 @@ export class InboxComponent implements OnInit {
 
   getItemFields(item: any): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [];
-    const skip = ['id', 'status', 'createdAt', 'updatedAt', 'schoolId',
+    const skip = ['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
                    'flowId', 'flowName', 'phoneNumber'];
 
     for (const [key, val] of Object.entries(item)) {
@@ -186,7 +186,7 @@ export class InboxComponent implements OnInit {
 
   getWhatsAppMessageLink(phone: string, name: string): string {
     const cleaned = phone?.replace(/[^0-9]/g, '') || '';
-    const msg = encodeURIComponent(`Hola ${name}, respecto a tu consulta en Instituto CanZion Sonsonate. `);
+    const msg = encodeURIComponent(`Hola ${name}, respecto a tu consulta. `);
     return `https://wa.me/${cleaned}?text=${msg}`;
   }
 

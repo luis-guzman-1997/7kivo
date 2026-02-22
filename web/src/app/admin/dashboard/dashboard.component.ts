@@ -8,31 +8,31 @@ import { FirebaseService } from '../../services/firebase.service';
 })
 export class DashboardComponent implements OnInit {
   stats = {
-    totalApplicants: 0,
-    pendingApplicants: 0,
-    acceptedApplicants: 0,
-    totalStudents: 0,
+    totalContacts: 0,
+    pendingContacts: 0,
+    convertedContacts: 0,
+    totalClients: 0,
     totalAdmins: 0
   };
-  recentApplicants: any[] = [];
+  recentContacts: any[] = [];
   loading = true;
 
   constructor(private firebaseService: FirebaseService) {}
 
   async ngOnInit(): Promise<void> {
     try {
-      const [applicants, students, admins] = await Promise.all([
-        this.firebaseService.getApplicants(),
-        this.firebaseService.getStudents(),
+      const [contacts, clients, admins] = await Promise.all([
+        this.firebaseService.getContacts(),
+        this.firebaseService.getClients(),
         this.firebaseService.getAdmins()
       ]);
 
-      this.stats.totalApplicants = applicants.length;
-      this.stats.pendingApplicants = applicants.filter(a => a.status === 'pending').length;
-      this.stats.acceptedApplicants = applicants.filter(a => a.status === 'accepted').length;
-      this.stats.totalStudents = students.length;
+      this.stats.totalContacts = contacts.length;
+      this.stats.pendingContacts = contacts.filter(a => a.status === 'pending').length;
+      this.stats.convertedContacts = contacts.filter(a => a.status === 'converted').length;
+      this.stats.totalClients = clients.length;
       this.stats.totalAdmins = admins.length;
-      this.recentApplicants = applicants.slice(0, 5);
+      this.recentContacts = contacts.slice(0, 5);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
@@ -46,7 +46,7 @@ export class DashboardComponent implements OnInit {
 
   formatDate(timestamp: any): string {
     if (!timestamp?.seconds) return 'N/A';
-    return new Date(timestamp.seconds * 1000).toLocaleDateString('es-SV', {
+    return new Date(timestamp.seconds * 1000).toLocaleDateString('es', {
       day: '2-digit', month: 'short', year: 'numeric'
     });
   }
@@ -54,7 +54,7 @@ export class DashboardComponent implements OnInit {
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
       pending: 'Pendiente',
-      accepted: 'Aceptado',
+      converted: 'Convertido',
       rejected: 'Rechazado'
     };
     return labels[status] || status;

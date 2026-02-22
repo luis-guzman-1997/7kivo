@@ -71,7 +71,15 @@ export class AdminUsersComponent implements OnInit {
     this.formSuccess = '';
 
     try {
-      await this.authService.createUser(this.newAdmin.email, this.newAdmin.password);
+      const user = await this.authService.createUser(this.newAdmin.email, this.newAdmin.password);
+
+      // Map the new user to this organization
+      await this.firebaseService.setUserOrg(user.uid, {
+        organizationId: this.firebaseService.getOrgId(),
+        email: this.newAdmin.email,
+        role: this.newAdmin.role,
+        name: this.newAdmin.name
+      });
 
       await this.firebaseService.addAdmin({
         email: this.newAdmin.email,

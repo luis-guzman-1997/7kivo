@@ -1,8 +1,8 @@
 const { db } = require("../config/firebase");
-const { getSchoolId } = require("../config/schoolConfig");
+const { getOrgId } = require("../config/orgConfig");
 
-const getSchoolRef = () => {
-  return db.collection("schools").doc(getSchoolId());
+const getOrgRef = () => {
+  return db.collection("organizations").doc(getOrgId());
 };
 
 // ==================== CACHE ====================
@@ -32,7 +32,7 @@ const loadBotMessages = async () => {
     return messagesCache;
   }
   try {
-    const snapshot = await getSchoolRef().collection("botMessages").get();
+    const snapshot = await getOrgRef().collection("botMessages").get();
     const messages = {};
     snapshot.docs.forEach(doc => {
       const data = doc.data();
@@ -55,7 +55,7 @@ const getMessage = async (key, fallback = "") => {
 // ==================== INFO ====================
 const getContactInfo = async () => {
   try {
-    const doc = await getSchoolRef().collection("info").doc("contact").get();
+    const doc = await getOrgRef().collection("info").doc("contact").get();
     return doc.exists ? doc.data() : null;
   } catch (error) {
     console.error("Error loading contact info:", error);
@@ -65,7 +65,7 @@ const getContactInfo = async () => {
 
 const getScheduleInfo = async () => {
   try {
-    const doc = await getSchoolRef().collection("info").doc("schedule").get();
+    const doc = await getOrgRef().collection("info").doc("schedule").get();
     return doc.exists ? doc.data() : null;
   } catch (error) {
     console.error("Error loading schedule info:", error);
@@ -75,7 +75,7 @@ const getScheduleInfo = async () => {
 
 const getGeneralInfo = async () => {
   try {
-    const doc = await getSchoolRef().collection("info").doc("general").get();
+    const doc = await getOrgRef().collection("info").doc("general").get();
     return doc.exists ? doc.data() : null;
   } catch (error) {
     console.error("Error loading general info:", error);
@@ -86,7 +86,7 @@ const getGeneralInfo = async () => {
 // ==================== PROGRAMS ====================
 const getProgramInfo = async (programId) => {
   try {
-    const doc = await getSchoolRef().collection("programs").doc(programId).get();
+    const doc = await getOrgRef().collection("programs").doc(programId).get();
     return doc.exists ? doc.data() : null;
   } catch (error) {
     console.error("Error loading program:", error);
@@ -96,7 +96,7 @@ const getProgramInfo = async (programId) => {
 
 const getAllPrograms = async () => {
   try {
-    const snapshot = await getSchoolRef().collection("programs").get();
+    const snapshot = await getOrgRef().collection("programs").get();
     return snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(p => p.active !== false)
@@ -110,10 +110,20 @@ const getAllPrograms = async () => {
 // ==================== CONFIG ====================
 const getGeneralConfig = async () => {
   try {
-    const doc = await getSchoolRef().collection("config").doc("general").get();
+    const doc = await getOrgRef().collection("config").doc("general").get();
     return doc.exists ? doc.data() : null;
   } catch (error) {
     console.error("Error loading config:", error);
+    return null;
+  }
+};
+
+const getWhatsAppConfig = async () => {
+  try {
+    const doc = await getOrgRef().collection("config").doc("whatsapp").get();
+    return doc.exists ? doc.data() : null;
+  } catch (error) {
+    console.error("Error loading WhatsApp config:", error);
     return null;
   }
 };
@@ -125,7 +135,7 @@ const getFlows = async () => {
     return flowsCache;
   }
   try {
-    const snapshot = await getSchoolRef().collection("flows").get();
+    const snapshot = await getOrgRef().collection("flows").get();
     const flows = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(f => f.active !== false)
@@ -141,7 +151,7 @@ const getFlows = async () => {
 
 const getFlow = async (flowId) => {
   try {
-    const doc = await getSchoolRef().collection("flows").doc(flowId).get();
+    const doc = await getOrgRef().collection("flows").doc(flowId).get();
     return doc.exists ? { id: doc.id, ...doc.data() } : null;
   } catch (error) {
     console.error("Error loading flow:", error);
@@ -156,7 +166,7 @@ const getMenuConfig = async () => {
     return menuCache;
   }
   try {
-    const doc = await getSchoolRef().collection("config").doc("menu").get();
+    const doc = await getOrgRef().collection("config").doc("menu").get();
     if (doc.exists) {
       menuCache = doc.data();
       menuCacheTimestamp = now;
@@ -172,7 +182,7 @@ const getMenuConfig = async () => {
 // ==================== COLLECTIONS (for dynamic select steps) ====================
 const getCollectionItems = async (collectionName) => {
   try {
-    const snapshot = await getSchoolRef().collection(collectionName).get();
+    const snapshot = await getOrgRef().collection(collectionName).get();
     return snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(item => item.active !== false)
@@ -187,9 +197,9 @@ const getCollectionItems = async (collectionName) => {
 const saveFlowSubmission = async (collectionName, data) => {
   try {
     const { admin } = require("../config/firebase");
-    const docRef = await getSchoolRef().collection(collectionName).add({
+    const docRef = await getOrgRef().collection(collectionName).add({
       ...data,
-      schoolId: getSchoolId(),
+      organizationId: getOrgId(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       status: "pending"
@@ -211,6 +221,7 @@ module.exports = {
   getProgramInfo,
   getAllPrograms,
   getGeneralConfig,
+  getWhatsAppConfig,
   getFlows,
   getFlow,
   getMenuConfig,

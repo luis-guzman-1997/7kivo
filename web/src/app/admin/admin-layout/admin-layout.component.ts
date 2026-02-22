@@ -1,20 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.css']
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnDestroy {
   sidebarCollapsed = false;
   userEmail = '';
+  orgName = '';
+  private subs: Subscription[] = [];
 
   constructor(private authService: AuthService, private router: Router) {
-    this.authService.currentUser$.subscribe(user => {
-      this.userEmail = user?.email || '';
-    });
+    this.subs.push(
+      this.authService.currentUser$.subscribe(user => {
+        this.userEmail = user?.email || '';
+      }),
+      this.authService.orgName$.subscribe(name => {
+        this.orgName = name;
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
   }
 
   toggleSidebar(): void {

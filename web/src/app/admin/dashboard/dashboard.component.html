@@ -14,8 +14,8 @@
           <i class="fas fa-user-clock"></i>
         </div>
         <div class="stat-info">
-          <span class="stat-number">{{ stats.totalApplicants }}</span>
-          <span class="stat-label">Total Aspirantes</span>
+          <span class="stat-number">{{ stats.totalContacts }}</span>
+          <span class="stat-label">Total Contactos</span>
         </div>
       </div>
 
@@ -24,18 +24,18 @@
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-info">
-          <span class="stat-number">{{ stats.pendingApplicants }}</span>
+          <span class="stat-number">{{ stats.pendingContacts }}</span>
           <span class="stat-label">Pendientes</span>
         </div>
       </div>
 
       <div class="stat-card">
         <div class="stat-icon bg-green">
-          <i class="fas fa-graduation-cap"></i>
+          <i class="fas fa-user-check"></i>
         </div>
         <div class="stat-info">
-          <span class="stat-number">{{ stats.totalStudents }}</span>
-          <span class="stat-label">Estudiantes</span>
+          <span class="stat-number">{{ stats.totalClients }}</span>
+          <span class="stat-label">Clientes</span>
         </div>
       </div>
 
@@ -50,18 +50,18 @@
       </div>
     </div>
 
-    <!-- Recent Applicants -->
+    <!-- Recent Contacts -->
     <div class="panel">
       <div class="panel-header">
-        <h3><i class="fas fa-user-clock"></i> Aspirantes Recientes</h3>
-        <a routerLink="/admin/aspirantes" class="btn-view-all">Ver todos <i class="fas fa-arrow-right"></i></a>
+        <h3><i class="fas fa-user-clock"></i> Contactos Recientes</h3>
+        <a routerLink="/admin/contactos" class="btn-view-all">Ver todos <i class="fas fa-arrow-right"></i></a>
       </div>
       <div class="panel-body">
-        <div *ngIf="recentApplicants.length === 0" class="empty-state">
+        <div *ngIf="recentContacts.length === 0" class="empty-state">
           <i class="fas fa-inbox"></i>
-          <p>No hay aspirantes aún</p>
+          <p>No hay contactos aún</p>
         </div>
-        <table class="data-table" *ngIf="recentApplicants.length > 0">
+        <table class="data-table" *ngIf="recentContacts.length > 0">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -72,7 +72,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let a of recentApplicants">
+            <tr *ngFor="let a of recentContacts">
               <td>
                 <strong>{{ getPersonName(a) }}</strong>
               </td>

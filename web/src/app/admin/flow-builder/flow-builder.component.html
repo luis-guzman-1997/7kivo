@@ -30,7 +30,7 @@
           <div class="form-group-config">
             <label>Mensaje de Saludo</label>
             <textarea [(ngModel)]="menuConfig.greeting" rows="3"
-                      placeholder="¡Hola{name}!&#10;Bienvenido al *Instituto CanZion*&#10;Selecciona una opción:"></textarea>
+                      placeholder="¡Hola{name}!&#10;Bienvenido a *Tu Organización*&#10;Selecciona una opción:"></textarea>
             <span class="field-hint">Usa <code>{{'{'}}name{{'}'}}</code> para incluir el nombre del contacto</span>
           </div>
           <div class="form-row-config">
@@ -159,7 +159,7 @@
         <div class="form-row-config">
           <div class="form-group-config">
             <label>Nombre del Flujo *</label>
-            <input type="text" [(ngModel)]="currentFlow.name" placeholder="Ej: Registro de Estudiantes" />
+            <input type="text" [(ngModel)]="currentFlow.name" placeholder="Ej: Registro de Contactos" />
           </div>
           <div class="form-group-config">
             <label>Tipo</label>
@@ -365,7 +365,7 @@
         <div class="form-group-config">
           <label>Mensaje al finalizar el flujo</label>
           <textarea [(ngModel)]="currentFlow.completionMessage" rows="5"
-                    placeholder="*REGISTRO COMPLETADO*&#10;&#10;Nombre: {fullName}&#10;Edad: {age}&#10;&#10;Gracias, un maestro te contactará pronto."></textarea>
+                    placeholder="*REGISTRO COMPLETADO*&#10;&#10;Nombre: {fullName}&#10;&#10;Gracias, nos pondremos en contacto pronto."></textarea>
           <div class="field-hint" *ngIf="getAvailableFields().length > 0">
             Variables disponibles: <code *ngFor="let f of getAvailableFields()">{{ f }} </code> <code>{{'{'}}phoneNumber{{'}'}}</code>
           </div>

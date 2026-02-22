@@ -11,43 +11,150 @@ import { environment } from '../../environments/environment';
 export class FirebaseService {
   private app: FirebaseApp;
   private db: Firestore;
-  private schoolId: string;
+  private _orgId: string | null = null;
+  private _orgConfig: any = null;
 
   constructor() {
     this.app = initializeApp(environment.firebase);
     this.db = getFirestore(this.app);
-    this.schoolId = environment.schoolId;
   }
 
   getFirestore(): Firestore {
     return this.db;
   }
 
-  getSchoolId(): string {
-    return this.schoolId;
+  // ==================== ORG RESOLUTION ====================
+
+  setOrgId(orgId: string): void {
+    this._orgId = orgId;
   }
 
-  private schoolPath(): string {
-    return `schools/${this.schoolId}`;
+  getOrgId(): string {
+    if (!this._orgId) {
+      throw new Error('Organization ID not set. User must be logged in.');
+    }
+    return this._orgId;
+  }
+
+  get isOrgSet(): boolean {
+    return !!this._orgId;
+  }
+
+  private orgPath(): string {
+    return `organizations/${this.getOrgId()}`;
+  }
+
+  async getUserOrg(uid: string): Promise<any | null> {
+    const userDocRef = doc(this.db, 'users', uid);
+    const snap = await getDoc(userDocRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async setUserOrg(uid: string, data: { organizationId: string; email: string; role: string; name?: string }): Promise<void> {
+    const userDocRef = doc(this.db, 'users', uid);
+    await setDoc(userDocRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  // ==================== ORG MANAGEMENT ====================
+
+  async createOrganization(orgData: {
+    name: string;
+    industry?: string;
+    description?: string;
+  }): Promise<string> {
+    const orgId = orgData.name.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .substring(0, 30);
+
+    const orgDocRef = doc(this.db, 'organizations', orgId);
+    await setDoc(orgDocRef, {
+      name: orgData.name,
+      industry: orgData.industry || 'general',
+      description: orgData.description || '',
+      createdAt: serverTimestamp(),
+      active: true
+    });
+
+    // Create default config
+    const configRef = doc(this.db, 'organizations', orgId, 'config', 'general');
+    await setDoc(configRef, {
+      orgName: orgData.name,
+      description: orgData.description || '',
+      industry: orgData.industry || 'general',
+      welcomeMessage: `Bienvenido a ${orgData.name}`,
+      inactivityTimeout: 180000,
+      createdAt: serverTimestamp()
+    });
+
+    // Create default menu config
+    const menuRef = doc(this.db, 'organizations', orgId, 'config', 'menu');
+    await setDoc(menuRef, {
+      greeting: `¡Hola{name}!\n\nBienvenido a *${orgData.name}*.\n\nSelecciona una opción:`,
+      menuButtonText: 'Ver opciones',
+      fallbackMessage: 'No entendí tu mensaje. Por favor selecciona una opción del menú.',
+      items: [],
+      createdAt: serverTimestamp()
+    });
+
+    // Create default bot messages
+    const botMsgsRef = collection(this.db, 'organizations', orgId, 'botMessages');
+    const defaultMessages = [
+      { key: 'greeting', label: 'Saludo', category: 'greeting', content: `¡Hola{name}!\n\nBienvenido a *${orgData.name}*.` },
+      { key: 'fallback', label: 'Mensaje no reconocido', category: 'fallback', content: 'No entendí tu mensaje. Escribe *hola* para ver el menú.' },
+      { key: 'goodbye', label: 'Despedida', category: 'general', content: '¡Hasta luego! Escribe *hola* cuando necesites ayuda.' },
+      { key: 'session_expired', label: 'Sesión expirada', category: 'general', content: 'Tu sesión se cerró por inactividad. Escribe *hola* cuando necesites ayuda.' }
+    ];
+    for (const msg of defaultMessages) {
+      await addDoc(botMsgsRef, { ...msg, createdAt: serverTimestamp() });
+    }
+
+    return orgId;
+  }
+
+  async getOrganization(orgId: string): Promise<any | null> {
+    const orgDocRef = doc(this.db, 'organizations', orgId);
+    const snap = await getDoc(orgDocRef);
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  }
+
+  // ==================== ORG CONFIG ====================
+
+  async getOrgConfig(): Promise<any | null> {
+    return this.getDocument('config', 'general');
+  }
+
+  async saveOrgConfig(data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'config', 'general');
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async getWhatsAppConfig(): Promise<any | null> {
+    return this.getDocument('config', 'whatsapp');
+  }
+
+  async saveWhatsAppConfig(data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'config', 'whatsapp');
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 
   // ==================== GENERIC HELPERS ====================
 
   async getCollection(subcollection: string, constraints: QueryConstraint[] = []): Promise<any[]> {
-    const colRef = collection(this.db, this.schoolPath(), subcollection);
+    const colRef = collection(this.db, this.orgPath(), subcollection);
     const q = constraints.length > 0 ? query(colRef, ...constraints) : query(colRef);
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
   async getDocument(subcollection: string, docId: string): Promise<any | null> {
-    const docRef = doc(this.db, this.schoolPath(), subcollection, docId);
+    const docRef = doc(this.db, this.orgPath(), subcollection, docId);
     const snap = await getDoc(docRef);
     return snap.exists() ? { id: snap.id, ...snap.data() } : null;
   }
 
   async addDocument(subcollection: string, data: DocumentData): Promise<string> {
-    const colRef = collection(this.db, this.schoolPath(), subcollection);
+    const colRef = collection(this.db, this.orgPath(), subcollection);
     const docRef = await addDoc(colRef, {
       ...data,
       createdAt: serverTimestamp(),
@@ -57,19 +164,19 @@ export class FirebaseService {
   }
 
   async updateDocument(subcollection: string, docId: string, data: DocumentData): Promise<void> {
-    const docRef = doc(this.db, this.schoolPath(), subcollection, docId);
+    const docRef = doc(this.db, this.orgPath(), subcollection, docId);
     await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
   }
 
   async deleteDocument(subcollection: string, docId: string): Promise<void> {
-    const docRef = doc(this.db, this.schoolPath(), subcollection, docId);
+    const docRef = doc(this.db, this.orgPath(), subcollection, docId);
     await deleteDoc(docRef);
   }
 
-  // ==================== ASPIRANTES (registros del bot) ====================
+  // ==================== CONTACTS (replaces applicants) ====================
 
-  async getApplicants(): Promise<any[]> {
-    const items = await this.getCollection('applicants');
+  async getContacts(): Promise<any[]> {
+    const items = await this.getCollection('contacts');
     return items.sort((a, b) => {
       const dateA = a.createdAt?.seconds || 0;
       const dateB = b.createdAt?.seconds || 0;
@@ -77,28 +184,28 @@ export class FirebaseService {
     });
   }
 
-  async updateApplicantStatus(applicantId: string, status: string): Promise<void> {
-    await this.updateDocument('applicants', applicantId, { status });
+  async updateContactStatus(contactId: string, status: string): Promise<void> {
+    await this.updateDocument('contacts', contactId, { status });
   }
 
-  async acceptApplicant(applicant: any): Promise<string> {
-    const studentData: any = { ...applicant };
-    delete studentData.id;
-    delete studentData.createdAt;
-    delete studentData.updatedAt;
-    studentData.status = 'active';
-    studentData.applicantId = applicant.id;
-    studentData.acceptedAt = serverTimestamp();
+  async convertContact(contact: any): Promise<string> {
+    const clientData: any = { ...contact };
+    delete clientData.id;
+    delete clientData.createdAt;
+    delete clientData.updatedAt;
+    clientData.status = 'active';
+    clientData.contactId = contact.id;
+    clientData.convertedAt = serverTimestamp();
 
-    const studentId = await this.addDocument('students', studentData);
-    await this.updateDocument('applicants', applicant.id, { status: 'accepted', studentId });
-    return studentId;
+    const clientId = await this.addDocument('clients', clientData);
+    await this.updateDocument('contacts', contact.id, { status: 'converted', clientId });
+    return clientId;
   }
 
-  // ==================== ESTUDIANTES (aceptados) ====================
+  // ==================== CLIENTS (replaces students) ====================
 
-  async getStudents(): Promise<any[]> {
-    const items = await this.getCollection('students');
+  async getClients(): Promise<any[]> {
+    const items = await this.getCollection('clients');
     return items.sort((a, b) => {
       const dateA = a.createdAt?.seconds || 0;
       const dateB = b.createdAt?.seconds || 0;
@@ -106,44 +213,31 @@ export class FirebaseService {
     });
   }
 
-  async updateStudentStatus(studentId: string, status: string): Promise<void> {
-    await this.updateDocument('students', studentId, { status });
+  async updateClientStatus(clientId: string, status: string): Promise<void> {
+    await this.updateDocument('clients', clientId, { status });
   }
 
-  // ==================== ADMINS ====================
+  // ==================== ADMINS (org-scoped) ====================
 
   async getAdmins(): Promise<any[]> {
-    const colRef = collection(this.db, 'admins');
-    const snapshot = await getDocs(colRef);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    return this.getCollection('admins');
   }
 
   async addAdmin(data: { email: string; name: string; role: string }): Promise<string> {
-    const colRef = collection(this.db, 'admins');
-    const docRef = await addDoc(colRef, {
-      ...data,
-      active: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    return docRef.id;
+    return this.addDocument('admins', { ...data, active: true });
   }
 
   async updateAdmin(adminId: string, data: DocumentData): Promise<void> {
-    const docRef = doc(this.db, 'admins', adminId);
-    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    await this.updateDocument('admins', adminId, data);
   }
 
   async deleteAdmin(adminId: string): Promise<void> {
-    const docRef = doc(this.db, 'admins', adminId);
-    await deleteDoc(docRef);
+    await this.deleteDocument('admins', adminId);
   }
 
-  async isAdmin(email: string): Promise<boolean> {
-    const colRef = collection(this.db, 'admins');
-    const q = query(colRef, where('email', '==', email), where('active', '==', true));
-    const snapshot = await getDocs(q);
-    return !snapshot.empty;
+  async isOrgAdmin(email: string): Promise<boolean> {
+    const admins = await this.getCollection('admins');
+    return admins.some(a => a.email === email && a.active !== false);
   }
 
   // ==================== BOT MESSAGES ====================
@@ -227,7 +321,7 @@ export class FirebaseService {
   }
 
   async saveMenuConfig(data: DocumentData): Promise<void> {
-    const docRef = doc(this.db, this.schoolPath(), 'config', 'menu');
+    const docRef = doc(this.db, this.orgPath(), 'config', 'menu');
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 
@@ -257,7 +351,7 @@ export class FirebaseService {
   // ==================== CONVERSATIONS ====================
 
   async getConversations(): Promise<any[]> {
-    const colRef = collection(this.db, this.schoolPath(), 'conversations');
+    const colRef = collection(this.db, this.orgPath(), 'conversations');
     const q = query(colRef, orderBy('lastMessageAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -265,7 +359,7 @@ export class FirebaseService {
 
   async getConversationMessages(phoneNumber: string, limitCount = 100): Promise<any[]> {
     const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const colRef = collection(this.db, this.schoolPath(), 'conversations', cleanPhone, 'messages');
+    const colRef = collection(this.db, this.orgPath(), 'conversations', cleanPhone, 'messages');
     const q = query(colRef, orderBy('timestamp', 'asc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -273,7 +367,7 @@ export class FirebaseService {
 
   onConversationMessages(phoneNumber: string, callback: (msgs: any[]) => void): Unsubscribe {
     const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const colRef = collection(this.db, this.schoolPath(), 'conversations', cleanPhone, 'messages');
+    const colRef = collection(this.db, this.orgPath(), 'conversations', cleanPhone, 'messages');
     const q = query(colRef, orderBy('timestamp', 'asc'));
     return onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -282,7 +376,7 @@ export class FirebaseService {
   }
 
   onConversationsChange(callback: (convs: any[]) => void): Unsubscribe {
-    const colRef = collection(this.db, this.schoolPath(), 'conversations');
+    const colRef = collection(this.db, this.orgPath(), 'conversations');
     const q = query(colRef, orderBy('lastMessageAt', 'desc'));
     return onSnapshot(q, (snapshot) => {
       const convs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -292,18 +386,7 @@ export class FirebaseService {
 
   async markConversationRead(phoneNumber: string): Promise<void> {
     const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const docRef = doc(this.db, this.schoolPath(), 'conversations', cleanPhone);
+    const docRef = doc(this.db, this.orgPath(), 'conversations', cleanPhone);
     await updateDoc(docRef, { unreadCount: 0 });
-  }
-
-  // ==================== SCHOOL CONFIG (personal WhatsApp) ====================
-
-  async getSchoolConfig(): Promise<any | null> {
-    return this.getDocument('config', 'general');
-  }
-
-  async saveSchoolConfig(data: DocumentData): Promise<void> {
-    const docRef = doc(this.db, this.schoolPath(), 'config', 'general');
-    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 }

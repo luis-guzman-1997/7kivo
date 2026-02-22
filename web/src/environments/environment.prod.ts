@@ -9,6 +9,5 @@ export const environment = {
     appId: "1:895511983977:web:49517c811c74eb6ef56ff8",
     measurementId: "G-ZNZYPH4X5V"
   },
-  schoolId: "sonsonate",
-  botApiUrl: "https://px4gtxt7-3005.use2.devtunnels.ms"
+  defaultBotApiUrl: "https://px4gtxt7-3005.use2.devtunnels.ms"
 };
