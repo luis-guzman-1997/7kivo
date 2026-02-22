@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Environment & secrets
+.env
+*.env.local
+*.env.production
+
+# Firebase credentials (NEVER commit)
+kivo7.json
+*-service-account.json
+*serviceAccount*.json
+
+# Build output
+dist/
+tmp/
+out-tsc/
+
+# Angular cache
+.angular/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Misc
+coverage/
+.sass-cache/

@@ -1,0 +1,143 @@
+.navbar {
+  padding: 1rem 0;
+}
+
+.navbar-nav .nav-link {
+  font-weight: 500;
+  margin: 0 0.5rem;
+  color: var(--text-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 8px;
+}
+
+.navbar-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+  width: 80%;
+}
+
+/* Indicador visual mejorado para sección activa */
+.navbar-nav .nav-link.active {
+  font-weight: 600;
+  position: relative;
+}
+
+.navbar-nav .nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border-radius: 0 3px 3px 0;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 3px;
+    opacity: 1;
+  }
+}
+
+/* Botón Iniciar Sesión */
+.btn-login-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white !important;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+}
+
+.btn-login-nav i {
+  font-size: 0.85rem;
+  color: white !important;
+  transition: transform 0.3s ease;
+}
+
+.btn-login-nav:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white !important;
+}
+
+.btn-login-nav:hover i {
+  transform: translateX(2px);
+}
+
+.btn-login-nav:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 991.98px) {
+  .btn-login-nav {
+    margin-top: 12px;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+main {
+  margin-top: 76px;
+  position: relative;
+  scroll-snap-type: none;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: calc(100vh - 76px);
+  scroll-behavior: auto;
+  scroll-padding-top: 120px;
+}
+
+/* Ocultar scrollbar en main */
+main::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
+
+main {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+main.no-margin {
+  margin-top: 0;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+  scroll-padding-top: 0;
+  scroll-snap-type: none;
+}

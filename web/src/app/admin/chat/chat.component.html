@@ -1,0 +1,231 @@
+<div class="chat-wrapper">
+  <!-- Settings Modal -->
+  <div class="modal-overlay" *ngIf="showSettings" (click)="showSettings = false">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h3><i class="fas fa-cog"></i> Configuración de Chat</h3>
+      <div class="form-group">
+        <label>WhatsApp Personal (fallback 24h)</label>
+        <input type="text" [(ngModel)]="settingsPhone"
+               placeholder="Ej: 50312345678 (código de país sin +)">
+        <small>Número al que se redirigirá cuando expire la ventana de 24h</small>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showSettings = false">Cancelar</button>
+        <button class="btn btn-primary" (click)="saveSettings()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: Conversations List -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <h2>
+        <i class="fab fa-whatsapp"></i> Conversaciones
+        <span class="unread-total" *ngIf="getTotalUnread() > 0">{{ getTotalUnread() }}</span>
+      </h2>
+      <button class="btn-icon" (click)="showSettings = true" title="Configuración">
+        <i class="fas fa-cog"></i>
+      </button>
+    </div>
+
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()"
+             placeholder="Buscar conversación...">
+    </div>
+
+    <div class="conversations-list" *ngIf="!loading">
+      <div class="conversation-item"
+           *ngFor="let conv of filteredConversations"
+           [class.active]="selectedConversation?.id === conv.id"
+           [class.has-unread]="(conv.unreadCount || 0) > 0"
+           [class.admin-mode]="conv.mode === 'admin'"
+           (click)="selectConversation(conv)">
+        <div class="conv-avatar" [class.avatar-admin]="conv.mode === 'admin'">
+          <i class="fas" [class.fa-user]="conv.mode !== 'admin'" [class.fa-headset]="conv.mode === 'admin'"></i>
+        </div>
+        <div class="conv-info">
+          <div class="conv-top">
+            <span class="conv-name">{{ getContactDisplayName(conv) }}</span>
+            <span class="conv-time">{{ formatTimestamp(conv.lastMessageAt) }}</span>
+          </div>
+          <div class="conv-bottom">
+            <span class="conv-mode-tag" *ngIf="conv.mode === 'admin'">Admin</span>
+            <span class="conv-mode-tag bot-tag" *ngIf="conv.mode !== 'admin'">Bot</span>
+            <span class="conv-phone">{{ formatPhone(conv.phoneNumber) }}</span>
+            <span class="conv-badge" *ngIf="(conv.unreadCount || 0) > 0">{{ conv.unreadCount }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="empty-convs" *ngIf="filteredConversations.length === 0">
+        <i class="fas fa-comments"></i>
+        <p>No hay conversaciones</p>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando...</p>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="chat-main" *ngIf="selectedConversation; else noSelection">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <button class="btn-back" (click)="selectedConversation = null">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="header-avatar" [class.avatar-admin]="isAdminMode">
+          <i class="fas" [class.fa-user]="!isAdminMode" [class.fa-headset]="isAdminMode"></i>
+        </div>
+        <div class="header-details">
+          <span class="header-name">{{ getContactDisplayName(selectedConversation) }}</span>
+          <span class="header-phone">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <!-- Mode indicator & toggle -->
+        <div class="mode-control">
+          <div class="mode-badge" [class.mode-admin]="isAdminMode" [class.mode-bot]="isBotMode">
+            <i class="fas" [class.fa-headset]="isAdminMode" [class.fa-robot]="isBotMode"></i>
+            {{ isAdminMode ? 'Admin' : 'Bot' }}
+          </div>
+          <button class="btn-mode-toggle"
+                  *ngIf="isBotMode"
+                  (click)="takeControl()"
+                  [disabled]="togglingMode"
+                  title="Tomar control de la conversación">
+            <i class="fas fa-hand-paper"></i> Tomar Control
+          </button>
+          <button class="btn-mode-toggle btn-release"
+                  *ngIf="isAdminMode"
+                  (click)="releaseToBot()"
+                  [disabled]="togglingMode"
+                  title="Devolver conversación al bot">
+            <i class="fas fa-robot"></i> Devolver al Bot
+          </button>
+        </div>
+
+        <div class="window-indicator" [class.active]="isWithin24h" [class.expired]="!isWithin24h">
+          <i class="fas" [class.fa-clock]="isWithin24h" [class.fa-exclamation-triangle]="!isWithin24h"></i>
+          <span *ngIf="isWithin24h">{{ windowTimeLeft }}</span>
+          <span *ngIf="!isWithin24h">24h</span>
+        </div>
+        <a [href]="getWhatsAppLink(selectedConversation.phoneNumber)"
+           target="_blank" class="btn-wa-personal" title="Abrir WhatsApp personal">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="error-banner" *ngIf="error">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{ error }}</span>
+      <button (click)="error = ''"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Mode Banner -->
+    <div class="mode-banner admin-banner" *ngIf="isAdminMode">
+      <i class="fas fa-headset"></i>
+      <span>Estás en control de esta conversación. El bot no responderá automáticamente.</span>
+      <span class="mode-admin-name" *ngIf="selectedConversation.modeAdminName">
+        ({{ selectedConversation.modeAdminName }})
+      </span>
+    </div>
+    <div class="mode-banner bot-banner" *ngIf="isBotMode && isInFlow">
+      <i class="fas fa-robot"></i>
+      <span>El usuario está en un flujo del bot ({{ sessionStep }}). Toma control si necesitas intervenir.</span>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" #messagesContainer>
+      <div class="messages-inner">
+        <div class="message-group"
+             *ngFor="let msg of messages"
+             [class.from-user]="msg.from === 'user'"
+             [class.from-bot]="msg.from === 'bot'"
+             [class.from-admin]="msg.from === 'admin'">
+          <div class="message-bubble">
+            <span class="message-sender" *ngIf="msg.from === 'admin' && msg.adminName">
+              {{ msg.adminName }}
+            </span>
+            <span class="message-sender bot-label" *ngIf="msg.from === 'bot'">Bot</span>
+            <p class="message-text">{{ msg.text }}</p>
+            <span class="message-time">{{ formatMessageTime(msg.timestamp) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-messages" *ngIf="messages.length === 0">
+        <i class="fas fa-comment-dots"></i>
+        <p>No hay mensajes aún</p>
+      </div>
+    </div>
+
+    <!-- Window Expired Banner -->
+    <div class="window-expired-banner" *ngIf="!isWithin24h">
+      <div class="expired-content">
+        <i class="fas fa-exclamation-circle"></i>
+        <div class="expired-text">
+          <strong>Ventana de 24h expirada</strong>
+          <p>Ya no puedes enviar mensajes por el bot. Contacta desde WhatsApp personal.</p>
+        </div>
+        <a [href]="getWhatsAppLink(selectedConversation.phoneNumber)"
+           target="_blank" class="btn-wa-redirect">
+          <i class="fab fa-whatsapp"></i> Abrir WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input" *ngIf="isWithin24h">
+      <div class="input-error" *ngIf="error">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+        <button (click)="error = ''"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="input-row">
+        <textarea
+          [(ngModel)]="newMessage"
+          (keypress)="onKeyPress($event)"
+          placeholder="Escribe un mensaje..."
+          rows="1"
+          [disabled]="sending"
+        ></textarea>
+        <button class="btn-send" (click)="sendMessage()" [disabled]="sending || !newMessage.trim()">
+          <i class="fas" [class.fa-paper-plane]="!sending" [class.fa-spinner]="sending" [class.fa-spin]="sending"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noSelection>
+    <div class="chat-main chat-placeholder">
+      <div class="placeholder-content">
+        <i class="fab fa-whatsapp"></i>
+        <h3>Selecciona una conversación</h3>
+        <p>Elige un aspirante de la lista para ver y responder mensajes</p>
+        <div class="placeholder-info">
+          <div class="info-item">
+            <i class="fas fa-robot"></i>
+            <span><strong>Modo Bot:</strong> El bot maneja la conversación automáticamente</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-headset"></i>
+            <span><strong>Modo Admin:</strong> Tú controlas la conversación, el bot no interviene</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-clock"></i>
+            <span>Puedes responder dentro de las 24h después del último mensaje del usuario</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-external-link-alt"></i>
+            <span>Después de 24h, se te redirigirá a WhatsApp personal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

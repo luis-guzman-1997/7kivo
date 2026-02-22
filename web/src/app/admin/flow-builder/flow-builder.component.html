@@ -1,0 +1,415 @@
+<div class="flow-page">
+  <!-- Toast -->
+  <div class="toast toast-success" *ngIf="notice"><i class="fas fa-check-circle"></i> {{ notice }}</div>
+  <div class="toast toast-error" *ngIf="error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+
+  <!-- ==================== LIST VIEW ==================== -->
+  <div *ngIf="!editMode">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title"><i class="fas fa-project-diagram"></i> Constructor de Flujos</h1>
+        <p class="page-subtitle">Diseña flujos conversacionales dinámicos para el bot de WhatsApp</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-menu-config" (click)="toggleMenuConfig()">
+          <i class="fas fa-bars"></i> {{ showMenuConfig ? 'Ocultar Menú' : 'Configurar Menú' }}
+        </button>
+        <button class="btn-new-flow" (click)="openNewFlow()">
+          <i class="fas fa-plus"></i> Nuevo Flujo
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== MENU CONFIG PANEL ========== -->
+    <div class="menu-config-panel" *ngIf="showMenuConfig">
+      <div class="config-section">
+        <h3><i class="fas fa-robot"></i> Menú Principal del Bot</h3>
+        <p class="section-hint">Configura el saludo, las opciones del menú y el mensaje cuando el usuario envía algo no reconocido.</p>
+
+        <div class="config-form">
+          <div class="form-group-config">
+            <label>Mensaje de Saludo</label>
+            <textarea [(ngModel)]="menuConfig.greeting" rows="3"
+                      placeholder="¡Hola{name}!&#10;Bienvenido al *Instituto CanZion*&#10;Selecciona una opción:"></textarea>
+            <span class="field-hint">Usa <code>{{'{'}}name{{'}'}}</code> para incluir el nombre del contacto</span>
+          </div>
+          <div class="form-row-config">
+            <div class="form-group-config">
+              <label>Texto del Botón del Menú</label>
+              <input type="text" [(ngModel)]="menuConfig.menuButtonText" placeholder="Ver opciones" />
+            </div>
+            <div class="form-group-config">
+              <label>Mensaje Fallback</label>
+              <input type="text" [(ngModel)]="menuConfig.fallbackMessage" placeholder="No entendí tu mensaje..." />
+            </div>
+          </div>
+
+          <h4 class="subsection-title"><i class="fas fa-list-ol"></i> Opciones del Menú</h4>
+          <p class="section-hint">Define qué opciones aparecen en el menú del bot. Puedes usar acciones predefinidas o vincular flujos.</p>
+
+          <div class="menu-items-list">
+            <div *ngFor="let item of menuConfig.items; let i = index" class="menu-item-row">
+              <div class="menu-item-handle">
+                <button class="btn-icon-sm" (click)="moveMenuItemUp(i)" [disabled]="i === 0" title="Subir">
+                  <i class="fas fa-chevron-up"></i>
+                </button>
+                <span class="order-badge">{{ i + 1 }}</span>
+                <button class="btn-icon-sm" (click)="moveMenuItemDown(i)" [disabled]="i === menuConfig.items.length - 1" title="Bajar">
+                  <i class="fas fa-chevron-down"></i>
+                </button>
+              </div>
+              <div class="menu-item-fields">
+                <select [(ngModel)]="item.type" (ngModelChange)="onMenuItemTypeChange(item)" class="select-sm">
+                  <option value="builtin">Acción predefinida</option>
+                  <option value="flow">Flujo personalizado</option>
+                </select>
+                <select *ngIf="item.type === 'builtin'" [(ngModel)]="item.action" class="select-sm">
+                  <option value="programs">Programas</option>
+                  <option value="schedule">Horarios</option>
+                  <option value="contact">Contacto</option>
+                  <option value="general">Información General</option>
+                </select>
+                <select *ngIf="item.type === 'flow'" [(ngModel)]="item.flowId" class="select-sm">
+                  <option *ngFor="let f of flows" [value]="f.id">{{ f.name }}</option>
+                </select>
+                <input type="text" [(ngModel)]="item.label" placeholder="Etiqueta" class="input-sm" />
+                <input type="text" [(ngModel)]="item.description" placeholder="Descripción" class="input-sm" />
+              </div>
+              <button class="btn-icon-sm btn-danger" (click)="removeMenuItem(i)" title="Eliminar">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <button class="btn-add-item" (click)="addMenuItem()">
+            <i class="fas fa-plus"></i> Agregar Opción al Menú
+          </button>
+
+          <button class="btn-save-section" (click)="saveMenuConfig()" [disabled]="saving" style="margin-top:16px">
+            <i class="fas fa-save"></i> Guardar Menú
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LOADING ========== -->
+    <div *ngIf="loading" class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i> Cargando flujos...
+    </div>
+
+    <!-- ========== EMPTY STATE ========== -->
+    <div *ngIf="!loading && flows.length === 0" class="empty-state">
+      <i class="fas fa-project-diagram"></i>
+      <p>No hay flujos creados. Crea el primero para configurar las conversaciones del bot.</p>
+    </div>
+
+    <!-- ========== FLOW CARDS ========== -->
+    <div *ngIf="!loading" class="flow-grid">
+      <div *ngFor="let flow of flows" class="flow-card" [class.flow-inactive]="!flow.active">
+        <div class="flow-card-header">
+          <div class="flow-card-title">
+            <i class="fas" [ngClass]="{
+              'fa-user-plus': flow.type === 'registration',
+              'fa-comments': flow.type === 'inquiry',
+              'fa-star': flow.type === 'feedback',
+              'fa-cogs': flow.type !== 'registration' && flow.type !== 'inquiry' && flow.type !== 'feedback'
+            }"></i>
+            <h3>{{ flow.name }}</h3>
+            <span class="flow-status" [class.active]="flow.active" [class.inactive]="!flow.active">
+              {{ flow.active ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+          <p class="flow-desc" *ngIf="flow.description">{{ flow.description }}</p>
+        </div>
+        <div class="flow-card-meta">
+          <span><i class="fas fa-layer-group"></i> {{ flow.steps.length || 0 }} pasos</span>
+          <span><i class="fas fa-tag"></i> {{ flow.menuLabel }}</span>
+          <span><i class="fas fa-database"></i> {{ flow.saveToCollection || 'Sin guardar' }}</span>
+        </div>
+        <div class="flow-card-actions">
+          <button class="btn-flow btn-flow-edit" (click)="openEditFlow(flow)">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button class="btn-flow" [class.btn-flow-deactivate]="flow.active" [class.btn-flow-activate]="!flow.active"
+                  (click)="toggleFlowActive(flow)">
+            <i class="fas" [class.fa-eye-slash]="flow.active" [class.fa-eye]="!flow.active"></i>
+            {{ flow.active ? 'Desactivar' : 'Activar' }}
+          </button>
+          <button class="btn-flow btn-flow-delete" (click)="deleteFlow(flow)">
+            <i class="fas fa-trash"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EDIT VIEW ==================== -->
+  <div *ngIf="editMode" class="flow-editor">
+    <div class="editor-header">
+      <button class="btn-back" (click)="cancelEdit()">
+        <i class="fas fa-arrow-left"></i> Volver
+      </button>
+      <h2>{{ currentFlow.id ? 'Editar Flujo' : 'Nuevo Flujo' }}</h2>
+    </div>
+
+    <!-- FLOW DETAILS -->
+    <div class="config-section">
+      <h3><i class="fas fa-info-circle"></i> Información del Flujo</h3>
+      <div class="config-form">
+        <div class="form-row-config">
+          <div class="form-group-config">
+            <label>Nombre del Flujo *</label>
+            <input type="text" [(ngModel)]="currentFlow.name" placeholder="Ej: Registro de Estudiantes" />
+          </div>
+          <div class="form-group-config">
+            <label>Tipo</label>
+            <select [(ngModel)]="currentFlow.type">
+              <option value="registration">Registro / Formulario</option>
+              <option value="inquiry">Consulta / Contacto</option>
+              <option value="feedback">Comentarios</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group-config">
+          <label>Descripción</label>
+          <input type="text" [(ngModel)]="currentFlow.description" placeholder="Descripción interna del flujo" />
+        </div>
+        <div class="form-row-config">
+          <div class="form-group-config">
+            <label>Etiqueta en Menú *</label>
+            <input type="text" [(ngModel)]="currentFlow.menuLabel" placeholder="Ej: Registrarse" maxlength="24" />
+            <span class="field-hint">Máximo 24 caracteres ({{ currentFlow.menuLabel.length }}/24)</span>
+          </div>
+          <div class="form-group-config">
+            <label>Descripción en Menú</label>
+            <input type="text" [(ngModel)]="currentFlow.menuDescription" placeholder="Ej: Inscripción a programas" maxlength="72" />
+            <span class="field-hint">Máximo 72 caracteres ({{ currentFlow.menuDescription.length }}/72)</span>
+          </div>
+        </div>
+        <div class="form-row-config">
+          <div class="form-group-config">
+            <label>Orden en menú</label>
+            <input type="number" [(ngModel)]="currentFlow.order" />
+          </div>
+          <div class="form-group-config">
+            <label>Guardar respuestas en colección</label>
+            <input type="text" [(ngModel)]="currentFlow.saveToCollection" placeholder="Ej: students, teacherRequests" />
+            <span class="field-hint">Nombre de la colección en Firestore donde se guardan los datos</span>
+          </div>
+        </div>
+        <div class="form-row-config">
+          <div class="form-group-config checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="currentFlow.notifyAdmin" />
+              Notificar al admin cuando se complete
+            </label>
+          </div>
+          <div class="form-group-config checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="currentFlow.active" />
+              Flujo activo
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEPS BUILDER -->
+    <div class="config-section">
+      <div class="section-header-row">
+        <h3><i class="fas fa-route"></i> Pasos del Flujo</h3>
+        <button class="btn-add-step" (click)="addStep()">
+          <i class="fas fa-plus"></i> Agregar Paso
+        </button>
+      </div>
+
+      <div *ngIf="currentFlow.steps.length === 0" class="empty-steps">
+        <i class="fas fa-plus-circle"></i>
+        <p>Agrega pasos para definir la conversación del bot con el usuario.</p>
+      </div>
+
+      <div *ngFor="let step of currentFlow.steps; let i = index" class="step-card" [class.step-expanded]="expandedStepIndex === i">
+        <div class="step-header" (click)="toggleStepExpand(i)">
+          <div class="step-header-left">
+            <div class="step-reorder">
+              <button class="btn-icon-xs" (click)="moveStepUp(i); $event.stopPropagation()" [disabled]="i === 0">
+                <i class="fas fa-chevron-up"></i>
+              </button>
+              <button class="btn-icon-xs" (click)="moveStepDown(i); $event.stopPropagation()" [disabled]="i === currentFlow.steps.length - 1">
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </div>
+            <span class="step-number">{{ i + 1 }}</span>
+            <span class="step-type-badge" [attr.data-type]="step.type">
+              <i class="fas" [ngClass]="getStepTypeInfo(step.type).icon"></i>
+              {{ getStepTypeInfo(step.type).label }}
+            </span>
+            <span class="step-preview" *ngIf="step.prompt">{{ step.prompt.substring(0, 60) }}{{ step.prompt.length > 60 ? '...' : '' }}</span>
+            <span class="step-field-badge" *ngIf="step.fieldKey && step.type !== 'message'">{{ '{' + step.fieldKey + '}' }}</span>
+          </div>
+          <div class="step-header-right">
+            <button class="btn-icon-xs btn-danger" (click)="removeStep(i); $event.stopPropagation()" title="Eliminar paso">
+              <i class="fas fa-trash"></i>
+            </button>
+            <i class="fas fa-chevron-down step-expand-icon" [class.rotated]="expandedStepIndex === i"></i>
+          </div>
+        </div>
+
+        <div class="step-body" *ngIf="expandedStepIndex === i">
+          <div class="form-group-config">
+            <label>Tipo de paso</label>
+            <div class="step-type-selector">
+              <button *ngFor="let st of stepTypes" class="step-type-option" [class.selected]="step.type === st.value"
+                      (click)="step.type = st.value">
+                <i class="fas" [ngClass]="st.icon"></i>
+                <span>{{ st.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group-config">
+            <label>Mensaje / Pregunta *</label>
+            <textarea [(ngModel)]="step.prompt" rows="2" [placeholder]="step.type === 'message' ? 'Mensaje automático...' : '¿Cuál es tu nombre completo?'"></textarea>
+          </div>
+
+          <div *ngIf="step.type !== 'message'" class="form-row-config">
+            <div class="form-group-config">
+              <label>Clave del campo (fieldKey) *</label>
+              <input type="text" [(ngModel)]="step.fieldKey" placeholder="Ej: fullName, age, comment" />
+              <span class="field-hint">Se usa en el mensaje de completado como {{ '{' + (step.fieldKey || 'clave') + '}' }}</span>
+            </div>
+            <div class="form-group-config">
+              <label>Etiqueta visible</label>
+              <input type="text" [(ngModel)]="step.fieldLabel" placeholder="Ej: Nombre Completo" />
+            </div>
+          </div>
+
+          <!-- Validation for text -->
+          <div *ngIf="step.type === 'text_input'" class="form-row-config">
+            <div class="form-group-config">
+              <label>Longitud mínima</label>
+              <input type="number" [(ngModel)]="step.validation.minLength" placeholder="3" />
+            </div>
+            <div class="form-group-config">
+              <label>Longitud máxima</label>
+              <input type="number" [(ngModel)]="step.validation.maxLength" placeholder="200" />
+            </div>
+          </div>
+
+          <!-- Validation for number -->
+          <div *ngIf="step.type === 'number_input'" class="form-row-config">
+            <div class="form-group-config">
+              <label>Valor mínimo</label>
+              <input type="number" [(ngModel)]="step.validation.min" placeholder="1" />
+            </div>
+            <div class="form-group-config">
+              <label>Valor máximo</label>
+              <input type="number" [(ngModel)]="step.validation.max" placeholder="100" />
+            </div>
+          </div>
+
+          <!-- Options source for select types -->
+          <div *ngIf="step.type === 'select_list' || step.type === 'select_buttons'">
+            <div class="form-row-config">
+              <div class="form-group-config">
+                <label>Origen de opciones</label>
+                <select [(ngModel)]="step.optionsSource">
+                  <option value="custom">Opciones personalizadas</option>
+                  <option value="instruments">Instrumentos (Firestore)</option>
+                  <option value="courseTypes">Tipos de Curso (Firestore)</option>
+                  <option value="programs">Programas (Firestore)</option>
+                </select>
+              </div>
+              <div class="form-group-config" *ngIf="step.type === 'select_list'">
+                <label>Texto del botón</label>
+                <input type="text" [(ngModel)]="step.buttonText" placeholder="Ver opciones" />
+              </div>
+            </div>
+
+            <!-- Custom options -->
+            <div *ngIf="step.optionsSource === 'custom'" class="custom-options-section">
+              <label>Opciones personalizadas</label>
+              <div *ngFor="let opt of step.customOptions; let oi = index" class="custom-option-row">
+                <input type="text" [(ngModel)]="opt.label" placeholder="Texto visible" class="input-sm" />
+                <input type="text" [(ngModel)]="opt.value" placeholder="Valor (ID)" class="input-sm" />
+                <button class="btn-icon-xs btn-danger" (click)="removeCustomOption(step, oi)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <button class="btn-add-option" (click)="addCustomOption(step)">
+                <i class="fas fa-plus"></i> Agregar opción
+              </button>
+              <p class="field-hint" *ngIf="step.type === 'select_buttons'">Máximo 3 opciones para botones de WhatsApp.</p>
+            </div>
+          </div>
+
+          <div *ngIf="step.type !== 'message'" class="form-group-config">
+            <label>Mensaje de error</label>
+            <input type="text" [(ngModel)]="step.errorMessage" placeholder="Respuesta inválida. Intenta de nuevo." />
+          </div>
+
+          <div *ngIf="step.type !== 'message'" class="form-group-config checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="step.required" /> Campo requerido
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLETION -->
+    <div class="config-section">
+      <h3><i class="fas fa-flag-checkered"></i> Mensaje de Completado</h3>
+      <div class="config-form">
+        <div class="form-group-config">
+          <label>Mensaje al finalizar el flujo</label>
+          <textarea [(ngModel)]="currentFlow.completionMessage" rows="5"
+                    placeholder="*REGISTRO COMPLETADO*&#10;&#10;Nombre: {fullName}&#10;Edad: {age}&#10;&#10;Gracias, un maestro te contactará pronto."></textarea>
+          <div class="field-hint" *ngIf="getAvailableFields().length > 0">
+            Variables disponibles: <code *ngFor="let f of getAvailableFields()">{{ f }} </code> <code>{{'{'}}phoneNumber{{'}'}}</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="config-section preview-section">
+      <h3><i class="fas fa-mobile-alt"></i> Vista Previa del Flujo</h3>
+      <div class="preview-chat">
+        <div *ngFor="let step of currentFlow.steps; let i = index" class="preview-message">
+          <div class="preview-bot">
+            <span class="preview-step-num">{{ i + 1 }}</span>
+            <div class="preview-bubble bot">{{ step.prompt || '(sin mensaje)' }}</div>
+          </div>
+          <div class="preview-user" *ngIf="step.type !== 'message'">
+            <div class="preview-bubble user">
+              <span *ngIf="step.type === 'text_input'">{{ step.fieldLabel || 'Texto...' }}</span>
+              <span *ngIf="step.type === 'number_input'">{{ step.fieldLabel || 'Número...' }}</span>
+              <span *ngIf="step.type === 'select_list' || step.type === 'select_buttons'">[Selecciona opción]</span>
+            </div>
+          </div>
+        </div>
+        <div class="preview-message" *ngIf="currentFlow.completionMessage">
+          <div class="preview-bot">
+            <span class="preview-step-num"><i class="fas fa-check"></i></span>
+            <div class="preview-bubble bot completion">{{ currentFlow.completionMessage.substring(0, 150) }}{{ currentFlow.completionMessage.length > 150 ? '...' : '' }}</div>
+          </div>
+        </div>
+        <div *ngIf="currentFlow.steps.length === 0 && !currentFlow.completionMessage" class="preview-empty">
+          Agrega pasos para ver la vista previa
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVE ACTIONS -->
+    <div class="editor-actions">
+      <button class="btn-save-flow" (click)="saveFlow()" [disabled]="saving">
+        <i class="fas fa-save"></i> {{ currentFlow.id ? 'Actualizar Flujo' : 'Crear Flujo' }}
+      </button>
+      <button class="btn-cancel-flow" (click)="cancelEdit()">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+    </div>
+  </div>
+</div>

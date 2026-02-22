@@ -1,0 +1,1482 @@
+/* Estilos globales modernos */
+:root {
+  --primary-color: #10b981;
+  --secondary-color: #059669;
+  --accent-color: #34d399;
+  --dark-color: #1e293b;
+  --light-color: #f8fafc;
+  --text-color: #334155;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --shadow-green: 0 10px 30px rgba(16, 185, 129, 0.2);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+}
+
+/* Ocultar scrollbar pero mantener funcionalidad */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* Para Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* Para IE y Edge */
+body {
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-color);
+  line-height: 1.7;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--dark-color);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.section-padding {
+  padding: 40px 0 100px 0;
+  position: relative;
+  scroll-snap-align: none;
+  scroll-snap-stop: normal;
+  min-height: auto;
+}
+
+/* Excepción para sección de contacto - más padding inferior */
+#contacto.section-padding {
+  padding-bottom: 120px !important;
+  min-height: calc(100vh - 76px);
+}
+
+/* Reducir margen superior de títulos de sección */
+.section-padding .text-center {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.section-padding > .container > .text-center:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Secciones sin ID no deben tener scroll-snap para evitar interferencias */
+section:not([id]) {
+  scroll-snap-align: none;
+  scroll-snap-stop: normal;
+}
+
+/* Asegurar que las secciones con ID ocupen el viewport completo */
+section[id].section-padding {
+  min-height: calc(100vh - 76px);
+  padding-top: 100px !important;
+  padding-bottom: 50px !important;
+}
+
+/* Sección de Valores más compacta */
+.valores-section {
+  padding: 36px 0 72px 0 !important;
+}
+
+.valores-item {
+  background: white;
+  border-radius: 14px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.valores-item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+}
+
+.valores-item i {
+  font-size: 2.4rem !important;
+}
+
+.valores-item h5 {
+  font-size: 1.2rem;
+}
+
+.valores-item p {
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  position: relative;
+  overflow: hidden;
+  scroll-snap-align: none;
+  scroll-snap-stop: normal;
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 76px 0 50px 0;
+}
+
+section[id] {
+  scroll-snap-align: none;
+  scroll-snap-stop: normal;
+  scroll-margin-top: 120px; /* Espacio para el navbar fijo */
+  min-height: auto;
+  padding-top: 120px !important; /* Espacio para el navbar */
+  padding-bottom: 50px !important;
+}
+
+/* Asegurar que los títulos dentro de las secciones tengan espacio */
+section[id] h1,
+section[id] h2,
+section[id] h3 {
+  scroll-margin-top: 120px;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* Ajuste específico para la sección nosotros */
+#nosotros {
+  scroll-margin-top: 120px;
+  padding-top: 120px !important;
+}
+
+#nosotros h2 {
+  scroll-margin-top: 120px;
+  margin-top: 0 !important;
+}
+
+/* Ajuste para sección inicio */
+#inicio {
+  min-height: calc(100vh - 76px);
+  padding-top: 76px !important;
+  padding-bottom: 50px !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Ajuste para sección servicios */
+#servicios {
+  padding-top: 100px !important;
+  padding-bottom: 50px !important;
+}
+
+/* Ajuste para sección contacto */
+#contacto {
+  padding-top: 100px !important;
+  padding-bottom: 50px !important;
+}
+
+.bg-gradient-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(52, 211, 153, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.bg-gradient-primary > * {
+  position: relative;
+  z-index: 1;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary-custom {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border: none;
+  padding: 14px 35px;
+  border-radius: 50px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary-custom::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary-custom:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-primary-custom:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-green);
+  color: white;
+}
+
+.btn-primary-custom:active {
+  transform: translateY(-1px);
+}
+
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: var(--shadow-md);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  background: white;
+}
+
+.card-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.card-hover:hover::before {
+  transform: scaleX(1);
+}
+
+.card-hover:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: var(--shadow-xl), var(--shadow-green);
+}
+
+.card-hover .icon-large {
+  transition: all 0.4s ease;
+}
+
+.card-hover:hover .icon-large {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.icon-large {
+  font-size: 3.5rem;
+  color: #10b981;
+  margin-bottom: 1.5rem;
+  display: inline-block;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.2));
+}
+
+/* Iconos verdes */
+.fa-robot, .fa-globe, .fa-cogs, .fa-brain, .fa-comments, 
+.fa-file-invoice, .fa-chart-line, .fa-bullseye, .fa-eye,
+.fa-lightbulb, .fa-handshake, .fa-award, .fa-users, 
+.fa-shield-alt, .fa-rocket, .fa-envelope, .fa-phone,
+.fa-map-marker-alt, .fa-python, .fa-js-square, .fa-angular,
+.fa-node-js, .fa-database, .fa-aws, .fa-mobile-alt {
+  color: #10b981 !important;
+}
+
+/* Excepción: iconos de contacto deben ser blancos */
+.contact-icon-modern .fa-envelope,
+.contact-icon-modern .fa-phone,
+.contact-icon-modern .fa-map-marker-alt {
+  color: white !important;
+}
+
+.text-primary i, i.text-primary {
+  color: #10b981 !important;
+}
+
+/* Iconos verdes en secciones jumbotron/hero */
+.bg-gradient-primary i,
+.bg-gradient-primary .fa,
+.bg-gradient-primary [class*="fa-"] {
+  color: #10b981 !important;
+}
+
+.bg-gradient-primary .icon-large {
+  color: #10b981 !important;
+}
+
+/* Sobrescribir botones de Bootstrap para tema verde */
+.btn-primary, .btn-primary:focus, .btn-primary:active {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: #059669 !important;
+  border-color: #059669 !important;
+  color: white !important;
+}
+
+.btn-outline-primary {
+  border-color: #10b981 !important;
+  color: #10b981 !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  color: white !important;
+}
+
+.btn-outline-primary:focus, .btn-outline-primary:active {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  color: white !important;
+}
+
+/* Links con color primario */
+a.text-primary, .text-primary {
+  color: #10b981 !important;
+}
+
+a.text-primary:hover {
+  color: #059669 !important;
+}
+
+.fade-in {
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animaciones modernas */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.navbar-brand img {
+  height: 50px;
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover img {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Navbar moderno */
+.navbar {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.navbar.scrolled {
+  box-shadow: var(--shadow-md);
+  background: rgba(255, 255, 255, 0.98) !important;
+}
+
+/* Footer Moderno */
+.footer-modern {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: white;
+  padding: 60px 0 0;
+  margin-top: 80px;
+  border-top: 3px solid #10b981;
+  position: relative;
+}
+
+.footer-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.footer-brand img {
+  filter: brightness(0) invert(1);
+  transition: transform 0.3s ease;
+}
+
+.footer-brand img:hover {
+  transform: scale(1.05);
+}
+
+.footer-title {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.footer-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 12px;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.footer-links a i {
+  font-size: 0.7rem;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #10b981;
+  transform: translateX(5px);
+}
+
+.footer-links a:hover i {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Contact Info Moderno */
+.footer-contact {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-contact li {
+  margin-bottom: 20px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.contact-icon {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+.contact-item:hover .contact-icon {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4);
+}
+
+.contact-icon i {
+  color: white !important;
+  font-size: 1rem;
+  display: block;
+}
+
+.contact-info {
+  flex: 1;
+}
+
+.contact-label {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.contact-value {
+  display: block;
+  color: white;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.contact-value:hover {
+  color: #10b981;
+}
+
+/* Social Links */
+.social-links {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.social-link {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.social-link:hover {
+  background: #10b981;
+  border-color: #34d399;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+  color: white;
+}
+
+/* Footer Bottom */
+.footer-bottom {
+  margin-top: 50px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  width: 100%;
+}
+
+.footer-bottom .container-fluid {
+  padding: 0;
+}
+
+.footer-bottom .row {
+  margin: 0;
+  padding: 0 15px;
+}
+
+.footer-copyright,
+.footer-made {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  margin: 0;
+  padding: 10px 0;
+  line-height: 1.6;
+}
+
+.footer-copyright .brand-name {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.footer-made {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+}
+
+.footer-made i {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.text-white-50 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Efectos modernos adicionales */
+.bg-light {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important;
+}
+
+/* Mejoras en cards */
+.card {
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+/* Efectos de texto */
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Secciones con efecto parallax suave */
+.section-parallax {
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Mejoras en formularios */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+}
+
+/* Efectos hover en iconos de tecnología */
+.p-4:hover i {
+  transform: scale(1.2) rotate(10deg);
+  filter: drop-shadow(0 8px 12px rgba(16, 185, 129, 0.3));
+}
+
+.p-4 i {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejoras en display headings */
+.display-4, .display-5 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--dark-color) 0%, var(--text-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-primary .display-4,
+.bg-gradient-primary .display-5 {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.9) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Efectos de entrada escalonada */
+.fade-in-delay-1 {
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+.fade-in-delay-2 {
+  animation: fadeInUp 1s ease-out 0.4s both;
+}
+
+.fade-in-delay-3 {
+  animation: fadeInUp 1s ease-out 0.6s both;
+}
+
+/* Proceso de Trabajo Moderno */
+.process-timeline {
+  position: relative;
+  padding: 40px 0;
+}
+
+.process-step {
+  position: relative;
+  text-align: center;
+  padding: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.process-step:hover {
+  transform: translateY(-10px);
+}
+
+.process-number {
+  margin-bottom: 25px;
+  position: relative;
+  z-index: 2;
+}
+
+.process-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 4px solid white;
+}
+
+.process-step:hover .process-circle {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4);
+}
+
+.process-number-text {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  position: absolute;
+  z-index: 3;
+  transition: all 0.3s ease;
+}
+
+.process-icon {
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.3);
+  position: absolute;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.process-step:hover .process-icon {
+  color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.2);
+}
+
+.process-step:hover .process-number-text {
+  transform: scale(1.1);
+}
+
+.process-content {
+  background: white;
+  padding: 30px 20px;
+  border-radius: 16px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.process-step:hover .process-content {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-top: 3px solid #10b981;
+}
+
+.process-content h4 {
+  color: #1e293b;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+.process-content p {
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.process-content ul {
+  margin-top: auto;
+}
+
+.process-content ul li {
+  padding: 8px 0;
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+/* Línea conectora para desktop */
+@media (min-width: 992px) {
+  .process-timeline::before {
+    content: '';
+    position: absolute;
+    top: 180px;
+    left: 12.5%;
+    right: 12.5%;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+    z-index: 1;
+    border-radius: 3px;
+  }
+}
+
+/* Animación para los pasos */
+.process-step:nth-child(1) {
+  animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+
+.process-step:nth-child(2) {
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.process-step:nth-child(3) {
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.process-step:nth-child(4) {
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+/* Misión y Visión Simplificadas y Modernas */
+.mission-vision-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px 35px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-top: 4px solid transparent;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mission-vision-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(16, 185, 129, 0.15);
+}
+
+.mission-card-simple {
+  border-top-color: #10b981;
+}
+
+.vision-card-simple {
+  border-top-color: #34d399;
+}
+
+.mv-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.25);
+  transition: all 0.4s ease;
+}
+
+.mission-vision-card:hover .mv-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 15px 40px rgba(16, 185, 129, 0.35);
+}
+
+.mv-icon i {
+  font-size: 2.5rem;
+  color: white;
+}
+
+.mv-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+.mv-text {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Proceso de Trabajo Simplificado */
+.process-step-simple {
+  background: white;
+  border-radius: 16px;
+  padding: 35px 25px;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  height: 100%;
+  border-top: 3px solid #10b981;
+}
+
+.process-step-simple:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 35px rgba(16, 185, 129, 0.2);
+}
+
+.process-number-simple {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.process-step-simple:hover .process-number-simple {
+  transform: translateX(-50%) scale(1.15);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+
+.process-icon-simple {
+  margin: 20px 0 20px;
+  display: inline-block;
+}
+
+.process-icon-simple i {
+  font-size: 3rem;
+  color: #10b981;
+  transition: all 0.3s ease;
+}
+
+.process-step-simple:hover .process-icon-simple i {
+  transform: scale(1.15) rotate(5deg);
+  color: #34d399;
+}
+
+.process-step-simple h5 {
+  color: #1e293b;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.process-step-simple p {
+  color: #64748b;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Sección de Contacto Moderna y Elegante */
+.contact-section-modern {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  padding: 40px 0 100px 0 !important;
+  position: relative;
+  overflow: visible;
+  min-height: auto;
+}
+
+.contact-section-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 70%, rgba(52, 211, 153, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.contact-form-modern {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(16, 185, 129, 0.1);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-form-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.contact-form-modern:hover {
+  box-shadow: 0 15px 50px rgba(16, 185, 129, 0.3),
+              0 0 0 1px rgba(16, 185, 129, 0.3);
+  transform: translateY(-5px);
+}
+
+.form-header-modern {
+  text-align: center;
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.form-icon-modern {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  color: white;
+  font-size: 1.5rem;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 35px rgba(16, 185, 129, 0.6);
+  }
+}
+
+.form-title-modern {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+  background: linear-gradient(135deg, #f1f5f9, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.form-group-modern-new {
+  margin-bottom: 18px;
+  position: relative;
+}
+
+.form-label-modern-new {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981;
+  font-size: 1rem;
+  z-index: 1;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.form-control-modern-new {
+  width: 100%;
+  padding: 12px 15px 12px 45px;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: rgba(15, 23, 42, 0.6);
+  color: #f1f5f9;
+  backdrop-filter: blur(5px);
+}
+
+.form-control-modern-new:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15),
+              inset 0 0 0 1px rgba(16, 185, 129, 0.2);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.form-control-modern-new::placeholder {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.form-control-modern-new:focus + .form-label-modern-new,
+.form-control-modern-new:not(:placeholder-shown) + .form-label-modern-new {
+  color: #34d399;
+}
+
+.btn-submit-modern-new {
+  width: 100%;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-submit-modern-new::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-submit-modern-new:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-submit-modern-new:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5);
+}
+
+.btn-submit-modern-new:active {
+  transform: translateY(-1px);
+}
+
+.btn-submit-modern {
+  width: 100%;
+  padding: 16px 30px;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 5px 20px rgba(16, 185, 129, 0.3);
+  cursor: pointer;
+}
+
+.btn-submit-modern:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+}
+
+.btn-submit-modern:active {
+  transform: translateY(-1px);
+}
+
+.btn-submit-modern i {
+  transition: transform 0.3s ease;
+}
+
+.btn-submit-modern:hover i {
+  transform: translateX(5px);
+}
+
+/* Información de Contacto Moderna y Elegante */
+.contact-info-modern {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.info-title-modern {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #f1f5f9, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.contact-item-modern {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 18px 20px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(16, 185, 129, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.4s ease;
+  border-left: 3px solid #10b981;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-item-modern::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent);
+  transition: width 0.4s ease;
+}
+
+.contact-item-modern:hover::before {
+  width: 100%;
+}
+
+.contact-item-modern:hover {
+  transform: translateX(5px);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3),
+              0 0 0 1px rgba(16, 185, 129, 0.3);
+  border-left-color: #34d399;
+}
+
+.contact-icon-modern {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s ease;
+}
+
+.contact-item-modern:hover .contact-icon-modern {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+}
+
+.contact-icon-modern i,
+.contact-icon-modern .fa-envelope,
+.contact-icon-modern .fa-phone,
+.contact-icon-modern .fa-map-marker-alt {
+  font-size: 1.2rem;
+  color: white !important;
+}
+
+.contact-details-modern {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-label-modern {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contact-value-modern {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #10b981;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.contact-value-modern:hover {
+  color: #34d399;
+  transform: translateX(3px);
+}
+
+.social-modern {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: auto;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(16, 185, 129, 0.1);
+  text-align: center;
+}
+
+.social-title-modern {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.social-icons-modern {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.social-icon-modern {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  border: 2px solid #334155;
+  position: relative;
+  overflow: hidden;
+}
+
+.social-icon-modern::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+  z-index: 0;
+}
+
+.social-icon-modern:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
+.social-icon-modern:hover {
+  color: white;
+  transform: translateY(-5px) scale(1.1);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+  border-color: #10b981;
+}
+
+.social-icon-modern i {
+  font-size: 1.1rem;
+  position: relative;
+  z-index: 1;
+}
+

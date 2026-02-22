@@ -1,0 +1,93 @@
+<div class="dashboard">
+  <h1 class="page-title">Dashboard</h1>
+  <p class="page-subtitle">Resumen general del sistema</p>
+
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Cargando datos...
+  </div>
+
+  <div *ngIf="!loading">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon bg-blue">
+          <i class="fas fa-user-clock"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.totalApplicants }}</span>
+          <span class="stat-label">Total Aspirantes</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon bg-yellow">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.pendingApplicants }}</span>
+          <span class="stat-label">Pendientes</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon bg-green">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.totalStudents }}</span>
+          <span class="stat-label">Estudiantes</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon bg-purple">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.totalAdmins }}</span>
+          <span class="stat-label">Administradores</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Applicants -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3><i class="fas fa-user-clock"></i> Aspirantes Recientes</h3>
+        <a routerLink="/admin/aspirantes" class="btn-view-all">Ver todos <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="panel-body">
+        <div *ngIf="recentApplicants.length === 0" class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <p>No hay aspirantes aún</p>
+        </div>
+        <table class="data-table" *ngIf="recentApplicants.length > 0">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Flujo</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of recentApplicants">
+              <td>
+                <strong>{{ getPersonName(a) }}</strong>
+              </td>
+              <td>{{ a.phoneNumber || '-' }}</td>
+              <td><span class="flow-chip">{{ a.flowName || 'Directo' }}</span></td>
+              <td>{{ formatDate(a.createdAt) }}</td>
+              <td>
+                <span class="badge" [class]="'badge-' + a.status">
+                  {{ getStatusLabel(a.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

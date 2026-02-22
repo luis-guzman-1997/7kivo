@@ -1,0 +1,60 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-icon">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <h2>Panel de Administración</h2>
+      <p>Instituto CanZion Sonsonate</p>
+    </div>
+
+    <form (ngSubmit)="onLogin()" class="login-form">
+      <div class="form-group-login">
+        <label for="email">
+          <i class="fas fa-envelope"></i> Correo electrónico
+        </label>
+        <input
+          type="email"
+          id="email"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="admin@ejemplo.com"
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group-login">
+        <label for="password">
+          <i class="fas fa-lock"></i> Contraseña
+        </label>
+        <input
+          type="password"
+          id="password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+      </div>
+
+      <div class="error-message" *ngIf="error">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="loading">
+        <span *ngIf="!loading">
+          <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+        </span>
+        <span *ngIf="loading">
+          <i class="fas fa-spinner fa-spin"></i> Ingresando...
+        </span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <a routerLink="/">
+        <i class="fas fa-arrow-left"></i> Volver al sitio
+      </a>
+    </div>
+  </div>
+</div>
