@@ -13,9 +13,11 @@ import { InboxComponent } from './inbox/inbox.component';
 import { ChatComponent } from './chat/chat.component';
 import { OrgSettingsComponent } from './org-settings/org-settings.component';
 import { CollectionsComponent } from './collections/collections.component';
+import { WelcomeComponent } from './welcome/welcome.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'bienvenida', component: WelcomeComponent, canActivate: [AuthGuard] },
   {
     path: '',
     component: AdminLayoutComponent,

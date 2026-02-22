@@ -4,9 +4,15 @@
       <h1 class="page-title">Dashboard</h1>
       <p class="page-subtitle">Resumen general del sistema</p>
     </div>
-    <div class="plan-badge">
-      <i class="fas fa-layer-group"></i>
-      <span>{{ planName }}</span>
+    <div class="header-badges">
+      <div class="plan-badge">
+        <i class="fas fa-layer-group"></i>
+        <span>{{ planName }}</span>
+      </div>
+      <div class="bot-status-badge" [class.bot-on]="botEnabled" [class.bot-off]="!botEnabled">
+        <i class="fab fa-whatsapp"></i>
+        <span>{{ botEnabled ? 'Bot activo' : 'Bot pendiente' }}</span>
+      </div>
     </div>
   </div>
 
@@ -15,6 +21,52 @@
   </div>
 
   <div *ngIf="!loading">
+    <!-- Onboarding for new orgs -->
+    <div class="onboarding" *ngIf="isNewOrg">
+      <div class="onboarding-header">
+        <h2>Bienvenido a 7kivo</h2>
+        <p>Tu organización ha sido creada. Sigue estos pasos para empezar:</p>
+      </div>
+      <div class="onboarding-steps">
+        <a routerLink="/admin/configuracion" class="onboarding-step">
+          <div class="ob-step-num">1</div>
+          <div class="ob-step-body">
+            <h4>Configura tu empresa</h4>
+            <p>Agrega el nombre, logo y datos de contacto de tu negocio</p>
+          </div>
+          <i class="fas fa-chevron-right"></i>
+        </a>
+        <a routerLink="/admin/colecciones" class="onboarding-step">
+          <div class="ob-step-num">2</div>
+          <div class="ob-step-body">
+            <h4>Crea tus colecciones</h4>
+            <p>Define las bases de datos donde se guardará la información (productos, servicios, etc.)</p>
+          </div>
+          <i class="fas fa-chevron-right"></i>
+        </a>
+        <a routerLink="/admin/flujos" class="onboarding-step">
+          <div class="ob-step-num">3</div>
+          <div class="ob-step-body">
+            <h4>Construye tus flujos</h4>
+            <p>Diseña las conversaciones que tu bot tendrá con los clientes</p>
+          </div>
+          <i class="fas fa-chevron-right"></i>
+        </a>
+        <a routerLink="/admin/bot" class="onboarding-step">
+          <div class="ob-step-num">4</div>
+          <div class="ob-step-body">
+            <h4>Personaliza la mensajería</h4>
+            <p>Configura mensajes de saludo, despedida e información general del bot</p>
+          </div>
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      </div>
+      <div class="onboarding-note">
+        <i class="fas fa-info-circle"></i>
+        Tu bot de WhatsApp se activará cuando el administrador de la plataforma configure tus credenciales. Mientras tanto, puedes preparar todo el contenido.
+      </div>
+    </div>
+
     <!-- Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card" *ngFor="let cs of collectionStats">
@@ -76,6 +128,13 @@
         <span class="feature-status" [class.enabled]="planLimits.chatLive" [class.disabled]="!planLimits.chatLive">
           <i class="fas" [class.fa-check-circle]="planLimits.chatLive" [class.fa-lock]="!planLimits.chatLive"></i>
           {{ planLimits.chatLive ? 'Habilitado' : 'No incluido' }}
+        </span>
+      </div>
+      <div class="usage-item feature-item">
+        <span class="usage-label">Bot WhatsApp</span>
+        <span class="feature-status" [class.enabled]="botEnabled" [class.disabled]="!botEnabled">
+          <i class="fas" [class.fa-check-circle]="botEnabled" [class.fa-clock]="!botEnabled"></i>
+          {{ botEnabled ? 'Conectado' : 'En configuración por 7kivo' }}
         </span>
       </div>
     </div>

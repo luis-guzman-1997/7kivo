@@ -21,6 +21,18 @@
       </div>
     </div>
 
+    <!-- Schedule Warning -->
+    <div class="schedule-warning" *ngIf="scheduleWarning">
+      <div class="sw-content">
+        <i class="fas fa-calendar-exclamation"></i>
+        <div>
+          <strong>Horarios no configurados</strong>
+          <p>Tienes un flujo de citas activo pero no has configurado tus horarios de atención. El bot no podrá mostrar fechas disponibles.</p>
+        </div>
+        <a routerLink="/admin/bot" class="sw-action">Configurar Horarios <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+
     <!-- ========== MENU CONFIG PANEL ========== -->
     <div class="menu-config-panel" *ngIf="showMenuConfig">
       <div class="config-section">
@@ -81,9 +93,38 @@
             </div>
           </div>
 
-          <button class="btn-add-item" (click)="addMenuItem()">
+          <button class="btn-add-item" (click)="showAddMenuPanel = !showAddMenuPanel">
             <i class="fas fa-plus"></i> Agregar Opción al Menú
           </button>
+
+          <!-- Quick-add panel -->
+          <div class="add-menu-panel" *ngIf="showAddMenuPanel">
+            <div class="amp-header">
+              <h5>Opciones predefinidas</h5>
+              <p>Agrega rápidamente o crea una personalizada</p>
+            </div>
+            <div class="amp-templates">
+              <button *ngFor="let tpl of menuTemplates"
+                class="amp-tpl"
+                [class.amp-disabled]="isTemplateAlreadyInMenu(tpl) || isTemplatePlanBlocked(tpl)"
+                [disabled]="isTemplateAlreadyInMenu(tpl) || isTemplatePlanBlocked(tpl)"
+                (click)="addMenuFromTemplate(tpl)">
+                <i class="fas" [ngClass]="tpl.icon"></i>
+                <div class="amp-tpl-text">
+                  <strong>{{ tpl.label }}</strong>
+                  <span>{{ tpl.description }}</span>
+                </div>
+                <span class="amp-tag" *ngIf="isTemplateAlreadyInMenu(tpl)">Ya agregado</span>
+                <span class="amp-tag amp-tag-plan" *ngIf="isTemplatePlanBlocked(tpl) && !isTemplateAlreadyInMenu(tpl)">Plan superior</span>
+                <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateAlreadyInMenu(tpl) && !isTemplatePlanBlocked(tpl)"></i>
+              </button>
+            </div>
+            <p class="amp-note" *ngIf="flows.length === 0">Crea al menos un flujo para vincular las opciones de tipo flujo al menú.</p>
+            <div class="amp-divider"><span>o</span></div>
+            <button class="amp-custom" (click)="addMenuItem()">
+              <i class="fas fa-sliders-h"></i> Crear opción personalizada
+            </button>
+          </div>
 
           <button class="btn-save-section" (click)="saveMenuConfig()" [disabled]="saving" style="margin-top:16px">
             <i class="fas fa-save"></i> Guardar Menú

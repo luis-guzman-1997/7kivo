@@ -13,6 +13,7 @@ import { InboxComponent } from './inbox/inbox.component';
 import { ChatComponent } from './chat/chat.component';
 import { OrgSettingsComponent } from './org-settings/org-settings.component';
 import { CollectionsComponent } from './collections/collections.component';
+import { WelcomeComponent } from './welcome/welcome.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +27,8 @@ import { CollectionsComponent } from './collections/collections.component';
     InboxComponent,
     ChatComponent,
     OrgSettingsComponent,
-    CollectionsComponent
+    CollectionsComponent,
+    WelcomeComponent
   ],
   imports: [
     CommonModule,

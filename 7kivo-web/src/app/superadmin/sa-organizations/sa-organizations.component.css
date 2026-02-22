@@ -244,9 +244,98 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
 
 .limits-row { grid-template-columns: 1fr 1fr 1fr; margin-top: 4px; }
 
+/* Actions cell */
+.actions-cell { display: flex; gap: 6px; }
+
+.btn-delete-sm {
+  background: rgba(239,68,68,0.08); color: #dc2626; border: none;
+  width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-delete-sm:hover { background: rgba(239,68,68,0.18); }
+
+/* Delete button in modal header */
+.modal-header-actions { padding: 0 24px 12px; }
+.btn-delete-org {
+  background: rgba(239,68,68,0.08); color: #dc2626; border: 1px solid rgba(239,68,68,0.15);
+  padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-delete-org:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); }
+
+/* Delete Confirmation Modal */
+.delete-overlay { z-index: 3000; }
+.delete-modal { max-width: 520px; }
+
+.delete-header {
+  padding: 24px 24px 12px; display: flex; align-items: center; gap: 14px;
+}
+.delete-header h2 { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin: 0; }
+.delete-icon { font-size: 2rem; color: #ef4444; }
+.delete-header.success .delete-icon { color: #22c55e; }
+
+.delete-body { padding: 0 24px 16px; }
+
+.delete-warning { color: #475569; font-size: 0.92rem; margin: 0 0 14px; }
+
+.delete-list {
+  list-style: none; padding: 0; margin: 0 0 18px;
+  background: #fef2f2; border-radius: 10px; padding: 14px 16px;
+}
+.delete-list li {
+  font-size: 0.85rem; color: #7f1d1d; padding: 5px 0;
+  display: flex; align-items: center; gap: 10px;
+}
+.delete-list li i { color: #dc2626; width: 16px; text-align: center; }
+
+.delete-confirm-input { margin-top: 16px; }
+.delete-confirm-input label {
+  display: block; font-size: 0.85rem; color: #475569; margin-bottom: 6px;
+}
+.delete-confirm-input input {
+  width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px;
+  font-size: 0.95rem; box-sizing: border-box; font-family: 'Courier New', monospace;
+  transition: border-color 0.2s;
+}
+.delete-confirm-input input:focus { outline: none; border-color: #ef4444; }
+
+.delete-org-name {
+  margin-top: 12px; padding: 10px 14px; background: #f8fafc; border-radius: 8px;
+  font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 8px;
+}
+
+.delete-actions { padding: 0 24px 24px; display: flex; gap: 8px; }
+
+.btn-delete-confirm {
+  padding: 10px 22px; border: none; border-radius: 8px; font-size: 0.9rem;
+  background: #dc2626; color: white; cursor: pointer; font-weight: 600;
+  display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+}
+.btn-delete-confirm:hover { background: #b91c1c; }
+.btn-delete-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.delete-users-note {
+  margin-top: 16px; padding: 14px; background: #fffbeb;
+  border: 1px solid #fde68a; border-radius: 10px;
+}
+.delete-users-note h4 {
+  font-size: 0.9rem; color: #92400e; margin: 0 0 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.delete-note { font-size: 0.82rem; color: #78716c; margin: 0 0 10px; }
+.deleted-users-list {
+  list-style: none; padding: 0; margin: 0;
+}
+.deleted-users-list li {
+  font-size: 0.85rem; color: #1e293b; padding: 3px 0;
+  font-family: 'Courier New', monospace;
+}
+
 @media (max-width: 768px) {
   table { font-size: 0.85rem; }
   .detail-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .modal-tabs { overflow-x: auto; }
+  .actions-cell { flex-direction: column; }
 }

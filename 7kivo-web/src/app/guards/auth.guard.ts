@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { FirebaseService } from '../services/firebase.service';
 import { Observable } from 'rxjs';
@@ -13,7 +13,7 @@ export class AuthGuard implements CanActivate {
     private router: Router
   ) {}
 
-  canActivate(): Observable<boolean> {
+  canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.authService.loading$.pipe(
       filter(loading => !loading),
       take(1),
@@ -23,6 +23,11 @@ export class AuthGuard implements CanActivate {
           return false;
         }
         if (this.authService.isAuthenticated && this.firebaseService.isOrgSet) {
+          const isWelcomeRoute = state.url.includes('/bienvenida');
+          if (!this.authService.setupComplete && !isWelcomeRoute) {
+            this.router.navigate(['/admin/bienvenida']);
+            return false;
+          }
           return true;
         }
         this.router.navigate(['/admin/login']);

@@ -66,9 +66,12 @@
             </button>
           </td>
           <td class="date-cell">{{ getCreatedDate(org) }}</td>
-          <td>
-            <button class="btn-detail" (click)="openDetail(org); $event.stopPropagation()">
+          <td class="actions-cell">
+            <button class="btn-detail" (click)="openDetail(org); $event.stopPropagation()" title="Ver detalle">
               <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-delete-sm" (click)="openDeleteConfirm(org); $event.stopPropagation()" title="Eliminar organización">
+              <i class="fas fa-trash-alt"></i>
             </button>
           </td>
         </tr>
@@ -89,6 +92,12 @@
           </div>
         </div>
         <button class="modal-close" (click)="closeDetail()">&times;</button>
+      </div>
+
+      <div class="modal-header-actions">
+        <button class="btn-delete-org" (click)="openDeleteConfirm(selectedOrg)">
+          <i class="fas fa-trash-alt"></i> Eliminar Organización
+        </button>
       </div>
 
       <!-- Tabs -->
@@ -357,6 +366,69 @@
           <div *ngIf="orgAdmins.length === 0" class="empty-mini">Sin usuarios registrados</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay delete-overlay" *ngIf="deleteConfirmOrg" (click)="cancelDelete()">
+    <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+
+      <!-- Before execution: confirmation -->
+      <div *ngIf="!deleteResult">
+        <div class="delete-header">
+          <i class="fas fa-exclamation-triangle delete-icon"></i>
+          <h2>Eliminar Organización</h2>
+        </div>
+        <div class="delete-body">
+          <p class="delete-warning">
+            Esta acción es <strong>irreversible</strong>. Se eliminarán permanentemente:
+          </p>
+          <ul class="delete-list">
+            <li><i class="fas fa-database"></i> Todos los datos en Firestore (flujos, colecciones, conversaciones, configuración, admins)</li>
+            <li><i class="fas fa-image"></i> Archivos en Storage (logos, imágenes)</li>
+            <li><i class="fas fa-users"></i> Vínculos de usuarios con la organización</li>
+            <li><i class="fas fa-file-invoice-dollar"></i> Registros de facturación asociados</li>
+          </ul>
+          <div class="delete-confirm-input">
+            <label>Escribe <strong>{{ deleteConfirmOrg.id }}</strong> para confirmar:</label>
+            <input type="text" [(ngModel)]="deleteConfirmText" [placeholder]="deleteConfirmOrg.id"
+              autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="delete-org-name">
+            <i class="fas fa-building"></i> {{ deleteConfirmOrg.orgName || deleteConfirmOrg.id }}
+          </div>
+        </div>
+        <div class="delete-actions">
+          <button class="btn-delete-confirm" (click)="executeDelete()" [disabled]="!deleteConfirmValid || deleting">
+            <i class="fas fa-spinner fa-spin" *ngIf="deleting"></i>
+            <i class="fas fa-trash-alt" *ngIf="!deleting"></i>
+            {{ deleting ? 'Eliminando...' : 'Eliminar Permanentemente' }}
+          </button>
+          <button class="btn-cancel" (click)="cancelDelete()" [disabled]="deleting">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- After execution: result -->
+      <div *ngIf="deleteResult">
+        <div class="delete-header success">
+          <i class="fas fa-check-circle delete-icon"></i>
+          <h2>Organización Eliminada</h2>
+        </div>
+        <div class="delete-body">
+          <p>La organización <strong>{{ deleteConfirmOrg?.orgName || deleteConfirmOrg?.id }}</strong> ha sido eliminada completamente.</p>
+          <div *ngIf="deleteResult.deletedUsers.length > 0" class="delete-users-note">
+            <h4><i class="fas fa-user-slash"></i> Usuarios desvinculados ({{ deleteResult.deletedUsers.length }})</h4>
+            <p class="delete-note">Los siguientes usuarios perdieron el vínculo con la organización. Sus cuentas de Firebase Auth siguen activas y deben eliminarse manualmente desde la consola de Firebase:</p>
+            <ul class="deleted-users-list">
+              <li *ngFor="let email of deleteResult.deletedUsers">{{ email }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="delete-actions">
+          <button class="btn-save" (click)="closeDeleteResult()">Entendido</button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

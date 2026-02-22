@@ -22,6 +22,15 @@ export class LoginComponent {
   regAdminName = '';
   regEmail = '';
   regPassword = '';
+  regPlan = '';
+  regStep = 1; // 1 = org info, 2 = plan selection, 3 = user info
+
+  availablePlans = [
+    { name: 'Starter', price: 9.99, features: ['Bot WhatsApp con menú interactivo', '1 flujo conversacional', '1 colección de datos', 'Bandeja de entrada', 'Chat WhatsApp (solo lectura)'] },
+    { name: 'Business', price: 19.99, popular: true, features: ['Hasta 3 flujos conversacionales', 'Hasta 3 colecciones de datos', 'Sistema de citas y agenda', 'Chat en vivo con clientes', '3 usuarios administradores'] },
+    { name: 'Premium', price: 39.99, features: ['Hasta 5 flujos conversacionales', 'Hasta 10 colecciones de datos', 'Roles y permisos avanzados', 'Horarios configurables', '5 usuarios administradores'] },
+    { name: 'Enterprise', price: 100, features: ['Hasta 20 flujos conversacionales', 'Colecciones ilimitadas', 'Usuarios ilimitados', 'Configuración avanzada del bot'] }
+  ];
 
   constructor(
     private authService: AuthService,
@@ -61,11 +70,28 @@ export class LoginComponent {
     }
   }
 
-  async onRegister(): Promise<void> {
-    if (!this.regOrgName.trim()) {
-      this.error = 'El nombre de la organización es requerido';
-      return;
+  nextStep(): void {
+    this.error = '';
+    if (this.regStep === 1) {
+      if (!this.regOrgName.trim()) { this.error = 'El nombre de la organización es requerido'; return; }
+      this.regStep = 2;
+    } else if (this.regStep === 2) {
+      if (!this.regPlan) { this.error = 'Selecciona un plan para continuar'; return; }
+      this.regStep = 3;
     }
+  }
+
+  prevStep(): void {
+    this.error = '';
+    if (this.regStep > 1) this.regStep--;
+  }
+
+  selectPlan(planName: string): void {
+    this.regPlan = planName;
+    this.error = '';
+  }
+
+  async onRegister(): Promise<void> {
     if (!this.regAdminName.trim()) {
       this.error = 'Tu nombre es requerido';
       return;
@@ -84,20 +110,25 @@ export class LoginComponent {
     this.success = '';
 
     try {
-      // 1. Create Firebase Auth user FIRST (so we're authenticated for Firestore writes)
       const user = await this.authService.createUser(this.regEmail.trim(), this.regPassword);
 
-      // 2. Create org in Firestore (now authenticated)
       const orgId = await this.firebaseService.createOrganization({
         name: this.regOrgName.trim(),
         industry: this.regIndustry,
-        description: this.regDescription.trim()
+        description: this.regDescription.trim(),
+        plan: this.regPlan
       });
 
-      // 3. Set orgId so we can write admin under the org
       this.firebaseService.setOrgId(orgId);
 
-      // 4. Map user to org in /users/{uid}
+      const selectedPlan = this.availablePlans.find(p => p.name === this.regPlan);
+      await this.firebaseService.updateOrganization(orgId, {
+        plan: this.regPlan,
+        monthlyRate: selectedPlan?.price || 0,
+        botEnabled: false,
+        setupComplete: false
+      });
+
       await this.firebaseService.setUserOrg(user.uid, {
         organizationId: orgId,
         email: this.regEmail.trim(),
@@ -105,16 +136,17 @@ export class LoginComponent {
         name: this.regAdminName.trim()
       });
 
-      // 5. Add user as admin in the org
       await this.firebaseService.addAdmin({
         email: this.regEmail.trim(),
         name: this.regAdminName.trim(),
         role: 'owner'
       });
 
-      this.success = `Organización "${this.regOrgName}" creada exitosamente. Redirigiendo...`;
+      await this.authService.refreshUserOrg();
+
+      this.success = `Organización "${this.regOrgName}" creada con plan ${this.regPlan}. Redirigiendo...`;
       setTimeout(() => {
-        this.router.navigate(['/admin']);
+        this.router.navigate(['/admin/bienvenida']);
       }, 1500);
     } catch (err: any) {
       console.error('Registration error:', err);

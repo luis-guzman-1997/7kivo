@@ -40,6 +40,11 @@ export class SaOrganizationsComponent implements OnInit {
   saving = false;
   notice = '';
 
+  deleteConfirmOrg: any = null;
+  deleteConfirmText = '';
+  deleting = false;
+  deleteResult: { deletedUsers: string[] } | null = null;
+
   constructor(private firebaseService: FirebaseService) {}
 
   async ngOnInit(): Promise<void> {
@@ -285,6 +290,47 @@ export class SaOrganizationsComponent implements OnInit {
   maskToken(token: string): string {
     if (!token || token.length < 12) return token || '—';
     return token.substring(0, 8) + '...' + token.substring(token.length - 4);
+  }
+
+  // ── Delete Organization ──
+  openDeleteConfirm(org: any): void {
+    this.deleteConfirmOrg = org;
+    this.deleteConfirmText = '';
+    this.deleting = false;
+    this.deleteResult = null;
+  }
+
+  cancelDelete(): void {
+    this.deleteConfirmOrg = null;
+    this.deleteConfirmText = '';
+    this.deleteResult = null;
+  }
+
+  get deleteConfirmValid(): boolean {
+    return this.deleteConfirmText.trim() === this.deleteConfirmOrg?.id;
+  }
+
+  async executeDelete(): Promise<void> {
+    if (!this.deleteConfirmOrg || !this.deleteConfirmValid) return;
+    this.deleting = true;
+    try {
+      const result = await this.firebaseService.deleteOrganizationFull(this.deleteConfirmOrg.id);
+      this.deleteResult = result;
+      this.organizations = this.organizations.filter(o => o.id !== this.deleteConfirmOrg.id);
+      this.applyFilter();
+      this.selectedOrg = null;
+    } catch (err) {
+      console.error('Error deleting organization:', err);
+      this.deleteResult = { deletedUsers: [] };
+    } finally {
+      this.deleting = false;
+    }
+  }
+
+  closeDeleteResult(): void {
+    this.deleteConfirmOrg = null;
+    this.deleteConfirmText = '';
+    this.deleteResult = null;
   }
 
   private showNotice(msg: string): void {

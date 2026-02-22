@@ -86,9 +86,16 @@
         </span>
       </div>
     </header>
-    <div class="bot-disabled-banner" *ngIf="!botEnabled">
-      <i class="fas fa-exclamation-triangle"></i>
-      Bot de WhatsApp deshabilitado — Los mensajes entrantes no serán procesados. Contacta al administrador de la plataforma.
+    <div class="bot-setup-banner" *ngIf="!botEnabled">
+      <div class="banner-content">
+        <div class="banner-icon-wrap">
+          <i class="fab fa-whatsapp"></i>
+        </div>
+        <div class="banner-text">
+          <strong>Bot de WhatsApp en configuración</strong>
+          <span>El equipo de <b>7kivo</b> está preparando la conexión de tu bot. Mientras tanto, puedes configurar tus flujos, colecciones y mensajería.</span>
+        </div>
+      </div>
     </div>
     <div class="admin-content">
       <router-outlet></router-outlet>

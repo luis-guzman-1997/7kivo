@@ -71,6 +71,7 @@ export class FlowBuilderComponent implements OnInit {
   ];
 
   planLimit = 999;
+  scheduleWarning = false;
 
   constructor(private firebaseService: FirebaseService, public authService: AuthService) {
     this.planLimit = this.authService.getPlanLimits().flows;
@@ -103,6 +104,7 @@ export class FlowBuilderComponent implements OnInit {
         };
       }
       await this.preloadCollectionPreviews();
+      await this.checkScheduleForAppointments();
     } catch (err) {
       console.error('Error loading flows:', err);
       this.error = 'Error al cargar flujos';
@@ -128,6 +130,20 @@ export class FlowBuilderComponent implements OnInit {
     );
     this.collectionPreviewCache = {};
     previews.forEach(p => this.collectionPreviewCache[p.slug] = p.items);
+  }
+
+  private async checkScheduleForAppointments(): Promise<void> {
+    const hasApptFlow = this.flows.some((f: any) =>
+      f.type === 'appointment' || f.steps?.some((s: any) => s.type === 'appointment_slot')
+    );
+    if (!hasApptFlow) { this.scheduleWarning = false; return; }
+    try {
+      const schedule = await this.firebaseService.getInfo('schedule');
+      const hasActiveDays = schedule?.days?.some((d: any) => d.active && d.shifts?.length > 0);
+      this.scheduleWarning = !hasActiveDays;
+    } catch {
+      this.scheduleWarning = true;
+    }
   }
 
   emptyFlow(): Flow {
@@ -338,16 +354,62 @@ export class FlowBuilderComponent implements OnInit {
     this.showMenuConfig = !this.showMenuConfig;
   }
 
+  showAddMenuPanel = false;
+
+  menuTemplates = [
+    { icon: 'fa-comments', label: 'Contáctanos', description: 'Recibe consultas de tus clientes', type: 'flow', matchFlow: 'Contáctanos', requiresPlan: null },
+    { icon: 'fa-calendar-check', label: 'Agendar Cita', description: 'Reserva de citas', type: 'flow', matchFlow: 'Agendar Cita', requiresPlan: 'appointments' },
+    { icon: 'fa-clock', label: 'Horarios', description: 'Días y horarios de atención', type: 'builtin', action: 'schedule', requiresPlan: null },
+    { icon: 'fa-map-marker-alt', label: 'Ubicación', description: 'Cómo encontrarnos', type: 'builtin', action: 'contact', requiresPlan: null },
+    { icon: 'fa-info-circle', label: 'Sobre Nosotros', description: 'Información general', type: 'builtin', action: 'general', requiresPlan: null },
+  ];
+
+  isTemplatePlanBlocked(tpl: any): boolean {
+    if (!tpl.requiresPlan) return false;
+    const limits = this.authService.getPlanLimits();
+    return !(limits as any)[tpl.requiresPlan];
+  }
+
+  isTemplateAlreadyInMenu(tpl: any): boolean {
+    if (tpl.type === 'builtin') {
+      return this.menuConfig.items.some((it: any) => it.type === 'builtin' && it.action === tpl.action);
+    }
+    return this.menuConfig.items.some((it: any) =>
+      it.type === 'flow' && it.label === tpl.label
+    );
+  }
+
+  addMenuFromTemplate(tpl: any): void {
+    const item: any = {
+      id: 'item_' + Date.now(),
+      label: tpl.label,
+      description: tpl.description,
+      order: this.menuConfig.items.length + 1,
+      active: true
+    };
+    if (tpl.type === 'builtin') {
+      item.type = 'builtin';
+      item.action = tpl.action;
+    } else {
+      item.type = 'flow';
+      const flow = this.flows.find((f: any) => f.name === tpl.matchFlow);
+      item.flowId = flow ? flow.id : (this.flows.length > 0 ? this.flows[0].id : '');
+    }
+    this.menuConfig.items.push(item);
+    this.showAddMenuPanel = false;
+  }
+
   addMenuItem(): void {
     this.menuConfig.items.push({
       id: 'item_' + Date.now(),
       type: 'builtin',
-      action: 'programs',
+      action: 'schedule',
       label: '',
       description: '',
       order: this.menuConfig.items.length + 1,
       active: true
     });
+    this.showAddMenuPanel = false;
   }
 
   removeMenuItem(index: number): void {
@@ -370,7 +432,7 @@ export class FlowBuilderComponent implements OnInit {
 
   onMenuItemTypeChange(item: any): void {
     if (item.type === 'builtin') {
-      item.action = 'programs';
+      item.action = 'schedule';
       item.flowId = null;
     } else {
       item.action = null;

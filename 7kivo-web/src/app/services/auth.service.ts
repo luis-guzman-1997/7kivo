@@ -8,11 +8,11 @@ import { BehaviorSubject, Observable } from 'rxjs';
 
 const SUPER_ADMIN_EMAILS = ['admin@7kivo.com'];
 
-export const PLAN_LIMITS: Record<string, { flows: number; collections: number; admins: number; chatLive: boolean }> = {
-  'Starter':    { flows: 1,  collections: 1,  admins: 1,   chatLive: false },
-  'Business':   { flows: 3,  collections: 3,  admins: 3,   chatLive: true },
-  'Premium':    { flows: 5,  collections: 10, admins: 5,   chatLive: true },
-  'Enterprise': { flows: 20, collections: 999, admins: 999, chatLive: true }
+export const PLAN_LIMITS: Record<string, { flows: number; collections: number; admins: number; chatLive: boolean; appointments: boolean }> = {
+  'Starter':    { flows: 1,  collections: 1,  admins: 1,   chatLive: false, appointments: false },
+  'Business':   { flows: 3,  collections: 3,  admins: 3,   chatLive: true,  appointments: true },
+  'Premium':    { flows: 5,  collections: 10, admins: 5,   chatLive: true,  appointments: true },
+  'Enterprise': { flows: 20, collections: 999, admins: 999, chatLive: true,  appointments: true }
 };
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -36,6 +36,7 @@ export class AuthService {
   private orgPlanSubject = new BehaviorSubject<string>('');
   private customLimitsSubject = new BehaviorSubject<any>(null);
   private botEnabledSubject = new BehaviorSubject<boolean>(true);
+  private setupCompleteSubject = new BehaviorSubject<boolean>(true);
 
   currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
   isAdmin$: Observable<boolean> = this.isAdminSubject.asObservable();
@@ -71,6 +72,11 @@ export class AuthService {
     });
   }
 
+  async refreshUserOrg(): Promise<void> {
+    const user = this.currentUserSubject.value;
+    if (user) await this.resolveUserOrg(user);
+  }
+
   private async resolveUserOrg(user: User): Promise<void> {
     try {
       const userData = await this.firebaseService.getUserOrg(user.uid);
@@ -88,6 +94,7 @@ export class AuthService {
         this.orgPlanSubject.next(orgDoc?.plan || '');
         this.customLimitsSubject.next(orgDoc?.customLimits || null);
         this.botEnabledSubject.next(orgDoc?.botEnabled !== false);
+        this.setupCompleteSubject.next(orgDoc?.setupComplete !== false);
         this.isAdminSubject.next(true);
       } else {
         this.isAdminSubject.next(false);
@@ -171,14 +178,23 @@ export class AuthService {
     return this.orgPlanSubject.value;
   }
 
-  getPlanLimits(): { flows: number; collections: number; admins: number; chatLive: boolean } {
+  get setupComplete(): boolean {
+    return this.setupCompleteSubject.value;
+  }
+
+  markSetupComplete(): void {
+    this.setupCompleteSubject.next(true);
+  }
+
+  getPlanLimits(): { flows: number; collections: number; admins: number; chatLive: boolean; appointments: boolean } {
     const custom = this.customLimitsSubject.value;
     if (custom && (custom.flows || custom.collections || custom.admins)) {
       return {
         flows: custom.flows ?? 1,
         collections: custom.collections ?? 1,
         admins: custom.admins ?? 1,
-        chatLive: custom.chatLive !== false
+        chatLive: custom.chatLive !== false,
+        appointments: custom.appointments !== false
       };
     }
     const plan = this.orgPlanSubject.value;

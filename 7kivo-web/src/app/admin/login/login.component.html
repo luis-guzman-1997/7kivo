@@ -66,22 +66,35 @@
     </div>
   </div>
 
-  <!-- REGISTER FORM -->
-  <div class="login-card register-card" *ngIf="showRegister">
+  <!-- REGISTER FORM (multi-step) -->
+  <div class="login-card register-card" [class.register-wide]="regStep === 2" *ngIf="showRegister">
     <div class="login-header">
       <div class="login-icon">
-        <i class="fas fa-building"></i>
+        <i class="fas" [class.fa-building]="regStep === 1" [class.fa-layer-group]="regStep === 2" [class.fa-user-plus]="regStep === 3"></i>
       </div>
-      <h2>Crear Organización</h2>
-      <p>Registra tu empresa y configura tu bot de WhatsApp</p>
+      <h2 *ngIf="regStep === 1">Tu Organización</h2>
+      <h2 *ngIf="regStep === 2">Elige tu Plan</h2>
+      <h2 *ngIf="regStep === 3">Tu Cuenta</h2>
+      <p *ngIf="regStep === 1">Datos de tu empresa o negocio</p>
+      <p *ngIf="regStep === 2">Selecciona el plan que mejor se adapte</p>
+      <p *ngIf="regStep === 3">Crea tu usuario administrador</p>
     </div>
 
-    <form (ngSubmit)="onRegister()" class="login-form">
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step" [class.active]="regStep >= 1" [class.done]="regStep > 1"><span>1</span></div>
+      <div class="step-line" [class.active]="regStep > 1"></div>
+      <div class="step" [class.active]="regStep >= 2" [class.done]="regStep > 2"><span>2</span></div>
+      <div class="step-line" [class.active]="regStep > 2"></div>
+      <div class="step" [class.active]="regStep >= 3"><span>3</span></div>
+    </div>
+
+    <!-- STEP 1: Org info -->
+    <form *ngIf="regStep === 1" class="login-form" (ngSubmit)="nextStep()">
       <div class="form-group-login">
         <label><i class="fas fa-building"></i> Nombre de la organización</label>
         <input type="text" [(ngModel)]="regOrgName" name="orgName" placeholder="Mi Empresa" />
       </div>
-
       <div class="form-group-login">
         <label><i class="fas fa-industry"></i> Rubro / Industria</label>
         <select [(ngModel)]="regIndustry" name="industry">
@@ -96,49 +109,86 @@
           <option value="other">Otro</option>
         </select>
       </div>
-
       <div class="form-group-login">
         <label><i class="fas fa-align-left"></i> Descripción (opcional)</label>
         <input type="text" [(ngModel)]="regDescription" name="description" placeholder="Breve descripción de tu organización" />
       </div>
+      <div class="error-message" *ngIf="error">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+      </div>
+      <button type="submit" class="btn-login btn-create">
+        <i class="fas fa-arrow-right"></i> Siguiente
+      </button>
+    </form>
 
-      <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 16px 0;" />
+    <!-- STEP 2: Plan selection -->
+    <div *ngIf="regStep === 2" class="plan-selection">
+      <div class="plans-grid">
+        <div *ngFor="let plan of availablePlans"
+          class="plan-card"
+          [class.selected]="regPlan === plan.name"
+          [class.popular]="plan.popular"
+          (click)="selectPlan(plan.name)">
+          <div class="plan-popular-tag" *ngIf="plan.popular">Recomendado</div>
+          <h3 class="plan-name">{{ plan.name }}</h3>
+          <div class="plan-price">
+            <span class="price-amount">${{ plan.price }}</span>
+            <span class="price-period">/mes</span>
+          </div>
+          <ul class="plan-features">
+            <li *ngFor="let feat of plan.features">
+              <i class="fas fa-check"></i> {{ feat }}
+            </li>
+          </ul>
+          <div class="plan-check" *ngIf="regPlan === plan.name">
+            <i class="fas fa-check-circle"></i> Seleccionado
+          </div>
+        </div>
+      </div>
+      <div class="error-message" *ngIf="error">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+      </div>
+      <div class="step-nav">
+        <button class="btn-back" (click)="prevStep()"><i class="fas fa-arrow-left"></i> Atrás</button>
+        <button class="btn-login btn-create btn-next" (click)="nextStep()"><i class="fas fa-arrow-right"></i> Siguiente</button>
+      </div>
+    </div>
 
+    <!-- STEP 3: User account -->
+    <form *ngIf="regStep === 3" class="login-form" (ngSubmit)="onRegister()">
+      <div class="reg-summary">
+        <span class="reg-summary-item"><i class="fas fa-building"></i> {{ regOrgName }}</span>
+        <span class="reg-summary-item"><i class="fas fa-layer-group"></i> Plan {{ regPlan }}</span>
+      </div>
       <div class="form-group-login">
         <label><i class="fas fa-user"></i> Tu nombre</label>
         <input type="text" [(ngModel)]="regAdminName" name="adminName" placeholder="Tu nombre completo" />
       </div>
-
       <div class="form-group-login">
         <label><i class="fas fa-envelope"></i> Correo electrónico</label>
         <input type="email" [(ngModel)]="regEmail" name="regEmail" placeholder="admin@ejemplo.com" autocomplete="email" />
       </div>
-
       <div class="form-group-login">
         <label><i class="fas fa-lock"></i> Contraseña</label>
         <input type="password" [(ngModel)]="regPassword" name="regPassword" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
       </div>
-
       <div class="error-message" *ngIf="error">
         <i class="fas fa-exclamation-circle"></i> {{ error }}
       </div>
-
       <div class="success-message" *ngIf="success">
         <i class="fas fa-check-circle"></i> {{ success }}
       </div>
-
-      <button type="submit" class="btn-login btn-create" [disabled]="loading">
-        <span *ngIf="!loading">
-          <i class="fas fa-rocket"></i> Crear Organización
-        </span>
-        <span *ngIf="loading">
-          <i class="fas fa-spinner fa-spin"></i> Creando...
-        </span>
-      </button>
+      <div class="step-nav">
+        <button type="button" class="btn-back" (click)="prevStep()"><i class="fas fa-arrow-left"></i> Atrás</button>
+        <button type="submit" class="btn-login btn-create btn-next" [disabled]="loading">
+          <span *ngIf="!loading"><i class="fas fa-rocket"></i> Crear Organización</span>
+          <span *ngIf="loading"><i class="fas fa-spinner fa-spin"></i> Creando...</span>
+        </button>
+      </div>
     </form>
 
     <div class="login-footer">
-      <a (click)="showRegister = false; error = ''; success = ''" style="cursor: pointer;">
+      <a (click)="showRegister = false; regStep = 1; error = ''; success = ''" style="cursor: pointer;">
         <i class="fas fa-arrow-left"></i> Volver al inicio de sesión
       </a>
     </div>

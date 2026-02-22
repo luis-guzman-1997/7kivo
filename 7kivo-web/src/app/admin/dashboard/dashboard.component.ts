@@ -16,10 +16,13 @@ export class DashboardComponent implements OnInit {
   loading = true;
   planName = '';
   planLimits: any = { flows: 0, collections: 0, admins: 0, chatLive: false };
+  isNewOrg = false;
+  botEnabled = true;
 
   constructor(private firebaseService: FirebaseService, public authService: AuthService) {
     this.planName = this.authService.orgPlan || 'Sin plan';
     this.planLimits = this.authService.getPlanLimits();
+    this.botEnabled = this.authService.botEnabled;
   }
 
   async ngOnInit(): Promise<void> {
@@ -53,6 +56,8 @@ export class DashboardComponent implements OnInit {
       this.collectionStats = await Promise.all(statsPromises);
       this.recentItems.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       this.recentItems = this.recentItems.slice(0, 5);
+
+      this.isNewOrg = this.totalFlows === 0 && this.totalCollections === 0;
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {

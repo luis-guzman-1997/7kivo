@@ -14,6 +14,7 @@
 .page-header-row {
   display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 4px;
 }
+.header-badges { display: flex; gap: 10px; flex-wrap: wrap; }
 .plan-badge {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 16px; border-radius: 10px;
@@ -21,6 +22,18 @@
   color: #7c3aed; font-weight: 600; font-size: 0.9rem;
 }
 .plan-badge i { font-size: 0.85rem; }
+
+.bot-status-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 10px;
+  font-weight: 600; font-size: 0.85rem;
+}
+.bot-status-badge.bot-on {
+  background: rgba(37, 211, 102, 0.1); color: #128c7e;
+}
+.bot-status-badge.bot-off {
+  background: rgba(59, 130, 246, 0.08); color: #3b82f6;
+}
 
 .plan-usage-bar {
   display: flex; gap: 24px; padding: 16px 20px;
@@ -252,6 +265,46 @@
   color: #7c3aed;
   font-weight: 500;
 }
+
+/* Onboarding */
+.onboarding {
+  background: white; border-radius: 16px; padding: 28px;
+  margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-left: 4px solid #7c3aed;
+}
+.onboarding-header { margin-bottom: 20px; }
+.onboarding-header h2 {
+  font-size: 1.3rem; font-weight: 700; color: #1e293b; margin: 0 0 4px;
+  background: none; -webkit-text-fill-color: #1e293b;
+}
+.onboarding-header p { color: #64748b; font-size: 0.95rem; margin: 0; }
+
+.onboarding-steps { display: flex; flex-direction: column; gap: 10px; }
+.onboarding-step {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px; border-radius: 12px; background: #f8fafc;
+  text-decoration: none; transition: all 0.2s; cursor: pointer;
+  border: 1px solid #f1f5f9;
+}
+.onboarding-step:hover { background: #f1f5f9; border-color: #e2e8f0; transform: translateX(4px); }
+
+.ob-step-num {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+}
+.ob-step-body { flex: 1; }
+.ob-step-body h4 { margin: 0 0 2px; font-size: 0.95rem; color: #1e293b; font-weight: 600; }
+.ob-step-body p { margin: 0; font-size: 0.82rem; color: #64748b; }
+.onboarding-step > i { color: #94a3b8; font-size: 0.8rem; }
+
+.onboarding-note {
+  margin-top: 16px; padding: 12px 16px; border-radius: 10px;
+  background: #eff6ff; color: #1e40af; font-size: 0.85rem;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.onboarding-note i { margin-top: 2px; flex-shrink: 0; }
 
 /* Empty State */
 .empty-state {
