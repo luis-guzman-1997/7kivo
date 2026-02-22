@@ -12,17 +12,17 @@
           <a class="nav-link" [class.active]="isActive('inicio')" href="#inicio" (click)="scrollToSection('inicio', $event)" role="button">Inicio</a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" [class.active]="isActive('funcionalidades')" href="#funcionalidades" (click)="scrollToSection('funcionalidades', $event)" role="button">Funcionalidades</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="isActive('casos')" href="#casos" (click)="scrollToSection('casos', $event)" role="button">Casos de Uso</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" [class.active]="isActive('nosotros')" href="#nosotros" (click)="scrollToSection('nosotros', $event)" role="button">Nosotros</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" [class.active]="isActive('servicios')" href="#servicios" (click)="scrollToSection('servicios', $event)" role="button">Servicios</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" [class.active]="isActive('contacto')" href="#contacto" (click)="scrollToSection('contacto', $event)" role="button">Contacto</a>
         </li>
         <li class="nav-item ms-lg-3">
           <a class="btn-login-nav" routerLink="/admin/login">
-            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+            <i class="fas fa-rocket"></i> Regístrate
           </a>
         </li>
       </ul>
@@ -42,53 +42,42 @@
         <div class="footer-brand">
           <img src="assets/7kivo.png" alt="7kivo" height="50" class="mb-3">
           <h4 class="text-white mb-3 fw-bold">7kivo</h4>
-          <p class="text-white-50 mb-4">Empresa salvadoreña especializada en modernización de procesos mediante tecnología e inteligencia artificial.</p>
+          <p class="text-white-50 mb-4">Plataforma CMS con bot de WhatsApp integrado. Automatiza la atención, gestiona datos y haz crecer tu negocio.</p>
           <div class="social-links">
-            <a href="#" class="social-link" aria-label="Facebook">
-              <i class="fab fa-facebook-f"></i>
-            </a>
-            <a href="#" class="social-link" aria-label="Twitter">
-              <i class="fab fa-twitter"></i>
-            </a>
-            <a href="#" class="social-link" aria-label="LinkedIn">
-              <i class="fab fa-linkedin-in"></i>
-            </a>
-            <a href="#" class="social-link" aria-label="Instagram">
-              <i class="fab fa-instagram"></i>
-            </a>
+            <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
           </div>
         </div>
       </div>
 
       <!-- Quick Links -->
-      <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
-        <h5 class="footer-title mb-4">Enlaces Rápidos</h5>
+      <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+        <h5 class="footer-title mb-4">Producto</h5>
         <ul class="footer-links">
-          <li><a href="#inicio"><i class="fas fa-chevron-right me-2"></i>Inicio</a></li>
+          <li><a href="#funcionalidades"><i class="fas fa-chevron-right me-2"></i>Funcionalidades</a></li>
+          <li><a href="#casos"><i class="fas fa-chevron-right me-2"></i>Casos de Uso</a></li>
           <li><a href="#nosotros"><i class="fas fa-chevron-right me-2"></i>Nosotros</a></li>
-          <li><a href="#servicios"><i class="fas fa-chevron-right me-2"></i>Servicios</a></li>
-          <li><a href="#contacto"><i class="fas fa-chevron-right me-2"></i>Contacto</a></li>
+          <li><a routerLink="/admin/login"><i class="fas fa-chevron-right me-2"></i>Regístrate</a></li>
         </ul>
       </div>
 
       <!-- Legal -->
-      <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+      <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
         <h5 class="footer-title mb-4">Legal</h5>
         <ul class="footer-links">
-          <li><a [routerLink]="['/terminos-y-condiciones']"><i class="fas fa-chevron-right me-2"></i>Términos y Condiciones</a></li>
-          <li><a [routerLink]="['/politica-de-privacidad']"><i class="fas fa-chevron-right me-2"></i>Política de Privacidad</a></li>
+          <li><a [routerLink]="['/terminos-y-condiciones']"><i class="fas fa-chevron-right me-2"></i>Términos</a></li>
+          <li><a [routerLink]="['/politica-de-privacidad']"><i class="fas fa-chevron-right me-2"></i>Privacidad</a></li>
         </ul>
       </div>
 
       <!-- Contact Info -->
       <div class="col-lg-3 col-md-6">
-        <h5 class="footer-title mb-4">Contáctanos</h5>
+        <h5 class="footer-title mb-4">Contacto</h5>
         <ul class="footer-contact">
           <li>
             <div class="contact-item">
-              <div class="contact-icon">
-                <i class="fas fa-envelope"></i>
-              </div>
+              <div class="contact-icon"><i class="fas fa-envelope"></i></div>
               <div class="contact-info">
                 <span class="contact-label">Email</span>
                 <a href="mailto:contacto@7kivo.com" class="contact-value">contacto&#64;7kivo.com</a>
@@ -97,20 +86,7 @@
           </li>
           <li>
             <div class="contact-item">
-              <div class="contact-icon">
-                <i class="fas fa-phone"></i>
-              </div>
-              <div class="contact-info">
-                <span class="contact-label">Teléfono</span>
-                <a href="tel:+503XXXX-XXXX" class="contact-value">+503 XXXX-XXXX</a>
-              </div>
-            </div>
-          </li>
-          <li>
-            <div class="contact-item">
-              <div class="contact-icon">
-                <i class="fas fa-map-marker-alt"></i>
-              </div>
+              <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
               <div class="contact-info">
                 <span class="contact-label">Ubicación</span>
                 <span class="contact-value">El Salvador</span>
@@ -127,7 +103,7 @@
         <div class="row align-items-center py-4">
           <div class="col-lg-6 text-center text-lg-start mb-3 mb-lg-0">
             <p class="mb-0 footer-copyright">
-              &copy; 2024 <strong class="brand-name">7kivo</strong>. Todos los derechos reservados.
+              &copy; 2026 <strong class="brand-name">7kivo</strong>. Todos los derechos reservados.
             </p>
           </div>
           <div class="col-lg-6 text-center text-lg-end">
@@ -140,4 +116,3 @@
     </div>
   </div>
 </footer>
-

@@ -11,8 +11,13 @@ interface FlowStep {
   validation: { minLength?: number; maxLength?: number; min?: number; max?: number };
   errorMessage: string;
   optionsSource: string;
-  customOptions: { label: string; value: string }[];
+  optionsTitleField: string;
+  optionsDescField: string;
+  customOptions: { label: string; value: string; description?: string }[];
   buttonText: string;
+  sourceCollection: string;
+  displayField: string;
+  detailFields: string[];
 }
 
 interface Flow {
@@ -50,13 +55,15 @@ export class FlowBuilderComponent implements OnInit {
   // Menu config
   menuConfig: any = { greeting: '', menuButtonText: 'Ver opciones', fallbackMessage: '', items: [] };
   showMenuConfig = false;
-  collections: string[] = ['instruments', 'courseTypes', 'programs'];
+  collectionDefs: any[] = [];
+  collectionPreviewCache: Record<string, any[]> = {};
 
   stepTypes = [
     { value: 'text_input', label: 'Texto libre', icon: 'fa-keyboard', desc: 'El usuario escribe texto' },
     { value: 'number_input', label: 'Número', icon: 'fa-hashtag', desc: 'El usuario escribe un número' },
     { value: 'select_list', label: 'Lista de opciones', icon: 'fa-list', desc: 'Menú desplegable con opciones' },
     { value: 'select_buttons', label: 'Botones (máx 3)', icon: 'fa-hand-pointer', desc: 'Botones interactivos' },
+    { value: 'browse_collection', label: 'Explorar colección', icon: 'fa-database', desc: 'Navegar y ver detalles de items' },
     { value: 'message', label: 'Mensaje automático', icon: 'fa-comment', desc: 'Envía un mensaje sin esperar respuesta' }
   ];
 
@@ -69,11 +76,13 @@ export class FlowBuilderComponent implements OnInit {
   async loadData(): Promise<void> {
     this.loading = true;
     try {
-      const [flows, menuConfig] = await Promise.all([
+      const [flows, menuConfig, colDefs] = await Promise.all([
         this.firebaseService.getFlows(),
-        this.firebaseService.getMenuConfig()
+        this.firebaseService.getMenuConfig(),
+        this.firebaseService.getCollectionDefs()
       ]);
       this.flows = flows;
+      this.collectionDefs = colDefs;
       if (menuConfig) {
         this.menuConfig = {
           greeting: menuConfig.greeting || '',
@@ -82,6 +91,7 @@ export class FlowBuilderComponent implements OnInit {
           items: menuConfig.items || []
         };
       }
+      await this.preloadCollectionPreviews();
     } catch (err) {
       console.error('Error loading flows:', err);
       this.error = 'Error al cargar flujos';
@@ -89,6 +99,24 @@ export class FlowBuilderComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  private async preloadCollectionPreviews(): Promise<void> {
+    const previews = await Promise.all(
+      this.collectionDefs.map(async (col) => {
+        try {
+          const items = await this.firebaseService.getCollectionData(col.slug);
+          return {
+            slug: col.slug,
+            items: items.slice(0, 10).map((item: any) => ({ id: item.id, ...item }))
+          };
+        } catch {
+          return { slug: col.slug, items: [] };
+        }
+      })
+    );
+    this.collectionPreviewCache = {};
+    previews.forEach(p => this.collectionPreviewCache[p.slug] = p.items);
   }
 
   emptyFlow(): Flow {
@@ -104,8 +132,45 @@ export class FlowBuilderComponent implements OnInit {
       id: 'step_' + Date.now(),
       type: 'text_input', prompt: '', fieldKey: '', fieldLabel: '',
       required: true, validation: {}, errorMessage: '',
-      optionsSource: 'custom', customOptions: [], buttonText: 'Ver opciones'
+      optionsSource: 'custom', optionsTitleField: '', optionsDescField: '',
+      customOptions: [], buttonText: 'Ver opciones',
+      sourceCollection: '', displayField: '', detailFields: []
     };
+  }
+
+  getCollectionFields(slug: string): any[] {
+    const col = this.collectionDefs.find(c => c.slug === slug);
+    return col?.fields || [];
+  }
+
+  getCollectionPreview(slug: string): any[] {
+    if (!slug || slug === 'custom') return [];
+    return this.collectionPreviewCache[slug] || [];
+  }
+
+  getPreviewItemField(item: any, fieldKey: string, fallbackField?: string): string {
+    if (fieldKey && item[fieldKey] !== undefined) return String(item[fieldKey]);
+    if (fallbackField && item[fallbackField] !== undefined) return String(item[fallbackField]);
+    const colDef = this.collectionDefs.find(c => c.slug === item._slug);
+    if (colDef?.displayField && item[colDef.displayField]) return String(item[colDef.displayField]);
+    return item.name || item.nombre || item.id || '';
+  }
+
+  onBrowseCollectionChange(step: FlowStep): void {
+    const fields = this.getCollectionFields(step.sourceCollection);
+    if (fields.length > 0 && !step.displayField) {
+      step.displayField = fields[0].key;
+    }
+    step.detailFields = fields.map((f: any) => f.key);
+  }
+
+  toggleDetailField(step: FlowStep, key: string): void {
+    const idx = step.detailFields.indexOf(key);
+    if (idx >= 0) {
+      step.detailFields.splice(idx, 1);
+    } else {
+      step.detailFields.push(key);
+    }
   }
 
   // ==================== FLOW LIST ====================
@@ -123,6 +188,11 @@ export class FlowBuilderComponent implements OnInit {
     this.currentFlow.steps.forEach(s => {
       if (!s.validation) s.validation = {};
       if (!s.customOptions) s.customOptions = [];
+      if (!s.detailFields) s.detailFields = [];
+      if (!s.sourceCollection) s.sourceCollection = '';
+      if (!s.displayField) s.displayField = '';
+      if (!s.optionsTitleField) s.optionsTitleField = '';
+      if (!s.optionsDescField) s.optionsDescField = '';
     });
     this.editMode = true;
     this.expandedStepIndex = null;

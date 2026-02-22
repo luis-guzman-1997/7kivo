@@ -12,6 +12,7 @@ import { FlowBuilderComponent } from './flow-builder/flow-builder.component';
 import { InboxComponent } from './inbox/inbox.component';
 import { ChatComponent } from './chat/chat.component';
 import { OrgSettingsComponent } from './org-settings/org-settings.component';
+import { CollectionsComponent } from './collections/collections.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import { OrgSettingsComponent } from './org-settings/org-settings.component';
     FlowBuilderComponent,
     InboxComponent,
     ChatComponent,
-    OrgSettingsComponent
+    OrgSettingsComponent,
+    CollectionsComponent
   ],
   imports: [
     CommonModule,

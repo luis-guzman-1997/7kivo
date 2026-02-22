@@ -5,13 +5,13 @@ const {
   getContactInfo,
   getScheduleInfo,
   getGeneralInfo,
-  getProgramInfo,
-  getAllPrograms,
   getGeneralConfig,
   getFlows,
   getFlow,
   getMenuConfig,
   getCollectionItems,
+  getCollectionItem,
+  getCollectionDef,
   saveFlowSubmission
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
@@ -175,12 +175,11 @@ const buildMenuItems = async () => {
     return rows;
   }
 
-  // Fallback: auto-generate from builtin + active flows
+  // Fallback: auto-generate from builtins + active flows
   const rows = [
-    { id: "builtin_programs", title: "Programas", description: "Ver programas disponibles" },
-    { id: "builtin_schedule", title: "Horarios", description: "Ver horarios de clases" },
-    { id: "builtin_contact", title: "Ubicación", description: "Dirección del instituto" },
-    { id: "builtin_general", title: "Información General", description: "Sobre el instituto" }
+    { id: "builtin_schedule", title: "Horarios", description: "Ver horarios" },
+    { id: "builtin_contact", title: "Ubicación", description: "Dirección" },
+    { id: "builtin_general", title: "Información General", description: "Sobre nosotros" }
   ];
 
   for (const flow of flows) {
@@ -228,18 +227,48 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     return;
   }
 
+  // Handle browse_collection selection
+  if (session && session.step === "flow_browse") {
+    await handleBrowseSelection(phoneNumber, buttonId, session);
+    return;
+  }
+
+  // Handle browse detail actions (ver otro / continuar)
+  if (session && session.step === "flow_browse_detail") {
+    if (buttonId === "browse_back") {
+      const flow = await getFlow(session.flowId);
+      if (flow) {
+        await executeFlowStep(phoneNumber, flow, session.flowStepIndex);
+      }
+      return;
+    }
+    if (buttonId === "browse_continue" || buttonId === "back_main") {
+      if (buttonId === "back_main") {
+        await sendGreeting(phoneNumber);
+        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        return;
+      }
+      const flow = await getFlow(session.flowId);
+      if (flow) {
+        const nextIndex = session.flowStepIndex + 1;
+        setSession(phoneNumber, { step: "flow_pending", flowStepIndex: nextIndex });
+        await executeFlowStep(phoneNumber, flow, nextIndex);
+      }
+      return;
+    }
+  }
+
   // Exit chat
   if (buttonId === "exit_chat") {
-    await sendTextMessage("¡Hasta luego! 👋 Escribe cuando necesites ayuda.", phoneNumber);
+    await sendTextMessage("¡Hasta luego! Escribe cuando necesites ayuda.", phoneNumber);
     clearSession(phoneNumber);
     return;
   }
 
-  // Builtin actions
+  // Builtin actions (schedule, contact, general - programs removed)
   if (buttonId.startsWith("builtin_")) {
     const action = buttonId.substring(8);
     const builtinActions = {
-      programs: () => showProgramsMenu(phoneNumber),
       schedule: () => showSchedule(phoneNumber),
       contact: () => showContact(phoneNumber),
       general: () => showGeneralInfo(phoneNumber)
@@ -258,13 +287,6 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     return;
   }
 
-  // Program detail
-  if (buttonId.startsWith("prog_")) {
-    const programId = buttonId.substring(5);
-    await showProgramDetail(phoneNumber, programId);
-    return;
-  }
-
   // Back to menu
   if (buttonId === "back_main") {
     await sendGreeting(phoneNumber);
@@ -272,9 +294,8 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     return;
   }
 
-  // Legacy: direct action names (backward compat)
+  // Legacy compat
   const legacyActions = {
-    programs: () => showProgramsMenu(phoneNumber),
     schedule: () => showSchedule(phoneNumber),
     contact: () => showContact(phoneNumber),
     register: () => startLegacyOrFlowRegistration(phoneNumber),
@@ -284,13 +305,6 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
 
   if (legacyActions[buttonId]) {
     await legacyActions[buttonId]();
-    return;
-  }
-
-  // Legacy program ID
-  const program = await getProgramInfo(buttonId);
-  if (program) {
-    await showProgramDetail(phoneNumber, buttonId);
     return;
   }
 
@@ -369,10 +383,12 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
       await sendSelectButtons(phoneNumber, flow, step, stepIndex);
       break;
 
+    case "browse_collection":
+      await sendBrowseCollection(phoneNumber, flow, step, stepIndex);
+      break;
+
     case "message":
       await sendTextMessage(step.prompt, phoneNumber);
-      // Auto-advance to next step
-      const session = getSession(phoneNumber);
       setSession(phoneNumber, {
         flowStepIndex: stepIndex + 1,
         flowStartTime: Date.now()
@@ -387,21 +403,41 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
   }
 };
 
+const getItemDisplayName = (item, step, collectionDef) => {
+  if (step && step.optionsTitleField && item[step.optionsTitleField]) {
+    return String(item[step.optionsTitleField]);
+  }
+  if (collectionDef && collectionDef.displayField && item[collectionDef.displayField]) {
+    return String(item[collectionDef.displayField]);
+  }
+  return String(item.name || item.nombre || item.label || item.id || "");
+};
+
+const getItemDescription = (item, step) => {
+  if (step && step.optionsDescField && item[step.optionsDescField] !== undefined) {
+    return String(item[step.optionsDescField]);
+  }
+  return "";
+};
+
 const sendSelectList = async (phoneNumber, flow, step, stepIndex) => {
   let rows = [];
 
   if (step.optionsSource && step.optionsSource !== "custom") {
-    const items = await getCollectionItems(step.optionsSource);
+    const [items, colDef] = await Promise.all([
+      getCollectionItems(step.optionsSource),
+      getCollectionDef(step.optionsSource)
+    ]);
     rows = items.map(item => ({
       id: `fsel_${item.id}`,
-      title: (item.name || item.label || item.id).substring(0, 24),
-      description: (item.description || item.age || "").substring(0, 72)
+      title: getItemDisplayName(item, step, colDef).substring(0, 24),
+      description: getItemDescription(item, step).substring(0, 72)
     }));
   } else if (step.customOptions && step.customOptions.length > 0) {
     rows = step.customOptions.map(opt => ({
       id: `fsel_${opt.value}`,
       title: (opt.label || opt.value).substring(0, 24),
-      description: ""
+      description: (opt.description || "").substring(0, 72)
     }));
   }
 
@@ -428,10 +464,13 @@ const sendSelectButtons = async (phoneNumber, flow, step, stepIndex) => {
   let buttons = [];
 
   if (step.optionsSource && step.optionsSource !== "custom") {
-    const items = await getCollectionItems(step.optionsSource);
+    const [items, colDef] = await Promise.all([
+      getCollectionItems(step.optionsSource),
+      getCollectionDef(step.optionsSource)
+    ]);
     buttons = items.slice(0, 3).map(item => ({
       id: `fsel_${item.id}`,
-      title: (item.name || item.label || item.id).substring(0, 20)
+      title: getItemDisplayName(item, step, colDef).substring(0, 20)
     }));
   } else if (step.customOptions && step.customOptions.length > 0) {
     buttons = step.customOptions.slice(0, 3).map(opt => ({
@@ -467,12 +506,15 @@ const handleFlowSelectResponse = async (phoneNumber, buttonId, session) => {
   const step = flow.steps[session.flowStepIndex];
   const selectedValue = buttonId.startsWith("fsel_") ? buttonId.substring(5) : buttonId;
 
-  // Resolve the display name
+  // Resolve the display name using step's titleField or collection's displayField
   let displayName = selectedValue;
   if (step.optionsSource && step.optionsSource !== "custom") {
-    const items = await getCollectionItems(step.optionsSource);
+    const [items, colDef] = await Promise.all([
+      getCollectionItems(step.optionsSource),
+      getCollectionDef(step.optionsSource)
+    ]);
     const found = items.find(i => i.id === selectedValue);
-    if (found) displayName = found.name || found.label || selectedValue;
+    if (found) displayName = getItemDisplayName(found, step, colDef);
   } else if (step.customOptions) {
     const found = step.customOptions.find(o => o.value === selectedValue);
     if (found) displayName = found.label || selectedValue;
@@ -491,6 +533,116 @@ const handleFlowSelectResponse = async (phoneNumber, buttonId, session) => {
   });
 
   await executeFlowStep(phoneNumber, flow, nextIndex);
+};
+
+// ==================== BROWSE COLLECTION ====================
+
+const sendBrowseCollection = async (phoneNumber, flow, step, stepIndex) => {
+  const collectionSlug = step.sourceCollection;
+  if (!collectionSlug) {
+    await sendTextMessage("Error: colección no configurada.", phoneNumber);
+    return;
+  }
+
+  const items = await getCollectionItems(collectionSlug);
+  if (items.length === 0) {
+    await sendTextMessage("No hay elementos disponibles.", phoneNumber);
+    const nextIndex = stepIndex + 1;
+    setSession(phoneNumber, { step: "flow_pending", flowStepIndex: nextIndex });
+    await executeFlowStep(phoneNumber, flow, nextIndex);
+    return;
+  }
+
+  const displayField = step.displayField || "name";
+  const rows = items.map(item => ({
+    id: `brw_${item.id}`,
+    title: (item[displayField] || item.name || item.id).substring(0, 24),
+    description: ""
+  }));
+
+  const prompt = step.prompt || "Selecciona un elemento:";
+  const sections = [{ title: "Opciones", rows }];
+
+  setSession(phoneNumber, {
+    step: "flow_browse",
+    flowId: flow.id,
+    flowStepIndex: stepIndex,
+    browseCollection: collectionSlug,
+    browseDetailFields: step.detailFields || [],
+    browseDisplayField: displayField,
+    flowStartTime: Date.now()
+  });
+
+  await sendInteractiveList(prompt, step.buttonText || "Ver opciones", sections, phoneNumber);
+};
+
+const handleBrowseSelection = async (phoneNumber, buttonId, session) => {
+  const itemId = buttonId.startsWith("brw_") ? buttonId.substring(4) : buttonId;
+  const collectionSlug = session.browseCollection;
+
+  const item = await getCollectionItem(collectionSlug, itemId);
+  if (!item) {
+    await sendTextMessage("Elemento no encontrado.", phoneNumber);
+    return;
+  }
+
+  const colDef = await getCollectionDef(collectionSlug);
+  const detailFieldKeys = session.browseDetailFields || [];
+  const allFields = colDef?.fields || [];
+
+  let info = "";
+  if (detailFieldKeys.length > 0 && allFields.length > 0) {
+    for (const key of detailFieldKeys) {
+      const fieldDef = allFields.find(f => f.key === key);
+      const label = fieldDef?.label || key;
+      let val = item[key];
+      if (val === undefined || val === null) continue;
+      if (Array.isArray(val)) {
+        info += `*${label}:*\n`;
+        val.forEach(v => { info += `• ${v}\n`; });
+        info += "\n";
+      } else {
+        info += `*${label}:* ${val}\n`;
+      }
+    }
+  } else {
+    const displayField = session.browseDisplayField || "name";
+    info = `*${item[displayField] || item.name || itemId}*\n\n`;
+    for (const [key, val] of Object.entries(item)) {
+      if (["id", "active", "order", "createdAt", "updatedAt", "organizationId"].includes(key)) continue;
+      if (val === undefined || val === null) continue;
+      if (Array.isArray(val)) {
+        info += `*${key}:*\n`;
+        val.forEach(v => { info += `• ${v}\n`; });
+      } else {
+        info += `*${key}:* ${val}\n`;
+      }
+    }
+  }
+
+  if (!info.trim()) info = "Sin detalles disponibles.";
+
+  setSession(phoneNumber, {
+    step: "flow_browse_detail",
+    flowId: session.flowId,
+    flowStepIndex: session.flowStepIndex,
+    browseCollection: collectionSlug,
+    browseDetailFields: session.browseDetailFields,
+    browseDisplayField: session.browseDisplayField,
+    flowStartTime: Date.now()
+  });
+
+  const flow = await getFlow(session.flowId);
+  const hasMoreSteps = flow && (session.flowStepIndex + 1) < flow.steps.length;
+
+  const buttons = [{ id: "browse_back", title: "Ver otro" }];
+  if (hasMoreSteps) {
+    buttons.push({ id: "browse_continue", title: "Continuar" });
+  } else {
+    buttons.push({ id: "back_main", title: "Menú Principal" });
+  }
+
+  await sendInteractiveButtons(info.trim(), buttons, phoneNumber);
 };
 
 const handleFlowTextInput = async (phoneNumber, message, session) => {
@@ -609,56 +761,6 @@ const completeFlow = async (phoneNumber, flow) => {
 
 // ==================== BUILTIN HANDLERS ====================
 
-const showProgramsMenu = async (phoneNumber) => {
-  const text = await getMessage("programs_menu", "*Programas Disponibles*\n\nSelecciona un programa:");
-  const programs = await getAllPrograms();
-
-  if (programs.length === 0) {
-    await sendTextMessage("No hay programas disponibles actualmente.", phoneNumber);
-    return;
-  }
-
-  const programRows = programs.map(p => ({
-    id: `prog_${p.id}`,
-    title: (p.name || "Programa").substring(0, 24),
-    description: (p.age || "").substring(0, 72)
-  }));
-
-  const sections = [
-    { title: "Programas", rows: programRows },
-    { title: "Navegación", rows: [{ id: "back_main", title: "Menú Principal", description: "Volver" }] }
-  ];
-
-  await sendInteractiveList(text, "Ver programas", sections, phoneNumber);
-};
-
-const showProgramDetail = async (phoneNumber, programId) => {
-  const program = await getProgramInfo(programId);
-
-  let info;
-  if (program) {
-    info = `*${program.name}*\n\n`;
-    info += `*Edad:* ${program.age}\n`;
-    if (program.ageNote) info += `(${program.ageNote})\n`;
-    info += `\n*Duración:* ${program.duration}\n\n`;
-    if (program.includes && program.includes.length > 0) {
-      info += "*Incluye:*\n";
-      program.includes.forEach(item => { info += `• ${item}\n`; });
-    }
-    if (program.note) info += `\n*Nota:* ${program.note}`;
-    if (program.focus) info += `\n*Enfoque:* ${program.focus}`;
-  } else {
-    info = "Información no disponible.";
-  }
-
-  const buttons = [
-    { id: "builtin_programs", title: "Ver Otros Programas" },
-    { id: "back_main", title: "Menú Principal" }
-  ];
-
-  await sendInteractiveButtons(info, buttons, phoneNumber);
-};
-
 const showSchedule = async (phoneNumber) => {
   const schedule = await getScheduleInfo();
 
@@ -728,7 +830,7 @@ const showGeneralInfo = async (phoneNumber) => {
   }
 
   const buttons = [
-    { id: "builtin_programs", title: "Ver Programas" },
+    { id: "builtin_schedule", title: "Ver Horarios" },
     { id: "back_main", title: "Menú Principal" }
   ];
 
@@ -767,8 +869,8 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
-  // Waiting for select but user typed text
-  if (session.step === "flow_select") {
+  // Waiting for select/browse but user typed text
+  if (session.step === "flow_select" || session.step === "flow_browse" || session.step === "flow_browse_detail") {
     await sendTextMessage("Por favor selecciona una opción del menú.", phoneNumber);
     return;
   }
@@ -777,8 +879,6 @@ const handleUserMessage = async (phoneNumber, message, session) => {
   if (lowerMessage.includes("hola") || lowerMessage.includes("hi") || lowerMessage.includes("menu") || lowerMessage.includes("menú")) {
     await sendGreeting(phoneNumber);
     setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
-  } else if (lowerMessage.includes("programa") || lowerMessage.includes("curso")) {
-    await showProgramsMenu(phoneNumber);
   } else if (lowerMessage.includes("horario") || lowerMessage.includes("hora")) {
     await showSchedule(phoneNumber);
   } else if (lowerMessage.includes("contacto") || lowerMessage.includes("direccion") || lowerMessage.includes("telefono")) {

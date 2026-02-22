@@ -64,9 +64,8 @@
                   <option value="flow">Flujo personalizado</option>
                 </select>
                 <select *ngIf="item.type === 'builtin'" [(ngModel)]="item.action" class="select-sm">
-                  <option value="programs">Programas</option>
                   <option value="schedule">Horarios</option>
-                  <option value="contact">Contacto</option>
+                  <option value="contact">Contacto / Ubicación</option>
                   <option value="general">Información General</option>
                 </select>
                 <select *ngIf="item.type === 'flow'" [(ngModel)]="item.flowId" class="select-sm">
@@ -194,8 +193,11 @@
           </div>
           <div class="form-group-config">
             <label>Guardar respuestas en colección</label>
-            <input type="text" [(ngModel)]="currentFlow.saveToCollection" placeholder="Ej: students, teacherRequests" />
-            <span class="field-hint">Nombre de la colección en Firestore donde se guardan los datos</span>
+            <select [(ngModel)]="currentFlow.saveToCollection">
+              <option value="">-- No guardar --</option>
+              <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }} ({{ col.slug }})</option>
+            </select>
+            <span class="field-hint">Los datos del flujo se guardarán en esta colección</span>
           </div>
         </div>
         <div class="form-row-config">
@@ -316,9 +318,7 @@
                 <label>Origen de opciones</label>
                 <select [(ngModel)]="step.optionsSource">
                   <option value="custom">Opciones personalizadas</option>
-                  <option value="instruments">Instrumentos (Firestore)</option>
-                  <option value="courseTypes">Tipos de Curso (Firestore)</option>
-                  <option value="programs">Programas (Firestore)</option>
+                  <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }} (colección)</option>
                 </select>
               </div>
               <div class="form-group-config" *ngIf="step.type === 'select_list'">
@@ -327,12 +327,33 @@
               </div>
             </div>
 
+            <!-- Collection field mapping -->
+            <div *ngIf="step.optionsSource && step.optionsSource !== 'custom'" class="form-row-config">
+              <div class="form-group-config">
+                <label>Campo para título *</label>
+                <select [(ngModel)]="step.optionsTitleField">
+                  <option value="">-- Usar nombre por defecto --</option>
+                  <option *ngFor="let f of getCollectionFields(step.optionsSource)" [value]="f.key">{{ f.label || f.key }}</option>
+                </select>
+                <span class="field-hint">Máx. 24 caracteres en lista, 20 en botones</span>
+              </div>
+              <div class="form-group-config" *ngIf="step.type === 'select_list'">
+                <label>Campo para descripción (opcional)</label>
+                <select [(ngModel)]="step.optionsDescField">
+                  <option value="">-- Sin descripción --</option>
+                  <option *ngFor="let f of getCollectionFields(step.optionsSource)" [value]="f.key">{{ f.label || f.key }}</option>
+                </select>
+                <span class="field-hint">Máx. 72 caracteres. Se muestra debajo del título</span>
+              </div>
+            </div>
+
             <!-- Custom options -->
             <div *ngIf="step.optionsSource === 'custom'" class="custom-options-section">
               <label>Opciones personalizadas</label>
               <div *ngFor="let opt of step.customOptions; let oi = index" class="custom-option-row">
-                <input type="text" [(ngModel)]="opt.label" placeholder="Texto visible" class="input-sm" />
+                <input type="text" [(ngModel)]="opt.label" placeholder="Texto visible" class="input-sm" maxlength="24" />
                 <input type="text" [(ngModel)]="opt.value" placeholder="Valor (ID)" class="input-sm" />
+                <input *ngIf="step.type === 'select_list'" type="text" [(ngModel)]="opt.description" placeholder="Descripción (opcional)" class="input-sm" maxlength="72" />
                 <button class="btn-icon-xs btn-danger" (click)="removeCustomOption(step, oi)">
                   <i class="fas fa-times"></i>
                 </button>
@@ -340,7 +361,61 @@
               <button class="btn-add-option" (click)="addCustomOption(step)">
                 <i class="fas fa-plus"></i> Agregar opción
               </button>
-              <p class="field-hint" *ngIf="step.type === 'select_buttons'">Máximo 3 opciones para botones de WhatsApp.</p>
+              <p class="field-hint" *ngIf="step.type === 'select_buttons'">Máximo 3 opciones para botones (20 caracteres máx. por título).</p>
+              <p class="field-hint" *ngIf="step.type === 'select_list'">Título: máx. 24 caracteres. Descripción: máx. 72 caracteres.</p>
+            </div>
+
+            <!-- Collection preview -->
+            <div *ngIf="step.optionsSource && step.optionsSource !== 'custom'" class="collection-preview-box">
+              <label><i class="fas fa-eye"></i> Vista previa (como se verá en WhatsApp)</label>
+              <div class="collection-preview-items" *ngIf="getCollectionPreview(step.optionsSource).length > 0">
+                <div *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0, step.type === 'select_buttons' ? 3 : 10); let pi = index"
+                     class="collection-preview-item"
+                     [class.btn-style]="step.type === 'select_buttons'" [class.list-style]="step.type === 'select_list'">
+                  <span class="preview-item-num" *ngIf="step.type === 'select_list'">{{ pi + 1 }}.</span>
+                  <div class="preview-item-content">
+                    <span class="preview-item-title">{{ getPreviewItemField(item, step.optionsTitleField).substring(0, step.type === 'select_buttons' ? 20 : 24) }}</span>
+                    <span class="preview-item-desc" *ngIf="step.type === 'select_list' && step.optionsDescField && item[step.optionsDescField]">
+                      {{ ('' + item[step.optionsDescField]).substring(0, 72) }}
+                    </span>
+                  </div>
+                </div>
+                <p class="field-hint" *ngIf="step.type === 'select_buttons' && getCollectionPreview(step.optionsSource).length > 3">
+                  <i class="fas fa-info-circle"></i> Solo se mostrarán las primeras 3 opciones en botones de WhatsApp.
+                </p>
+              </div>
+              <div *ngIf="getCollectionPreview(step.optionsSource).length === 0" class="collection-preview-empty">
+                <i class="fas fa-database"></i> No hay datos en esta colección.
+              </div>
+            </div>
+          </div>
+
+          <!-- Browse collection config -->
+          <div *ngIf="step.type === 'browse_collection'">
+            <div class="form-row-config">
+              <div class="form-group-config">
+                <label>Colección fuente *</label>
+                <select [(ngModel)]="step.sourceCollection" (ngModelChange)="onBrowseCollectionChange(step)">
+                  <option value="">-- Seleccionar --</option>
+                  <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
+                </select>
+              </div>
+              <div class="form-group-config">
+                <label>Campo a mostrar en la lista</label>
+                <select [(ngModel)]="step.displayField">
+                  <option value="">-- Seleccionar --</option>
+                  <option *ngFor="let f of getCollectionFields(step.sourceCollection)" [value]="f.key">{{ f.label || f.key }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group-config" *ngIf="step.sourceCollection">
+              <label>Campos a mostrar en el detalle</label>
+              <div class="detail-fields-checks">
+                <label *ngFor="let f of getCollectionFields(step.sourceCollection)" class="check-detail">
+                  <input type="checkbox" [checked]="step.detailFields.includes(f.key)" (change)="toggleDetailField(step, f.key)" />
+                  {{ f.label || f.key }}
+                </label>
+              </div>
             </div>
           </div>
 
@@ -383,10 +458,41 @@
             <div class="preview-bubble bot">{{ step.prompt || '(sin mensaje)' }}</div>
           </div>
           <div class="preview-user" *ngIf="step.type !== 'message'">
-            <div class="preview-bubble user">
+            <div class="preview-bubble user" *ngIf="step.type === 'text_input' || step.type === 'number_input'">
               <span *ngIf="step.type === 'text_input'">{{ step.fieldLabel || 'Texto...' }}</span>
               <span *ngIf="step.type === 'number_input'">{{ step.fieldLabel || 'Número...' }}</span>
-              <span *ngIf="step.type === 'select_list' || step.type === 'select_buttons'">[Selecciona opción]</span>
+            </div>
+            <div class="preview-bubble user preview-options" *ngIf="step.type === 'select_list' || step.type === 'select_buttons'">
+              <span class="preview-options-title">{{ step.type === 'select_list' ? 'Lista de opciones:' : 'Botones:' }}</span>
+              <ng-container *ngIf="step.optionsSource && step.optionsSource !== 'custom' && getCollectionPreview(step.optionsSource).length > 0">
+                <div class="preview-option-row" *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0, step.type === 'select_buttons' ? 3 : 10)"
+                     [class.btn-pill]="step.type === 'select_buttons'">
+                  <span class="preview-option-title">{{ getPreviewItemField(item, step.optionsTitleField).substring(0, step.type === 'select_buttons' ? 20 : 24) }}</span>
+                  <span class="preview-option-desc" *ngIf="step.type === 'select_list' && step.optionsDescField && item[step.optionsDescField]">
+                    {{ ('' + item[step.optionsDescField]).substring(0, 72) }}
+                  </span>
+                </div>
+              </ng-container>
+              <ng-container *ngIf="step.optionsSource === 'custom' && step.customOptions && step.customOptions.length > 0">
+                <div class="preview-option-row" *ngFor="let opt of step.customOptions.slice(0, step.type === 'select_buttons' ? 3 : 10)"
+                     [class.btn-pill]="step.type === 'select_buttons'">
+                  <span class="preview-option-title">{{ (opt.label || opt.value).substring(0, step.type === 'select_buttons' ? 20 : 24) }}</span>
+                  <span class="preview-option-desc" *ngIf="step.type === 'select_list' && opt.description">{{ opt.description.substring(0, 72) }}</span>
+                </div>
+              </ng-container>
+              <span *ngIf="(!step.optionsSource || (step.optionsSource !== 'custom' && getCollectionPreview(step.optionsSource).length === 0)) && (!step.customOptions || step.customOptions.length === 0)">[Selecciona opción]</span>
+            </div>
+            <div class="preview-bubble user preview-options" *ngIf="step.type === 'browse_collection'">
+              <span class="preview-options-title">Items de la colección:</span>
+              <ng-container *ngIf="step.sourceCollection && getCollectionPreview(step.sourceCollection).length > 0">
+                <div class="preview-option-row" *ngFor="let item of getCollectionPreview(step.sourceCollection).slice(0, 5)">
+                  <span class="preview-option-title">{{ getPreviewItemField(item, step.displayField).substring(0, 24) }}</span>
+                </div>
+                <span class="field-hint" *ngIf="getCollectionPreview(step.sourceCollection).length > 5" style="font-size:0.75rem;color:#94a3b8">
+                  +{{ getCollectionPreview(step.sourceCollection).length - 5 }} más...
+                </span>
+              </ng-container>
+              <span *ngIf="!step.sourceCollection || getCollectionPreview(step.sourceCollection).length === 0">[Navega y selecciona item]</span>
             </div>
           </div>
         </div>

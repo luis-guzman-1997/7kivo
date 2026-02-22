@@ -7,41 +7,51 @@ import { FirebaseService } from '../../services/firebase.service';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  stats = {
-    totalContacts: 0,
-    pendingContacts: 0,
-    convertedContacts: 0,
-    totalClients: 0,
-    totalAdmins: 0
-  };
-  recentContacts: any[] = [];
+  totalAdmins = 0;
+  totalFlows = 0;
+  totalCollections = 0;
+  collectionStats: { name: string; slug: string; count: number; icon: string }[] = [];
+  recentItems: any[] = [];
   loading = true;
 
   constructor(private firebaseService: FirebaseService) {}
 
   async ngOnInit(): Promise<void> {
     try {
-      const [contacts, clients, admins] = await Promise.all([
-        this.firebaseService.getContacts(),
-        this.firebaseService.getClients(),
-        this.firebaseService.getAdmins()
+      const [admins, flows, colDefs] = await Promise.all([
+        this.firebaseService.getAdmins(),
+        this.firebaseService.getFlows(),
+        this.firebaseService.getCollectionDefs()
       ]);
 
-      this.stats.totalContacts = contacts.length;
-      this.stats.pendingContacts = contacts.filter(a => a.status === 'pending').length;
-      this.stats.convertedContacts = contacts.filter(a => a.status === 'converted').length;
-      this.stats.totalClients = clients.length;
-      this.stats.totalAdmins = admins.length;
-      this.recentContacts = contacts.slice(0, 5);
+      this.totalAdmins = admins.length;
+      this.totalFlows = flows.length;
+      this.totalCollections = colDefs.length;
+
+      const icons = ['fa-layer-group', 'fa-users', 'fa-folder', 'fa-archive', 'fa-clipboard-list', 'fa-tags'];
+      const statsPromises = colDefs.map(async (col: any, i: number) => {
+        const items = await this.firebaseService.getCollectionData(col.slug);
+        const pending = items.filter((it: any) => it.status === 'pending').length;
+        if (items.length > 0) {
+          const displayField = col.displayField || col.fields?.[0]?.key || 'id';
+          const recent = items.slice(0, 3).map((it: any) => ({
+            ...it,
+            _collectionName: col.name,
+            _displayValue: it[displayField] || it.fullName || it.name || it.id
+          }));
+          this.recentItems.push(...recent);
+        }
+        return { name: col.name, slug: col.slug, count: items.length, pending, icon: icons[i % icons.length] };
+      });
+
+      this.collectionStats = await Promise.all(statsPromises);
+      this.recentItems.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      this.recentItems = this.recentItems.slice(0, 5);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
       this.loading = false;
     }
-  }
-
-  getPersonName(person: any): string {
-    return person.fullName || person.name || 'Sin nombre';
   }
 
   formatDate(timestamp: any): string {
@@ -55,8 +65,10 @@ export class DashboardComponent implements OnInit {
     const labels: Record<string, string> = {
       pending: 'Pendiente',
       converted: 'Convertido',
-      rejected: 'Rechazado'
+      rejected: 'Rechazado',
+      resolved: 'Resuelto',
+      active: 'Activo'
     };
-    return labels[status] || status;
+    return labels[status] || status || '-';
   }
 }

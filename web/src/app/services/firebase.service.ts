@@ -325,16 +325,51 @@ export class FirebaseService {
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 
-  // ==================== INSTRUMENTS & COURSE TYPES ====================
+  // ==================== DYNAMIC COLLECTIONS ====================
 
-  async getInstruments(): Promise<any[]> {
-    const items = await this.getCollection('instruments');
-    return items.filter(i => i.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+  async getCollectionDefs(): Promise<any[]> {
+    const items = await this.getCollection('_collections');
+    return items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
-  async getCourseTypes(): Promise<any[]> {
-    const items = await this.getCollection('courseTypes');
-    return items.filter(i => i.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+  async getCollectionDef(defId: string): Promise<any | null> {
+    return this.getDocument('_collections', defId);
+  }
+
+  async saveCollectionDef(data: any): Promise<string> {
+    if (data.id) {
+      const id = data.id;
+      const rest = { ...data };
+      delete rest.id;
+      await this.updateDocument('_collections', id, rest);
+      return id;
+    }
+    return this.addDocument('_collections', data);
+  }
+
+  async deleteCollectionDef(defId: string): Promise<void> {
+    await this.deleteDocument('_collections', defId);
+  }
+
+  async getCollectionData(slug: string): Promise<any[]> {
+    const items = await this.getCollection(slug);
+    return items.sort((a, b) => {
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return dateB - dateA;
+    });
+  }
+
+  async addCollectionItem(slug: string, data: DocumentData): Promise<string> {
+    return this.addDocument(slug, data);
+  }
+
+  async updateCollectionItem(slug: string, itemId: string, data: DocumentData): Promise<void> {
+    await this.updateDocument(slug, itemId, data);
+  }
+
+  async deleteCollectionItem(slug: string, itemId: string): Promise<void> {
+    await this.deleteDocument(slug, itemId);
   }
 
   // ==================== FLOW SUBMISSIONS ====================

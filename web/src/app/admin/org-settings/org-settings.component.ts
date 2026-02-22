@@ -15,11 +15,15 @@ export class OrgSettingsComponent implements OnInit {
   notice = '';
   error = '';
   activeTab = 'general';
+  orgId = '';
+  copied = false;
 
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService
-  ) {}
+  ) {
+    this.orgId = this.firebaseService.getOrgId();
+  }
 
   async ngOnInit(): Promise<void> {
     await this.loadConfig();
@@ -55,6 +59,13 @@ export class OrgSettingsComponent implements OnInit {
     } finally {
       this.saving = false;
     }
+  }
+
+  copyOrgId(): void {
+    navigator.clipboard.writeText(this.orgId).then(() => {
+      this.copied = true;
+      setTimeout(() => this.copied = false, 2000);
+    });
   }
 
   async saveWhatsApp(): Promise<void> {

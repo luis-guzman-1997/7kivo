@@ -179,7 +179,7 @@ const getMenuConfig = async () => {
   }
 };
 
-// ==================== COLLECTIONS (for dynamic select steps) ====================
+// ==================== DYNAMIC COLLECTIONS ====================
 const getCollectionItems = async (collectionName) => {
   try {
     const snapshot = await getOrgRef().collection(collectionName).get();
@@ -190,6 +190,28 @@ const getCollectionItems = async (collectionName) => {
   } catch (error) {
     console.error(`Error loading collection ${collectionName}:`, error);
     return [];
+  }
+};
+
+const getCollectionDef = async (slug) => {
+  try {
+    const snapshot = await getOrgRef().collection("_collections").where("slug", "==", slug).get();
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() };
+  } catch (error) {
+    console.error(`Error loading collection def for ${slug}:`, error);
+    return null;
+  }
+};
+
+const getCollectionItem = async (collectionName, itemId) => {
+  try {
+    const doc = await getOrgRef().collection(collectionName).doc(itemId).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  } catch (error) {
+    console.error(`Error loading item ${itemId} from ${collectionName}:`, error);
+    return null;
   }
 };
 
@@ -226,6 +248,8 @@ module.exports = {
   getFlow,
   getMenuConfig,
   getCollectionItems,
+  getCollectionItem,
+  getCollectionDef,
   saveFlowSubmission,
   clearCache
 };

@@ -1,35 +1,28 @@
 <div class="bot-config-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title"><i class="fab fa-whatsapp icon-whatsapp"></i> Configuración del Bot</h1>
-      <p class="page-subtitle">Parametriza los mensajes y flujos del bot de WhatsApp</p>
+      <h1 class="page-title"><i class="fab fa-whatsapp icon-wa"></i> Configuración del Bot</h1>
+      <p class="page-subtitle">Parametriza los mensajes, información y comportamiento del bot de WhatsApp</p>
     </div>
-    <button class="btn-reload" (click)="loadAll()">
+    <button class="btn-reload" (click)="loadAll()" [disabled]="loading">
       <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Recargar
     </button>
   </div>
 
   <!-- Toast Messages -->
-  <div class="toast toast-success" *ngIf="saveNotice">
-    <i class="fas fa-check-circle"></i> {{ saveNotice }}
-  </div>
-  <div class="toast toast-error" *ngIf="saveError">
-    <i class="fas fa-exclamation-circle"></i> {{ saveError }}
-  </div>
+  <div class="toast toast-success" *ngIf="saveNotice"><i class="fas fa-check-circle"></i> {{ saveNotice }}</div>
+  <div class="toast toast-error" *ngIf="saveError"><i class="fas fa-exclamation-circle"></i> {{ saveError }}</div>
 
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab" [class.active]="activeTab === 'messages'" (click)="activeTab = 'messages'">
-      <i class="fas fa-comment-dots"></i> Mensajes del Bot
+      <i class="fas fa-comment-dots"></i> Mensajes
     </button>
     <button class="tab" [class.active]="activeTab === 'info'" (click)="activeTab = 'info'">
-      <i class="fas fa-info-circle"></i> Info & Contacto
-    </button>
-    <button class="tab" [class.active]="activeTab === 'programs'" (click)="activeTab = 'programs'">
-      <i class="fas fa-graduation-cap"></i> Programas
+      <i class="fas fa-map-marker-alt"></i> Info & Contacto
     </button>
     <button class="tab" [class.active]="activeTab === 'config'" (click)="activeTab = 'config'">
-      <i class="fas fa-cog"></i> Configuración
+      <i class="fas fa-sliders-h"></i> Configuración
     </button>
   </div>
 
@@ -42,42 +35,47 @@
   <div *ngIf="!loading && activeTab === 'messages'" class="tab-content">
     <div class="info-banner">
       <i class="fas fa-lightbulb"></i>
-      <p>Edita los mensajes que el bot envía a los usuarios. Los cambios se reflejarán inmediatamente en el bot.
+      <p>Edita los mensajes que el bot envía a los usuarios. Los cambios se reflejan inmediatamente.
         Usa <code>*texto*</code> para <strong>negritas</strong> en WhatsApp.</p>
     </div>
 
     <div *ngFor="let category of getCategories()" class="message-category">
-      <h3 class="category-title">
-        <i class="fas" [ngClass]="getCategoryIcon(category)"></i>
-        {{ getCategoryLabel(category) }}
-      </h3>
+      <div class="category-header">
+        <div class="category-icon">
+          <i class="fas" [ngClass]="getCategoryIcon(category)"></i>
+        </div>
+        <h3>{{ getCategoryLabel(category) }}</h3>
+        <span class="category-count">{{ getMessagesByCategory(category).length }}</span>
+      </div>
 
-      <div *ngFor="let msg of getMessagesByCategory(category)" class="message-card">
-        <div class="message-header">
-          <div>
-            <h4>{{ msg.label }}</h4>
-            <small>{{ msg.description }}</small>
+      <div class="messages-grid">
+        <div *ngFor="let msg of getMessagesByCategory(category)" class="message-card" [class.editing]="editingMessageId === msg.id">
+          <div class="message-top">
+            <div class="message-info">
+              <h4>{{ msg.label }}</h4>
+              <small>{{ msg.description }}</small>
+            </div>
+            <button class="btn-edit" *ngIf="editingMessageId !== msg.id" (click)="startEditing(msg)">
+              <i class="fas fa-pen"></i>
+            </button>
           </div>
-          <button class="btn-edit" *ngIf="editingMessageId !== msg.id" (click)="startEditing(msg)">
-            <i class="fas fa-edit"></i> Editar
-          </button>
-        </div>
 
-        <!-- View Mode -->
-        <div class="message-preview" *ngIf="editingMessageId !== msg.id">
-          <pre>{{ msg.content }}</pre>
-        </div>
+          <!-- View Mode -->
+          <div class="message-preview" *ngIf="editingMessageId !== msg.id">
+            <pre>{{ msg.content || '(vacío)' }}</pre>
+          </div>
 
-        <!-- Edit Mode -->
-        <div class="message-edit" *ngIf="editingMessageId === msg.id">
-          <textarea [(ngModel)]="editContent" rows="8"></textarea>
-          <div class="edit-actions">
-            <button class="btn-save" (click)="saveBotMessage(msg)" [disabled]="saving">
-              <i class="fas fa-save"></i> Guardar
-            </button>
-            <button class="btn-cancel" (click)="cancelEditing()">
-              <i class="fas fa-times"></i> Cancelar
-            </button>
+          <!-- Edit Mode -->
+          <div class="message-edit" *ngIf="editingMessageId === msg.id">
+            <textarea [(ngModel)]="editContent" rows="6"></textarea>
+            <div class="edit-actions">
+              <button class="btn-save-msg" (click)="saveBotMessage(msg)" [disabled]="saving">
+                <i class="fas fa-check"></i> Guardar
+              </button>
+              <button class="btn-cancel-msg" (click)="cancelEditing()">
+                <i class="fas fa-times"></i> Cancelar
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -92,37 +90,43 @@
   <!-- ==================== INFO TAB ==================== -->
   <div *ngIf="!loading && activeTab === 'info'" class="tab-content">
     <!-- Contact Info -->
-    <div class="config-section">
-      <h3><i class="fas fa-address-book"></i> Información de Contacto</h3>
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon teal"><i class="fas fa-address-book"></i></div>
+        <div>
+          <h3>Información de Contacto</h3>
+          <p>Datos que el bot comparte cuando el usuario pide contacto</p>
+        </div>
+      </div>
       <div class="config-form">
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Dirección</label>
-            <input type="text" [(ngModel)]="contactInfo.address" />
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-map-marker-alt"></i> Dirección</label>
+            <input type="text" [(ngModel)]="contactInfo.address" placeholder="Calle, número, colonia..." />
           </div>
-          <div class="form-group-config">
-            <label>Ciudad</label>
-            <input type="text" [(ngModel)]="contactInfo.city" />
-          </div>
-        </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Teléfono / WhatsApp</label>
-            <input type="text" [(ngModel)]="contactInfo.phone" />
-          </div>
-          <div class="form-group-config">
-            <label>Email</label>
-            <input type="email" [(ngModel)]="contactInfo.email" />
+          <div class="form-group">
+            <label><i class="fas fa-city"></i> Ciudad</label>
+            <input type="text" [(ngModel)]="contactInfo.city" placeholder="San Salvador" />
           </div>
         </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Horarios de Atención</label>
-            <input type="text" [(ngModel)]="contactInfo.attentionHours" />
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-phone"></i> Teléfono / WhatsApp</label>
+            <input type="text" [(ngModel)]="contactInfo.phone" placeholder="+503 XXXX-XXXX" />
           </div>
-          <div class="form-group-config">
-            <label>País</label>
-            <input type="text" [(ngModel)]="contactInfo.country" />
+          <div class="form-group">
+            <label><i class="fas fa-envelope"></i> Email</label>
+            <input type="email" [(ngModel)]="contactInfo.email" placeholder="info@empresa.com" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-clock"></i> Horarios de Atención</label>
+            <input type="text" [(ngModel)]="contactInfo.attentionHours" placeholder="Lun-Vie 8:00am - 5:00pm" />
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-globe-americas"></i> País</label>
+            <input type="text" [(ngModel)]="contactInfo.country" placeholder="El Salvador" />
           </div>
         </div>
         <button class="btn-save-section" (click)="saveContactInfo()" [disabled]="saving">
@@ -132,24 +136,28 @@
     </div>
 
     <!-- Schedule Info -->
-    <div class="config-section">
-      <h3><i class="fas fa-clock"></i> Información de Horarios</h3>
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon amber"><i class="fas fa-calendar-alt"></i></div>
+        <div>
+          <h3>Información de Horarios</h3>
+          <p>Horarios que el bot muestra al usuario</p>
+        </div>
+      </div>
       <div class="config-form">
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Día</label>
-            <input type="text" [(ngModel)]="scheduleInfo.day" />
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-calendar-day"></i> Días</label>
+            <input type="text" [(ngModel)]="scheduleInfo.day" placeholder="Lunes a Viernes" />
           </div>
-          <div class="form-group-config">
-            <label>Horario</label>
-            <input type="text" [(ngModel)]="scheduleInfo.time" />
+          <div class="form-group">
+            <label><i class="fas fa-clock"></i> Horario</label>
+            <input type="text" [(ngModel)]="scheduleInfo.time" placeholder="8:00 AM - 5:00 PM" />
           </div>
         </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Modalidad</label>
-            <input type="text" [(ngModel)]="scheduleInfo.modality" />
-          </div>
+        <div class="form-group">
+          <label><i class="fas fa-laptop-house"></i> Modalidad</label>
+          <input type="text" [(ngModel)]="scheduleInfo.modality" placeholder="Presencial / Virtual / Híbrido" />
         </div>
         <button class="btn-save-section" (click)="saveScheduleInfo()" [disabled]="saving">
           <i class="fas fa-save"></i> Guardar Horarios
@@ -158,142 +166,40 @@
     </div>
   </div>
 
-  <!-- ==================== PROGRAMS TAB ==================== -->
-  <div *ngIf="!loading && activeTab === 'programs'" class="tab-content">
-    <div class="programs-header">
-      <div class="info-banner">
-        <i class="fas fa-lightbulb"></i>
-        <p>Los programas se muestran dinámicamente en el bot de WhatsApp. Puedes agregar, editar, activar/desactivar o eliminar programas.</p>
-      </div>
-      <button class="btn-add-program" (click)="openNewProgram()" *ngIf="!showProgramForm">
-        <i class="fas fa-plus"></i> Nuevo Programa
-      </button>
-    </div>
-
-    <!-- Program Form (Create / Edit) -->
-    <div class="config-section program-form-section" *ngIf="showProgramForm">
-      <h3>
-        <i class="fas" [class.fa-plus-circle]="!editingProgramId" [class.fa-edit]="editingProgramId"></i>
-        {{ editingProgramId ? 'Editar Programa' : 'Nuevo Programa' }}
-      </h3>
-      <div class="config-form">
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Nombre *</label>
-            <input type="text" [(ngModel)]="programForm.name" placeholder="Ej: Programa Kids" />
-          </div>
-          <div class="form-group-config">
-            <label>Rango de Edad</label>
-            <input type="text" [(ngModel)]="programForm.age" placeholder="Ej: 6 a 10 años" />
-          </div>
-        </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Duración</label>
-            <input type="text" [(ngModel)]="programForm.duration" placeholder="Ej: 2 años (4 semestres)" />
-          </div>
-          <div class="form-group-config">
-            <label>Orden</label>
-            <input type="number" [(ngModel)]="programForm.order" />
-          </div>
-        </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Enfoque</label>
-            <input type="text" [(ngModel)]="programForm.focus" placeholder="Ej: Adoración y servicio ministerial" />
-          </div>
-          <div class="form-group-config">
-            <label>Nota de Edad</label>
-            <input type="text" [(ngModel)]="programForm.ageNote" placeholder="Ej: Niños menores si saben leer" />
-          </div>
-        </div>
-        <div class="form-group-config">
-          <label>Nota adicional</label>
-          <input type="text" [(ngModel)]="programForm.note" placeholder="Ej: Programa por instrumento" />
-        </div>
-        <div class="form-group-config">
-          <label>Incluye (una línea por item)</label>
-          <textarea [(ngModel)]="programForm.includes" rows="5" placeholder="Iniciación musical&#10;Práctica de instrumento&#10;Ensambles musicales"></textarea>
-        </div>
-        <div class="form-actions-row">
-          <button class="btn-save-section" (click)="submitProgram()" [disabled]="saving">
-            <i class="fas fa-save"></i> {{ editingProgramId ? 'Actualizar' : 'Crear Programa' }}
-          </button>
-          <button class="btn-cancel-section" (click)="closeProgramForm()">
-            <i class="fas fa-times"></i> Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Programs List -->
-    <div *ngIf="programs.length === 0 && !showProgramForm" class="empty-state">
-      <i class="fas fa-graduation-cap"></i>
-      <p>No hay programas. Crea el primero.</p>
-    </div>
-
-    <div *ngFor="let program of programs" class="program-card" [class.program-inactive]="!program.active">
-      <div class="program-card-top">
-        <div class="program-info">
-          <h4>
-            <i class="fas fa-music"></i> {{ program.name }}
-            <span class="program-status" [class.active]="program.active" [class.inactive]="!program.active">
-              {{ program.active ? 'Activo' : 'Inactivo' }}
-            </span>
-          </h4>
-          <div class="program-meta">
-            <span *ngIf="program.age"><i class="fas fa-child"></i> {{ program.age }}</span>
-            <span *ngIf="program.duration"><i class="fas fa-clock"></i> {{ program.duration }}</span>
-            <span *ngIf="program.focus"><i class="fas fa-bullseye"></i> {{ program.focus }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="program-includes" *ngIf="program.includes && program.includes.length > 0">
-        <strong>Incluye:</strong>
-        <ul>
-          <li *ngFor="let item of program.includes">{{ item }}</li>
-        </ul>
-      </div>
-      <div class="program-card-actions">
-        <button class="btn-prog btn-prog-edit" (click)="openEditProgram(program)">
-          <i class="fas fa-edit"></i> Editar
-        </button>
-        <button class="btn-prog" [class.btn-prog-deactivate]="program.active" [class.btn-prog-activate]="!program.active"
-                (click)="toggleProgramActive(program)">
-          <i class="fas" [class.fa-eye-slash]="program.active" [class.fa-eye]="!program.active"></i>
-          {{ program.active ? 'Desactivar' : 'Activar' }}
-        </button>
-        <button class="btn-prog btn-prog-delete" (click)="deleteProgram(program)">
-          <i class="fas fa-trash"></i> Eliminar
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- ==================== CONFIG TAB ==================== -->
   <div *ngIf="!loading && activeTab === 'config'" class="tab-content">
-    <div class="config-section">
-      <h3><i class="fas fa-cog"></i> Configuración General del Bot</h3>
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon purple"><i class="fas fa-sliders-h"></i></div>
+        <div>
+          <h3>Configuración General del Bot</h3>
+          <p>Comportamiento general y personalización</p>
+        </div>
+      </div>
       <div class="config-form">
-        <div class="form-group-config">
-          <label>Nombre de la Organización</label>
-          <input type="text" [(ngModel)]="config.orgName" />
+        <div class="form-group">
+          <label><i class="fas fa-building"></i> Nombre de la Organización</label>
+          <input type="text" [(ngModel)]="config.orgName" placeholder="Mi Empresa" />
         </div>
-        <div class="form-group-config">
-          <label>Mensaje de Bienvenida</label>
-          <textarea [(ngModel)]="config.welcomeMessage" rows="3"></textarea>
+        <div class="form-group">
+          <label><i class="fas fa-hand-sparkles"></i> Mensaje de Bienvenida</label>
+          <textarea [(ngModel)]="config.welcomeMessage" rows="3" placeholder="¡Hola! Bienvenido a..."></textarea>
         </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Timeout de Registro (ms)</label>
-            <input type="number" [(ngModel)]="config.registrationTimeout" />
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-hourglass-half"></i> Timeout de Registro (ms)</label>
+            <input type="number" [(ngModel)]="config.registrationTimeout" placeholder="300000" />
+            <span class="hint">Tiempo máximo para completar un flujo de registro</span>
           </div>
-          <div class="form-group-config">
-            <label>Bot Activo</label>
-            <select [(ngModel)]="config.active">
-              <option [ngValue]="true">Sí</option>
-              <option [ngValue]="false">No</option>
-            </select>
+          <div class="form-group">
+            <label><i class="fas fa-power-off"></i> Bot Activo</label>
+            <div class="toggle-row">
+              <select [(ngModel)]="config.active" class="select-status">
+                <option [ngValue]="true">Activo</option>
+                <option [ngValue]="false">Inactivo</option>
+              </select>
+              <span class="status-dot" [class.active]="config.active" [class.inactive]="!config.active"></span>
+            </div>
           </div>
         </div>
         <button class="btn-save-section" (click)="saveConfig()" [disabled]="saving">

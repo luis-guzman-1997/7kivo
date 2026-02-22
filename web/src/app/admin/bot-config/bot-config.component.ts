@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
 
 interface BotMessage {
@@ -22,7 +22,6 @@ export class BotConfigComponent implements OnInit {
   scheduleInfo: any = {};
   generalInfo: any = {};
   config: any = {};
-  programs: any[] = [];
 
   loading = true;
   saving = false;
@@ -33,11 +32,7 @@ export class BotConfigComponent implements OnInit {
   editingMessageId: string | null = null;
   editContent = '';
 
-  showProgramForm = false;
-  editingProgramId: string | null = null;
-  programForm: any = { name: '', age: '', duration: '', focus: '', ageNote: '', note: '', includes: '', active: true, order: 0 };
-
-  constructor(private firebaseService: FirebaseService, private el: ElementRef) {}
+  constructor(private firebaseService: FirebaseService) {}
 
   async ngOnInit(): Promise<void> {
     await this.loadAll();
@@ -46,13 +41,12 @@ export class BotConfigComponent implements OnInit {
   async loadAll(): Promise<void> {
     this.loading = true;
     try {
-      const [messages, contact, schedule, general, config, programs] = await Promise.all([
+      const [messages, contact, schedule, general, config] = await Promise.all([
         this.firebaseService.getBotMessages(),
         this.firebaseService.getInfo('contact'),
         this.firebaseService.getInfo('schedule'),
         this.firebaseService.getInfo('general'),
-        this.firebaseService.getConfig(),
-        this.firebaseService.getPrograms()
+        this.firebaseService.getConfig()
       ]);
 
       this.messages = messages as BotMessage[];
@@ -60,7 +54,6 @@ export class BotConfigComponent implements OnInit {
       this.scheduleInfo = schedule || {};
       this.generalInfo = general || {};
       this.config = config || {};
-      this.programs = programs;
     } catch (err) {
       console.error('Error loading bot config:', err);
     } finally {
@@ -172,128 +165,6 @@ export class BotConfigComponent implements OnInit {
       setTimeout(() => this.saveError = '', 3000);
     } finally {
       this.saving = false;
-    }
-  }
-
-  async saveProgram(program: any): Promise<void> {
-    this.saving = true;
-    try {
-      const { id, ...data } = program;
-      await this.firebaseService.updateProgram(id, data);
-      this.saveNotice = `Programa "${program.name}" actualizado`;
-      setTimeout(() => this.saveNotice = '', 3000);
-    } catch (err) {
-      this.saveError = 'Error al guardar programa';
-      setTimeout(() => this.saveError = '', 3000);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  openNewProgram(): void {
-    this.showProgramForm = true;
-    this.editingProgramId = null;
-    this.programForm = { name: '', age: '', duration: '', focus: '', ageNote: '', note: '', includes: '', active: true, order: this.programs.length + 1 };
-    this.scrollToProgramForm();
-  }
-
-  openEditProgram(program: any): void {
-    this.showProgramForm = true;
-    this.editingProgramId = program.id;
-    this.programForm = {
-      name: program.name || '',
-      age: program.age || '',
-      duration: program.duration || '',
-      focus: program.focus || '',
-      ageNote: program.ageNote || '',
-      note: program.note || '',
-      includes: Array.isArray(program.includes) ? program.includes.join('\n') : '',
-      active: program.active !== false,
-      order: program.order || 0
-    };
-    this.scrollToProgramForm();
-  }
-
-  private scrollToProgramForm(): void {
-    setTimeout(() => {
-      const formEl = this.el.nativeElement.querySelector('.program-form-section');
-      if (formEl) {
-        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 50);
-  }
-
-  closeProgramForm(): void {
-    this.showProgramForm = false;
-    this.editingProgramId = null;
-  }
-
-  async submitProgram(): Promise<void> {
-    if (!this.programForm.name.trim()) {
-      this.saveError = 'El nombre del programa es requerido';
-      setTimeout(() => this.saveError = '', 3000);
-      return;
-    }
-
-    this.saving = true;
-    try {
-      const data = {
-        name: this.programForm.name.trim(),
-        age: this.programForm.age.trim(),
-        duration: this.programForm.duration.trim(),
-        focus: this.programForm.focus.trim(),
-        ageNote: this.programForm.ageNote.trim(),
-        note: this.programForm.note.trim(),
-        includes: this.programForm.includes ? this.programForm.includes.split('\n').map((s: string) => s.trim()).filter((s: string) => s) : [],
-        active: this.programForm.active,
-        order: this.programForm.order || 0
-      };
-
-      if (this.editingProgramId) {
-        await this.firebaseService.updateProgram(this.editingProgramId, data);
-        this.saveNotice = `Programa "${data.name}" actualizado`;
-      } else {
-        await this.firebaseService.addProgram(data);
-        this.saveNotice = `Programa "${data.name}" creado`;
-      }
-
-      this.closeProgramForm();
-      await this.loadAll();
-      setTimeout(() => this.saveNotice = '', 3000);
-    } catch (err) {
-      this.saveError = 'Error al guardar programa';
-      setTimeout(() => this.saveError = '', 3000);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  async deleteProgram(program: any): Promise<void> {
-    if (!confirm(`¿Eliminar el programa "${program.name}"?`)) return;
-
-    this.saving = true;
-    try {
-      await this.firebaseService.deleteProgram(program.id);
-      this.saveNotice = `Programa "${program.name}" eliminado`;
-      await this.loadAll();
-      setTimeout(() => this.saveNotice = '', 3000);
-    } catch (err) {
-      this.saveError = 'Error al eliminar programa';
-      setTimeout(() => this.saveError = '', 3000);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  async toggleProgramActive(program: any): Promise<void> {
-    try {
-      await this.firebaseService.updateProgram(program.id, { active: !program.active });
-      program.active = !program.active;
-      this.saveNotice = `Programa "${program.name}" ${program.active ? 'activado' : 'desactivado'}`;
-      setTimeout(() => this.saveNotice = '', 3000);
-    } catch (err) {
-      this.saveError = 'Error al actualizar programa';
-      setTimeout(() => this.saveError = '', 3000);
     }
   }
 }

@@ -83,18 +83,18 @@ export class LoginComponent {
     this.success = '';
 
     try {
-      // 1. Create org in Firestore
+      // 1. Create Firebase Auth user FIRST (so we're authenticated for Firestore writes)
+      const user = await this.authService.createUser(this.regEmail.trim(), this.regPassword);
+
+      // 2. Create org in Firestore (now authenticated)
       const orgId = await this.firebaseService.createOrganization({
         name: this.regOrgName.trim(),
         industry: this.regIndustry,
         description: this.regDescription.trim()
       });
 
-      // 2. Set orgId so we can write admin under the org
+      // 3. Set orgId so we can write admin under the org
       this.firebaseService.setOrgId(orgId);
-
-      // 3. Create Firebase Auth user
-      const user = await this.authService.createUser(this.regEmail.trim(), this.regPassword);
 
       // 4. Map user to org in /users/{uid}
       await this.firebaseService.setUserOrg(user.uid, {

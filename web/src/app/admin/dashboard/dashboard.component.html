@@ -9,79 +9,65 @@
   <div *ngIf="!loading">
     <!-- Stats Cards -->
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card" *ngFor="let cs of collectionStats">
         <div class="stat-icon bg-blue">
-          <i class="fas fa-user-clock"></i>
+          <i class="fas" [ngClass]="cs.icon"></i>
         </div>
         <div class="stat-info">
-          <span class="stat-number">{{ stats.totalContacts }}</span>
-          <span class="stat-label">Total Contactos</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon bg-yellow">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-number">{{ stats.pendingContacts }}</span>
-          <span class="stat-label">Pendientes</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon bg-green">
-          <i class="fas fa-user-check"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-number">{{ stats.totalClients }}</span>
-          <span class="stat-label">Clientes</span>
+          <span class="stat-number">{{ cs.count }}</span>
+          <span class="stat-label">{{ cs.name }}</span>
         </div>
       </div>
 
       <div class="stat-card">
         <div class="stat-icon bg-purple">
+          <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ totalFlows }}</span>
+          <span class="stat-label">Flujos</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon bg-green">
           <i class="fas fa-user-shield"></i>
         </div>
         <div class="stat-info">
-          <span class="stat-number">{{ stats.totalAdmins }}</span>
+          <span class="stat-number">{{ totalAdmins }}</span>
           <span class="stat-label">Administradores</span>
         </div>
       </div>
     </div>
 
-    <!-- Recent Contacts -->
+    <!-- Recent Entries -->
     <div class="panel">
       <div class="panel-header">
-        <h3><i class="fas fa-user-clock"></i> Contactos Recientes</h3>
-        <a routerLink="/admin/contactos" class="btn-view-all">Ver todos <i class="fas fa-arrow-right"></i></a>
+        <h3><i class="fas fa-clock"></i> Registros Recientes</h3>
+        <a routerLink="/admin/colecciones" class="btn-view-all">Colecciones <i class="fas fa-arrow-right"></i></a>
       </div>
       <div class="panel-body">
-        <div *ngIf="recentContacts.length === 0" class="empty-state">
+        <div *ngIf="recentItems.length === 0" class="empty-state">
           <i class="fas fa-inbox"></i>
-          <p>No hay contactos aún</p>
+          <p>No hay registros aún. Crea colecciones y flujos para comenzar.</p>
         </div>
-        <table class="data-table" *ngIf="recentContacts.length > 0">
+        <table class="data-table" *ngIf="recentItems.length > 0">
           <thead>
             <tr>
-              <th>Nombre</th>
-              <th>Teléfono</th>
-              <th>Flujo</th>
+              <th>Registro</th>
+              <th>Colección</th>
               <th>Fecha</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let a of recentContacts">
+            <tr *ngFor="let item of recentItems">
+              <td><strong>{{ item._displayValue }}</strong></td>
+              <td><span class="flow-chip">{{ item._collectionName }}</span></td>
+              <td>{{ formatDate(item.createdAt) }}</td>
               <td>
-                <strong>{{ getPersonName(a) }}</strong>
-              </td>
-              <td>{{ a.phoneNumber || '-' }}</td>
-              <td><span class="flow-chip">{{ a.flowName || 'Directo' }}</span></td>
-              <td>{{ formatDate(a.createdAt) }}</td>
-              <td>
-                <span class="badge" [class]="'badge-' + a.status">
-                  {{ getStatusLabel(a.status) }}
+                <span class="badge" [class]="'badge-' + (item.status || 'active')">
+                  {{ getStatusLabel(item.status) }}
                 </span>
               </td>
             </tr>

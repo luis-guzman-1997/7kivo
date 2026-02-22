@@ -11,6 +11,7 @@ import { FlowBuilderComponent } from './flow-builder/flow-builder.component';
 import { InboxComponent } from './inbox/inbox.component';
 import { ChatComponent } from './chat/chat.component';
 import { OrgSettingsComponent } from './org-settings/org-settings.component';
+import { CollectionsComponent } from './collections/collections.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -23,6 +24,7 @@ const routes: Routes = [
       { path: 'contactos', component: StudentsComponent },
       { path: 'chat', component: ChatComponent },
       { path: 'bandeja', component: InboxComponent },
+      { path: 'colecciones', component: CollectionsComponent },
       { path: 'administradores', component: AdminUsersComponent },
       { path: 'bot', component: BotConfigComponent },
       { path: 'flujos', component: FlowBuilderComponent },
