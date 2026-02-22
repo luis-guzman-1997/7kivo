@@ -1,71 +1,56 @@
+/* ── Navbar ── */
 .navbar {
-  padding: 1rem 0;
+  padding: 12px 0;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  transition: all 0.3s;
 }
+
+.navbar-brand img { height: 36px; }
+
+.navbar-toggler {
+  border: none; padding: 6px 10px;
+}
+.navbar-toggler:focus { box-shadow: none; }
 
 .navbar-nav .nav-link {
   font-weight: 500;
-  margin: 0 0.5rem;
-  color: var(--text-color);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 0 2px;
+  color: #475569;
+  transition: all 0.25s;
   position: relative;
-  padding: 0.5rem 0.75rem !important;
+  padding: 8px 14px !important;
   border-radius: 8px;
+  font-size: 0.9rem;
 }
 
 .navbar-nav .nav-link::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  bottom: 2px; left: 50%;
+  width: 0; height: 2px;
+  background: linear-gradient(90deg, #10b981, #059669);
   transform: translateX(-50%);
-  transition: width 0.3s ease;
+  transition: width 0.3s;
+  border-radius: 2px;
 }
 
-.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:hover {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.06);
+}
+.navbar-nav .nav-link:hover::after { width: 60%; }
+
 .navbar-nav .nav-link.active {
-  color: #10b981 !important;
-  background: rgba(16, 185, 129, 0.1);
-}
-
-.navbar-nav .nav-link:hover::after,
-.navbar-nav .nav-link.active::after {
-  width: 80%;
-}
-
-/* Indicador visual mejorado para sección activa */
-.navbar-nav .nav-link.active {
+  color: #059669;
   font-weight: 600;
-  position: relative;
+  background: rgba(16, 185, 129, 0.08);
 }
+.navbar-nav .nav-link.active::after { width: 70%; }
 
-.navbar-nav .nav-link.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  background: linear-gradient(135deg, #10b981, #34d399);
-  border-radius: 0 3px 3px 0;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    width: 0;
-    opacity: 0;
-  }
-  to {
-    width: 3px;
-    opacity: 1;
-  }
-}
-
-/* Botón Iniciar Sesión */
+/* ── CTA Button ── */
 .btn-login-nav {
   display: inline-flex;
   align-items: center;
@@ -73,65 +58,44 @@
   padding: 9px 22px;
   background: linear-gradient(135deg, #10b981, #059669);
   color: white !important;
-  border-radius: 50px;
-  font-size: 0.9rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s;
+  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.25);
   white-space: nowrap;
 }
-
 .btn-login-nav i {
-  font-size: 0.85rem;
-  color: white !important;
-  transition: transform 0.3s ease;
+  font-size: 0.82rem; color: white !important;
+  transition: transform 0.3s;
 }
-
 .btn-login-nav:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
-  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
   color: white !important;
 }
-
-.btn-login-nav:hover i {
-  transform: translateX(2px);
-}
-
-.btn-login-nav:active {
-  transform: translateY(0);
-}
+.btn-login-nav:hover i { transform: translateX(2px); }
 
 @media (max-width: 991.98px) {
   .btn-login-nav {
-    margin-top: 12px;
-    justify-content: center;
-    width: 100%;
+    margin-top: 12px; justify-content: center; width: 100%;
   }
+  .navbar-nav .nav-link { padding: 10px 14px !important; }
 }
 
+/* ── Main ── */
 main {
-  margin-top: 76px;
+  margin-top: 66px;
   position: relative;
-  scroll-snap-type: none;
   overflow-y: scroll;
   overflow-x: hidden;
-  height: calc(100vh - 76px);
+  height: calc(100vh - 66px);
   scroll-behavior: auto;
-  scroll-padding-top: 120px;
+  scroll-padding-top: 100px;
 }
-
-/* Ocultar scrollbar en main */
-main::-webkit-scrollbar {
-  display: none;
-  width: 0;
-}
-
-main {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+main::-webkit-scrollbar { display: none; width: 0; }
+main { -ms-overflow-style: none; scrollbar-width: none; }
 
 main.no-margin {
   margin-top: 0;
@@ -139,5 +103,25 @@ main.no-margin {
   overflow-y: auto;
   overflow-x: hidden;
   scroll-padding-top: 0;
-  scroll-snap-type: none;
 }
+
+/* ── Footer ── */
+.site-footer {
+  background: #0f172a;
+  padding: 20px 0;
+}
+.site-footer .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.site-footer span { font-size: 0.8rem; color: #64748b; }
+.site-footer strong { color: #10b981; font-weight: 700; }
+.site-footer a {
+  font-size: 0.8rem; color: #34d399;
+  text-decoration: none; transition: color 0.2s;
+  font-weight: 500;
+}
+.site-footer a:hover { color: #6ee7b7; }

@@ -311,35 +311,8 @@ section[id] h3 {
   filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.2));
 }
 
-/* Iconos verdes */
-.fa-robot, .fa-globe, .fa-cogs, .fa-brain, .fa-comments, 
-.fa-file-invoice, .fa-chart-line, .fa-bullseye, .fa-eye,
-.fa-lightbulb, .fa-handshake, .fa-award, .fa-users, 
-.fa-shield-alt, .fa-rocket, .fa-envelope, .fa-phone,
-.fa-map-marker-alt, .fa-python, .fa-js-square, .fa-angular,
-.fa-node-js, .fa-database, .fa-aws, .fa-mobile-alt {
-  color: #10b981 !important;
-}
-
-/* Excepción: iconos de contacto deben ser blancos */
-.contact-icon-modern .fa-envelope,
-.contact-icon-modern .fa-phone,
-.contact-icon-modern .fa-map-marker-alt {
-  color: white !important;
-}
-
+/* Iconos con color primario (solo contextos globales) */
 .text-primary i, i.text-primary {
-  color: #10b981 !important;
-}
-
-/* Iconos verdes en secciones jumbotron/hero */
-.bg-gradient-primary i,
-.bg-gradient-primary .fa,
-.bg-gradient-primary [class*="fa-"] {
-  color: #10b981 !important;
-}
-
-.bg-gradient-primary .icon-large {
   color: #10b981 !important;
 }
 

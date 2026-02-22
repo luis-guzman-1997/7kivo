@@ -1,72 +1,138 @@
 <!-- Hero Section -->
-<section id="inicio" class="bg-gradient-primary text-white py-5">
-  <div class="container">
-    <div class="row align-items-center min-vh-75">
-      <div class="col-lg-6 fade-in">
+<section id="inicio" class="hero-section">
+  <div class="hero-bg"></div>
+  <div class="container position-relative">
+    <div class="row align-items-center hero-row">
+      <div class="col-lg-7 fade-in">
         <span class="hero-badge">Plataforma CMS + WhatsApp Bot</span>
-        <h1 class="display-4 fw-bold mb-4">Tu negocio en WhatsApp, automatizado y bajo control</h1>
-        <p class="lead mb-4">7kivo es la plataforma que te permite crear un bot de WhatsApp personalizado, gestionar flujos conversacionales, administrar colecciones de datos y atender a tus clientes desde un panel web, sin escribir una sola línea de código.</p>
-        <div class="d-flex gap-3 flex-wrap">
-          <a routerLink="/admin/login" class="btn btn-light btn-lg fw-bold">
-            <i class="fas fa-rocket me-2"></i>Regístrate Gratis
+        <h1 class="hero-title">Tu negocio en WhatsApp, automatizado y bajo control</h1>
+        <p class="hero-subtitle">Crea un bot de WhatsApp personalizado, gestiona flujos conversacionales, administra colecciones de datos y atiende a tus clientes desde un panel web. Sin escribir una sola linea de codigo.</p>
+        <div class="hero-actions">
+          <a routerLink="/admin/login" class="btn-hero-primary">
+            <i class="fas fa-rocket"></i> Comienza Gratis
           </a>
         </div>
+        <div class="hero-trust">
+          <div class="trust-item"><i class="fas fa-check-circle"></i> Sin tarjeta de credito</div>
+          <div class="trust-item"><i class="fas fa-check-circle"></i> Configuracion en minutos</div>
+          <div class="trust-item"><i class="fas fa-check-circle"></i> Soporte incluido</div>
+        </div>
       </div>
-      <div class="col-lg-6 text-center mt-5 mt-lg-0">
-        <img src="assets/7kivo.png" alt="7kivo" class="img-fluid" style="max-width: 400px; filter: brightness(0) invert(1);">
+      <div class="col-lg-5 text-center mt-5 mt-lg-0">
+        <div class="hero-visual">
+          <div class="wa-device">
+            <div class="wa-header">
+              <div class="wa-header-left">
+                <i class="fas fa-chevron-left"></i>
+                <div class="wa-pic">7k</div>
+                <div class="wa-info">
+                  <div class="wa-h-name">7kivo Bot</div>
+                  <div class="wa-h-status">en linea</div>
+                </div>
+              </div>
+              <div class="wa-header-right">
+                <i class="fas fa-video"></i>
+                <i class="fas fa-phone-alt"></i>
+                <i class="fas fa-ellipsis-v"></i>
+              </div>
+            </div>
+            <div class="wa-body">
+              <div class="wa-day"><span>HOY</span></div>
+              <div class="wa-row left">
+                <div class="wa-bbl in first">
+                  Hola, bienvenido a <b>Tu Empresa</b>. Soy tu asistente virtual. Estoy aqui para ayudarte con lo que necesites.
+                  <span class="wa-t">10:30 a.m.</span>
+                </div>
+              </div>
+              <div class="wa-row right">
+                <div class="wa-bbl out first">
+                  Hola, me gustaria agendar una cita para consulta general
+                  <span class="wa-t">10:31 <i class="fas fa-check-double"></i></span>
+                </div>
+              </div>
+              <div class="wa-row left">
+                <div class="wa-bbl in first">
+                  Con gusto. Tenemos disponibilidad el <b>Mie 26 Feb</b> a las <b>9:00 AM</b> y <b>11:30 AM</b>. ¿Cual prefieres?
+                  <span class="wa-t">10:31 a.m.</span>
+                </div>
+              </div>
+              <div class="wa-row right">
+                <div class="wa-bbl out first">
+                  A las 9:00 AM por favor
+                  <span class="wa-t">10:32 <i class="fas fa-check-double"></i></span>
+                </div>
+              </div>
+              <div class="wa-row left">
+                <div class="wa-bbl in first">
+                  Listo, tu cita quedo agendada:<br><br><b>Fecha:</b> Mie 26 Feb<br><b>Hora:</b> 9:00 AM<br><b>Tipo:</b> Consulta general<br><br>Te enviaremos un recordatorio. ¡Te esperamos!
+                  <span class="wa-t">10:32 a.m.</span>
+                </div>
+              </div>
+            </div>
+            <div class="wa-footer">
+              <div class="wa-compose">
+                <i class="far fa-smile"></i>
+                <span>Mensaje</span>
+                <i class="fas fa-paperclip"></i>
+              </div>
+              <div class="wa-send-btn"><i class="fas fa-microphone"></i></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- Features -->
-<section id="funcionalidades" class="section-padding">
+<section id="funcionalidades" class="section-modern">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="display-5 fw-bold mb-3">Todo lo que necesitas en un solo lugar</h2>
-      <p class="lead text-muted">Configura tu bot, gestiona tus datos y atiende a tus clientes desde la web</p>
+    <div class="section-header">
+      <span class="section-tag">Funcionalidades</span>
+      <h2 class="section-title">Todo lo que necesitas en un solo lugar</h2>
+      <p class="section-desc">Configura tu bot, gestiona tus datos y atiende a tus clientes desde la web</p>
     </div>
     <div class="row g-4">
       <div class="col-md-4">
-        <div class="card card-hover h-100 p-4 text-center">
-          <div class="mb-3"><i class="fas fa-robot icon-large"></i></div>
-          <h4 class="fw-bold mb-3">Bot de WhatsApp</h4>
-          <p class="text-muted">Conecta tu WhatsApp Business y ofrece atención automatizada 24/7. El bot responde, guía y recopila información de tus clientes automáticamente.</p>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-robot"></i></div>
+          <h4>Bot de WhatsApp</h4>
+          <p>Conecta tu WhatsApp Business y ofrece atencion automatizada 24/7. El bot responde, guia y recopila informacion de tus clientes.</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card card-hover h-100 p-4 text-center">
-          <div class="mb-3"><i class="fas fa-project-diagram icon-large"></i></div>
-          <h4 class="fw-bold mb-3">Constructor de Flujos</h4>
-          <p class="text-muted">Diseña conversaciones paso a paso: formularios de registro, consultas, catálogos de productos. Todo visual y sin código.</p>
+        <div class="feature-card">
+          <div class="feature-icon accent"><i class="fas fa-project-diagram"></i></div>
+          <h4>Constructor de Flujos</h4>
+          <p>Disena conversaciones paso a paso: formularios de registro, consultas, catalogos. Todo visual y sin codigo.</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card card-hover h-100 p-4 text-center">
-          <div class="mb-3"><i class="fas fa-database icon-large"></i></div>
-          <h4 class="fw-bold mb-3">Colecciones Dinámicas</h4>
-          <p class="text-muted">Crea tus propias bases de datos: productos, servicios, aspirantes. Define los campos que necesitas y el bot se alimenta de ellos.</p>
+        <div class="feature-card">
+          <div class="feature-icon purple"><i class="fas fa-database"></i></div>
+          <h4>Colecciones Dinamicas</h4>
+          <p>Crea tus propias bases de datos: productos, servicios, aspirantes. Define los campos que necesitas y el bot se alimenta de ellos.</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card card-hover h-100 p-4 text-center">
-          <div class="mb-3"><i class="fas fa-comments icon-large"></i></div>
-          <h4 class="fw-bold mb-3">Chat en Tiempo Real</h4>
-          <p class="text-muted">Toma el control de cualquier conversación cuando lo necesites. Intervén directamente desde la web y el bot se pausa automáticamente.</p>
+        <div class="feature-card">
+          <div class="feature-icon orange"><i class="fas fa-comments"></i></div>
+          <h4>Chat en Tiempo Real</h4>
+          <p>Toma el control de cualquier conversacion cuando lo necesites. Interven directamente desde la web y el bot se pausa.</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card card-hover h-100 p-4 text-center">
-          <div class="mb-3"><i class="fas fa-chart-bar icon-large"></i></div>
-          <h4 class="fw-bold mb-3">Dashboard y Reportes</h4>
-          <p class="text-muted">Visualiza las estadísticas de tus colecciones, revisa los registros entrantes y gestiona todo desde un panel centralizado.</p>
+        <div class="feature-card">
+          <div class="feature-icon blue"><i class="fas fa-calendar-check"></i></div>
+          <h4>Sistema de Citas</h4>
+          <p>Permite a tus clientes agendar citas directamente desde WhatsApp. Configura horarios, duracion y disponibilidad.</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card card-hover h-100 p-4 text-center">
-          <div class="mb-3"><i class="fas fa-building icon-large"></i></div>
-          <h4 class="fw-bold mb-3">Multi-organización</h4>
-          <p class="text-muted">Cada cuenta es independiente con sus propios datos, flujos y configuraciones. Ideal para agencias que gestionan múltiples clientes.</p>
+        <div class="feature-card">
+          <div class="feature-icon teal"><i class="fas fa-building"></i></div>
+          <h4>Multi-organizacion</h4>
+          <p>Cada cuenta es independiente con sus propios datos, flujos y configuraciones. Ideal para agencias con multiples clientes.</p>
         </div>
       </div>
     </div>
@@ -74,43 +140,147 @@
 </section>
 
 <!-- How it works -->
-<section class="section-padding bg-light">
+<section class="section-modern section-alt">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="display-5 fw-bold mb-3">Empieza en 4 pasos</h2>
-      <p class="lead text-muted">De cero a un bot funcional en minutos</p>
+    <div class="section-header">
+      <span class="section-tag">Como Funciona</span>
+      <h2 class="section-title">Empieza en 4 pasos</h2>
+      <p class="section-desc">De cero a un bot funcional en minutos</p>
     </div>
     <div class="row g-4">
       <div class="col-lg-3 col-md-6">
-        <div class="process-step-simple">
-          <div class="process-number-simple">1</div>
-          <div class="process-icon-simple"><i class="fas fa-user-plus"></i></div>
-          <h5 class="fw-bold mb-3">Crea tu cuenta</h5>
-          <p class="text-muted">Regístrate con tu email, crea tu organización y accede al panel de administración.</p>
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-icon"><i class="fas fa-user-plus"></i></div>
+          <h5>Crea tu cuenta</h5>
+          <p>Registrate, crea tu organizacion y accede al panel de administracion.</p>
         </div>
       </div>
       <div class="col-lg-3 col-md-6">
-        <div class="process-step-simple">
-          <div class="process-number-simple">2</div>
-          <div class="process-icon-simple"><i class="fas fa-sliders-h"></i></div>
-          <h5 class="fw-bold mb-3">Configura tu bot</h5>
-          <p class="text-muted">Define los mensajes, crea colecciones de datos y diseña los flujos conversacionales.</p>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-icon"><i class="fas fa-sliders-h"></i></div>
+          <h5>Configura tu bot</h5>
+          <p>Define mensajes, crea colecciones de datos y disena los flujos conversacionales.</p>
         </div>
       </div>
       <div class="col-lg-3 col-md-6">
-        <div class="process-step-simple">
-          <div class="process-number-simple">3</div>
-          <div class="process-icon-simple"><i class="fab fa-whatsapp"></i></div>
-          <h5 class="fw-bold mb-3">Conecta WhatsApp</h5>
-          <p class="text-muted">Ingresa las credenciales de tu WhatsApp Business API y activa la conexión.</p>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-icon"><i class="fab fa-whatsapp"></i></div>
+          <h5>Conecta WhatsApp</h5>
+          <p>Nuestro equipo configura la conexion con tu WhatsApp Business API.</p>
         </div>
       </div>
       <div class="col-lg-3 col-md-6">
-        <div class="process-step-simple">
-          <div class="process-number-simple">4</div>
-          <div class="process-icon-simple"><i class="fas fa-rocket"></i></div>
-          <h5 class="fw-bold mb-3">Listo para usar</h5>
-          <p class="text-muted">Tu bot ya está activo. Recibe mensajes, registra datos y gestiona todo desde el panel.</p>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-icon"><i class="fas fa-rocket"></i></div>
+          <h5>Listo para usar</h5>
+          <p>Tu bot esta activo. Recibe mensajes, registra datos y gestiona todo desde el panel.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Plans -->
+<section id="planes" class="section-modern">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Planes</span>
+      <h2 class="section-title">Un plan para cada etapa de tu negocio</h2>
+      <p class="section-desc">Elige el plan que se adapte a tus necesidades. Actualiza en cualquier momento.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <!-- Starter -->
+      <div class="col-lg-3 col-md-6">
+        <div class="plan-card">
+          <div class="plan-header">
+            <h4>Starter</h4>
+            <p class="plan-tagline">Para empezar a automatizar</p>
+          </div>
+          <div class="plan-price">
+            <span class="price-amount">$9.99</span>
+            <span class="price-period">/mes</span>
+          </div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> Bot WhatsApp con menu interactivo</li>
+            <li><i class="fas fa-check"></i> 1 flujo conversacional</li>
+            <li><i class="fas fa-check"></i> 1 coleccion de datos</li>
+            <li><i class="fas fa-check"></i> Bandeja de entrada</li>
+            <li><i class="fas fa-check"></i> Chat WhatsApp (solo lectura)</li>
+            <li class="disabled"><i class="fas fa-times"></i> Sistema de citas</li>
+            <li class="disabled"><i class="fas fa-times"></i> Chat en vivo</li>
+          </ul>
+          <a routerLink="/admin/login" class="btn-plan">Comenzar</a>
+        </div>
+      </div>
+      <!-- Business -->
+      <div class="col-lg-3 col-md-6">
+        <div class="plan-card popular">
+          <div class="popular-badge">Popular</div>
+          <div class="plan-header">
+            <h4>Business</h4>
+            <p class="plan-tagline">Para negocios en crecimiento</p>
+          </div>
+          <div class="plan-price">
+            <span class="price-amount">$19.99</span>
+            <span class="price-period">/mes</span>
+          </div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> Hasta 3 flujos conversacionales</li>
+            <li><i class="fas fa-check"></i> Hasta 3 colecciones de datos</li>
+            <li><i class="fas fa-check"></i> Sistema de citas y agenda</li>
+            <li><i class="fas fa-check"></i> Chat en vivo con clientes</li>
+            <li><i class="fas fa-check"></i> 3 usuarios administradores</li>
+            <li><i class="fas fa-check"></i> Bandeja de entrada con calendario</li>
+          </ul>
+          <a routerLink="/admin/login" class="btn-plan primary">Comenzar</a>
+        </div>
+      </div>
+      <!-- Premium -->
+      <div class="col-lg-3 col-md-6">
+        <div class="plan-card">
+          <div class="plan-header">
+            <h4>Premium</h4>
+            <p class="plan-tagline">Para equipos profesionales</p>
+          </div>
+          <div class="plan-price">
+            <span class="price-amount">$39.99</span>
+            <span class="price-period">/mes</span>
+          </div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> Hasta 5 flujos conversacionales</li>
+            <li><i class="fas fa-check"></i> Hasta 10 colecciones de datos</li>
+            <li><i class="fas fa-check"></i> Sistema de citas y agenda</li>
+            <li><i class="fas fa-check"></i> Chat en vivo con clientes</li>
+            <li><i class="fas fa-check"></i> 5 usuarios administradores</li>
+            <li><i class="fas fa-check"></i> Roles y permisos avanzados</li>
+          </ul>
+          <a routerLink="/admin/login" class="btn-plan">Comenzar</a>
+        </div>
+      </div>
+      <!-- Enterprise -->
+      <div class="col-lg-3 col-md-6">
+        <div class="plan-card">
+          <div class="plan-header">
+            <h4>Enterprise</h4>
+            <p class="plan-tagline">Para grandes operaciones</p>
+          </div>
+          <div class="plan-price">
+            <span class="price-amount">$100</span>
+            <span class="price-period">/mes</span>
+          </div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> Hasta 20 flujos conversacionales</li>
+            <li><i class="fas fa-check"></i> Colecciones ilimitadas</li>
+            <li><i class="fas fa-check"></i> Usuarios ilimitados</li>
+            <li><i class="fas fa-check"></i> Configuracion avanzada del bot</li>
+            <li><i class="fas fa-check"></i> Roles y permisos completos</li>
+            <li><i class="fas fa-check"></i> Plan personalizado</li>
+          </ul>
+          <a routerLink="/admin/login" class="btn-plan">Contactar</a>
         </div>
       </div>
     </div>
@@ -118,53 +288,48 @@
 </section>
 
 <!-- Use cases -->
-<section id="casos" class="section-padding">
+<section id="casos" class="section-modern section-alt">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="display-5 fw-bold mb-3">Adaptable a cualquier industria</h2>
-      <p class="lead text-muted">7kivo funciona para cualquier negocio que necesite atender clientes por WhatsApp</p>
+    <div class="section-header">
+      <span class="section-tag">Casos de Uso</span>
+      <h2 class="section-title">Adaptable a cualquier industria</h2>
+      <p class="section-desc">7kivo funciona para cualquier negocio que necesite atender clientes por WhatsApp</p>
     </div>
     <div class="row g-4">
       <div class="col-lg-4 col-md-6">
-        <div class="card card-hover h-100">
-          <div class="card-body p-4">
-            <div class="mb-3"><i class="fas fa-graduation-cap fa-3x text-primary"></i></div>
-            <h5 class="fw-bold mb-3">Instituciones Educativas</h5>
-            <p class="text-muted">Registra aspirantes, comparte programas académicos, horarios y ubicación. Gestiona las consultas de nuevos estudiantes.</p>
-            <ul class="list-unstyled mt-3">
-              <li><i class="fas fa-check text-success me-2"></i>Registro de aspirantes</li>
-              <li><i class="fas fa-check text-success me-2"></i>Catálogo de programas</li>
-              <li><i class="fas fa-check text-success me-2"></i>Horarios y ubicación</li>
-            </ul>
-          </div>
+        <div class="usecase-card">
+          <div class="usecase-icon"><i class="fas fa-graduation-cap"></i></div>
+          <h5>Instituciones Educativas</h5>
+          <p>Registra aspirantes, comparte programas academicos, horarios y ubicacion.</p>
+          <ul class="usecase-list">
+            <li>Registro de aspirantes</li>
+            <li>Catalogo de programas</li>
+            <li>Horarios y ubicacion</li>
+          </ul>
         </div>
       </div>
       <div class="col-lg-4 col-md-6">
-        <div class="card card-hover h-100">
-          <div class="card-body p-4">
-            <div class="mb-3"><i class="fas fa-store fa-3x text-primary"></i></div>
-            <h5 class="fw-bold mb-3">Comercio y Retail</h5>
-            <p class="text-muted">Muestra tu catálogo de productos, recibe pedidos y consultas. Atiende a tus clientes sin perder ninguna venta.</p>
-            <ul class="list-unstyled mt-3">
-              <li><i class="fas fa-check text-success me-2"></i>Catálogo de productos</li>
-              <li><i class="fas fa-check text-success me-2"></i>Recepción de pedidos</li>
-              <li><i class="fas fa-check text-success me-2"></i>Atención automatizada</li>
-            </ul>
-          </div>
+        <div class="usecase-card">
+          <div class="usecase-icon"><i class="fas fa-store"></i></div>
+          <h5>Comercio y Retail</h5>
+          <p>Muestra tu catalogo de productos, recibe pedidos y consultas automaticamente.</p>
+          <ul class="usecase-list">
+            <li>Catalogo de productos</li>
+            <li>Recepcion de pedidos</li>
+            <li>Atencion automatizada</li>
+          </ul>
         </div>
       </div>
       <div class="col-lg-4 col-md-6">
-        <div class="card card-hover h-100">
-          <div class="card-body p-4">
-            <div class="mb-3"><i class="fas fa-concierge-bell fa-3x text-primary"></i></div>
-            <h5 class="fw-bold mb-3">Servicios y Consultoría</h5>
-            <p class="text-muted">Agenda citas, recibe solicitudes de información y gestiona el primer contacto con tus clientes potenciales.</p>
-            <ul class="list-unstyled mt-3">
-              <li><i class="fas fa-check text-success me-2"></i>Formularios de contacto</li>
-              <li><i class="fas fa-check text-success me-2"></i>Agendamiento de citas</li>
-              <li><i class="fas fa-check text-success me-2"></i>Seguimiento de leads</li>
-            </ul>
-          </div>
+        <div class="usecase-card">
+          <div class="usecase-icon"><i class="fas fa-concierge-bell"></i></div>
+          <h5>Servicios y Consultoria</h5>
+          <p>Agenda citas, recibe solicitudes y gestiona el primer contacto con tus clientes.</p>
+          <ul class="usecase-list">
+            <li>Formularios de contacto</li>
+            <li>Agendamiento de citas</li>
+            <li>Seguimiento de leads</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -172,56 +337,53 @@
 </section>
 
 <!-- Why 7kivo -->
-<section id="nosotros" class="section-padding bg-light">
+<section id="nosotros" class="section-modern">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="display-5 fw-bold mb-3">Por qué elegir 7kivo</h2>
+    <div class="section-header">
+      <span class="section-tag">Por que 7kivo</span>
+      <h2 class="section-title">La plataforma que tu negocio necesita</h2>
     </div>
     <div class="row g-4">
-      <div class="col-lg-6">
-        <div class="d-flex mb-4">
-          <div class="flex-shrink-0"><i class="fas fa-check-circle fa-2x text-success"></i></div>
-          <div class="flex-grow-1 ms-3">
-            <h5 class="fw-bold">Sin código</h5>
-            <p class="text-muted">Configura todo desde la web. No necesitas ser programador para crear flujos complejos.</p>
-          </div>
-        </div>
-        <div class="d-flex mb-4">
-          <div class="flex-shrink-0"><i class="fas fa-check-circle fa-2x text-success"></i></div>
-          <div class="flex-grow-1 ms-3">
-            <h5 class="fw-bold">100% dinámico</h5>
-            <p class="text-muted">Cualquier cambio que hagas en el panel se refleja instantáneamente en el bot. Sin reinicios.</p>
-          </div>
-        </div>
-        <div class="d-flex mb-4">
-          <div class="flex-shrink-0"><i class="fas fa-check-circle fa-2x text-success"></i></div>
-          <div class="flex-grow-1 ms-3">
-            <h5 class="fw-bold">Control total</h5>
-            <p class="text-muted">Toma el control de conversaciones, envía mensajes directos y gestiona todo en tiempo real.</p>
-          </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-code-branch"></i></div>
+          <h5>Sin codigo</h5>
+          <p>Configura todo desde la web. No necesitas ser programador para crear flujos complejos.</p>
         </div>
       </div>
-      <div class="col-lg-6">
-        <div class="d-flex mb-4">
-          <div class="flex-shrink-0"><i class="fas fa-check-circle fa-2x text-success"></i></div>
-          <div class="flex-grow-1 ms-3">
-            <h5 class="fw-bold">Multi-industria</h5>
-            <p class="text-muted">Funciona para educación, comercio, servicios, salud, restaurantes y cualquier negocio.</p>
-          </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-bolt"></i></div>
+          <h5>100% dinamico</h5>
+          <p>Cualquier cambio en el panel se refleja al instante en el bot. Sin reinicios ni esperas.</p>
         </div>
-        <div class="d-flex mb-4">
-          <div class="flex-shrink-0"><i class="fas fa-check-circle fa-2x text-success"></i></div>
-          <div class="flex-grow-1 ms-3">
-            <h5 class="fw-bold">Datos organizados</h5>
-            <p class="text-muted">Toda la información que recopila el bot se organiza automáticamente en colecciones accesibles desde el panel.</p>
-          </div>
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-hand-pointer"></i></div>
+          <h5>Control total</h5>
+          <p>Toma el control de conversaciones, envia mensajes directos y gestiona todo en tiempo real.</p>
         </div>
-        <div class="d-flex mb-4">
-          <div class="flex-shrink-0"><i class="fas fa-check-circle fa-2x text-success"></i></div>
-          <div class="flex-grow-1 ms-3">
-            <h5 class="fw-bold">Hecho en El Salvador</h5>
-            <p class="text-muted">Desarrollado por 7kivo, empresa salvadoreña especializada en tecnología e inteligencia artificial.</p>
-          </div>
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-globe-americas"></i></div>
+          <h5>Multi-industria</h5>
+          <p>Funciona para educacion, comercio, servicios, salud, restaurantes y cualquier negocio.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-layer-group"></i></div>
+          <h5>Datos organizados</h5>
+          <p>Toda la informacion que recopila el bot se organiza automaticamente en colecciones accesibles.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-heart"></i></div>
+          <h5>Hecho en El Salvador</h5>
+          <p>Desarrollado por 7kivo, empresa salvadorena especializada en tecnologia e inteligencia artificial.</p>
         </div>
       </div>
     </div>
@@ -229,12 +391,12 @@
 </section>
 
 <!-- CTA -->
-<section class="section-padding bg-gradient-primary text-white text-center">
-  <div class="container">
-    <h2 class="display-5 fw-bold mb-3">Empieza a automatizar tu negocio hoy</h2>
-    <p class="lead mb-4 text-white-50">Crea tu cuenta gratis, configura tu bot y empieza a recibir clientes por WhatsApp.</p>
-    <a routerLink="/admin/login" class="btn btn-light btn-lg fw-bold px-5">
-      <i class="fas fa-rocket me-2"></i>Crear mi cuenta gratis
+<section class="cta-section">
+  <div class="container text-center">
+    <h2 class="cta-title">Empieza a automatizar tu negocio hoy</h2>
+    <p class="cta-desc">Crea tu cuenta gratis, configura tu bot y empieza a recibir clientes por WhatsApp.</p>
+    <a routerLink="/admin/login" class="btn-cta">
+      <i class="fas fa-rocket"></i> Crear mi cuenta gratis
     </a>
   </div>
 </section>

@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top" *ngIf="!isAdminRoute">
+<nav class="navbar navbar-expand-lg fixed-top" *ngIf="!isAdminRoute">
   <div class="container">
     <a class="navbar-brand" [routerLink]="['/']">
       <img src="assets/7kivo.png" alt="7kivo Logo" class="d-inline-block align-top">
@@ -9,20 +9,23 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto align-items-center">
         <li class="nav-item">
-          <a class="nav-link" [class.active]="isActive('inicio')" href="#inicio" (click)="scrollToSection('inicio', $event)" role="button">Inicio</a>
+          <a class="nav-link" [class.active]="isActive('inicio')" href="#inicio" (click)="scrollToSection('inicio', $event)">Inicio</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" [class.active]="isActive('funcionalidades')" href="#funcionalidades" (click)="scrollToSection('funcionalidades', $event)" role="button">Funcionalidades</a>
+          <a class="nav-link" [class.active]="isActive('funcionalidades')" href="#funcionalidades" (click)="scrollToSection('funcionalidades', $event)">Funcionalidades</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" [class.active]="isActive('casos')" href="#casos" (click)="scrollToSection('casos', $event)" role="button">Casos de Uso</a>
+          <a class="nav-link" [class.active]="isActive('planes')" href="#planes" (click)="scrollToSection('planes', $event)">Planes</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" [class.active]="isActive('nosotros')" href="#nosotros" (click)="scrollToSection('nosotros', $event)" role="button">Nosotros</a>
+          <a class="nav-link" [class.active]="isActive('casos')" href="#casos" (click)="scrollToSection('casos', $event)">Casos de Uso</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="isActive('nosotros')" href="#nosotros" (click)="scrollToSection('nosotros', $event)">Nosotros</a>
         </li>
         <li class="nav-item ms-lg-3">
           <a class="btn-login-nav" routerLink="/admin/login">
-            <i class="fas fa-rocket"></i> Regístrate
+            <i class="fas fa-rocket"></i> Comienza Gratis
           </a>
         </li>
       </ul>
@@ -32,87 +35,10 @@
 
 <main [class.no-margin]="isAdminRoute">
   <router-outlet></router-outlet>
-</main>
 
-<footer class="footer-modern" *ngIf="!isAdminRoute">
+<footer class="site-footer" *ngIf="!isAdminRoute">
   <div class="container">
-    <div class="row g-4">
-      <!-- Brand Section -->
-      <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
-        <div class="footer-brand">
-          <img src="assets/7kivo.png" alt="7kivo" height="50" class="mb-3">
-          <h4 class="text-white mb-3 fw-bold">7kivo</h4>
-          <p class="text-white-50 mb-4">Plataforma CMS con bot de WhatsApp integrado. Automatiza la atención, gestiona datos y haz crecer tu negocio.</p>
-          <div class="social-links">
-            <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Links -->
-      <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
-        <h5 class="footer-title mb-4">Producto</h5>
-        <ul class="footer-links">
-          <li><a href="#funcionalidades"><i class="fas fa-chevron-right me-2"></i>Funcionalidades</a></li>
-          <li><a href="#casos"><i class="fas fa-chevron-right me-2"></i>Casos de Uso</a></li>
-          <li><a href="#nosotros"><i class="fas fa-chevron-right me-2"></i>Nosotros</a></li>
-          <li><a routerLink="/admin/login"><i class="fas fa-chevron-right me-2"></i>Regístrate</a></li>
-        </ul>
-      </div>
-
-      <!-- Legal -->
-      <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
-        <h5 class="footer-title mb-4">Legal</h5>
-        <ul class="footer-links">
-          <li><a [routerLink]="['/terminos-y-condiciones']"><i class="fas fa-chevron-right me-2"></i>Términos</a></li>
-          <li><a [routerLink]="['/politica-de-privacidad']"><i class="fas fa-chevron-right me-2"></i>Privacidad</a></li>
-        </ul>
-      </div>
-
-      <!-- Contact Info -->
-      <div class="col-lg-3 col-md-6">
-        <h5 class="footer-title mb-4">Contacto</h5>
-        <ul class="footer-contact">
-          <li>
-            <div class="contact-item">
-              <div class="contact-icon"><i class="fas fa-envelope"></i></div>
-              <div class="contact-info">
-                <span class="contact-label">Email</span>
-                <a href="mailto:contacto@7kivo.com" class="contact-value">contacto&#64;7kivo.com</a>
-              </div>
-            </div>
-          </li>
-          <li>
-            <div class="contact-item">
-              <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
-              <div class="contact-info">
-                <span class="contact-label">Ubicación</span>
-                <span class="contact-value">El Salvador</span>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Bottom Bar -->
-    <div class="footer-bottom">
-      <div class="container-fluid">
-        <div class="row align-items-center py-4">
-          <div class="col-lg-6 text-center text-lg-start mb-3 mb-lg-0">
-            <p class="mb-0 footer-copyright">
-              &copy; 2026 <strong class="brand-name">7kivo</strong>. Todos los derechos reservados.
-            </p>
-          </div>
-          <div class="col-lg-6 text-center text-lg-end">
-            <p class="mb-0 footer-made">
-              Hecho con <i class="fas fa-heart text-danger"></i> en El Salvador
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <span>&copy; 2026 <strong>7kivo</strong>. Todos los derechos reservados.</span>
   </div>
 </footer>
+</main>
