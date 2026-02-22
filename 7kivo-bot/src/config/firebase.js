@@ -62,12 +62,33 @@ if (!admin.apps.length) {
         console.log("✅ Firebase inicializado con configuración básica");
       }
     } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      // Usar credenciales desde archivo
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        projectId: projectId
-      });
-      console.log("✅ Firebase inicializado con Application Default Credentials");
+      const credsVal = process.env.GOOGLE_APPLICATION_CREDENTIALS.trim();
+      // Si parece JSON (prod: variable con contenido), usar cert(). Si es ruta de archivo, applicationDefault().
+      if (credsVal.startsWith("{")) {
+        try {
+          const serviceAccount = JSON.parse(credsVal);
+          if (serviceAccount.type === "service_account" && serviceAccount.private_key) {
+            admin.initializeApp({
+              credential: admin.credential.cert(serviceAccount),
+              projectId: projectId
+            });
+            console.log("✅ Firebase inicializado con credenciales desde variable de entorno");
+          } else {
+            admin.initializeApp({ credential: admin.credential.applicationDefault(), projectId });
+            console.log("✅ Firebase inicializado con Application Default Credentials");
+          }
+        } catch (e) {
+          console.error("❌ GOOGLE_APPLICATION_CREDENTIALS parece JSON pero falló el parse:", e.message);
+          throw e;
+        }
+      } else {
+        // Ruta de archivo
+        admin.initializeApp({
+          credential: admin.credential.applicationDefault(),
+          projectId: projectId
+        });
+        console.log("✅ Firebase inicializado con Application Default Credentials");
+      }
     } else {
       // Inicialización básica - requiere configuración de credenciales
       // Para producción, se recomienda usar service account
