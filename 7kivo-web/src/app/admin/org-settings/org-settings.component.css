@@ -174,9 +174,17 @@
 .logo-hint { font-size: 0.75rem; color: #94a3b8; }
 
 @media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .form-row { grid-template-columns: 1fr; }
-  .tabs { flex-wrap: wrap; }
+  .tabs { flex-wrap: wrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab { flex: 0 0 auto; min-width: 120px; }
   .org-id-value { flex-direction: column; }
   .org-id-value code { width: 100%; }
   .logo-upload-row { flex-direction: column; align-items: flex-start; }
+  .card-header { flex-wrap: wrap; }
+  .page-title { font-size: 1.5rem; }
 }

@@ -378,3 +378,56 @@
 }
 .input-new.full { width: 100%; margin-bottom: 10px; }
 textarea.input-new { resize: vertical; font-family: inherit; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    min-width: 100px;
+  }
+
+  .info-banner {
+    flex-direction: column;
+  }
+
+  .message-category {
+    margin-bottom: 24px;
+  }
+
+  .category-header {
+    flex-wrap: wrap;
+  }
+
+  .messages-actions {
+    flex-direction: column;
+  }
+
+  .btn-add-msg,
+  .btn-generate-sm {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .new-msg-row {
+    flex-direction: column;
+  }
+
+  .input-new {
+    min-width: 100%;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+}

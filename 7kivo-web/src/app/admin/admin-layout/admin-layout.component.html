@@ -1,4 +1,6 @@
-<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed">
+<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed">
+  <!-- Backdrop (mobile) -->
+  <div class="sidebar-backdrop" *ngIf="!sidebarCollapsed" (click)="toggleSidebar()" aria-hidden="true"></div>
   <!-- Sidebar -->
   <aside class="admin-sidebar">
     <div class="sidebar-header">

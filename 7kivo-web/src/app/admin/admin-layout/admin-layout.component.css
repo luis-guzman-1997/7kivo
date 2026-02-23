@@ -2,6 +2,7 @@
   display: block;
   height: 100vh;
   overflow: hidden;
+  max-width: 100vw;
 }
 
 .admin-wrapper {
@@ -9,6 +10,8 @@
   height: 100vh;
   background: #f1f5f9;
   overflow: hidden;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Sidebar */
@@ -209,6 +212,10 @@
   color: #ef4444;
 }
 
+.sidebar-backdrop {
+  display: none;
+}
+
 /* Main Content */
 .admin-main {
   flex: 1;
@@ -295,27 +302,104 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .admin-sidebar {
-    width: 70px;
+  :host, .admin-wrapper {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 
-  .admin-sidebar .brand-text,
-  .admin-sidebar .nav-item-admin span,
-  .admin-sidebar .user-email,
-  .admin-sidebar .btn-logout span {
-    display: none;
+  .admin-sidebar {
+    width: 280px;
+    left: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* Evitar espacio residual en iOS */
+    will-change: transform;
+  }
+
+  .admin-wrapper.sidebar-open .admin-sidebar {
+    transform: translateX(0);
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .admin-wrapper.sidebar-open .admin-sidebar .brand-text,
+  .admin-wrapper.sidebar-open .admin-sidebar .nav-item-admin span,
+  .admin-wrapper.sidebar-open .admin-sidebar .user-email,
+  .admin-wrapper.sidebar-open .admin-sidebar .btn-logout span {
+    display: inline;
+  }
+
+  .admin-wrapper.sidebar-open .admin-sidebar .sidebar-toggle {
+    display: flex;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
   }
 
   .admin-main {
-    margin-left: 70px;
+    margin-left: 0 !important;
+    min-width: 0;
+    width: 100%;
+    max-width: 100vw;
+    flex: 1 1 100%;
   }
 
-  .sidebar-collapsed .admin-sidebar {
-    width: 0;
+  .admin-content {
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
-  .sidebar-collapsed .admin-main {
-    margin-left: 0;
+  /* Evitar espacio lateral y overscroll horizontal en iOS */
+  .admin-wrapper, .admin-main, .admin-content {
+    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .admin-topbar {
+    padding: 12px 16px;
+  }
+
+  .topbar-user {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+  }
+
+  .admin-content {
+    padding: 16px;
+  }
+
+  .bot-setup-banner .banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .bot-setup-banner .banner-text span {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-content {
+    padding: 12px;
+  }
+
+  .topbar-user {
+    max-width: 100px;
   }
 }
 

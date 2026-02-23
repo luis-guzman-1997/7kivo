@@ -364,6 +364,16 @@
   @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 }
 @media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-refresh {
+    width: 100%;
+    justify-content: center;
+  }
+
   .message-card { flex-direction: column; }
   .message-actions { flex-direction: row; }
   .message-top { flex-direction: column; align-items: flex-start; gap: 4px; }
@@ -374,4 +384,25 @@
   .cal-appt-card { flex-direction: column; align-items: flex-start; }
   .view-toggle { margin-left: 0; width: 100%; }
   .toggle-btn { flex: 1; justify-content: center; }
+  .page-title { font-size: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .search-box {
+    min-width: 100%;
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+  }
+
+  .reschedule-fields {
+    flex-direction: column;
+  }
 }

@@ -23,6 +23,7 @@ html {
   scroll-behavior: auto;
   scroll-snap-type: y mandatory;
   overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 /* Ocultar scrollbar pero mantener funcionalidad */
@@ -55,6 +56,38 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   height: 100vh;
+  width: 100%;
+}
+
+/* Eliminar margen lateral en telefono vertical */
+@media (max-width: 576px) {
+  body, html, app-root {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+  }
+
+  .container, .container-fluid {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  main {
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  .navbar .container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .site-footer .container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {

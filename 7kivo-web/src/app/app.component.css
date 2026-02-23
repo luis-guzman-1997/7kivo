@@ -103,6 +103,9 @@ main.no-margin {
   overflow-y: auto;
   overflow-x: hidden;
   scroll-padding-top: 0;
+  width: 100%;
+  max-width: 100vw;
+  overscroll-behavior-x: none;
 }
 
 /* ── Footer ── */

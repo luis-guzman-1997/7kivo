@@ -207,6 +207,11 @@
 .btn-table i { color: inherit !important; }
 
 @media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .collection-grid { grid-template-columns: 1fr; }
   .form-row-config { grid-template-columns: 1fr; }
   .field-inputs { flex-direction: column; }
@@ -215,6 +220,17 @@
   .item-form-fields { grid-template-columns: 1fr; }
   .schema-actions { flex-direction: column; }
   .btn-save, .btn-delete { width: 100%; justify-content: center; }
+  .detail-header { flex-wrap: wrap; }
+  .page-title { font-size: 1.5rem; }
+
+  .data-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table {
+    min-width: 500px;
+  }
 }
 
 .wa-link { color: #25d366; text-decoration: none; font-weight: 500; white-space: nowrap; }

@@ -1,4 +1,4 @@
-<div class="chat-wrapper">
+<div class="chat-wrapper" [class.chat-has-selection]="selectedConversation">
   <!-- Settings Modal -->
   <div class="modal-overlay" *ngIf="showSettings" (click)="showSettings = false">
     <div class="modal-box" (click)="$event.stopPropagation()">

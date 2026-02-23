@@ -432,3 +432,97 @@
 .amp-custom i { color: inherit; }
 .amp-tag-plan { background: #fef3c7; color: #92400e; }
 .amp-note { font-size: 0.78rem; color: #94a3b8; margin: 8px 0 0; text-align: center; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .btn-new-flow,
+  .btn-menu-config {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .schedule-warning .sw-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sw-action {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .form-row-config {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-item-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .menu-item-fields {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-sm {
+    min-width: 100%;
+  }
+
+  .flow-card-header,
+  .flow-card-meta,
+  .flow-card-actions {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .flow-card-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .flow-card-actions {
+    flex-wrap: wrap;
+  }
+
+  .editor-header {
+    flex-wrap: wrap;
+  }
+
+  .step-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .step-header-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .config-section {
+    padding: 18px 16px;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .flow-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .add-menu-panel {
+    padding: 12px;
+  }
+}

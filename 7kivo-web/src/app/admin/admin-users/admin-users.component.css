@@ -270,8 +270,30 @@
 .empty-state { text-align: center; padding: 60px; color: #94a3b8; grid-column: 1 / -1; }
 .empty-state i { font-size: 2.5rem; color: #cbd5e1 !important; margin-bottom: 12px; display: block; }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .form-row { grid-template-columns: 1fr; }
+  .page-title { font-size: 1.5rem; }
+}
+
+@media (max-width: 640px) {
+  .admin-card {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .admin-card-info {
+    align-items: center;
+  }
+
+  .admin-card-actions {
+    justify-content: center;
+  }
 }
 
 /* Roles reference */

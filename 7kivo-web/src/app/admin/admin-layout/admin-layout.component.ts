@@ -18,6 +18,9 @@ export class AdminLayoutComponent implements OnDestroy {
   private subs: Subscription[] = [];
 
   constructor(public authService: AuthService, private router: Router) {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      this.sidebarCollapsed = true;
+    }
     this.subs.push(
       this.authService.currentUser$.subscribe(user => {
         this.userEmail = user?.email || '';
