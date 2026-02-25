@@ -333,8 +333,9 @@
 
   .plan-usage-bar {
     flex-direction: column;
-    gap: 16px;
-    padding: 16px;
+    gap: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
   }
 
   .usage-item {
@@ -344,7 +345,8 @@
   .panel-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
+    padding: 16px 18px;
   }
 
   .panel-body {
@@ -355,13 +357,29 @@
   .data-table {
     min-width: 500px;
   }
+  .data-table thead th {
+    padding: 10px 14px;
+    font-size: 0.75rem;
+  }
+  .data-table tbody td {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
 
   .onboarding {
-    padding: 20px 16px;
+    padding: 18px 14px;
+    margin-bottom: 20px;
   }
 
   .onboarding-step {
     flex-wrap: wrap;
+    padding: 12px 14px;
+  }
+
+  .ob-step-num {
+    width: 32px;
+    height: 32px;
+    font-size: 0.88rem;
   }
 
   .ob-step-body p {
@@ -370,18 +388,100 @@
 
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
   }
 
   .stat-card {
-    padding: 20px;
+    padding: 18px 16px;
+    gap: 16px;
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+
+  .stat-number {
+    font-size: 1.6rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
   }
 
   .page-title {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
   }
 
   .page-subtitle {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+  }
+
+  .plan-badge,
+  .bot-status-badge {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .plan-usage-bar {
+    padding: 12px 14px;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .stats-grid {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .stat-card {
+    padding: 14px 12px;
+    gap: 14px;
+  }
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+  }
+  .page-title {
+    font-size: 1.3rem;
+  }
+  .page-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  .panel-header {
+    padding: 14px 12px;
+  }
+  .panel-header h3 {
+    font-size: 1rem;
+  }
+  .onboarding {
+    padding: 14px 12px;
+    margin-bottom: 16px;
+  }
+  .onboarding-header h2 {
+    font-size: 1.15rem;
+  }
+  .onboarding-step {
+    padding: 10px 12px;
+  }
+  .ob-step-num {
+    width: 28px;
+    height: 28px;
+    font-size: 0.82rem;
+  }
+  .ob-step-body h4 {
+    font-size: 0.88rem;
   }
 }
 

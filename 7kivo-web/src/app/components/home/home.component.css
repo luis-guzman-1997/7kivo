@@ -388,14 +388,80 @@ section[id] {
 
 /* ── Responsive ── */
 @media (max-width: 991px) {
-  .hero-section { padding: 50px 0 40px; }
+  .hero-section { padding: 40px 0 32px; }
   .hero-row { min-height: auto; }
-  .wa-device { width: 260px; height: 520px; }
-  .section-modern { padding: 40px 0; }
+  .wa-device { width: 260px; height: 480px; }
+  .section-modern { padding: 32px 0; }
+  .section-header { margin-bottom: 24px; }
+  .section-title { font-size: 1.5rem; }
+  .section-desc { font-size: 0.95rem; }
+  .feature-card { padding: 24px 20px; }
+  .feature-icon { width: 44px; height: 44px; font-size: 1.1rem; margin-bottom: 14px; }
+  .feature-card h4 { font-size: 1rem; }
+  .feature-card p { font-size: 0.85rem; }
+  .step-card { padding: 18px 14px; }
+  .step-icon { font-size: 1.4rem; }
 }
 @media (max-width: 767px) {
-  .hero-actions { flex-direction: column; }
-  .hero-trust { flex-direction: column; gap: 8px; }
-  .wa-device { width: 240px; height: 485px; }
-  .plan-card { max-width: 360px; margin: 0 auto; }
+  section[id] {
+    scroll-margin-top: 90px;
+    padding-top: 80px !important;
+    padding-bottom: 36px !important;
+  }
+  .hero-section { padding: 32px 0 24px; }
+  .hero-badge { padding: 6px 14px; font-size: 0.78rem; margin-bottom: 14px; }
+  .hero-title { font-size: 1.75rem; margin-bottom: 14px; }
+  .hero-subtitle { font-size: 0.95rem; margin-bottom: 20px; }
+  .hero-actions { gap: 10px; margin-bottom: 20px; }
+  .btn-hero-primary, .btn-hero-secondary { padding: 12px 20px; font-size: 0.9rem; }
+  .hero-trust { flex-direction: column; gap: 6px; }
+  .trust-item { font-size: 0.78rem; }
+  .wa-device { width: 220px; height: 420px; }
+  .section-modern { padding: 24px 0; }
+  .section-header { margin-bottom: 20px; }
+  .section-tag { padding: 5px 12px; font-size: 0.72rem; margin-bottom: 10px; }
+  .section-title { font-size: 1.35rem; margin-bottom: 8px; }
+  .section-desc { font-size: 0.88rem; }
+  .feature-card { padding: 18px 16px; }
+  .feature-icon { width: 40px; height: 40px; font-size: 1rem; margin-bottom: 12px; }
+  .feature-card h4 { font-size: 0.95rem; margin-bottom: 6px; }
+  .feature-card p { font-size: 0.82rem; }
+  .step-card { padding: 14px 12px; }
+  .step-num { width: 20px; height: 20px; font-size: 0.65rem; }
+  .step-icon { font-size: 1.2rem; margin-bottom: 8px; }
+  .step-card h5 { font-size: 0.88rem; }
+  .step-card p { font-size: 0.75rem; }
+  .plan-card { padding: 20px 18px; max-width: 100%; }
+  .plan-header h4 { font-size: 1rem; }
+  .plan-tagline { font-size: 0.75rem; }
+  .price-amount { font-size: 1.8rem; }
+  .plan-features { gap: 5px; margin-bottom: 14px; }
+  .plan-features li { font-size: 0.78rem; }
+  .btn-plan { padding: 8px; font-size: 0.82rem; }
+  .usecase-card { padding: 20px 18px; }
+  .usecase-icon { width: 44px; height: 44px; font-size: 1.1rem; }
+  .usecase-card h5 { font-size: 0.95rem; }
+  .usecase-card p { font-size: 0.85rem; }
+  .why-card { padding: 18px 16px; }
+  .why-icon { width: 38px; height: 38px; font-size: 0.9rem; }
+  .why-card h5 { font-size: 0.92rem; }
+  .why-card p { font-size: 0.82rem; }
+  .cta-section { padding: 40px 0; }
+  .cta-title { font-size: 1.5rem; }
+  .cta-desc { font-size: 0.9rem; }
+  .btn-cta { padding: 12px 24px; font-size: 0.9rem; }
+}
+@media (max-width: 480px) {
+  section[id] {
+    padding-top: 72px !important;
+    padding-bottom: 28px !important;
+  }
+  .hero-section { padding: 24px 0 20px; }
+  .hero-title { font-size: 1.5rem; }
+  .wa-device { width: 200px; height: 380px; }
+  .section-modern { padding: 20px 0; }
+  .feature-card { padding: 16px 14px; }
+  .plan-card { padding: 16px 14px; }
+  .cta-section { padding: 32px 0; }
+  .cta-title { font-size: 1.3rem; }
 }

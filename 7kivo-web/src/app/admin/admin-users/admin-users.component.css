@@ -274,10 +274,36 @@
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    margin-bottom: 18px;
   }
 
-  .form-row { grid-template-columns: 1fr; }
-  .page-title { font-size: 1.5rem; }
+  .form-row { grid-template-columns: 1fr; gap: 14px; }
+  .page-title { font-size: 1.4rem; }
+  .page-subtitle { font-size: 0.88rem; }
+  .create-form {
+    padding: 20px 18px;
+    margin-bottom: 18px;
+  }
+  .create-form h3 { font-size: 1rem; margin-bottom: 16px; }
+  .admins-grid {
+    gap: 14px;
+    grid-template-columns: 1fr;
+  }
+  .admin-card { padding: 18px; }
+}
+
+@media (max-width: 576px) {
+  .page-header { margin-bottom: 14px; }
+  .page-title { font-size: 1.2rem; }
+  .btn-add { padding: 10px 16px; font-size: 0.88rem; }
+  .create-form { padding: 16px 14px; }
+  .form-group-admin input,
+  .form-group-admin select {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+  .roles-reference { padding: 16px 14px; }
+  .role-card-ref { padding: 12px; }
 }
 
 @media (max-width: 640px) {
@@ -285,6 +311,7 @@
     flex-direction: column;
     align-items: stretch;
     text-align: center;
+    padding: 14px 12px;
   }
 
   .admin-card-info {

@@ -210,18 +210,27 @@
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    margin-bottom: 18px;
   }
 
-  .collection-grid { grid-template-columns: 1fr; }
+  .collection-grid { grid-template-columns: 1fr; gap: 12px; }
+  .collection-card { padding: 16px; gap: 12px; }
+  .collection-card-icon { width: 40px; height: 40px; font-size: 1rem; }
+  .collection-card-body h3 { font-size: 1rem; }
+  .collection-desc, .collection-slug { font-size: 0.82rem; }
   .form-row-config { grid-template-columns: 1fr; }
+  .config-section { padding: 18px 16px; margin-bottom: 14px; }
   .field-inputs { flex-direction: column; }
   .input-sm { min-width: auto; }
   .input-key { max-width: none; }
   .item-form-fields { grid-template-columns: 1fr; }
   .schema-actions { flex-direction: column; }
   .btn-save, .btn-delete { width: 100%; justify-content: center; }
-  .detail-header { flex-wrap: wrap; }
-  .page-title { font-size: 1.5rem; }
+  .detail-header { flex-wrap: wrap; margin-bottom: 16px; }
+  .detail-header h2 { font-size: 1.3rem; }
+  .page-title { font-size: 1.4rem; }
+  .page-subtitle { font-size: 0.88rem; }
+  .btn-new { padding: 10px 18px; font-size: 0.88rem; }
 
   .data-table-wrapper {
     overflow-x: auto;
@@ -231,6 +240,17 @@
   .data-table {
     min-width: 500px;
   }
+}
+
+@media (max-width: 576px) {
+  .page-header { margin-bottom: 14px; }
+  .page-title { font-size: 1.2rem; }
+  .collection-card { padding: 12px 14px; gap: 10px; }
+  .collection-card-icon { width: 36px; height: 36px; font-size: 0.95rem; }
+  .collection-card-body h3 { font-size: 0.95rem; }
+  .config-section { padding: 14px 12px; }
+  .detail-tabs { padding: 3px; }
+  .detail-tab { padding: 8px 14px; font-size: 0.85rem; }
 }
 
 .wa-link { color: #25d366; text-decoration: none; font-weight: 500; white-space: nowrap; }

@@ -59,7 +59,7 @@ body {
   width: 100%;
 }
 
-/* Eliminar margen lateral en telefono vertical */
+/* ── Mobile compact (< 576px) ── */
 @media (max-width: 576px) {
   body, html, app-root {
     overflow-x: hidden !important;
@@ -79,14 +79,22 @@ body {
     width: 100%;
   }
 
-  .navbar .container {
+  .navbar .container,
+  .site-footer .container {
     padding-left: 10px !important;
     padding-right: 10px !important;
   }
 
-  .site-footer .container {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+  h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* ── Mobile compact tablet (577–767px) ── */
+@media (max-width: 767px) {
+  .container, .container-fluid {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
   }
 }
 

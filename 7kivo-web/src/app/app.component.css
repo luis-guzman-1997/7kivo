@@ -84,6 +84,26 @@
   .navbar-nav .nav-link { padding: 10px 14px !important; }
 }
 
+@media (max-width: 576px) {
+  main {
+    margin-top: 56px;
+    height: calc(100vh - 56px);
+    scroll-padding-top: 80px;
+  }
+  .navbar {
+    padding: 8px 0;
+  }
+  .navbar-brand img {
+    height: 30px;
+  }
+  .site-footer {
+    padding: 12px 0;
+  }
+  .site-footer span {
+    font-size: 0.72rem;
+  }
+}
+
 /* ── Main ── */
 main {
   margin-top: 66px;
