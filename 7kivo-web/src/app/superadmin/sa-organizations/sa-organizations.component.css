@@ -457,3 +457,37 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
   .modal-tabs { overflow-x: auto; }
   .actions-cell { flex-direction: column; }
 }
+
+/* Reset Bot button (header action) */
+.btn-reset-bot {
+  background: rgba(245,158,11,0.08); color: #b45309; border: 1px solid rgba(245,158,11,0.2);
+  padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-reset-bot:hover { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.35); }
+
+/* Reset Bot modal specifics */
+.reset-bot-icon { font-size: 2rem; color: #f59e0b; }
+.reset-bot-modal .delete-header { display: flex; align-items: center; gap: 14px; padding: 24px 24px 12px; }
+
+.btn-reset-bot-confirm {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 22px; border: none; border-radius: 8px; font-size: 0.9rem;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white; cursor: pointer; font-weight: 600;
+  transition: opacity 0.2s; font-family: inherit;
+}
+.btn-reset-bot-confirm:hover:not(:disabled) { opacity: 0.88; }
+.btn-reset-bot-confirm:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.delete-result {
+  padding: 32px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.delete-result h3 { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin: 0; }
+.delete-result p { color: #64748b; font-size: 0.9rem; margin: 0; }

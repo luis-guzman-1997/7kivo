@@ -147,6 +147,8 @@
 .btn-danger { color: #ef4444 !important; }
 .btn-danger:hover { color: #dc2626 !important; }
 .btn-danger i { color: inherit !important; }
+.btn-protected { color: #8b5cf6 !important; opacity: 0.6; cursor: not-allowed !important; }
+.btn-protected i { color: inherit !important; }
 
 /* Schema Actions */
 .schema-actions { display: flex; gap: 12px; margin-top: 8px; }
@@ -256,3 +258,13 @@
 .wa-link { color: #25d366; text-decoration: none; font-weight: 500; white-space: nowrap; }
 .wa-link:hover { text-decoration: underline; }
 .wa-link i { margin-right: 4px; }
+
+/* Reference field sub-config */
+.ref-config {
+  width: 100%; display: flex; gap: 12px; flex-wrap: wrap;
+  padding: 8px 10px; margin-top: 6px;
+  background: rgba(139, 92, 246, 0.04); border: 1px dashed rgba(139, 92, 246, 0.25);
+  border-radius: 8px;
+}
+.ref-config-group { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 180px; }
+.ref-label { font-size: 0.78rem; font-weight: 600; color: #8b5cf6; white-space: nowrap; }

@@ -14,10 +14,6 @@
         <button class="btn-menu-config" (click)="toggleMenuConfig()">
           <i class="fas fa-bars"></i> {{ showMenuConfig ? 'Ocultar Menú' : 'Configurar Menú' }}
         </button>
-        <button class="btn-new-flow" (click)="openNewFlow()" [disabled]="!canCreateFlow">
-          <i class="fas fa-plus"></i> Nuevo Flujo
-        </button>
-        <span class="plan-limit-hint" *ngIf="!canCreateFlow">Límite del plan: {{ planLimit }} flujo{{ planLimit > 1 ? 's' : '' }}</span>
       </div>
     </div>
 
@@ -75,6 +71,7 @@
                 <select [(ngModel)]="item.type" (ngModelChange)="onMenuItemTypeChange(item)" class="select-sm">
                   <option value="builtin">Acción predefinida</option>
                   <option value="flow">Flujo personalizado</option>
+                  <option value="message">Mensaje directo</option>
                 </select>
                 <select *ngIf="item.type === 'builtin'" [(ngModel)]="item.action" class="select-sm">
                   <option value="schedule">Horarios</option>
@@ -85,7 +82,8 @@
                   <option *ngFor="let f of flows" [value]="f.id">{{ f.name }}</option>
                 </select>
                 <input type="text" [(ngModel)]="item.label" placeholder="Etiqueta" class="input-sm" />
-                <input type="text" [(ngModel)]="item.description" placeholder="Descripción" class="input-sm" />
+                <input *ngIf="item.type !== 'message'" type="text" [(ngModel)]="item.description" placeholder="Descripción" class="input-sm" />
+                <textarea *ngIf="item.type === 'message'" [(ngModel)]="item.messageContent" placeholder="Mensaje que enviará el bot al seleccionar esta opción..." class="input-sm textarea-message" rows="2"></textarea>
               </div>
               <button class="btn-icon-sm btn-danger" (click)="removeMenuItem(i)" title="Eliminar">
                 <i class="fas fa-trash"></i>
@@ -100,14 +98,37 @@
           <!-- Quick-add panel -->
           <div class="add-menu-panel" *ngIf="showAddMenuPanel">
             <div class="amp-header">
-              <h5>Opciones predefinidas</h5>
-              <p>Agrega rápidamente o crea una personalizada</p>
+              <h5>Agregar opción al menú</h5>
+              <p>Usa una plantilla o crea una opción personalizada</p>
             </div>
+
+            <!-- Flow templates (create flow + collection) -->
+            <p class="amp-section-label"><i class="fas fa-magic"></i> Flujos predefinidos</p>
+            <div class="amp-templates">
+              <button *ngFor="let tfl of templateFlows"
+                class="amp-tpl"
+                [class.amp-disabled]="isTemplateFlowPlanBlocked(tfl) || !canCreateFlow"
+                [disabled]="isTemplateFlowPlanBlocked(tfl) || !canCreateFlow"
+                (click)="openTemplateModal(tfl)">
+                <i class="fas" [ngClass]="tfl.icon"></i>
+                <div class="amp-tpl-text">
+                  <strong>{{ tfl.label }}</strong>
+                  <span>{{ tfl.description }}</span>
+                </div>
+                <span class="amp-tag amp-tag-plan" *ngIf="isTemplateFlowPlanBlocked(tfl)">Plan superior</span>
+                <span class="amp-tag amp-tag-plan" *ngIf="!isTemplateFlowPlanBlocked(tfl) && !canCreateFlow">Límite alcanzado</span>
+                <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateFlowPlanBlocked(tfl) && canCreateFlow"></i>
+              </button>
+            </div>
+
+            <div class="amp-divider"><span>acciones rápidas</span></div>
+
+            <!-- Builtin templates -->
             <div class="amp-templates">
               <button *ngFor="let tpl of menuTemplates"
                 class="amp-tpl"
-                [class.amp-disabled]="isTemplateAlreadyInMenu(tpl) || isTemplatePlanBlocked(tpl)"
-                [disabled]="isTemplateAlreadyInMenu(tpl) || isTemplatePlanBlocked(tpl)"
+                [class.amp-disabled]="isTemplateAlreadyInMenu(tpl)"
+                [disabled]="isTemplateAlreadyInMenu(tpl)"
                 (click)="addMenuFromTemplate(tpl)">
                 <i class="fas" [ngClass]="tpl.icon"></i>
                 <div class="amp-tpl-text">
@@ -115,15 +136,43 @@
                   <span>{{ tpl.description }}</span>
                 </div>
                 <span class="amp-tag" *ngIf="isTemplateAlreadyInMenu(tpl)">Ya agregado</span>
-                <span class="amp-tag amp-tag-plan" *ngIf="isTemplatePlanBlocked(tpl) && !isTemplateAlreadyInMenu(tpl)">Plan superior</span>
-                <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateAlreadyInMenu(tpl) && !isTemplatePlanBlocked(tpl)"></i>
+                <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateAlreadyInMenu(tpl)"></i>
               </button>
             </div>
-            <p class="amp-note" *ngIf="flows.length === 0">Crea al menos un flujo para vincular las opciones de tipo flujo al menú.</p>
+
             <div class="amp-divider"><span>o</span></div>
-            <button class="amp-custom" (click)="addMenuItem()">
-              <i class="fas fa-sliders-h"></i> Crear opción personalizada
-            </button>
+
+            <div class="amp-custom-row">
+              <button class="amp-custom" (click)="addMenuItem()">
+                <i class="fas fa-sliders-h"></i> Opción personalizada
+              </button>
+              <button class="amp-custom amp-custom-msg" (click)="addMessageMenuItem()">
+                <i class="fas fa-comment-alt"></i> Mensaje directo
+              </button>
+            </div>
+          </div>
+
+          <!-- Template creation modal -->
+          <div class="template-modal-overlay" *ngIf="showTemplateModal" (click)="cancelTemplateModal()">
+            <div class="template-modal" (click)="$event.stopPropagation()">
+              <div class="template-modal-header">
+                <i class="fas" [ngClass]="pendingTemplateFlow?.icon"></i>
+                <h4>Crear flujo: {{ pendingTemplateFlow?.label }}</h4>
+              </div>
+              <p class="template-modal-desc">{{ pendingTemplateFlow?.description }}. Puedes personalizar el nombre del flujo.</p>
+              <div class="form-group-config" style="margin-bottom:0">
+                <label>Nombre del flujo *</label>
+                <input type="text" [(ngModel)]="templateTitle" placeholder="Ej: Citas Médicas" maxlength="40" (keydown.enter)="confirmCreateTemplate()" />
+              </div>
+              <div class="template-modal-actions">
+                <button class="btn-tpl-cancel" (click)="cancelTemplateModal()" [disabled]="creatingTemplate">Cancelar</button>
+                <button class="btn-tpl-create" (click)="confirmCreateTemplate()" [disabled]="!templateTitle.trim() || creatingTemplate">
+                  <i class="fas fa-spinner fa-spin" *ngIf="creatingTemplate"></i>
+                  <i class="fas fa-plus-circle" *ngIf="!creatingTemplate"></i>
+                  {{ creatingTemplate ? 'Creando...' : 'Crear y agregar al menú' }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <button class="btn-save-section" (click)="saveMenuConfig()" [disabled]="saving" style="margin-top:16px">

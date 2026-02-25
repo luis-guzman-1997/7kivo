@@ -3,7 +3,7 @@ import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore, Firestore, collection, doc, getDocs, getDoc, addDoc,
   updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp,
-  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe
+  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch
 } from 'firebase/firestore';
 import {
   getStorage, FirebaseStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll
@@ -75,8 +75,6 @@ export class FirebaseService {
       .substring(0, 30);
 
     const orgName = orgData.name;
-    const plan = orgData.plan || 'Starter';
-    const hasAppointments = ['Business', 'Premium', 'Enterprise'].includes(plan);
     const orgDocRef = doc(this.db, 'organizations', orgId);
     const ts = serverTimestamp;
     const orgPath = `organizations/${orgId}`;
@@ -120,120 +118,19 @@ export class FirebaseService {
 
     // Info: general
     await setDoc(doc(this.db, orgPath, 'info', 'general'), {
-      orgName, description: orgData.description || '',
+      name: orgName, description: orgData.description || '',
       focus: [], modality: '', services: '', note: '',
       createdAt: ts()
     });
 
-    // ── Collection definitions ──
-
-    await addDoc(collection(this.db, orgPath, '_collections'), {
-      name: 'Consultas', slug: 'consultas', description: 'Mensajes recibidos a través del bot',
-      displayField: 'nombre',
-      fields: [
-        { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-        { key: 'comentario', label: 'Comentario', type: 'text', required: true },
-        { key: 'phoneNumber', label: 'Teléfono', type: 'text', required: true }
-      ],
-      createdAt: ts(), updatedAt: ts()
-    });
-
-    if (hasAppointments) {
-      await addDoc(collection(this.db, orgPath, '_collections'), {
-        name: 'Citas', slug: 'citas', description: 'Citas agendadas desde el bot',
-        displayField: 'nombre',
-        fields: [
-          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-          { key: 'phoneNumber', label: 'Teléfono', type: 'text', required: true },
-          { key: 'fecha', label: 'Fecha', type: 'text', required: true },
-          { key: 'hora', label: 'Hora', type: 'text', required: true },
-          { key: '_apptDuration', label: 'Duración (min)', type: 'number', required: false }
-        ],
-        createdAt: ts(), updatedAt: ts()
-      });
-    }
-
-    // ── Default flows ──
-
-    const flowsRef = collection(this.db, orgPath, 'flows');
-
-    // Flow: Contáctanos
-    const contactFlowRef = await addDoc(flowsRef, {
-      name: 'Contáctanos', description: 'Recibe consultas y comentarios de tus clientes',
-      type: 'registration', active: true, order: 1, saveToCollection: 'consultas',
-      menuLabel: 'Contáctanos', menuDescription: 'Envíanos un mensaje', showInMenu: true,
-      steps: [
-        {
-          id: 's1', type: 'text_input',
-          prompt: '¡Nos encanta escucharte!\n\nEscribe tu *nombre completo*:',
-          fieldKey: 'nombre', fieldLabel: 'Nombre', required: true,
-          validation: { minLength: 3 }, errorMessage: 'Necesitamos al menos 3 caracteres.',
-          optionsSource: 'custom', customOptions: [], buttonText: '',
-          sourceCollection: '', displayField: '', detailFields: []
-        },
-        {
-          id: 's2', type: 'text_input',
-          prompt: 'Perfecto, *{nombre}*.\n\nEscribe tu *comentario o consulta* y te responderemos lo antes posible:',
-          fieldKey: 'comentario', fieldLabel: 'Comentario', required: true,
-          validation: { minLength: 5 }, errorMessage: 'Escribe al menos unas palabras para poder ayudarte.',
-          optionsSource: 'custom', customOptions: [], buttonText: '',
-          sourceCollection: '', displayField: '', detailFields: []
-        }
-      ],
-      completionMessage: `✅ *Mensaje recibido*\n\nGracias *{nombre}*, hemos registrado tu consulta.\n\nUn miembro de nuestro equipo te contactará pronto.\n\n_${orgName}_`,
-      createdAt: ts(), updatedAt: ts()
-    });
-
-    // Flow: Agendar Cita (only for plans with appointments)
-    let apptFlowRef: any = null;
-    if (hasAppointments) {
-      apptFlowRef = await addDoc(flowsRef, {
-        name: 'Agendar Cita', description: 'Permite a tus clientes reservar una cita',
-        type: 'appointment', active: true, order: 2, saveToCollection: 'citas',
-        menuLabel: 'Agendar Cita', menuDescription: 'Reserva un espacio con nosotros', showInMenu: true,
-        steps: [
-          {
-            id: 's1', type: 'text_input',
-            prompt: 'Vamos a agendar tu cita.\n\nEscribe tu *nombre completo*:',
-            fieldKey: 'nombre', fieldLabel: 'Nombre', required: true,
-            validation: { minLength: 3 }, errorMessage: 'Necesitamos al menos 3 caracteres.',
-            optionsSource: 'custom', customOptions: [], buttonText: '',
-            sourceCollection: '', displayField: '', detailFields: [], timeFieldKey: ''
-          },
-          {
-            id: 's2', type: 'appointment_slot',
-            prompt: 'Elige el *día* que mejor te convenga:\n\nSolo se muestran días con disponibilidad.',
-            fieldKey: 'fecha', fieldLabel: 'Fecha', required: true,
-            timeFieldKey: 'hora',
-            validation: {}, errorMessage: '',
-            optionsSource: 'custom', optionsTitleField: '', optionsDescField: '',
-            customOptions: [
-              { label: 'Consulta general', value: 'consulta', description: 'Consulta general', duration: 30 }
-            ],
-            buttonText: 'Ver días',
-            sourceCollection: '', displayField: '', detailFields: []
-          }
-        ],
-        completionMessage: `✅ *Cita agendada*\n\n*Nombre:* {nombre}\n*Fecha:* {fecha}\n*Hora:* {hora}\n\nTe esperamos en *${orgName}*.\nSi necesitas cancelar o reagendar, escríbenos.`,
-        createdAt: ts(), updatedAt: ts()
-      });
-    }
-
-    // ── Menu config ──
+    // ── Menu config: only 3 default builtin items ──
+    // Flows and collections are created on-demand via the Flow Builder template system.
 
     const menuItems: any[] = [
-      { id: 'm1', type: 'flow', flowId: contactFlowRef.id, label: 'Contáctanos', description: 'Envíanos un mensaje', order: 1, active: true },
+      { id: 'm1', type: 'builtin', action: 'schedule', label: 'Horarios', description: 'Días y horarios de atención', order: 1, active: true },
+      { id: 'm2', type: 'builtin', action: 'contact', label: 'Ubicación', description: 'Cómo encontrarnos', order: 2, active: true },
+      { id: 'm3', type: 'builtin', action: 'general', label: 'Sobre Nosotros', description: 'Conoce quiénes somos', order: 3, active: true }
     ];
-
-    if (apptFlowRef) {
-      menuItems.push({ id: 'm2', type: 'flow', flowId: apptFlowRef.id, label: 'Agendar Cita', description: 'Reserva un espacio con nosotros', order: 2, active: true });
-    }
-
-    menuItems.push(
-      { id: 'm10', type: 'builtin', action: 'schedule', label: 'Horarios', description: 'Días y horarios de atención', order: 10, active: true },
-      { id: 'm11', type: 'builtin', action: 'contact', label: 'Ubicación', description: 'Cómo encontrarnos', order: 11, active: true },
-      { id: 'm12', type: 'builtin', action: 'general', label: 'Sobre Nosotros', description: 'Conoce quiénes somos', order: 12, active: true }
-    );
 
     await setDoc(doc(this.db, orgPath, 'config', 'menu'), {
       greeting: `¡Hola{name}!\n\nBienvenido a *${orgName}*.\n\n¿Cómo podemos ayudarte?`,
@@ -555,6 +452,113 @@ export class FirebaseService {
 
   async deleteCollectionDef(defId: string): Promise<void> {
     await this.deleteDocument('_collections', defId);
+  }
+
+  // Sync flow steps → collection fields (add missing fields, never removes existing ones)
+  async syncFlowToCollection(slug: string, steps: any[]): Promise<void> {
+    const colDefs = await this.getCollectionDefs();
+    const col = colDefs.find((c: any) => c.slug === slug);
+    if (!col) return;
+
+    const existingKeys = new Set(col.fields.map((f: any) => f.key));
+    let changed = false;
+
+    for (const step of steps) {
+      if (step.type === 'message') continue;
+
+      if (step.type === 'appointment_slot') {
+        const apptFields = [
+          { key: step.fieldKey || 'fecha', label: 'Fecha' },
+          { key: step.timeFieldKey || 'hora', label: 'Hora' },
+          { key: '_apptService', label: 'Servicio' }
+        ];
+        for (const af of apptFields) {
+          if (af.key && !existingKeys.has(af.key)) {
+            col.fields.push({ key: af.key, label: af.label, type: 'text', required: false });
+            existingKeys.add(af.key);
+            changed = true;
+          }
+        }
+        continue;
+      }
+
+      if (!step.fieldKey || existingKeys.has(step.fieldKey)) continue;
+      col.fields.push({
+        key: step.fieldKey,
+        label: step.fieldLabel || step.fieldKey,
+        type: step.type === 'number_input' ? 'number' : 'text',
+        required: false
+      });
+      existingKeys.add(step.fieldKey);
+      changed = true;
+    }
+
+    if (changed) await this.saveCollectionDef(col);
+  }
+
+  // Remove flow steps whose fieldKey matches deleted collection fields
+  async removeFlowStepsForFields(slug: string, removedKeys: string[]): Promise<void> {
+    if (!removedKeys.length) return;
+    const flows = await this.getFlows();
+    for (const flow of flows) {
+      if (flow.saveToCollection !== slug) continue;
+      const original = flow.steps || [];
+      const updated = original.filter((s: any) =>
+        s.type === 'message' || !removedKeys.includes(s.fieldKey)
+      );
+      if (updated.length !== original.length) {
+        await this.updateFlow(flow.id, { steps: updated });
+      }
+    }
+  }
+
+  // SA: reset org bot to default state (clears flows, collections, menu)
+  async resetOrgBotToDefault(orgId: string): Promise<void> {
+    const orgBase = `organizations/${orgId}`;
+
+    // 1. Delete all collection data + definitions
+    const colDefsSnap = await getDocs(collection(this.db, orgBase, '_collections'));
+    for (const colDoc of colDefsSnap.docs) {
+      const slug: string = colDoc.data()['slug'];
+      if (slug) {
+        const dataSnap = await getDocs(collection(this.db, orgBase, slug));
+        if (!dataSnap.empty) {
+          for (let i = 0; i < dataSnap.docs.length; i += 400) {
+            const batch = writeBatch(this.db);
+            dataSnap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+        }
+      }
+      await deleteDoc(colDoc.ref);
+    }
+
+    // 2. Delete all flows
+    const flowsSnap = await getDocs(collection(this.db, orgBase, 'flows'));
+    if (!flowsSnap.empty) {
+      for (let i = 0; i < flowsSnap.docs.length; i += 400) {
+        const batch = writeBatch(this.db);
+        flowsSnap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+    }
+
+    // 3. Reset menu config to 3 builtins (preserve text customizations)
+    const menuRef = doc(this.db, orgBase, 'config', 'menu');
+    const menuSnap = await getDoc(menuRef);
+    const existing = menuSnap.exists() ? menuSnap.data() : {};
+    await setDoc(menuRef, {
+      greeting: existing['greeting'] || '¡Hola{name}!\n\n¿Cómo podemos ayudarte?',
+      menuButtonText: existing['menuButtonText'] || 'Ver opciones',
+      fallbackMessage: existing['fallbackMessage'] || 'No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones.',
+      exitMessage: existing['exitMessage'] || '¡Hasta pronto!',
+      items: [
+        { id: 'm1', type: 'builtin', action: 'schedule', label: 'Horarios', description: 'Días y horarios de atención', order: 1, active: true },
+        { id: 'm2', type: 'builtin', action: 'contact', label: 'Ubicación', description: 'Cómo encontrarnos', order: 2, active: true },
+        { id: 'm3', type: 'builtin', action: 'general', label: 'Sobre Nosotros', description: 'Conoce quiénes somos', order: 3, active: true }
+      ],
+      updatedAt: serverTimestamp()
+    });
   }
 
   async getCollectionData(slug: string): Promise<any[]> {

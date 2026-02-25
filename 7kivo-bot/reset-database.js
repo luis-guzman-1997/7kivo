@@ -1,17 +1,17 @@
 /**
  * Reset Database Script - ICZ Sonsonate
- * 
+ *
  * Resets data for an existing organization:
  * - Dynamic collection definitions (_collections/)
  * - Pre-populated data (programas, instrumentos)
- * - Dynamic flows (browse programs, registration)
+ * - Dynamic flows (browse programs, registration, appointments)
  * - Menu configuration
  * - Bot messages
  * - Info (contact, schedule, general)
- * 
- * PRESERVES: WhatsApp credentials, user mappings, org config doc
+ *
+ * PRESERVES: WhatsApp credentials, botApiUrl, user mappings, org config doc
  * DOES NOT TOUCH: admin user (admin@canzion.com)
- * 
+ *
  * Usage: node reset-database.js
  */
 
@@ -30,7 +30,7 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
 }
 
 const db = admin.firestore();
-const ORG_ID = process.env.ORG_ID || process.env.SCHOOL_ID || "demo";
+const ORG_ID = process.env.ORG_ID || "instituto-canzion-sonsonate";
 const ORG_NAME = "Instituto CanZion Sonsonate";
 const ts = admin.firestore.FieldValue.serverTimestamp;
 
@@ -74,22 +74,31 @@ async function deleteConversationsDeep(parentRef) {
 
 async function resetDatabase() {
   try {
-    // 0. Preserve WhatsApp credentials
-    console.log("0. Preservando credenciales de WhatsApp...");
+    // 0. Preserve WhatsApp credentials AND botApiUrl
+    console.log("0. Preservando credenciales y configuración del bot...");
     let savedWAConfig = null;
+    let savedBotApiUrl = "";
     try {
       const waDoc = await orgRef.collection("config").doc("whatsapp").get();
       if (waDoc.exists && waDoc.data()?.token) {
         savedWAConfig = waDoc.data();
-        console.log(`   Token preservado (Phone: ${savedWAConfig.phoneNumberId || 'N/A'})\n`);
+        console.log(`   WA Token preservado (Phone: ${savedWAConfig.phoneNumberId || "N/A"})`);
       } else {
-        console.log("   Sin credenciales previas.\n");
+        console.log("   Sin credenciales WA previas.");
       }
+      const generalDoc = await orgRef.collection("config").doc("general").get();
+      if (generalDoc.exists && generalDoc.data()?.botApiUrl) {
+        savedBotApiUrl = generalDoc.data().botApiUrl;
+        console.log(`   botApiUrl preservado: ${savedBotApiUrl}`);
+      } else {
+        console.log("   Sin botApiUrl previo.");
+      }
+      console.log();
     } catch (e) {
-      console.log("   No se pudieron leer credenciales.\n");
+      console.log("   No se pudo leer configuración previa.\n");
     }
 
-    // 1. Clean old structures
+    // 1. Clean old structures (schools/ legacy)
     console.log("1. Limpiando estructura anterior...");
     const oldSchoolRef = db.collection("schools").doc(ORG_ID);
     if ((await oldSchoolRef.get()).exists) {
@@ -127,7 +136,7 @@ async function resetDatabase() {
       if (d.exists) await d.ref.delete();
     }
 
-    // Clean conversations (includes chat messages + bot sessions)
+    // Clean conversations
     console.log("   Limpiando conversaciones y sesiones...");
     const convCount = await deleteConversationsDeep(orgRef);
     console.log(`   - conversations: ${convCount} docs (mensajes + sesiones)`);
@@ -136,16 +145,20 @@ async function resetDatabase() {
     // 3. Organization document (update, not overwrite)
     console.log("3. Actualizando organización...");
     await orgRef.set({
-      name: ORG_NAME, orgId: ORG_ID, industry: "educacion", active: true, createdAt: ts()
+      name: ORG_NAME, orgId: ORG_ID, industry: "education", active: true, createdAt: ts()
     }, { merge: true });
 
     // 4. Config: general
     console.log("4. Configuración general...");
     await orgRef.collection("config").doc("general").set({
-      orgName: ORG_NAME, description: "Escuela de música cristiana con enfoque en adoración y formación musical integral.",
-      industry: "educacion", welcomeMessage: `¡Bienvenido a *${ORG_NAME}*! 🎵`,
-      inactivityTimeout: 180000, personalWhatsApp: "", botApiUrl: "http://localhost:3005",
-      createdAt: ts()
+      orgName:            ORG_NAME,
+      description:        "Escuela de música cristiana con enfoque en adoración y formación musical integral.",
+      industry:           "education",
+      welcomeMessage:     `¡Bienvenido a *${ORG_NAME}*! 🎵`,
+      inactivityTimeout:  180000,
+      personalWhatsApp:   "",
+      botApiUrl:          savedBotApiUrl || "",
+      createdAt:          ts()
     });
 
     // 5. Config: whatsapp
@@ -156,11 +169,12 @@ async function resetDatabase() {
     } else {
       await orgRef.collection("config").doc("whatsapp").set({
         phoneNumberId: process.env.PHONE_NUMBER_WHATSAPP || "",
-        token: process.env.TOKEN_META_WHATSAPP || "",
-        version: process.env.VERSION_META_WHATSAPP || "v21.0",
-        verifyToken: process.env.VERIFY_META_TOKEN || "",
-        createdAt: ts()
+        token:         process.env.TOKEN_META_WHATSAPP || "",
+        version:       process.env.VERSION_META_WHATSAPP || "v21.0",
+        verifyToken:   process.env.VERIFY_META_TOKEN || "",
+        createdAt:     ts()
       });
+      console.log("   Credenciales desde .env (o vacías).\n");
     }
 
     // ==================== COLLECTIONS ====================
@@ -172,10 +186,10 @@ async function resetDatabase() {
       name: "Programas", slug: "programas", description: "Cursos disponibles en ICZ Sonsonate",
       displayField: "nombre",
       fields: [
-        { key: "nombre", label: "Nombre del Curso", type: "text", required: true },
-        { key: "edad", label: "Rango de Edad", type: "text", required: true },
-        { key: "duracion", label: "Duración", type: "text", required: false },
-        { key: "descripcion", label: "Descripción", type: "text", required: false }
+        { key: "nombre",      label: "Nombre del Curso",  type: "text",   required: true  },
+        { key: "edad",        label: "Rango de Edad",     type: "text",   required: true  },
+        { key: "duracion",    label: "Duración",          type: "text",   required: false },
+        { key: "descripcion", label: "Descripción",       type: "text",   required: false }
       ],
       createdAt: ts(), updatedAt: ts()
     });
@@ -193,10 +207,10 @@ async function resetDatabase() {
       name: "Aspirantes", slug: "aspirantes", description: "Personas interesadas en inscribirse",
       displayField: "nombre",
       fields: [
-        { key: "nombre", label: "Nombre", type: "text", required: true },
-        { key: "edad", label: "Edad", type: "text", required: true },
-        { key: "curso", label: "Curso", type: "reference", refCollection: "programas", required: true },
-        { key: "instrumento", label: "Instrumento", type: "reference", refCollection: "instrumentos", required: true }
+        { key: "nombre",       label: "Nombre",       type: "text",      required: true  },
+        { key: "edad",         label: "Edad",         type: "text",      required: true  },
+        { key: "curso",        label: "Curso",        type: "reference", refCollection: "programas",    required: true },
+        { key: "instrumento",  label: "Instrumento",  type: "reference", refCollection: "instrumentos", required: true }
       ],
       createdAt: ts(), updatedAt: ts()
     });
@@ -205,20 +219,20 @@ async function resetDatabase() {
       name: "Citas", slug: "citas", description: "Citas agendadas desde el bot",
       displayField: "nombre",
       fields: [
-        { key: "nombre", label: "Nombre", type: "text", required: true },
-        { key: "edad", label: "Edad", type: "text", required: false },
-        { key: "motivo", label: "Motivo", type: "text", required: false },
-        { key: "phoneNumber", label: "Teléfono", type: "text", required: true },
-        { key: "fecha", label: "Fecha", type: "text", required: true },
-        { key: "hora", label: "Hora", type: "text", required: true },
-        { key: "_apptDuration", label: "Duración (min)", type: "number", required: false }
+        { key: "nombre",        label: "Nombre",          type: "text",   required: true  },
+        { key: "edad",          label: "Edad",            type: "text",   required: false },
+        { key: "_apptService",  label: "Servicio",        type: "text",   required: false },
+        { key: "phoneNumber",   label: "Teléfono",        type: "text",   required: true  },
+        { key: "fecha",         label: "Fecha",           type: "text",   required: true  },
+        { key: "hora",          label: "Hora",            type: "text",   required: true  },
+        { key: "_apptDuration", label: "Duración (min)",  type: "number", required: false }
       ],
       createdAt: ts(), updatedAt: ts()
     });
 
     console.log("   4 colecciones: programas, instrumentos, aspirantes, citas\n");
 
-    // 7. Populate programas (based on https://sv.institutocanzion.com/sonsonate)
+    // 7. Populate programas
     console.log("7. Populando programas...");
     const programas = [
       {
@@ -324,6 +338,9 @@ async function resetDatabase() {
     });
 
     // --- Flow 3: Agendar Cita ---
+    // El appointment_slot usa los servicios del schedule (info/schedule.services)
+    // para seleccionar el tipo de visita y calcular la duración del slot.
+    // No se necesita un paso select_list de motivo — el bot lo maneja internamente.
     await orgRef.collection("flows").add({
       name: "Agendar Cita", description: "Reserva una cita presencial",
       type: "appointment", active: true, order: 3, saveToCollection: "citas",
@@ -346,32 +363,16 @@ async function resetDatabase() {
           sourceCollection: "", displayField: "", detailFields: [], timeFieldKey: ""
         },
         {
-          id: "s3", type: "select_list",
-          prompt: "📌 ¿Cuál es el *motivo* de tu visita?\n\nEsto nos ayuda a prepararnos para atenderte mejor:",
-          fieldKey: "motivo", fieldLabel: "Motivo", required: true,
-          validation: {}, errorMessage: "", optionsSource: "custom",
-          optionsTitleField: "", optionsDescField: "",
-          customOptions: [
-            { label: "Conocer los cursos", value: "info_cursos", description: "Quiero información sobre los programas", duration: 20 },
-            { label: "Formalizar inscripción", value: "inscripcion", description: "Ya me decidí y quiero inscribirme", duration: 30 },
-            { label: "Prueba de nivel", value: "prueba_nivel", description: "Evaluación de conocimiento musical", duration: 45 },
-            { label: "Otro motivo", value: "otro", description: "Consulta o trámite general", duration: 15 }
-          ],
-          buttonText: "Ver motivos",
-          sourceCollection: "", displayField: "", detailFields: [], timeFieldKey: ""
-        },
-        {
-          id: "s4", type: "appointment_slot",
-          prompt: "📆 Ahora elige el *día* que mejor te convenga:\n\nSolo se muestran días con disponibilidad.",
+          id: "s3", type: "appointment_slot",
+          prompt: "📆 Elige el *tipo de visita* y el horario que mejor te convenga:",
           fieldKey: "fecha", fieldLabel: "Fecha", required: true,
           timeFieldKey: "hora",
           validation: {}, errorMessage: "", optionsSource: "custom",
-          optionsTitleField: "", optionsDescField: "",
-          customOptions: [], buttonText: "Ver días",
+          customOptions: [], buttonText: "Ver disponibilidad",
           sourceCollection: "", displayField: "", detailFields: []
         }
       ],
-      completionMessage: "✅ *Cita agendada*\n\nTu cita ha sido registrada con los siguientes datos:\n\n*Nombre:* {nombre}\n*Edad:* {edad}\n*Motivo:* {motivo}\n*Fecha:* {fecha}\n*Hora:* {hora}\n\nTe esperamos en *" + ORG_NAME + "*\n8va Av. Norte # 6-3, Col. Aida, Sonsonate\n\nSi necesitas cancelar o reagendar, escríbenos y con gusto te ayudamos.",
+      completionMessage: "✅ *Cita agendada*\n\nTu cita ha sido registrada con los siguientes datos:\n\n*Nombre:* {nombre}\n*Edad:* {edad}\n*Fecha:* {fecha}\n*Hora:* {hora}\n\nTe esperamos en *" + ORG_NAME + "*\n8va Av. Norte # 6-3, Col. Aida, Sonsonate\n\nSi necesitas cancelar o reagendar, escríbenos y con gusto te ayudamos. 🎵",
       createdAt: ts(), updatedAt: ts()
     });
 
@@ -384,38 +385,73 @@ async function resetDatabase() {
     const flowsSnap = await orgRef.collection("flows").get();
     const flowDocs = flowsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const browseFlow = flowDocs.find(f => f.name === "Ver Programas");
-    const regFlow = flowDocs.find(f => f.name === "Inscríbete");
-    const apptFlow = flowDocs.find(f => f.name === "Agendar Cita");
+    const regFlow    = flowDocs.find(f => f.name === "Inscríbete");
+    const apptFlow   = flowDocs.find(f => f.name === "Agendar Cita");
 
     await orgRef.collection("config").doc("menu").set({
       greeting: `¡Hola{name}! 👋🎵\n\nBienvenido a *${ORG_NAME}*\nTu escuela de música en Sonsonate.\n\n¿Cómo podemos ayudarte hoy?`,
       menuButtonText: "Ver opciones",
       fallbackMessage: "🤔 No logré entender tu mensaje.\n\nEscribe *hola* para ver todas las opciones disponibles.",
-      exitMessage: "🎶 ¡Hasta pronto!\n\nFue un gusto atenderte. Escribe *hola* cuando quieras volver.\n\n_${ORG_NAME} — Formando adoradores_ 🎵",
+      exitMessage: `🎶 ¡Hasta pronto!\n\nFue un gusto atenderte. Escribe *hola* cuando quieras volver.\n\n_${ORG_NAME} — Formando adoradores_ 🎵`,
       items: [
-        { id: "m1", type: "flow", flowId: browseFlow?.id || "", label: "Nuestros Cursos", description: "Conoce nuestra oferta académica", order: 1, active: true },
-        { id: "m2", type: "flow", flowId: regFlow?.id || "", label: "Inscríbete", description: "Inicia tu pre-inscripción", order: 2, active: true },
-        { id: "m3", type: "flow", flowId: apptFlow?.id || "", label: "Agendar Cita", description: "Reserva un espacio con nosotros", order: 3, active: true },
-        { id: "m4", type: "builtin", action: "schedule", label: "Horarios", description: "Días y horarios de atención", order: 4, active: true },
-        { id: "m5", type: "builtin", action: "contact", label: "Ubicación", description: "Cómo llegar al instituto", order: 5, active: true },
-        { id: "m6", type: "builtin", action: "general", label: "Sobre Nosotros", description: "Conoce nuestra misión", order: 6, active: true }
+        { id: "m1", type: "flow",    flowId: browseFlow?.id || "", label: "Nuestros Cursos", description: "Conoce nuestra oferta académica",    order: 1, active: true },
+        { id: "m2", type: "flow",    flowId: regFlow?.id    || "", label: "Inscríbete",      description: "Inicia tu pre-inscripción",          order: 2, active: true },
+        { id: "m3", type: "flow",    flowId: apptFlow?.id   || "", label: "Agendar Cita",    description: "Reserva un espacio con nosotros",    order: 3, active: true },
+        { id: "m4", type: "builtin", action: "schedule",           label: "Horarios",        description: "Días y horarios de atención",        order: 4, active: true },
+        { id: "m5", type: "builtin", action: "contact",            label: "Ubicación",       description: "Cómo llegar al instituto",           order: 5, active: true },
+        { id: "m6", type: "builtin", action: "general",            label: "Sobre Nosotros",  description: "Conoce nuestra misión",              order: 6, active: true }
       ],
       createdAt: ts()
     });
+    // Note: New organizations created from scratch get only 3 default builtin items:
+    // Horarios, Ubicación, Sobre Nosotros. This org already has flows so we keep them.
+    console.log("   Menú configurado.\n");
 
     // ==================== BOT MESSAGES ====================
 
     // 11. Bot messages
     console.log("11. Mensajes del bot...");
     const botMessages = [
-      { key: "greeting", label: "Saludo principal", category: "greeting", description: "Mensaje de bienvenida", content: `¡Hola{name}! 👋\n\nBienvenido a *${ORG_NAME}*\nTu escuela de música en Sonsonate.\n\n¿Cómo podemos ayudarte hoy?` },
-      { key: "fallback", label: "Mensaje no reconocido", category: "fallback", description: "Cuando el bot no entiende", content: "No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones." },
-      { key: "goodbye", label: "Despedida", category: "general", description: "Cuando el usuario se despide", content: "¡Hasta pronto!\n\nFue un gusto atenderte. Escribe *hola* cuando quieras volver." },
-      { key: "session_expired", label: "Sesión expirada", category: "general", description: "Cierre por inactividad", content: "Tu sesión se cerró por inactividad.\n\nEscribe *hola* cuando quieras retomar." },
-      { key: "cancel", label: "Cancelación", category: "general", description: "Cuando cancela un proceso", content: "Proceso cancelado. Escribe *hola* para volver al menú." },
-      { key: "flow_cancel_hint", label: "Aviso de cancelación", category: "flow", description: "Al iniciar un flujo", content: "Puedes escribir *cancelar* en cualquier momento para detener este proceso.\n" },
-      { key: "admin_farewell", label: "Despedida de admin", category: "admin", description: "Cuando admin devuelve control", content: "La conversación con nuestro equipo ha finalizado.\n\nEscribe *hola* para ver el menú." },
-      { key: "no_registration", label: "Registro no disponible", category: "flow", description: "Sin flujo de registro", content: "El registro no está disponible en este momento.\n\nEscribe *hola* para ver otras opciones." }
+      {
+        key: "greeting",        label: "Saludo principal",        category: "greeting",
+        description: "Mensaje de bienvenida",
+        content: `¡Hola{name}! 👋\n\nBienvenido a *${ORG_NAME}*\nTu escuela de música en Sonsonate.\n\n¿Cómo podemos ayudarte hoy?`
+      },
+      {
+        key: "fallback",        label: "Mensaje no reconocido",   category: "fallback",
+        description: "Cuando el bot no entiende",
+        content: "No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones."
+      },
+      {
+        key: "goodbye",         label: "Despedida",               category: "general",
+        description: "Cuando el usuario se despide",
+        content: "¡Hasta pronto! 🎶\n\nFue un gusto atenderte. Escribe *hola* cuando quieras volver."
+      },
+      {
+        key: "session_expired", label: "Sesión expirada",         category: "general",
+        description: "Cierre por inactividad",
+        content: "Tu sesión se cerró por inactividad.\n\nEscribe *hola* cuando quieras retomar."
+      },
+      {
+        key: "cancel",          label: "Cancelación",             category: "general",
+        description: "Cuando cancela un proceso",
+        content: "Proceso cancelado. Escribe *hola* para volver al menú."
+      },
+      {
+        key: "flow_cancel_hint", label: "Aviso de cancelación",   category: "flow",
+        description: "Al iniciar un flujo",
+        content: "Puedes escribir *cancelar* en cualquier momento para detener este proceso.\n"
+      },
+      {
+        key: "admin_farewell",  label: "Despedida de admin",      category: "admin",
+        description: "Cuando admin devuelve control",
+        content: "La conversación con nuestro equipo ha finalizado.\n\nEscribe *hola* para ver el menú."
+      },
+      {
+        key: "no_registration", label: "Registro no disponible",  category: "flow",
+        description: "Sin flujo de registro",
+        content: "El registro no está disponible en este momento.\n\nEscribe *hola* para ver otras opciones."
+      }
     ];
     for (const msg of botMessages) {
       await orgRef.collection("botMessages").add({ ...msg, createdAt: ts() });
@@ -426,35 +462,78 @@ async function resetDatabase() {
 
     // 12. Info
     console.log("12. Información base...");
+
+    // contact — 'name' key used by infoDone check: contact?.phone || contact?.address
     await orgRef.collection("info").doc("contact").set({
-      address: "8va Av. Norte # 6-3, Colonia Aida, Sonsonate",
-      city: "Sonsonate", country: "El Salvador",
-      phone: "6930-7473", email: "sonsonate@institutocanzion.com",
-      createdAt: ts()
+      address:    "8va Av. Norte # 6-3, Colonia Aida, Sonsonate",
+      city:       "Sonsonate",
+      country:    "El Salvador",
+      phone:      "6930-7473",
+      email:      "sonsonate@institutocanzion.com",
+      showFields: { address: true, city: true, phone: true, email: true, country: true },
+      createdAt:  ts()
     });
+
+    // schedule — offersAppointments + businessType + services son requeridos por el sistema
+    // para que servicesDone = true en el checklist y para que appointment_slot
+    // pueda mostrar la selección de servicio y calcular la duración del slot.
     await orgRef.collection("info").doc("schedule").set({
       days: [
-        { name: "Lunes", active: false, shifts: [] },
-        { name: "Martes", active: false, shifts: [] },
-        { name: "Miércoles", active: false, shifts: [] },
-        { name: "Jueves", active: false, shifts: [] },
-        { name: "Viernes", active: false, shifts: [] },
-        { name: "Sábado", active: true, shifts: [{ from: "08:00", to: "12:00" }] },
-        { name: "Domingo", active: false, shifts: [] }
+        { name: "Lunes",     active: false, shifts: [{ from: "08:00", to: "17:00" }] },
+        { name: "Martes",    active: false, shifts: [{ from: "08:00", to: "17:00" }] },
+        { name: "Miércoles", active: false, shifts: [{ from: "08:00", to: "17:00" }] },
+        { name: "Jueves",    active: false, shifts: [{ from: "08:00", to: "17:00" }] },
+        { name: "Viernes",   active: false, shifts: [{ from: "08:00", to: "17:00" }] },
+        { name: "Sábado",    active: true,  shifts: [{ from: "08:00", to: "12:00" }] },
+        { name: "Domingo",   active: false, shifts: [{ from: "08:00", to: "17:00" }] }
       ],
-      slotDuration: 30,
-      blockedDates: [],
+      slotDuration:       30,
+      blockedDates:       [],
+      businessType:       "services",
+      offersAppointments: true,
+      // Estos servicios reemplazan el paso de "motivo" del flujo anterior.
+      // El bot los muestra en la selección de servicio del appointment_slot
+      // y usa 'duration' para calcular la duración del slot.
+      services: [
+        {
+          title:       "Conocer los cursos",
+          subtitle:    "Información sobre programas",
+          description: "Consulta sobre nuestra oferta académica y resuelve tus dudas con nuestro equipo.",
+          duration:    20
+        },
+        {
+          title:       "Formalizar inscripción",
+          subtitle:    "Proceso de inscripción",
+          description: "Completa tu inscripción con nuestro equipo administrativo.",
+          duration:    30
+        },
+        {
+          title:       "Prueba de nivel",
+          subtitle:    "Evaluación musical",
+          description: "Evaluación de conocimiento musical para ubicación en el programa adecuado.",
+          duration:    45
+        },
+        {
+          title:       "Consulta general",
+          subtitle:    "Trámites y otras consultas",
+          description: "Cualquier otra consulta o trámite con el instituto.",
+          duration:    15
+        }
+      ],
       createdAt: ts()
     });
+
+    // general — 'name' key requerido por infoDone: general?.name && general?.description
     await orgRef.collection("info").doc("general").set({
-      orgName: ORG_NAME,
+      name:        ORG_NAME,
       description: "Escuela de música cristiana con enfoque en adoración y formación musical integral. Formamos músicos con excelencia técnica y pasión por el servicio.",
-      focus: ["Formación musical", "Adoración", "Desarrollo artístico integral"],
-      modality: "Presencial",
+      focus:       ["Formación musical", "Adoración", "Desarrollo artístico integral"],
+      modality:    "Presencial",
       instrumentsNote: "Guitarra, Piano, Batería, Bajo y Canto",
-      openToAll: true,
-      createdAt: ts()
+      openToAll:   true,
+      createdAt:   ts()
     });
+    console.log("   contact, schedule (con servicios), general.\n");
 
     // ==================== ADMINS ====================
 
@@ -471,7 +550,7 @@ async function resetDatabase() {
         const hasOwner = orgAdmins.some(a => a.role === "owner");
         for (let i = 0; i < orgAdmins.length; i++) {
           const adm = orgAdmins[i];
-          const role = adm.role || (!hasOwner && i === 0 ? "owner" : "admin");
+          const role = adm.role || (!hasOwner && i === 0 ? "owner" : "editor");
 
           await orgRef.collection("admins").add({
             uid: adm.uid, email: adm.email, name: adm.name || adm.email,
@@ -483,7 +562,7 @@ async function resetDatabase() {
           }
         }
         console.log(`   ${orgAdmins.length} usuario(s):`);
-        orgAdmins.forEach(a => console.log(`     - ${a.email} (${a.role || 'owner'})`));
+        orgAdmins.forEach(a => console.log(`     - ${a.email} (${a.role || "owner"})`));
       } else {
         console.log("   Sin usuarios encontrados en users/.");
       }
@@ -493,26 +572,23 @@ async function resetDatabase() {
 
     // ==================== PLATFORM CONFIG (Super Admin) ====================
 
-    console.log("13. Configuración de plataforma (Super Admin)...");
+    console.log("\n14. Configuración de plataforma (Super Admin)...");
 
     const platformPlansRef = db.collection("platformConfig").doc("plans");
     await platformPlansRef.set({
       plans: [
         {
-          name: "Starter",
-          price: 9.99,
+          name: "Starter", price: 9.99, active: true,
           features: [
             "Bot WhatsApp con menú interactivo",
             "1 flujo conversacional",
             "1 colección de datos",
             "Bandeja de entrada",
             "Chat WhatsApp (solo lectura)"
-          ],
-          active: true
+          ]
         },
         {
-          name: "Business",
-          price: 19.99,
+          name: "Business", price: 19.99, active: true,
           features: [
             "Bot WhatsApp con menú interactivo",
             "Hasta 3 flujos conversacionales",
@@ -521,27 +597,22 @@ async function resetDatabase() {
             "Sistema de citas y agenda",
             "Chat en vivo con clientes",
             "3 usuarios administradores"
-          ],
-          active: true
+          ]
         },
         {
-          name: "Premium",
-          price: 39.99,
+          name: "Premium", price: 39.99, active: true,
           features: [
             "Todo lo de Business",
             "Hasta 5 flujos conversacionales",
-            "Sistema de citas y agenda",
             "Hasta 10 colecciones de datos",
-            "Roles y permisos (owner, admin, editor, viewer)",
+            "Roles y permisos (Propietario, Gerente, Operador, Agente)",
             "Logo y marca personalizada",
             "Horarios de atención configurables",
             "5 usuarios administradores"
-          ],
-          active: true
+          ]
         },
         {
-          name: "Enterprise",
-          price: 100,
+          name: "Enterprise", price: 100, active: true,
           features: [
             "Todo lo de Premium",
             "Hasta 20 flujos conversacionales",
@@ -549,8 +620,7 @@ async function resetDatabase() {
             "Contactos ilimitados",
             "Usuarios administradores ilimitados",
             "Configuración avanzada del bot"
-          ],
-          active: true
+          ]
         }
       ],
       updatedAt: ts()
@@ -558,8 +628,8 @@ async function resetDatabase() {
     console.log("   4 planes configurados (Starter, Business, Premium, Enterprise).");
 
     await orgRef.update({
-      botEnabled: true,
-      plan: "Business",
+      botEnabled:  true,
+      plan:        "Business",
       monthlyRate: 19.99
     });
     console.log(`   Org ${ORG_ID}: plan Business, bot habilitado.\n`);
@@ -569,17 +639,19 @@ async function resetDatabase() {
     console.log(`\n========================================`);
     console.log(`  Reset completado`);
     console.log(`========================================\n`);
-    console.log(`  Org:           ${ORG_ID}`);
-    console.log(`  Nombre:        ${ORG_NAME}`);
-    console.log(`  WhatsApp:      ${savedWAConfig?.token ? 'Preservado' : 'Configurar en web'}`);
-    console.log(`  Colecciones:   programas, instrumentos, aspirantes, citas`);
-    console.log(`  Programas:     Curso Ministerial Musical, Teens, Kids`);
-    console.log(`  Instrumentos:  Guitarra, Batería, Bajo, Canto, Piano`);
-    console.log(`  Flujos:        Ver Programas, Inscríbete, Agendar Cita`);
-    console.log(`  Citas:         Flujo dinámico, duración por tipo (15-45 min)`);
-    console.log(`  Menú:          Programas | Inscríbete | Cita | Horarios | Ubicación | Info`);
-    console.log(`  Planes:        Starter ($9.99), Business ($19.99), Premium ($39.99), Enterprise ($100)`);
-    console.log(`  Super Admin:   admin@7kivo.com (crear en Firebase Auth)`);
+    console.log(`  Org:            ${ORG_ID}`);
+    console.log(`  Nombre:         ${ORG_NAME}`);
+    console.log(`  botApiUrl:      ${savedBotApiUrl || "(vacío — configurar en superadmin)"}`);
+    console.log(`  WhatsApp:       ${savedWAConfig?.token ? "Preservado" : "(vacío — configurar en superadmin)"}`);
+    console.log(`  Colecciones:    programas, instrumentos, aspirantes, citas`);
+    console.log(`  Programas:      Curso Ministerial Musical, Teens, Kids`);
+    console.log(`  Instrumentos:   Guitarra, Batería, Bajo, Canto, Piano`);
+    console.log(`  Flujos:         Ver Programas (browse), Inscríbete (registro), Agendar Cita (citas)`);
+    console.log(`  Citas:          appointment_slot — selección de servicio desde schedule.services`);
+    console.log(`  Servicios:      Conocer cursos (20m), Formalizar inscripción (30m), Prueba nivel (45m), Consulta general (15m)`);
+    console.log(`  Menú:           Programas | Inscríbete | Cita | Horarios | Ubicación | Info`);
+    console.log(`  Planes:         Starter ($9.99), Business ($19.99), Premium ($39.99), Enterprise ($100)`);
+    console.log(`  Super Admin:    admin@7kivo.com`);
     console.log(`\n  Siguiente: npm start\n`);
 
   } catch (error) {

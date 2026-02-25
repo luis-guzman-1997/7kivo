@@ -126,11 +126,31 @@
               <option value="">-- Colección --</option>
               <option *ngFor="let c of getOtherCollections()" [value]="c.slug">{{ c.name }}</option>
             </select>
+            <!-- Reference sub-config: display & value fields -->
+            <div *ngIf="field.type === 'reference' && field.refCollection" class="ref-config">
+              <div class="ref-config-group">
+                <span class="ref-label">Mostrar:</span>
+                <select [(ngModel)]="field.refDisplayField" class="select-sm">
+                  <option value="">-- Campo a mostrar --</option>
+                  <option *ngFor="let rf of getRefCollectionFields(field.refCollection)" [value]="rf.key">{{ rf.label || rf.key }}</option>
+                </select>
+              </div>
+              <div class="ref-config-group">
+                <span class="ref-label">Almacenar:</span>
+                <select [(ngModel)]="field.refValueField" class="select-sm">
+                  <option value="">ID del documento</option>
+                  <option *ngFor="let rf of getRefCollectionFields(field.refCollection)" [value]="rf.key">{{ rf.label || rf.key }}</option>
+                </select>
+              </div>
+            </div>
             <label class="check-sm">
               <input type="checkbox" [(ngModel)]="field.required" /> Req.
             </label>
           </div>
-          <button class="btn-icon-xs btn-danger" (click)="removeField(i)"><i class="fas fa-trash"></i></button>
+          <button class="btn-icon-xs" [class.btn-danger]="!field.protected" [class.btn-protected]="field.protected"
+                  (click)="removeField(i)" [disabled]="field.protected" [title]="field.protected ? 'Campo del sistema (no eliminable)' : 'Eliminar campo'">
+            <i class="fas" [ngClass]="field.protected ? 'fa-lock' : 'fa-trash'"></i>
+          </button>
         </div>
       </div>
 
@@ -166,9 +186,16 @@
           <div class="item-form-fields">
             <div *ngFor="let field of currentCollection.fields" class="form-group-config">
               <label>{{ field.label || field.key }} <span *ngIf="field.required" class="req-mark">*</span></label>
-              <input *ngIf="field.type === 'text' || field.type === 'date' || field.type === 'reference'"
+              <input *ngIf="field.type === 'text' || field.type === 'date'"
                      [type]="field.type === 'date' ? 'date' : 'text'"
                      [(ngModel)]="itemForm[field.key]" />
+              <select *ngIf="field.type === 'reference'" [(ngModel)]="itemForm[field.key]">
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let refItem of (refCollectionData[field.refCollection || ''] || [])"
+                        [value]="getRefItemOptionValue(refItem, field)">
+                  {{ getRefItemOptionLabel(refItem, field) }}
+                </option>
+              </select>
               <input *ngIf="field.type === 'number'" type="number" [(ngModel)]="itemForm[field.key]" />
               <select *ngIf="field.type === 'boolean'" [(ngModel)]="itemForm[field.key]">
                 <option [ngValue]="true">Sí</option>

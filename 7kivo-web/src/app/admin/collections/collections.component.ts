@@ -7,7 +7,10 @@ interface CollectionField {
   label: string;
   type: string;
   required: boolean;
+  protected?: boolean;
   refCollection?: string;
+  refDisplayField?: string;
+  refValueField?: string;
   options?: string[];
 }
 
@@ -35,12 +38,14 @@ export class CollectionsComponent implements OnInit {
   view: 'list' | 'schema' | 'data' = 'list';
   currentCollection: CollectionDef = this.emptyCollection();
   activeTab: 'schema' | 'data' = 'schema';
+  private originalFieldKeys: string[] = [];
 
   collectionData: any[] = [];
   dataLoading = false;
   showItemForm = false;
   editingItemId: string | null = null;
   itemForm: Record<string, any> = {};
+  refCollectionData: Record<string, any[]> = {};
 
   fieldTypes = [
     { value: 'text', label: 'Texto' },
@@ -96,12 +101,14 @@ export class CollectionsComponent implements OnInit {
 
   openNewCollection(): void {
     this.currentCollection = this.emptyCollection();
+    this.originalFieldKeys = [];
     this.view = 'schema';
     this.activeTab = 'schema';
   }
 
   openCollection(col: CollectionDef): void {
     this.currentCollection = JSON.parse(JSON.stringify(col));
+    this.originalFieldKeys = (col.fields || []).map(f => f.key);
     this.view = 'schema';
     this.activeTab = this.canEditSchema ? 'schema' : 'data';
     this.loadCollectionData();
@@ -132,6 +139,11 @@ export class CollectionsComponent implements OnInit {
   }
 
   removeField(index: number): void {
+    if (this.currentCollection.fields[index]?.protected) {
+      this.error = 'Este campo es requerido por el sistema y no puede eliminarse';
+      setTimeout(() => this.error = '', 3000);
+      return;
+    }
     this.currentCollection.fields.splice(index, 1);
   }
 
@@ -184,6 +196,17 @@ export class CollectionsComponent implements OnInit {
       if (!this.currentCollection.id) {
         this.currentCollection.id = savedId;
       }
+
+      // Detect removed fields and remove matching flow steps
+      if (this.originalFieldKeys.length > 0 && data.slug) {
+        const currentKeys = new Set(this.currentCollection.fields.map(f => f.key));
+        const removedKeys = this.originalFieldKeys.filter(k => !currentKeys.has(k));
+        if (removedKeys.length > 0) {
+          await this.firebaseService.removeFlowStepsForFields(data.slug, removedKeys);
+        }
+      }
+      this.originalFieldKeys = this.currentCollection.fields.map(f => f.key);
+
       this.notice = `Colección "${data.name}" guardada`;
       await this.loadCollections();
       setTimeout(() => this.notice = '', 3000);
@@ -228,7 +251,7 @@ export class CollectionsComponent implements OnInit {
     }
   }
 
-  openNewItem(): void {
+  async openNewItem(): Promise<void> {
     this.showItemForm = true;
     this.editingItemId = null;
     this.itemForm = {};
@@ -241,9 +264,10 @@ export class CollectionsComponent implements OnInit {
         this.itemForm[field.key] = '';
       }
     }
+    await this.loadRefCollectionData();
   }
 
-  openEditItem(item: any): void {
+  async openEditItem(item: any): Promise<void> {
     this.showItemForm = true;
     this.editingItemId = item.id;
     this.itemForm = {};
@@ -253,6 +277,21 @@ export class CollectionsComponent implements OnInit {
         this.itemForm[field.key] = val.join('\n');
       } else {
         this.itemForm[field.key] = val ?? (field.type === 'boolean' ? false : '');
+      }
+    }
+    await this.loadRefCollectionData();
+  }
+
+  async loadRefCollectionData(): Promise<void> {
+    const refFields = this.currentCollection.fields.filter(f => f.type === 'reference' && f.refCollection);
+    for (const field of refFields) {
+      const slug = field.refCollection!;
+      if (!this.refCollectionData[slug]) {
+        try {
+          this.refCollectionData[slug] = await this.firebaseService.getCollectionData(slug);
+        } catch {
+          this.refCollectionData[slug] = [];
+        }
       }
     }
   }
@@ -341,5 +380,29 @@ export class CollectionsComponent implements OnInit {
   getWhatsAppLink(phone: string): string {
     const cleaned = phone?.replace(/[^0-9]/g, '') || '';
     return `https://wa.me/${cleaned}`;
+  }
+
+  // ==================== REFERENCE FIELD HELPERS ====================
+
+  getRefCollectionFields(slug: string): CollectionField[] {
+    const col = this.collections.find(c => c.slug === slug);
+    return col?.fields || [];
+  }
+
+  getRefItemOptionLabel(refItem: any, field: CollectionField): string {
+    if (field.refDisplayField && refItem[field.refDisplayField] != null) {
+      return String(refItem[field.refDisplayField]);
+    }
+    const refCol = this.collections.find(c => c.slug === field.refCollection);
+    const dispKey = refCol?.displayField || refCol?.fields?.[0]?.key;
+    if (dispKey && refItem[dispKey] != null) return String(refItem[dispKey]);
+    return refItem.id || '(sin nombre)';
+  }
+
+  getRefItemOptionValue(refItem: any, field: CollectionField): string {
+    if (field.refValueField && refItem[field.refValueField] != null) {
+      return String(refItem[field.refValueField]);
+    }
+    return refItem.id || '';
   }
 }

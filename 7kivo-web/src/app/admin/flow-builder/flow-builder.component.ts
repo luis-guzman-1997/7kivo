@@ -73,6 +73,17 @@ export class FlowBuilderComponent implements OnInit {
   planLimit = 999;
   scheduleWarning = false;
 
+  // Template modal state
+  showTemplateModal = false;
+  pendingTemplateFlow: any = null;
+  templateTitle = '';
+  creatingTemplate = false;
+
+  templateFlows = [
+    { icon: 'fa-calendar-check', label: 'Agendar Cita', description: 'Reserva de citas con disponibilidad en tiempo real', requiresPlan: 'appointments', key: 'appointments' },
+    { icon: 'fa-clipboard-list', label: 'Registro', description: 'Formulario de inscripción o registro de datos', requiresPlan: null, key: 'registration' }
+  ];
+
   constructor(private firebaseService: FirebaseService, public authService: AuthService) {
     this.planLimit = this.authService.getPlanLimits().flows;
   }
@@ -261,6 +272,11 @@ export class FlowBuilderComponent implements OnInit {
         this.notice = `Flujo "${data.name}" creado`;
       }
 
+      // Sync flow steps → linked collection fields
+      if (data.saveToCollection) {
+        await this.firebaseService.syncFlowToCollection(data.saveToCollection, data.steps || []);
+      }
+
       this.editMode = false;
       await this.loadData();
       setTimeout(() => this.notice = '', 3000);
@@ -357,8 +373,6 @@ export class FlowBuilderComponent implements OnInit {
   showAddMenuPanel = false;
 
   menuTemplates = [
-    { icon: 'fa-comments', label: 'Contáctanos', description: 'Recibe consultas de tus clientes', type: 'flow', matchFlow: 'Contáctanos', requiresPlan: null },
-    { icon: 'fa-calendar-check', label: 'Agendar Cita', description: 'Reserva de citas', type: 'flow', matchFlow: 'Agendar Cita', requiresPlan: 'appointments' },
     { icon: 'fa-clock', label: 'Horarios', description: 'Días y horarios de atención', type: 'builtin', action: 'schedule', requiresPlan: null },
     { icon: 'fa-map-marker-alt', label: 'Ubicación', description: 'Cómo encontrarnos', type: 'builtin', action: 'contact', requiresPlan: null },
     { icon: 'fa-info-circle', label: 'Sobre Nosotros', description: 'Información general', type: 'builtin', action: 'general', requiresPlan: null },
@@ -412,6 +426,18 @@ export class FlowBuilderComponent implements OnInit {
     this.showAddMenuPanel = false;
   }
 
+  addMessageMenuItem(): void {
+    this.menuConfig.items.push({
+      id: 'item_' + Date.now(),
+      type: 'message',
+      label: '',
+      messageContent: '',
+      order: this.menuConfig.items.length + 1,
+      active: true
+    });
+    this.showAddMenuPanel = false;
+  }
+
   removeMenuItem(index: number): void {
     this.menuConfig.items.splice(index, 1);
   }
@@ -434,9 +460,130 @@ export class FlowBuilderComponent implements OnInit {
     if (item.type === 'builtin') {
       item.action = 'schedule';
       item.flowId = null;
-    } else {
+      item.messageContent = null;
+    } else if (item.type === 'flow') {
       item.action = null;
       item.flowId = this.flows.length > 0 ? this.flows[0].id : '';
+      item.messageContent = null;
+    } else if (item.type === 'message') {
+      item.action = null;
+      item.flowId = null;
+      if (!item.messageContent) item.messageContent = '';
+    }
+  }
+
+  isTemplateFlowPlanBlocked(tfl: any): boolean {
+    if (!tfl.requiresPlan) return false;
+    const limits = this.authService.getPlanLimits();
+    return !(limits as any)[tfl.requiresPlan];
+  }
+
+  isTemplateFlowAlreadyCreated(tfl: any): boolean {
+    if (tfl.key === 'appointments') {
+      return this.flows.some(f => f.steps?.some((s: any) => s.type === 'appointment_slot'));
+    }
+    return false;
+  }
+
+  openTemplateModal(tfl: any): void {
+    this.pendingTemplateFlow = tfl;
+    this.templateTitle = tfl.label;
+    this.showTemplateModal = true;
+  }
+
+  cancelTemplateModal(): void {
+    this.showTemplateModal = false;
+    this.pendingTemplateFlow = null;
+    this.templateTitle = '';
+  }
+
+  slugify(text: string): string {
+    return text.toLowerCase().trim()
+      .replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u').replace(/ñ/g, 'n')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  async confirmCreateTemplate(): Promise<void> {
+    if (!this.templateTitle.trim() || this.creatingTemplate) return;
+    const tfl = this.pendingTemplateFlow;
+    this.creatingTemplate = true;
+    try {
+      const title = this.templateTitle.trim();
+      const slug = tfl.key === 'appointments' ? 'citas' : this.slugify(title);
+      const menuLabel = title.substring(0, 24);
+      const now = Date.now();
+
+      const colDef: any = {
+        name: title,
+        slug,
+        description: tfl.key === 'appointments' ? 'Citas agendadas por el bot' : `Registros de ${title}`,
+        displayField: 'nombre',
+        fields: tfl.key === 'appointments'
+          ? [
+              { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+              { key: 'fecha', label: 'Fecha', type: 'text', required: false },
+              { key: 'hora', label: 'Hora', type: 'text', required: false },
+              { key: '_apptService', label: 'Servicio', type: 'text', required: false },
+              { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+            ]
+          : [
+              { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+              { key: 'correo', label: 'Correo', type: 'text', required: false },
+              { key: 'telefono', label: 'Teléfono', type: 'text', required: false },
+              { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+            ]
+      };
+      await this.firebaseService.saveCollectionDef(colDef);
+
+      const stepBase = { required: true, validation: {}, errorMessage: '', optionsSource: 'custom', optionsTitleField: '', optionsDescField: '', customOptions: [], buttonText: 'Ver opciones', sourceCollection: '', displayField: '', detailFields: [], timeFieldKey: '' };
+      const flowData: any = {
+        name: title,
+        description: tfl.key === 'appointments' ? 'Flujo de agendamiento de citas' : `Flujo de registro: ${title}`,
+        menuLabel,
+        menuDescription: tfl.key === 'appointments' ? 'Elige fecha y hora disponible' : 'Completa tu registro',
+        type: tfl.key === 'appointments' ? 'appointment' : 'registration',
+        active: true,
+        order: this.flows.length + 1,
+        saveToCollection: slug,
+        notifyAdmin: true,
+        completionMessage: tfl.key === 'appointments'
+          ? `✅ *CITA AGENDADA*\n\nNombre: {nombre}\nFecha: {fecha}\nHora: {hora}\n\n¡Te esperamos! Si necesitas cancelar, escríbenos.`
+          : `✅ *REGISTRO COMPLETADO*\n\nNombre: {nombre}\n\n¡Gracias! Nos pondremos en contacto pronto.`,
+        steps: tfl.key === 'appointments'
+          ? [
+              { id: `step_${now}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu nombre completo?', fieldKey: 'nombre', fieldLabel: 'Nombre', validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+              { id: `step_${now + 1}`, ...stepBase, type: 'appointment_slot', prompt: '¿En qué fecha y hora te gustaría agendar?', fieldKey: 'fecha', fieldLabel: 'Fecha', timeFieldKey: 'hora' }
+            ]
+          : [
+              { id: `step_${now}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu nombre completo?', fieldKey: 'nombre', fieldLabel: 'Nombre', validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+              { id: `step_${now + 1}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu correo electrónico?', fieldKey: 'correo', fieldLabel: 'Correo', required: false, errorMessage: 'Por favor ingresa un correo válido.' },
+              { id: `step_${now + 2}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu número de teléfono?', fieldKey: 'telefono', fieldLabel: 'Teléfono', required: false, errorMessage: '' }
+            ]
+      };
+      const newFlowId = await this.firebaseService.addFlow(flowData);
+
+      this.menuConfig.items.push({
+        id: 'item_' + Date.now(),
+        type: 'flow',
+        flowId: newFlowId,
+        label: menuLabel,
+        description: flowData.menuDescription,
+        order: this.menuConfig.items.length + 1,
+        active: true
+      });
+
+      this.cancelTemplateModal();
+      this.showAddMenuPanel = false;
+      await this.loadData();
+      this.notice = `Flujo "${title}" creado y agregado al menú`;
+      setTimeout(() => this.notice = '', 4000);
+    } catch {
+      this.error = 'Error al crear flujo desde plantilla';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.creatingTemplate = false;
     }
   }
 

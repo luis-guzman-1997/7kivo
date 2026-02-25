@@ -114,6 +114,9 @@
         <button class="btn-view-org" (click)="viewOrgPage(selectedOrg, 'pendientes')" title="Ver checklist de configuración pendiente">
           <i class="fas fa-tasks"></i> Ver Pendientes
         </button>
+        <button class="btn-reset-bot" (click)="openResetBotConfirm(selectedOrg)" title="Restablecer bot a estado inicial">
+          <i class="fas fa-redo-alt"></i> Resetear Bot
+        </button>
         <button class="btn-delete-org" (click)="openDeleteConfirm(selectedOrg)">
           <i class="fas fa-trash-alt"></i> Eliminar Organización
         </button>
@@ -551,4 +554,49 @@
 
     </div>
   </div>
+
+  <!-- Reset Bot Confirmation Modal -->
+  <div class="modal-overlay delete-overlay" *ngIf="resetBotConfirmOrg" (click)="!resettingBot && cancelResetBot()">
+    <div class="modal-content delete-modal reset-bot-modal" (click)="$event.stopPropagation()">
+
+      <div *ngIf="!resetBotDone">
+        <div class="delete-header">
+          <i class="fas fa-redo-alt reset-bot-icon"></i>
+          <h2>Resetear Bot</h2>
+        </div>
+        <div class="delete-body">
+          <p class="delete-warning">
+            Esto restablecerá el bot de <strong>{{ resetBotConfirmOrg.orgName }}</strong> al estado inicial:
+          </p>
+          <ul class="delete-list">
+            <li><i class="fas fa-project-diagram"></i> Se eliminarán todos los <strong>flujos</strong> creados</li>
+            <li><i class="fas fa-database"></i> Se eliminarán las <strong>colecciones y sus datos</strong></li>
+            <li><i class="fas fa-bars"></i> El menú volverá a tener solo Horarios, Ubicación y Sobre Nosotros</li>
+          </ul>
+          <p class="delete-note">
+            <i class="fas fa-shield-alt"></i> <strong>No se toca:</strong> configuración de la organización, credenciales de WhatsApp, usuarios, ni mensajes del bot.
+          </p>
+        </div>
+        <div class="delete-actions">
+          <button class="btn-cancel" (click)="cancelResetBot()" [disabled]="resettingBot">Cancelar</button>
+          <button class="btn-reset-bot-confirm" (click)="confirmResetBot()" [disabled]="resettingBot">
+            <i class="fas fa-spinner fa-spin" *ngIf="resettingBot"></i>
+            <i class="fas fa-redo-alt" *ngIf="!resettingBot"></i>
+            {{ resettingBot ? 'Reseteando...' : 'Confirmar Reset' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="resetBotDone" class="delete-result">
+        <i class="fas fa-check-circle" style="color:#10b981;font-size:2.5rem;margin-bottom:12px;"></i>
+        <h3>¡Reset completado!</h3>
+        <p>El bot de <strong>{{ resetBotConfirmOrg.orgName }}</strong> fue restablecido al estado inicial correctamente.</p>
+        <div class="delete-actions">
+          <button class="btn-save" (click)="cancelResetBot()">Entendido</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>

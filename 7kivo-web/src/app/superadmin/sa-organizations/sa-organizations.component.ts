@@ -63,6 +63,10 @@ export class SaOrganizationsComponent implements OnInit {
   changePwSaving = false;
   changePwError = '';
 
+  resetBotConfirmOrg: any = null;
+  resettingBot = false;
+  resetBotDone = false;
+
   constructor(
     private firebaseService: FirebaseService,
     private authService: AuthService,
@@ -537,6 +541,29 @@ export class SaOrganizationsComponent implements OnInit {
   async viewOrgPage(org: any, path: string): Promise<void> {
     await this.authService.setOrgContextForSuperAdmin(org.id);
     this.router.navigate([`/admin/${path}`]);
+  }
+
+  openResetBotConfirm(org: any): void {
+    this.resetBotConfirmOrg = org;
+    this.resetBotDone = false;
+  }
+
+  cancelResetBot(): void {
+    this.resetBotConfirmOrg = null;
+    this.resetBotDone = false;
+  }
+
+  async confirmResetBot(): Promise<void> {
+    if (!this.resetBotConfirmOrg || this.resettingBot) return;
+    this.resettingBot = true;
+    try {
+      await this.firebaseService.resetOrgBotToDefault(this.resetBotConfirmOrg.id);
+      this.resetBotDone = true;
+    } catch (err) {
+      console.error('Error resetting bot:', err);
+    } finally {
+      this.resettingBot = false;
+    }
   }
 
   private showNotice(msg: string): void {

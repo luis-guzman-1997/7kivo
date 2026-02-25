@@ -202,6 +202,12 @@ const buildMenuItems = async () => {
             description: (item.description || flow.menuDescription || "").substring(0, 72)
           });
         }
+      } else if (item.type === "message" && item.messageContent && item.label) {
+        rows.push({
+          id: `message_${item.id}`,
+          title: (item.label).substring(0, 24),
+          description: item.messageContent.substring(0, 72)
+        });
       }
     }
     rows.push({ id: "exit_chat", title: "Salir", description: "Finalizar conversación" });
@@ -408,6 +414,19 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
   if (buttonId.startsWith("flow_")) {
     const flowId = buttonId.substring(5);
     await startFlow(phoneNumber, flowId);
+    return;
+  }
+
+  // Message-type menu item: send static message and show menu again
+  if (buttonId.startsWith("message_")) {
+    const itemId = buttonId.substring(8);
+    const menuConfig = await getMenuConfig();
+    const item = menuConfig?.items?.find(i => i.id === itemId && i.type === "message");
+    if (item && item.messageContent) {
+      await sendTextMessage(item.messageContent, phoneNumber);
+    }
+    setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+    await sendMenu(phoneNumber);
     return;
   }
 
