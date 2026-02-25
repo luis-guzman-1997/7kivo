@@ -7,7 +7,7 @@
   <div *ngIf="view === 'list'">
     <div class="page-header">
       <div>
-        <h1 class="page-title"><i class="fas fa-database"></i> Colecciones</h1>
+        <h1 class="page-title"><i class="fas fa-database"></i> Base de Datos</h1>
         <p class="page-subtitle">Crea y administra las bases de datos que alimentan tus flujos del bot</p>
       </div>
       <button class="btn-new" *ngIf="canEditSchema" (click)="openNewCollection()" [disabled]="!canCreateCollection">
@@ -53,12 +53,12 @@
 
     <!-- Tabs -->
     <div class="detail-tabs">
-      <button class="detail-tab" *ngIf="canEditSchema" [class.active]="activeTab === 'schema'" (click)="activeTab = 'schema'">
-        <i class="fas fa-drafting-compass"></i> Esquema
-      </button>
       <button class="detail-tab" [class.active]="activeTab === 'data'" (click)="activeTab = 'data'; loadCollectionData()"
               [disabled]="!currentCollection.id">
         <i class="fas fa-table"></i> Datos
+      </button>
+      <button class="detail-tab" *ngIf="canEditSchema" [class.active]="activeTab === 'schema'" (click)="activeTab = 'schema'">
+        <i class="fas fa-drafting-compass"></i> Esquema
       </button>
     </div>
 

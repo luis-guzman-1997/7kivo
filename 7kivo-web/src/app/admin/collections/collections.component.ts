@@ -110,7 +110,7 @@ export class CollectionsComponent implements OnInit {
     this.currentCollection = JSON.parse(JSON.stringify(col));
     this.originalFieldKeys = (col.fields || []).map(f => f.key);
     this.view = 'schema';
-    this.activeTab = this.canEditSchema ? 'schema' : 'data';
+    this.activeTab = 'data';
     this.loadCollectionData();
   }
 
