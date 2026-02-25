@@ -19,6 +19,10 @@ export class AuthGuard implements CanActivate {
       take(1),
       map(() => {
         if (this.authService.isAuthenticated && this.authService.isSuperAdmin) {
+          // Allow SA to access admin pages when an org context has been set (SA previewing an org)
+          if (this.firebaseService.isOrgSet) {
+            return true;
+          }
           this.router.navigate(['/superadmin']);
           return false;
         }

@@ -14,6 +14,7 @@ import { ChatComponent } from './chat/chat.component';
 import { OrgSettingsComponent } from './org-settings/org-settings.component';
 import { CollectionsComponent } from './collections/collections.component';
 import { WelcomeComponent } from './welcome/welcome.component';
+import { AdminSetupComponent } from './admin-setup/admin-setup.component';
 
 @NgModule({
   declarations: [
@@ -28,7 +29,8 @@ import { WelcomeComponent } from './welcome/welcome.component';
     ChatComponent,
     OrgSettingsComponent,
     CollectionsComponent,
-    WelcomeComponent
+    WelcomeComponent,
+    AdminSetupComponent
   ],
   imports: [
     CommonModule,

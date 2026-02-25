@@ -1,23 +1,32 @@
-import { Component, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { FirebaseService } from '../../services/firebase.service';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.css']
 })
-export class AdminLayoutComponent implements OnDestroy {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   userEmail = '';
   orgName = '';
   orgLogo = '';
   userRole = '';
   botEnabled = true;
+  setupComplete = false;
+  botPaused = false;
+  botBlocked = false;
   private subs: Subscription[] = [];
 
-  constructor(public authService: AuthService, private router: Router) {
+  constructor(
+    public authService: AuthService,
+    private firebaseService: FirebaseService,
+    private router: Router
+  ) {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       this.sidebarCollapsed = true;
     }
@@ -36,8 +45,67 @@ export class AdminLayoutComponent implements OnDestroy {
       }),
       this.authService.botEnabled$.subscribe(val => {
         this.botEnabled = val;
+        this.checkSetupComplete();
+      }),
+      this.authService.botPaused$.subscribe(val => { this.botPaused = val; }),
+      this.authService.botBlocked$.subscribe(val => { this.botBlocked = val; }),
+      this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
+        this.checkSetupComplete();
       })
     );
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.checkSetupComplete();
+  }
+
+  async checkSetupComplete(): Promise<void> {
+    try {
+      const [orgConfig, general, contact, schedule, messages, waConfig] = await Promise.all([
+        this.firebaseService.getOrgConfig(),
+        this.firebaseService.getInfo('general'),
+        this.firebaseService.getInfo('contact'),
+        this.firebaseService.getInfo('schedule'),
+        this.firebaseService.getBotMessages(),
+        this.firebaseService.getWhatsAppConfig()
+      ]);
+      const orgDone      = !!(orgConfig?.orgName && orgConfig?.industry && orgConfig.industry !== 'general');
+      const infoDone     = !!(general?.name && general?.description);
+      const contactDone  = !!(contact?.phone || contact?.address);
+      const scheduleDone = !!(schedule?.days?.some((d: any) => d.active));
+      const messagesDone = !!((messages as any[])?.length > 0);
+      const offersAppts  = schedule?.offersAppointments !== false;
+      const needsServices = offersAppts && schedule?.businessType !== 'products';
+      const servicesDone = !needsServices || (schedule?.services?.length > 0);
+      const waDone       = !!(orgConfig?.botApiUrl && waConfig?.token && waConfig?.phoneNumberId);
+
+      // contentDone drives auto-pause (operational data the bot needs at runtime)
+      const contentDone  = orgDone && infoDone && contactDone && scheduleDone && messagesDone && servicesDone;
+      // setupComplete drives the "ready" banner and checklist (includes WA credentials)
+      this.setupComplete = contentDone && waDone;
+
+      // Auto-pause / auto-resume only when bot is connected and not hard-blocked.
+      // Uses contentDone (not waDone) so existing bots with env-based WA creds are not affected.
+      if (this.botEnabled && !this.botBlocked) {
+        const reason = this.authService.botPausedReason;
+        if (!contentDone && !this.botPaused) {
+          await this.firebaseService.setBotStatus(true, 'auto_setup');
+          this.authService.updateBotPaused(true, 'auto_setup');
+          this.botPaused = true;
+        } else if (contentDone && this.botPaused && reason === 'auto_setup') {
+          await this.firebaseService.setBotStatus(false, null);
+          this.authService.updateBotPaused(false, null);
+          this.botPaused = false;
+        }
+      }
+    } catch { /* silent */ }
+  }
+
+  async reactivateBot(): Promise<void> {
+    if (this.botBlocked) return;
+    await this.firebaseService.setBotStatus(false, null);
+    this.authService.updateBotPaused(false, null);
+    this.botPaused = false;
   }
 
   ngOnDestroy(): void {
@@ -46,6 +114,20 @@ export class AdminLayoutComponent implements OnDestroy {
 
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  getRoleLabel(role: string): string {
+    const labels: Record<string, string> = {
+      owner:  'Propietario',
+      admin:  'Gerente',
+      editor: 'Operador',
+      viewer: 'Agente'
+    };
+    return labels[role] || role;
+  }
+
+  clearOrgContext(): void {
+    this.authService.clearOrgContext();
   }
 
   async logout(): Promise<void> {

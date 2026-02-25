@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { initializeApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore, Firestore, collection, doc, getDocs, getDoc, addDoc,
   updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp,
@@ -8,6 +8,7 @@ import {
 import {
   getStorage, FirebaseStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll
 } from 'firebase/storage';
+import { getAuth, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -267,6 +268,56 @@ export class FirebaseService {
     const orgDocRef = doc(this.db, 'organizations', orgId);
     const snap = await getDoc(orgDocRef);
     return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  }
+
+  async setBotStatus(paused: boolean, reason: string | null = null): Promise<void> {
+    const orgId = this.getOrgId();
+    await this.updateOrganization(orgId, { botPaused: paused, botPausedReason: reason });
+  }
+
+  async setBotBlockedByOrgId(orgId: string, blocked: boolean): Promise<void> {
+    await this.updateOrganization(orgId, { botBlocked: blocked });
+  }
+
+  async deleteAdminByOrgId(orgId: string, adminId: string): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'admins', adminId);
+    await deleteDoc(docRef);
+  }
+
+  // Creates a Firebase Auth user without affecting the current admin session
+  async createUserForOrg(orgId: string, email: string, password: string, name: string, role: string): Promise<string> {
+    const secondaryName = 'secondary-user-creation';
+    const secondaryApp = getApps().find(a => a.name === secondaryName)
+      || initializeApp(getApp().options, secondaryName);
+    const secondaryAuth = getAuth(secondaryApp);
+    try {
+      const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      const uid = credential.user.uid;
+      await setDoc(doc(this.db, 'users', uid), {
+        email, organizationId: orgId, role, name, updatedAt: serverTimestamp()
+      });
+      await addDoc(collection(this.db, `organizations/${orgId}/admins`), {
+        email, name, role, uid, active: true, createdAt: serverTimestamp()
+      });
+      return uid;
+    } finally {
+      await firebaseSignOut(secondaryAuth).catch(() => {});
+    }
+  }
+
+  // Uses bot Admin SDK to change another user's password
+  async setUserPassword(botApiUrl: string, targetUid: string, newPassword: string): Promise<void> {
+    if (!botApiUrl) throw new Error('URL del bot no configurada. Contacta a soporte.');
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error('Sesión no válida');
+    const response = await fetch(`${botApiUrl}/api/admin/set-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify({ targetUid, newPassword })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'Error al cambiar contraseña');
   }
 
   // ==================== ORG CONFIG ====================

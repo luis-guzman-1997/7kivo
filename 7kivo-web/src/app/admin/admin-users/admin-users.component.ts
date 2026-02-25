@@ -16,9 +16,9 @@ export class AdminUsersComponent implements OnInit {
   formSuccess = '';
 
   availableRoles = [
-    { value: 'admin', label: 'Administrador', desc: 'Acceso completo: mensajería, flujos, colecciones, usuarios y datos de empresa' },
-    { value: 'editor', label: 'Editor', desc: 'Dashboard, contactos, chat, bandeja y datos de colecciones' },
-    { value: 'viewer', label: 'Solo lectura', desc: 'Dashboard, contactos, bandeja y chat (solo lectura)' }
+    { value: 'admin',  label: 'Gerente',   desc: 'Gestión operativa: mensajería, flujos, colecciones y usuarios (sin configuración de empresa)' },
+    { value: 'editor', label: 'Operador',  desc: 'Operaciones del día a día: dashboard, contactos, chat, bandeja y colecciones' },
+    { value: 'viewer', label: 'Agente',    desc: 'Atención al cliente: dashboard, bandeja de entrada y chat (sin acceso a contactos)' }
   ];
 
   allPermissions = [
@@ -40,10 +40,20 @@ export class AdminUsersComponent implements OnInit {
     role: 'editor'
   };
 
+  changePwAdmin: any = null;
+  changePwValue = '';
+  changePwSaving = false;
+  changePwError = '';
+  changePwNotice = '';
+
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService
   ) {}
+
+  get botReady(): boolean {
+    return this.authService.botEnabled;
+  }
 
   get canAddAdmin(): boolean {
     const limit = this.authService.getPlanLimits().admins;
@@ -70,6 +80,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   toggleForm(): void {
+    if (!this.botReady) return;
     this.showForm = !this.showForm;
     this.formError = '';
     this.formSuccess = '';
@@ -98,24 +109,15 @@ export class AdminUsersComponent implements OnInit {
     this.formSuccess = '';
 
     try {
-      const user = await this.authService.createUser(this.newAdmin.email, this.newAdmin.password);
+      await this.firebaseService.createUserForOrg(
+        this.firebaseService.getOrgId(),
+        this.newAdmin.email.trim(),
+        this.newAdmin.password,
+        this.newAdmin.name.trim(),
+        this.newAdmin.role
+      );
 
-      // Map the new user to this organization
-      await this.firebaseService.setUserOrg(user.uid, {
-        organizationId: this.firebaseService.getOrgId(),
-        email: this.newAdmin.email,
-        role: this.newAdmin.role,
-        name: this.newAdmin.name
-      });
-
-      await this.firebaseService.addAdmin({
-        uid: user.uid,
-        email: this.newAdmin.email,
-        name: this.newAdmin.name,
-        role: this.newAdmin.role
-      });
-
-      this.formSuccess = `Administrador "${this.newAdmin.name}" creado exitosamente`;
+      this.formSuccess = `Usuario "${this.newAdmin.name}" creado exitosamente`;
       this.resetForm();
       await this.loadAdmins();
 
@@ -175,6 +177,40 @@ export class AdminUsersComponent implements OnInit {
     }
   }
 
+  startChangePassword(admin: any): void {
+    this.changePwAdmin = admin;
+    this.changePwValue = '';
+    this.changePwError = '';
+  }
+
+  cancelChangePassword(): void {
+    this.changePwAdmin = null;
+    this.changePwValue = '';
+    this.changePwError = '';
+  }
+
+  async saveChangePassword(): Promise<void> {
+    if (!this.changePwAdmin?.uid) return;
+    if (this.changePwValue.length < 6) {
+      this.changePwError = 'La contraseña debe tener al menos 6 caracteres';
+      return;
+    }
+    this.changePwSaving = true;
+    this.changePwError = '';
+    try {
+      const botUrl = this.authService.botApiUrl;
+      await this.firebaseService.setUserPassword(botUrl, this.changePwAdmin.uid, this.changePwValue);
+      this.changePwAdmin = null;
+      this.changePwValue = '';
+      this.changePwNotice = 'Contraseña actualizada correctamente';
+      setTimeout(() => this.changePwNotice = '', 4000);
+    } catch (err: any) {
+      this.changePwError = err?.message || 'Error al cambiar contraseña';
+    } finally {
+      this.changePwSaving = false;
+    }
+  }
+
   isOwner(admin: any): boolean {
     return admin.role === 'owner';
   }
@@ -199,10 +235,10 @@ export class AdminUsersComponent implements OnInit {
 
   getRoleLabel(role: string): string {
     const labels: Record<string, string> = {
-      owner: 'Dueño',
-      admin: 'Administrador',
-      editor: 'Editor',
-      viewer: 'Solo lectura'
+      owner:  'Propietario',
+      admin:  'Gerente',
+      editor: 'Operador',
+      viewer: 'Agente'
     };
     return labels[role] || role;
   }

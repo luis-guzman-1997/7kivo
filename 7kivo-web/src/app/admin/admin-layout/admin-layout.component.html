@@ -15,53 +15,79 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item-admin">
-        <i class="fas fa-tachometer-alt"></i>
-        <span>Dashboard</span>
-      </a>
-      <a *ngIf="authService.hasPermission('contacts')" routerLink="/admin/contactos" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-users"></i>
-        <span>Contactos</span>
-      </a>
-      <a *ngIf="authService.hasPermission('chat')" routerLink="/admin/chat" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-comments"></i>
-        <span>Chat WhatsApp</span>
-      </a>
-      <a *ngIf="authService.hasPermission('inbox')" routerLink="/admin/bandeja" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-inbox"></i>
-        <span>Bandeja de Entrada</span>
-      </a>
-      <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-database"></i>
-        <span>Colecciones</span>
-      </a>
-      <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-project-diagram"></i>
-        <span>Flujos del Bot</span>
-      </a>
+      <!-- Items only available once bot is enabled -->
+      <ng-container *ngIf="botEnabled">
+        <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item-admin">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+        <a *ngIf="authService.hasPermission('contacts')" routerLink="/admin/contactos" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-users"></i>
+          <span>Contactos</span>
+        </a>
+        <a *ngIf="authService.hasPermission('chat')" routerLink="/admin/chat" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-comments"></i>
+          <span>Chat WhatsApp</span>
+        </a>
+        <a *ngIf="authService.hasPermission('inbox')" routerLink="/admin/bandeja" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-inbox"></i>
+          <span>Bandeja de Entrada</span>
+        </a>
+        <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-database"></i>
+          <span>Colecciones</span>
+        </a>
+        <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-project-diagram"></i>
+          <span>Flujos del Bot</span>
+        </a>
+      </ng-container>
+
+      <!-- Always accessible (setup essentials) -->
       <a *ngIf="authService.hasPermission('bot_config')" routerLink="/admin/bot" routerLinkActive="active" class="nav-item-admin">
         <i class="fas fa-robot"></i>
         <span>Mensajería Bot</span>
       </a>
       <a *ngIf="authService.hasPermission('users')" routerLink="/admin/administradores" routerLinkActive="active" class="nav-item-admin">
         <i class="fas fa-user-shield"></i>
-        <span>Administradores</span>
+        <span>Mi Equipo</span>
       </a>
       <a *ngIf="authService.hasPermission('settings')" routerLink="/admin/configuracion" routerLinkActive="active" class="nav-item-admin">
         <i class="fas fa-building"></i>
-        <span>Mi Empresa</span>
+        <span>Mi Organización</span>
       </a>
 
-      <div class="nav-divider"></div>
+      <!-- Setup hint shown while bot is not yet enabled -->
+      <div class="setup-mode-hint" *ngIf="!botEnabled" [class.complete]="setupComplete">
+        <i class="fas fa-lock" *ngIf="!setupComplete"></i>
+        <i class="fas fa-check-circle" *ngIf="setupComplete"></i>
+        <span *ngIf="!setupComplete">Completa la configuración para desbloquear el resto de funciones.
+          <a routerLink="/admin/pendientes" class="setup-hint-link">Ver pendientes</a>
+        </span>
+        <span *ngIf="setupComplete">Configuración lista. Tu bot se activará en las próximas 24–48 hrs.
+          <a routerLink="/admin/pendientes" class="setup-hint-link">Ver estado</a>
+        </span>
+      </div>
 
-      <a routerLink="/" class="nav-item-admin">
-        <i class="fas fa-globe"></i>
-        <span>Ver Sitio Web</span>
-      </a>
+      <ng-container *ngIf="botEnabled">
+        <div class="nav-divider"></div>
+        <a routerLink="/" class="nav-item-admin">
+          <i class="fas fa-globe"></i>
+          <span>Ver Sitio Web</span>
+        </a>
+      </ng-container>
+
+      <ng-container *ngIf="authService.isSuperAdmin">
+        <div class="nav-divider"></div>
+        <a routerLink="/superadmin/organizaciones" class="nav-item-admin nav-item-sa-back" (click)="clearOrgContext()">
+          <i class="fas fa-arrow-left"></i>
+          <span>Volver al Panel SA</span>
+        </a>
+      </ng-container>
     </nav>
 
     <div class="sidebar-role" *ngIf="userRole">
-      <span class="role-badge-sidebar" [class]="'role-' + userRole">{{ userRole }}</span>
+      <span class="role-badge-sidebar" [class]="'role-' + userRole">{{ getRoleLabel(userRole) }}</span>
     </div>
 
     <div class="sidebar-footer">
@@ -88,14 +114,40 @@
         </span>
       </div>
     </header>
-    <div class="bot-setup-banner" *ngIf="!botEnabled">
+    <!-- Bot paused / blocked banner (bot IS connected but not responding) -->
+    <div class="bot-status-banner" *ngIf="botEnabled && (botPaused || botBlocked)"
+         [class.blocked]="botBlocked" [class.paused]="botPaused && !botBlocked && !setupComplete"
+         [class.paused-ready]="botPaused && !botBlocked && setupComplete">
       <div class="banner-content">
-        <div class="banner-icon-wrap">
-          <i class="fab fa-whatsapp"></i>
+        <div class="banner-icon-wrap" [class.red]="botBlocked" [class.amber]="botPaused && !botBlocked && !setupComplete" [class.blue]="botPaused && !botBlocked && setupComplete">
+          <i class="fas fa-ban" *ngIf="botBlocked"></i>
+          <i class="fas fa-pause-circle" *ngIf="botPaused && !botBlocked"></i>
         </div>
         <div class="banner-text">
-          <strong>Bot de WhatsApp en configuración</strong>
-          <span>El equipo de <b>7kivo</b> está preparando la conexión de tu bot. Mientras tanto, puedes configurar tus flujos, colecciones y mensajería.</span>
+          <strong *ngIf="botBlocked">Bot bloqueado por el sistema</strong>
+          <strong *ngIf="!botBlocked && !setupComplete">Bot pausado — configuración incompleta</strong>
+          <strong *ngIf="!botBlocked && setupComplete">Bot pausado</strong>
+          <span *ngIf="botBlocked">El bot fue desactivado por el administrador del sistema. Contacta a soporte para más información.</span>
+          <span *ngIf="!botBlocked && !setupComplete">Hay elementos de configuración pendientes. El bot no responderá hasta que se complete la configuración. <a routerLink="/admin/pendientes" class="banner-link">Ver pendientes</a></span>
+          <span *ngIf="!botBlocked && setupComplete">La configuración está completa. Puedes reactivar el bot cuando estés listo.</span>
+        </div>
+        <button class="btn-reactivate" *ngIf="botPaused && !botBlocked && setupComplete && authService.isOwnerOrAdmin" (click)="reactivateBot()">
+          <i class="fas fa-play"></i> Reactivar
+        </button>
+      </div>
+    </div>
+
+    <div class="bot-setup-banner" *ngIf="!botEnabled" [class.ready]="setupComplete">
+      <div class="banner-content">
+        <div class="banner-icon-wrap" [class.ready]="setupComplete">
+          <i class="fab fa-whatsapp" *ngIf="!setupComplete"></i>
+          <i class="fas fa-check" *ngIf="setupComplete"></i>
+        </div>
+        <div class="banner-text">
+          <strong *ngIf="!setupComplete">Bot de WhatsApp en configuración</strong>
+          <strong *ngIf="setupComplete">¡Configuración lista!</strong>
+          <span *ngIf="!setupComplete">El equipo de <b>7kivo</b> está preparando la conexión de tu bot. Mientras tanto, puedes completar tu configuración para acelerar el proceso.</span>
+          <span *ngIf="setupComplete">El equipo de <b>7kivo</b> activará tu bot en las próximas <b>24 a 48 horas</b>. Recibirás acceso completo una vez activado.</span>
         </div>
       </div>
     </div>

@@ -18,9 +18,6 @@ interface BotMessage {
 })
 export class BotConfigComponent implements OnInit {
   messages: BotMessage[] = [];
-  contactInfo: any = {};
-  scheduleInfo: any = { days: [] };
-  generalInfo: any = {};
   config: any = {};
 
   loading = true;
@@ -34,8 +31,6 @@ export class BotConfigComponent implements OnInit {
   showNewMsgForm = false;
   newMsg = { key: '', label: '', category: 'general', content: '', description: '' };
 
-  readonly WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
   constructor(private firebaseService: FirebaseService) {}
 
   async ngOnInit(): Promise<void> {
@@ -45,19 +40,13 @@ export class BotConfigComponent implements OnInit {
   async loadAll(): Promise<void> {
     this.loading = true;
     try {
-      const [messages, contact, schedule, general, config] = await Promise.all([
+      const [messages, config] = await Promise.all([
         this.firebaseService.getBotMessages(),
-        this.firebaseService.getInfo('contact'),
-        this.firebaseService.getInfo('schedule'),
-        this.firebaseService.getInfo('general'),
         this.firebaseService.getConfig()
       ]);
 
       this.messages = messages as BotMessage[];
-      this.contactInfo = contact || {};
-      this.generalInfo = general || {};
       this.config = config || {};
-      this.initSchedule(schedule);
     } catch (err) {
       console.error('Error loading bot config:', err);
     } finally {
@@ -175,98 +164,6 @@ export class BotConfigComponent implements OnInit {
       setTimeout(() => this.saveNotice = '', 3000);
     } catch (err) {
       this.saveError = 'Error al guardar';
-      setTimeout(() => this.saveError = '', 3000);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  async saveGeneralInfo(): Promise<void> {
-    this.saving = true;
-    try {
-      await this.firebaseService.updateInfo('general', this.generalInfo);
-      this.saveNotice = 'Información general actualizada';
-      setTimeout(() => this.saveNotice = '', 3000);
-    } catch (err) {
-      this.saveError = 'Error al guardar información general';
-      setTimeout(() => this.saveError = '', 3000);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  async saveContactInfo(): Promise<void> {
-    this.saving = true;
-    try {
-      await this.firebaseService.updateInfo('contact', this.contactInfo);
-      this.saveNotice = 'Información de contacto actualizada';
-      setTimeout(() => this.saveNotice = '', 3000);
-    } catch (err) {
-      this.saveError = 'Error al guardar contacto';
-      setTimeout(() => this.saveError = '', 3000);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  newBlockedDate = '';
-
-  initSchedule(raw: any): void {
-    const days = this.WEEK_DAYS.map(name => {
-      const existing = raw?.days?.find((d: any) => d.name === name);
-      return existing
-        ? { name, active: !!existing.active, shifts: existing.shifts?.length ? [...existing.shifts] : [{ from: '08:00', to: '17:00' }] }
-        : { name, active: false, shifts: [{ from: '08:00', to: '17:00' }] };
-    });
-    this.scheduleInfo = {
-      days,
-      slotDuration: raw?.slotDuration || 30,
-      blockedDates: raw?.blockedDates || []
-    };
-  }
-
-  hasActiveDays(): boolean {
-    return this.scheduleInfo.days && this.scheduleInfo.days.some((d: any) => d.active);
-  }
-
-  addShift(dayIndex: number): void {
-    this.scheduleInfo.days[dayIndex].shifts.push({ from: '08:00', to: '17:00' });
-  }
-
-  removeShift(dayIndex: number, shiftIndex: number): void {
-    const shifts = this.scheduleInfo.days[dayIndex].shifts;
-    if (shifts.length > 1) {
-      shifts.splice(shiftIndex, 1);
-    }
-  }
-
-  addBlockedDate(): void {
-    if (!this.newBlockedDate) return;
-    if (!this.scheduleInfo.blockedDates.includes(this.newBlockedDate)) {
-      this.scheduleInfo.blockedDates.push(this.newBlockedDate);
-      this.scheduleInfo.blockedDates.sort();
-    }
-    this.newBlockedDate = '';
-  }
-
-  removeBlockedDate(date: string): void {
-    this.scheduleInfo.blockedDates = this.scheduleInfo.blockedDates.filter((d: string) => d !== date);
-  }
-
-  formatBlockedDate(dateStr: string): string {
-    const [y, m, d] = dateStr.split('-');
-    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
-  }
-
-  async saveScheduleInfo(): Promise<void> {
-    this.saving = true;
-    try {
-      await this.firebaseService.updateInfo('schedule', this.scheduleInfo);
-      this.saveNotice = 'Horarios de atención actualizados';
-      setTimeout(() => this.saveNotice = '', 3000);
-    } catch (err) {
-      this.saveError = 'Error al guardar horarios';
       setTimeout(() => this.saveError = '', 3000);
     } finally {
       this.saving = false;

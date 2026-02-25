@@ -16,10 +16,10 @@ export const PLAN_LIMITS: Record<string, { flows: number; collections: number; a
 };
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  owner: ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings'],
-  admin: ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings'],
+  owner:  ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings'],
+  admin:  ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users'],
   editor: ['dashboard', 'contacts', 'chat', 'inbox', 'collections'],
-  viewer: ['dashboard', 'contacts', 'inbox', 'chat']
+  viewer: ['dashboard', 'inbox', 'chat']
 };
 
 @Injectable({ providedIn: 'root' })
@@ -37,6 +37,9 @@ export class AuthService {
   private customLimitsSubject = new BehaviorSubject<any>(null);
   private botEnabledSubject = new BehaviorSubject<boolean>(true);
   private setupCompleteSubject = new BehaviorSubject<boolean>(true);
+  private botPausedSubject = new BehaviorSubject<boolean>(false);
+  private botBlockedSubject = new BehaviorSubject<boolean>(false);
+  private botPausedReasonSubject = new BehaviorSubject<string | null>(null);
 
   currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
   isAdmin$: Observable<boolean> = this.isAdminSubject.asObservable();
@@ -47,6 +50,8 @@ export class AuthService {
   botApiUrl$: Observable<string> = this.botApiUrlSubject.asObservable();
   userRole$: Observable<string> = this.userRoleSubject.asObservable();
   botEnabled$: Observable<boolean> = this.botEnabledSubject.asObservable();
+  botPaused$: Observable<boolean> = this.botPausedSubject.asObservable();
+  botBlocked$: Observable<boolean> = this.botBlockedSubject.asObservable();
 
   constructor(private firebaseService: FirebaseService) {
     this.auth = getAuth(this.firebaseService.getFirestore().app);
@@ -95,6 +100,9 @@ export class AuthService {
         this.customLimitsSubject.next(orgDoc?.customLimits || null);
         this.botEnabledSubject.next(orgDoc?.botEnabled !== false);
         this.setupCompleteSubject.next(orgDoc?.setupComplete !== false);
+        this.botPausedSubject.next(orgDoc?.botPaused === true);
+        this.botBlockedSubject.next(orgDoc?.botBlocked === true);
+        this.botPausedReasonSubject.next(orgDoc?.botPausedReason || null);
         this.isAdminSubject.next(true);
       } else {
         this.isAdminSubject.next(false);
@@ -114,6 +122,9 @@ export class AuthService {
   async logout(): Promise<void> {
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
+    this.botPausedSubject.next(false);
+    this.botBlockedSubject.next(false);
+    this.botPausedReasonSubject.next(null);
     await signOut(this.auth);
   }
 
@@ -174,6 +185,23 @@ export class AuthService {
     return this.botEnabledSubject.value;
   }
 
+  get botPaused(): boolean {
+    return this.botPausedSubject.value;
+  }
+
+  get botBlocked(): boolean {
+    return this.botBlockedSubject.value;
+  }
+
+  get botPausedReason(): string | null {
+    return this.botPausedReasonSubject.value;
+  }
+
+  updateBotPaused(paused: boolean, reason: string | null = null): void {
+    this.botPausedSubject.next(paused);
+    this.botPausedReasonSubject.next(reason);
+  }
+
   get orgPlan(): string {
     return this.orgPlanSubject.value;
   }
@@ -199,5 +227,36 @@ export class AuthService {
     }
     const plan = this.orgPlanSubject.value;
     return PLAN_LIMITS[plan] || PLAN_LIMITS['Starter'];
+  }
+
+  // ── Superadmin org-context preview ──
+
+  async setOrgContextForSuperAdmin(orgId: string): Promise<void> {
+    if (!this.isSuperAdminSubject.value) return;
+    this.firebaseService.setOrgId(orgId);
+    try {
+      const [orgConfig, orgDoc] = await Promise.all([
+        this.firebaseService.getOrgConfig(),
+        this.firebaseService.getOrganization(orgId)
+      ]);
+      this.orgNameSubject.next(orgConfig?.orgName || orgConfig?.schoolName || orgId);
+      this.orgLogoSubject.next(orgConfig?.orgLogo || '');
+      this.botApiUrlSubject.next(orgConfig?.botApiUrl || '');
+      this.orgPlanSubject.next(orgDoc?.plan || '');
+      this.customLimitsSubject.next(orgDoc?.customLimits || null);
+      this.botEnabledSubject.next(orgDoc?.botEnabled !== false);
+      this.botPausedSubject.next(orgDoc?.botPaused === true);
+      this.botBlockedSubject.next(orgDoc?.botBlocked === true);
+      this.botPausedReasonSubject.next(orgDoc?.botPausedReason || null);
+    } catch (err) {
+      console.error('Error setting SA org context:', err);
+    }
+  }
+
+  clearOrgContext(): void {
+    this.firebaseService.setOrgId('');
+    this.orgNameSubject.next('');
+    this.orgLogoSubject.next('');
+    this.botApiUrlSubject.next('');
   }
 }

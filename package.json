@@ -1,0 +1,10 @@
+{
+  "name": "7kivo",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"BOT,WEB\" --prefix-colors \"cyan,magenta\" \"cd 7kivo-bot && node src/index.js\" \"cd 7kivo-web && npx ng serve --port 4300\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

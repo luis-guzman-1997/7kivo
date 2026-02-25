@@ -14,6 +14,7 @@ import { ChatComponent } from './chat/chat.component';
 import { OrgSettingsComponent } from './org-settings/org-settings.component';
 import { CollectionsComponent } from './collections/collections.component';
 import { WelcomeComponent } from './welcome/welcome.component';
+import { AdminSetupComponent } from './admin-setup/admin-setup.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -31,7 +32,8 @@ const routes: Routes = [
       { path: 'administradores', component: AdminUsersComponent, canActivate: [RoleGuard], data: { permission: 'users' } },
       { path: 'bot', component: BotConfigComponent, canActivate: [RoleGuard], data: { permission: 'bot_config' } },
       { path: 'flujos', component: FlowBuilderComponent, canActivate: [RoleGuard], data: { permission: 'flows' } },
-      { path: 'configuracion', component: OrgSettingsComponent, canActivate: [RoleGuard], data: { permission: 'settings' } }
+      { path: 'configuracion', component: OrgSettingsComponent, canActivate: [RoleGuard], data: { permission: 'settings' } },
+      { path: 'pendientes', component: AdminSetupComponent, canActivate: [AuthGuard] }
     ]
   }
 ];

@@ -1,0 +1,79 @@
+<div class="setup-page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-tasks"></i> Configuración Pendiente</h1>
+      <p class="page-subtitle">Completa estos pasos antes de que el equipo de 7kivo active tu bot</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Verificando configuración...
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Progress card -->
+    <div class="progress-card" [class.all-done]="allDone">
+      <div class="progress-summary">
+        <div class="progress-numbers">
+          <span class="done-num">{{ doneCount }}</span>
+          <span class="total-num">/ {{ totalCount }}</span>
+          <span class="progress-lbl">completados</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" [style.width.%]="progressPercent"></div>
+        </div>
+        <span class="progress-pct">{{ progressPercent }}%</span>
+      </div>
+      <p class="progress-msg" *ngIf="!allDone">
+        <i class="fas fa-clock"></i>
+        El equipo de <strong>7kivo</strong> activará tu bot una vez que completes la configuración y lo revisen.
+      </p>
+      <p class="progress-msg done-msg" *ngIf="allDone">
+        <i class="fas fa-check-circle"></i>
+        ¡Todo listo! Avisa al equipo de <strong>7kivo</strong> para que activen tu bot.
+      </p>
+    </div>
+
+    <!-- Checklist -->
+    <div class="checklist">
+      <div *ngFor="let item of items; let i = index"
+           class="checklist-item"
+           [class.item-done]="item.done"
+           [class.item-pending]="!item.done">
+
+        <div class="item-step">
+          <div class="step-bubble" [class.bubble-done]="item.done">
+            <i class="fas" [class.fa-check]="item.done" [class.fa-circle-dot]="!item.done"></i>
+          </div>
+          <div class="step-line" *ngIf="i < items.length - 1" [class.line-done]="item.done"></div>
+        </div>
+
+        <div class="item-content">
+          <div class="item-head">
+            <div class="item-title-row">
+              <span class="item-icon-wrap" [class.icon-done]="item.done">
+                <i class="fas" [ngClass]="'fa-' + item.icon.replace('fa-','')"></i>
+              </span>
+              <h3>{{ item.title }}</h3>
+              <span class="item-badge-done" *ngIf="item.done"><i class="fas fa-check"></i> Listo</span>
+            </div>
+            <p class="item-desc">{{ item.description }}</p>
+          </div>
+          <a *ngIf="item.link" [routerLink]="item.link" [queryParams]="item.queryParams"
+             class="item-cta" [class.cta-done]="item.done">
+            {{ item.done ? 'Revisar' : item.linkLabel }}
+            <i class="fas fa-arrow-right"></i>
+          </a>
+          <span *ngIf="!item.link && !item.done" class="item-cta-support">
+            <i class="fas fa-headset"></i> Pendiente — el equipo de 7kivo lo configurará
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

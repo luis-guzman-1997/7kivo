@@ -66,6 +66,11 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
 .bot-toggle { display: flex; align-items: center; gap: 6px; }
 .bot-toggle.bot-on { background: rgba(37,211,102,0.1); color: #128c7e; }
 .bot-toggle.bot-off { background: rgba(100,116,139,0.1); color: #64748b; }
+.bot-no-wa-error {
+  font-size: 0.7rem; color: #dc2626; margin-top: 4px;
+  display: flex; align-items: center; gap: 4px; white-space: nowrap;
+}
+.bot-no-wa-error i { font-size: 0.7rem; color: #dc2626 !important; }
 
 .btn-detail {
   background: rgba(139,92,246,0.1); color: #7c3aed; border: none;
@@ -196,16 +201,122 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
 .wa-dot.configured { background: #22c55e; }
 .wa-dot.not-configured { background: #ef4444; }
 
+/* Bot API URL and test */
+.bot-api-url-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.bot-api-url-row .mono { flex: 1; min-width: 120px; }
+.btn-test-api {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 8px; font-size: 0.82rem;
+  background: rgba(37,211,102,0.1); color: #128c7e; border: 1px solid rgba(37,211,102,0.25);
+  cursor: pointer; white-space: nowrap; font-weight: 500;
+}
+.btn-test-api:hover:not(:disabled) { background: rgba(37,211,102,0.2); }
+.btn-test-api:disabled { opacity: 0.6; cursor: not-allowed; }
+.api-test-result {
+  display: block; margin-top: 8px; font-size: 0.85rem;
+  padding: 6px 10px; border-radius: 8px; width: fit-content;
+}
+.api-test-result.success { color: #059669; background: rgba(16,185,129,0.1); }
+.api-test-result.error { color: #dc2626; background: rgba(239,68,68,0.08); }
+.api-test-result i { margin-right: 6px; }
+
+/* Bot block toggle (table) */
+.block-toggle {
+  width: 32px; height: 26px; padding: 0; display: flex; align-items: center;
+  justify-content: center; border: none; border-radius: 6px; cursor: pointer;
+  transition: all 0.2s; font-size: 0.85rem;
+}
+.block-toggle.unblocked { background: rgba(16,185,129,0.1); color: #059669; }
+.block-toggle.blocked { background: rgba(239,68,68,0.1); color: #dc2626; }
+.block-toggle:disabled { opacity: 0.5; cursor: wait; }
+
+/* Bot block in detail */
+.bot-block-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.status-badge.blocked-badge { background: rgba(239,68,68,0.1); color: #dc2626; }
+.btn-block-toggle {
+  display: flex; align-items: center; gap: 6px; padding: 5px 12px;
+  border: 1px solid currentColor; border-radius: 8px; background: transparent;
+  font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-block-toggle:not([disabled]):hover { opacity: 0.75; }
+.btn-block-toggle:disabled { opacity: 0.4; cursor: wait; }
+
+/* Add admin form */
+.add-admin-form {
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 12px; padding: 16px; margin-bottom: 16px;
+}
+.add-admin-error {
+  color: #dc2626; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px;
+}
+.add-admin-notice {
+  color: #059669; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;
+  margin-bottom: 12px; padding: 8px 12px;
+  background: rgba(16,185,129,0.08); border-radius: 8px;
+}
+
 /* Admins */
 .admins-list { display: flex; flex-direction: column; gap: 8px; }
 .admin-row {
   display: flex; align-items: center; gap: 12px; padding: 10px;
   background: #f8fafc; border-radius: 10px;
 }
-.admin-row i { font-size: 1.4rem; color: #a78bfa; flex-shrink: 0; }
+.admin-row > i { font-size: 1.4rem; color: #a78bfa; flex-shrink: 0; }
 .admin-info { flex: 1; display: flex; flex-direction: column; }
 .admin-name { font-weight: 600; color: #1e293b; font-size: 0.9rem; }
 .admin-email { font-size: 0.8rem; color: #64748b; }
+.btn-remove-admin {
+  background: none; border: none; color: #94a3b8; cursor: pointer;
+  padding: 4px 6px; border-radius: 6px; font-size: 0.9rem; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.btn-remove-admin:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+.btn-pw-sa {
+  background: none; border: none; color: #a78bfa; cursor: pointer;
+  padding: 4px 8px; border-radius: 6px; font-size: 0.88rem; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.btn-pw-sa:hover { background: rgba(99,102,241,0.1); color: #6366f1; }
+
+.admin-row-wrap { display: flex; flex-direction: column; gap: 0; }
+
+/* Inline password change form in SA org */
+.sa-pw-form {
+  background: rgba(99,102,241,0.04);
+  border: 1px solid rgba(99,102,241,0.15);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 10px 12px;
+}
+.sa-pw-row {
+  display: flex; gap: 8px; align-items: center;
+}
+.sa-pw-row input {
+  flex: 1; padding: 7px 11px;
+  border: 1px solid rgba(99,102,241,0.25); border-radius: 8px;
+  font-size: 0.83rem; background: white; outline: none;
+}
+.sa-pw-row input:focus { border-color: #6366f1; }
+.btn-pw-save {
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+  color: #059669; border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  font-size: 0.83rem; display: flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+}
+.btn-pw-save:disabled { opacity: 0.5; cursor: wait; }
+.btn-pw-cancel {
+  background: rgba(100,116,139,0.08); border: 1px solid rgba(100,116,139,0.2);
+  color: #64748b; border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+.btn-pw-cancel:disabled { opacity: 0.5; cursor: wait; }
+.sa-pw-error {
+  display: block; margin-top: 6px;
+  font-size: 0.8rem; color: #dc2626;
+}
 
 .role-badge {
   font-size: 0.7rem; padding: 3px 10px; border-radius: 10px;
@@ -254,8 +365,15 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
 }
 .btn-delete-sm:hover { background: rgba(239,68,68,0.18); }
 
-/* Delete button in modal header */
-.modal-header-actions { padding: 0 24px 12px; }
+/* Modal header action buttons */
+.modal-header-actions { padding: 0 24px 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-view-org {
+  background: rgba(99,102,241,0.08); color: #6366f1; border: 1px solid rgba(99,102,241,0.2);
+  padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-view-org:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.35); }
 .btn-delete-org {
   background: rgba(239,68,68,0.08); color: #dc2626; border: 1px solid rgba(239,68,68,0.15);
   padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; cursor: pointer;

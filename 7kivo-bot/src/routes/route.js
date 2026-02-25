@@ -12,6 +12,8 @@ const {
   checkWindow
 } = require("../controllers/chatController");
 
+const { setUserPassword } = require("../controllers/adminController");
+
 const { getOrgId } = require("../config/orgConfig");
 const { getGeneralConfig, getWhatsAppConfig } = require("../services/botMessagesService");
 
@@ -32,6 +34,9 @@ router.get("/api/conversations/:phone/window", checkWindow);
 router.post("/api/send-message", sendAdminMessage);
 router.post("/api/take-control", takeControl);
 router.post("/api/release-to-bot", releaseToBot);
+
+// Admin operations
+router.post("/api/admin/set-password", setUserPassword);
 
 // Org info (for web dashboard)
 router.get("/api/org-info", async (req, res) => {

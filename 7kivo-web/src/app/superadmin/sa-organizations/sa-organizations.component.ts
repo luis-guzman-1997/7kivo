@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { FirebaseService } from '../../services/firebase.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-sa-organizations',
@@ -34,18 +36,38 @@ export class SaOrganizationsComponent implements OnInit {
   editingWA = false;
   editWA: any = {};
 
+  testingApi = false;
+  apiTestResult: { ok: boolean; error?: string } | null = null;
+
   logoFile: File | null = null;
   logoPreview = '';
 
   saving = false;
   notice = '';
 
+  togglingBlock: { [orgId: string]: boolean } = {};
+  botToggleError: string | null = null;
+  addingAdmin = false;
+  newAdmin = { name: '', email: '', password: '', role: 'editor' };
+  addAdminSaving = false;
+  addAdminError = '';
+  addAdminNotice = '';
+
   deleteConfirmOrg: any = null;
   deleteConfirmText = '';
   deleting = false;
   deleteResult: { deletedUsers: string[] } | null = null;
 
-  constructor(private firebaseService: FirebaseService) {}
+  changePwAdm: any = null;
+  changePwVal = '';
+  changePwSaving = false;
+  changePwError = '';
+
+  constructor(
+    private firebaseService: FirebaseService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await Promise.all([this.loadOrganizations(), this.loadPlans()]);
@@ -111,11 +133,45 @@ export class SaOrganizationsComponent implements OnInit {
 
   async toggleBot(org: any): Promise<void> {
     const newVal = org.botEnabled === false;
+    // When enabling, verify WhatsApp webhook config is complete
+    if (newVal) {
+      try {
+        const [config, wa] = await Promise.all([
+          this.firebaseService.getOrgConfigByOrgId(org.id),
+          this.firebaseService.getWhatsAppConfigByOrgId(org.id)
+        ]);
+        const waReady = !!(config?.botApiUrl && wa?.token && wa?.phoneNumberId);
+        if (!waReady) {
+          this.botToggleError = org.id;
+          setTimeout(() => { this.botToggleError = null; }, 4000);
+          return;
+        }
+      } catch (err) {
+        console.error('Error checking WA config:', err);
+        return;
+      }
+    }
     try {
       await this.firebaseService.updateOrganization(org.id, { botEnabled: newVal });
       org.botEnabled = newVal;
+      this.botToggleError = null;
     } catch (err) {
       console.error('Error toggling bot:', err);
+    }
+  }
+
+  async toggleBotBlocked(org: any): Promise<void> {
+    if (this.togglingBlock[org.id]) return;
+    this.togglingBlock[org.id] = true;
+    const newVal = !org.botBlocked;
+    try {
+      await this.firebaseService.setBotBlockedByOrgId(org.id, newVal);
+      org.botBlocked = newVal;
+      if (this.selectedOrg?.id === org.id) this.selectedOrg.botBlocked = newVal;
+    } catch (err) {
+      console.error('Error toggling bot blocked:', err);
+    } finally {
+      this.togglingBlock[org.id] = false;
     }
   }
 
@@ -126,7 +182,14 @@ export class SaOrganizationsComponent implements OnInit {
     this.editingPlan = false;
     this.editingGeneral = false;
     this.editingWA = false;
+    this.apiTestResult = null;
+    this.addingAdmin = false;
+    this.addAdminError = '';
+    this.addAdminNotice = '';
     this.notice = '';
+    this.changePwAdm = null;
+    this.changePwVal = '';
+    this.changePwError = '';
     try {
       const [detail, wa, admins] = await Promise.all([
         this.firebaseService.getOrgConfigByOrgId(org.id),
@@ -208,8 +271,7 @@ export class SaOrganizationsComponent implements OnInit {
     this.editGeneral = {
       orgName: this.orgDetail?.orgName || '',
       description: this.orgDetail?.description || '',
-      industry: this.orgDetail?.industry || 'general',
-      botApiUrl: this.orgDetail?.botApiUrl || ''
+      industry: this.orgDetail?.industry || 'general'
     };
     this.editingGeneral = true;
   }
@@ -259,19 +321,61 @@ export class SaOrganizationsComponent implements OnInit {
     this.editWA = {
       token: this.orgWhatsApp?.token || '',
       phoneNumberId: this.orgWhatsApp?.phoneNumberId || '',
-      verifyToken: this.orgWhatsApp?.verifyToken || ''
+      verifyToken: this.orgWhatsApp?.verifyToken || '',
+      botApiUrl: this.orgDetail?.botApiUrl || ''
     };
     this.editingWA = true;
+    this.apiTestResult = null;
   }
 
-  cancelEditWA(): void { this.editingWA = false; }
+  cancelEditWA(): void { this.editingWA = false; this.apiTestResult = null; }
+
+  async testBotApi(): Promise<void> {
+    const url = this.orgDetail?.botApiUrl?.trim();
+    if (!url) {
+      this.apiTestResult = { ok: false, error: 'URL no configurada' };
+      setTimeout(() => this.apiTestResult = null, 5000);
+      return;
+    }
+    this.testingApi = true;
+    this.apiTestResult = null;
+    try {
+      const base = url.replace(/\/$/, '');
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 10000);
+      const res = await fetch(`${base}/test`, { method: 'GET', signal: ctrl.signal });
+      clearTimeout(tid);
+      const text = await res.text();
+      if (res.ok && text?.trim().toUpperCase() === 'OK') {
+        this.apiTestResult = { ok: true };
+      } else {
+        this.apiTestResult = { ok: false, error: `HTTP ${res.status}` };
+      }
+    } catch (err: any) {
+      this.apiTestResult = {
+        ok: false,
+        error: err?.message || err?.name || 'Sin respuesta (CORS, red o servidor caído)'
+      };
+    } finally {
+      this.testingApi = false;
+      setTimeout(() => this.apiTestResult = null, 6000);
+    }
+  }
 
   async saveWA(): Promise<void> {
     if (!this.selectedOrg) return;
     this.saving = true;
     try {
-      await this.firebaseService.saveWhatsAppConfigByOrgId(this.selectedOrg.id, this.editWA);
-      this.orgWhatsApp = { ...this.orgWhatsApp, ...this.editWA };
+      await this.firebaseService.saveWhatsAppConfigByOrgId(this.selectedOrg.id, {
+        token: this.editWA.token,
+        phoneNumberId: this.editWA.phoneNumberId,
+        verifyToken: this.editWA.verifyToken
+      });
+      if (this.editWA.botApiUrl !== undefined) {
+        await this.firebaseService.saveOrgConfigByOrgId(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl });
+        this.orgDetail = { ...this.orgDetail, botApiUrl: this.editWA.botApiUrl };
+      }
+      this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken };
       this.editingWA = false;
       this.showNotice('WhatsApp configurado');
     } catch (err) {
@@ -290,6 +394,103 @@ export class SaOrganizationsComponent implements OnInit {
   maskToken(token: string): string {
     if (!token || token.length < 12) return token || '—';
     return token.substring(0, 8) + '...' + token.substring(token.length - 4);
+  }
+
+  // ── Admin Management ──
+  startAddAdmin(): void {
+    this.newAdmin = { name: '', email: '', password: '', role: 'editor' };
+    this.addAdminError = '';
+    this.addAdminNotice = '';
+    this.addingAdmin = true;
+  }
+
+  cancelAddAdmin(): void {
+    this.addingAdmin = false;
+    this.addAdminError = '';
+  }
+
+  async addAdminToOrg(): Promise<void> {
+    if (!this.selectedOrg) return;
+    if (!this.newAdmin.email.trim() || !this.newAdmin.password.trim()) {
+      this.addAdminError = 'Email y contraseña son requeridos';
+      return;
+    }
+    if (this.newAdmin.password.length < 6) {
+      this.addAdminError = 'La contraseña debe tener al menos 6 caracteres';
+      return;
+    }
+    this.addAdminSaving = true;
+    this.addAdminError = '';
+    try {
+      await this.firebaseService.createUserForOrg(
+        this.selectedOrg.id,
+        this.newAdmin.email.trim(),
+        this.newAdmin.password,
+        this.newAdmin.name.trim(),
+        this.newAdmin.role
+      );
+      const admins = await this.firebaseService.getOrgAdminsByOrgId(this.selectedOrg.id);
+      this.orgAdmins = admins;
+      this.addingAdmin = false;
+      this.addAdminNotice = 'Usuario creado y agregado al equipo';
+      setTimeout(() => this.addAdminNotice = '', 4000);
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/email-already-in-use') {
+        this.addAdminError = 'Este email ya tiene una cuenta registrada';
+      } else if (code === 'auth/invalid-email') {
+        this.addAdminError = 'Email inválido';
+      } else {
+        this.addAdminError = 'Error al crear usuario. Intenta de nuevo.';
+      }
+    } finally {
+      this.addAdminSaving = false;
+    }
+  }
+
+  async removeAdminFromOrg(admin: any): Promise<void> {
+    if (!this.selectedOrg || !admin.id) return;
+    if (!confirm(`¿Quitar a ${admin.email} del equipo?`)) return;
+    try {
+      await this.firebaseService.deleteAdminByOrgId(this.selectedOrg.id, admin.id);
+      this.orgAdmins = this.orgAdmins.filter(a => a.id !== admin.id);
+    } catch (err) {
+      console.error('Error removing admin:', err);
+    }
+  }
+
+  // ── Password Change ──
+  startChangePwSA(adm: any): void {
+    this.changePwAdm = adm;
+    this.changePwVal = '';
+    this.changePwError = '';
+  }
+
+  cancelChangePwSA(): void {
+    this.changePwAdm = null;
+    this.changePwVal = '';
+    this.changePwError = '';
+  }
+
+  async saveChangePwSA(): Promise<void> {
+    if (!this.changePwAdm?.uid) return;
+    if (this.changePwVal.length < 6) {
+      this.changePwError = 'La contraseña debe tener al menos 6 caracteres';
+      return;
+    }
+    this.changePwSaving = true;
+    this.changePwError = '';
+    try {
+      const botUrl = this.orgDetail?.botApiUrl;
+      await this.firebaseService.setUserPassword(botUrl, this.changePwAdm.uid, this.changePwVal);
+      this.changePwAdm = null;
+      this.changePwVal = '';
+      this.showNotice('Contraseña actualizada');
+    } catch (err: any) {
+      this.changePwError = err?.message || 'Error al cambiar contraseña';
+    } finally {
+      this.changePwSaving = false;
+    }
   }
 
   // ── Delete Organization ──
@@ -331,6 +532,11 @@ export class SaOrganizationsComponent implements OnInit {
     this.deleteConfirmOrg = null;
     this.deleteConfirmText = '';
     this.deleteResult = null;
+  }
+
+  async viewOrgPage(org: any, path: string): Promise<void> {
+    await this.authService.setOrgContextForSuperAdmin(org.id);
+    this.router.navigate([`/admin/${path}`]);
   }
 
   private showNotice(msg: string): void {

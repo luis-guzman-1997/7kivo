@@ -1,20 +1,33 @@
 <div class="settings-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title"><i class="fas fa-building"></i> Mi Empresa</h1>
-      <p class="page-subtitle">Datos y configuración de tu organización</p>
+      <h1 class="page-title"><i class="fas fa-building"></i> Mi Organización</h1>
+      <p class="page-subtitle">Datos, información y horarios de tu organización</p>
     </div>
   </div>
 
   <div class="toast toast-success" *ngIf="notice"><i class="fas fa-check-circle"></i> {{ notice }}</div>
   <div class="toast toast-error" *ngIf="error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
 
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'empresa'" (click)="activeTab = 'empresa'">
+      <i class="fas fa-building"></i> Mi Organización
+    </button>
+    <button class="tab" [class.active]="activeTab === 'info'" (click)="activeTab = 'info'">
+      <i class="fas fa-map-marker-alt"></i> Info & Contacto
+    </button>
+    <button class="tab" [class.active]="activeTab === 'horarios'" (click)="activeTab = 'horarios'">
+      <i class="fas fa-calendar-alt"></i> Horarios & Citas
+    </button>
+  </div>
+
   <div *ngIf="loading" class="loading-state">
     <i class="fas fa-spinner fa-spin"></i> Cargando configuración...
   </div>
 
-  <div *ngIf="!loading" class="tab-content">
-    <!-- Org Details Card -->
+  <!-- ==================== EMPRESA TAB ==================== -->
+  <div *ngIf="!loading && activeTab === 'empresa'" class="tab-content">
     <div class="config-card">
       <div class="card-header">
         <div class="card-icon blue"><i class="fas fa-building"></i></div>
@@ -24,7 +37,6 @@
         </div>
       </div>
       <div class="config-form">
-        <!-- Logo Upload -->
         <div class="logo-upload-section">
           <label class="form-label-top">Logo de la empresa</label>
           <div class="logo-upload-row">
@@ -44,7 +56,6 @@
             </div>
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>Nombre de la Organización</label>
@@ -84,4 +95,317 @@
       </div>
     </div>
   </div>
+
+  <!-- ==================== INFO & CONTACTO TAB ==================== -->
+  <div *ngIf="!loading && activeTab === 'info'" class="tab-content">
+
+    <!-- Quick-start banner: shown when info is empty -->
+    <div class="quickstart-banner" *ngIf="isInfoEmpty">
+      <div class="quickstart-icon"><i class="fas fa-rocket"></i></div>
+      <div class="quickstart-body">
+        <strong>¿Empezando desde cero?</strong>
+        <span>Precarga datos de ejemplo para el perfil <em>{{ getIndustryLabel(generalConfig.industry) }}</em> y pon en marcha el bot rápidamente. Después puedes ajustar cada campo.</span>
+      </div>
+      <button class="btn-quickstart" (click)="fillDummyData()" [disabled]="saving">
+        <i class="fas fa-magic"></i> Auto-completar
+      </button>
+    </div>
+
+    <!-- Secondary trigger: shown when info already exists -->
+    <div class="quickstart-sm" *ngIf="!isInfoEmpty">
+      <span><i class="fas fa-info-circle"></i> Perfil: <strong>{{ getIndustryLabel(generalConfig.industry) }}</strong></span>
+      <button class="btn-quickstart-sm" (click)="fillDummyData()" [disabled]="saving">
+        <i class="fas fa-redo-alt"></i> Recargar datos de ejemplo
+      </button>
+    </div>
+
+    <!-- General Info -->
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon blue"><i class="fas fa-info-circle"></i></div>
+        <div>
+          <h3>Información General</h3>
+          <p>Datos que el bot comparte cuando el usuario pide información general del negocio</p>
+        </div>
+      </div>
+      <div class="config-form">
+        <div class="form-group">
+          <label><i class="fas fa-building"></i> Nombre</label>
+          <input type="text" [(ngModel)]="generalInfo.name" placeholder="Nombre de tu negocio" />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-align-left"></i> Descripción</label>
+          <textarea [(ngModel)]="generalInfo.description" rows="4" placeholder="Describe brevemente tu negocio: qué hacen, a qué se dedican, qué los hace únicos..."></textarea>
+          <span class="hint">El bot comparte esta descripción cuando el usuario pide información general</span>
+        </div>
+        <button class="btn-save" (click)="saveGeneralInfo()" [disabled]="saving">
+          <i class="fas fa-save"></i> Guardar Información General
+        </button>
+      </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon green"><i class="fas fa-address-book"></i></div>
+        <div>
+          <h3>Información de Contacto</h3>
+          <p>Activa el <i class="fab fa-whatsapp" style="color:#25d366"></i> para que el campo aparezca cuando el usuario selecciona <em>Contáctanos</em> en el bot</p>
+        </div>
+      </div>
+      <div class="config-form">
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="contact-field-header">
+              <label><i class="fas fa-map-marker-alt"></i> Dirección</label>
+              <label class="bot-vis-toggle" [class.visible]="contactInfo.showFields?.address !== false" title="Mostrar en bot">
+                <input type="checkbox" [(ngModel)]="contactInfo.showFields.address" />
+                <i class="fab fa-whatsapp"></i>
+              </label>
+            </div>
+            <input type="text" [(ngModel)]="contactInfo.address" placeholder="Calle, número, colonia..."
+              [class.field-hidden-bot]="contactInfo.showFields?.address === false" />
+          </div>
+          <div class="form-group">
+            <div class="contact-field-header">
+              <label><i class="fas fa-city"></i> Ciudad</label>
+              <label class="bot-vis-toggle" [class.visible]="contactInfo.showFields?.city !== false" title="Mostrar en bot">
+                <input type="checkbox" [(ngModel)]="contactInfo.showFields.city" />
+                <i class="fab fa-whatsapp"></i>
+              </label>
+            </div>
+            <input type="text" [(ngModel)]="contactInfo.city" placeholder="San Salvador"
+              [class.field-hidden-bot]="contactInfo.showFields?.city === false" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="contact-field-header">
+              <label><i class="fas fa-phone"></i> Teléfono / WhatsApp</label>
+              <label class="bot-vis-toggle" [class.visible]="contactInfo.showFields?.phone !== false" title="Mostrar en bot">
+                <input type="checkbox" [(ngModel)]="contactInfo.showFields.phone" />
+                <i class="fab fa-whatsapp"></i>
+              </label>
+            </div>
+            <input type="text" [(ngModel)]="contactInfo.phone" placeholder="+503 XXXX-XXXX"
+              [class.field-hidden-bot]="contactInfo.showFields?.phone === false" />
+          </div>
+          <div class="form-group">
+            <div class="contact-field-header">
+              <label><i class="fas fa-envelope"></i> Email</label>
+              <label class="bot-vis-toggle" [class.visible]="contactInfo.showFields?.email !== false" title="Mostrar en bot">
+                <input type="checkbox" [(ngModel)]="contactInfo.showFields.email" />
+                <i class="fab fa-whatsapp"></i>
+              </label>
+            </div>
+            <input type="email" [(ngModel)]="contactInfo.email" placeholder="info@empresa.com"
+              [class.field-hidden-bot]="contactInfo.showFields?.email === false" />
+          </div>
+        </div>
+
+        <div class="form-group" style="max-width:320px">
+          <div class="contact-field-header">
+            <label><i class="fas fa-globe-americas"></i> País</label>
+            <label class="bot-vis-toggle" [class.visible]="contactInfo.showFields?.country !== false" title="Mostrar en bot">
+              <input type="checkbox" [(ngModel)]="contactInfo.showFields.country" />
+              <i class="fab fa-whatsapp"></i>
+            </label>
+          </div>
+          <input type="text" [(ngModel)]="contactInfo.country" placeholder="El Salvador"
+            [class.field-hidden-bot]="contactInfo.showFields?.country === false" />
+        </div>
+
+        <button class="btn-save" (click)="saveContactInfo()" [disabled]="saving">
+          <i class="fas fa-save"></i> Guardar Contacto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HORARIOS & CITAS TAB ==================== -->
+  <div *ngIf="!loading && activeTab === 'horarios'" class="tab-content">
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-icon amber"><i class="fas fa-calendar-alt"></i></div>
+        <div>
+          <h3>Horarios de Atención</h3>
+          <p>Configura los días, turnos y servicios para citas. El bot usará esta información.</p>
+        </div>
+      </div>
+      <div class="config-form">
+
+        <!-- Business type -->
+        <div class="form-group">
+          <label><i class="fas fa-store"></i> ¿Qué ofrece tu negocio?</label>
+          <div class="business-type-selector">
+            <div class="btype-option" [class.selected]="scheduleInfo.businessType === 'products'" (click)="scheduleInfo.businessType = 'products'">
+              <i class="fas fa-box"></i> Solo Productos
+            </div>
+            <div class="btype-option" [class.selected]="scheduleInfo.businessType === 'services'" (click)="scheduleInfo.businessType = 'services'">
+              <i class="fas fa-hands-helping"></i> Solo Servicios
+            </div>
+            <div class="btype-option" [class.selected]="scheduleInfo.businessType === 'both'" (click)="scheduleInfo.businessType = 'both'">
+              <i class="fas fa-layer-group"></i> Productos y Servicios
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointments toggle -->
+        <div class="form-group" *ngIf="scheduleInfo.businessType !== 'products'">
+          <label><i class="fas fa-calendar-check"></i> Citas por WhatsApp</label>
+          <div class="toggle-appt-row">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="scheduleInfo.offersAppointments" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-appt-label" [class.on]="scheduleInfo.offersAppointments">
+              {{ scheduleInfo.offersAppointments ? 'Activo — los clientes pueden agendar citas' : 'Desactivado' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Services list -->
+        <div class="services-section" *ngIf="scheduleInfo.businessType !== 'products' && scheduleInfo.offersAppointments">
+          <div class="services-header">
+            <span><i class="fas fa-list-ul"></i> Servicios disponibles para cita</span>
+            <small>El bot mostrará esta lista antes de mostrar el calendario</small>
+          </div>
+          <div class="services-list" *ngIf="scheduleInfo.services?.length > 0">
+            <div class="service-card" *ngFor="let svc of scheduleInfo.services; let i = index">
+              <div class="svc-card-body">
+                <span class="svc-title">{{ svc.title || svc.name }}</span>
+                <span class="svc-subtitle" *ngIf="svc.subtitle">{{ svc.subtitle }}</span>
+                <span class="svc-desc-preview" *ngIf="svc.description">{{ svc.description | slice:0:80 }}{{ svc.description.length > 80 ? '…' : '' }}</span>
+              </div>
+              <div class="svc-card-meta">
+                <span class="svc-duration"><i class="fas fa-clock"></i> {{ svc.duration }} min</span>
+                <button class="btn-svc-remove" (click)="removeService(i)" title="Eliminar servicio">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <p class="no-services no-services-warn" *ngIf="!scheduleInfo.services?.length">
+            <i class="fas fa-exclamation-triangle"></i> Debes agregar al menos un servicio para poder guardar
+          </p>
+
+          <div class="add-service-form">
+            <p class="add-svc-label"><i class="fas fa-plus-circle"></i> Agregar servicio</p>
+            <div class="svc-row-top">
+              <div class="svc-field-with-counter">
+                <input type="text" [(ngModel)]="newService.title" placeholder="Título (máx. 20 caracteres)"
+                  class="svc-input-title" maxlength="20" />
+                <span class="char-counter" [class.counter-warn]="newService.title?.length >= 18">{{ newService.title?.length || 0 }}/20</span>
+              </div>
+              <select [(ngModel)]="newService.duration" class="svc-input-duration">
+                <option [ngValue]="15">15 min</option>
+                <option [ngValue]="20">20 min</option>
+                <option [ngValue]="30">30 min</option>
+                <option [ngValue]="45">45 min</option>
+                <option [ngValue]="60">60 min</option>
+                <option [ngValue]="90">90 min</option>
+                <option [ngValue]="120">120 min</option>
+              </select>
+            </div>
+            <div class="svc-field-with-counter">
+              <input type="text" [(ngModel)]="newService.subtitle" placeholder="Subtítulo (máx. 70 caracteres)"
+                class="svc-input-subtitle" maxlength="70" />
+              <span class="char-counter" [class.counter-warn]="newService.subtitle?.length >= 65">{{ newService.subtitle?.length || 0 }}/70</span>
+            </div>
+            <div class="svc-field-with-counter">
+              <textarea [(ngModel)]="newService.description" rows="3"
+                placeholder="Descripción detallada que el bot envía cuando el cliente selecciona este servicio (máx. 500 caracteres)..."
+                class="svc-input-description" maxlength="500"></textarea>
+              <span class="char-counter" [class.counter-warn]="newService.description?.length >= 480">{{ newService.description?.length || 0 }}/500</span>
+            </div>
+            <button class="btn-add-service" (click)="addService()" [disabled]="!newService.title?.trim()">
+              <i class="fas fa-plus"></i> Agregar servicio
+            </button>
+          </div>
+        </div>
+
+        <div class="schedule-divider"></div>
+
+        <!-- Days & Shifts -->
+        <div class="schedule-week">
+          <div *ngFor="let day of scheduleInfo.days; let di = index" class="schedule-day" [class.day-active]="day.active">
+            <div class="day-header">
+              <label class="day-toggle">
+                <input type="checkbox" [(ngModel)]="day.active" />
+                <span class="day-name">{{ day.name }}</span>
+              </label>
+              <span class="day-status" *ngIf="!day.active">Cerrado</span>
+            </div>
+            <div class="day-shifts" *ngIf="day.active">
+              <div *ngFor="let shift of day.shifts; let si = index" class="shift-row">
+                <div class="shift-inputs">
+                  <input type="time" [(ngModel)]="shift.from" class="time-input" />
+                  <span class="shift-sep">a</span>
+                  <input type="time" [(ngModel)]="shift.to" class="time-input" />
+                </div>
+                <div class="shift-actions">
+                  <button class="btn-shift-remove" *ngIf="day.shifts.length > 1" (click)="removeShift(di, si)" title="Quitar turno">
+                    <i class="fas fa-minus-circle"></i>
+                  </button>
+                  <button class="btn-shift-add" *ngIf="si === day.shifts.length - 1" (click)="addShift(di)" title="Agregar turno">
+                    <i class="fas fa-plus-circle"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blocked Dates -->
+        <div class="blocked-dates-section">
+          <h4><i class="fas fa-ban"></i> Días sin atención</h4>
+          <p class="config-hint">Fechas específicas en las que no se atenderá (feriados, vacaciones, etc.)</p>
+          <div class="blocked-date-input">
+            <input type="date" [(ngModel)]="newBlockedDate" class="date-input" />
+            <button class="btn-add-date" (click)="addBlockedDate()" [disabled]="!newBlockedDate">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+          <div class="blocked-dates-list" *ngIf="scheduleInfo.blockedDates && scheduleInfo.blockedDates.length > 0">
+            <span *ngFor="let bd of scheduleInfo.blockedDates" class="blocked-date-chip">
+              {{ formatBlockedDate(bd) }}
+              <button (click)="removeBlockedDate(bd)" class="chip-remove"><i class="fas fa-times"></i></button>
+            </span>
+          </div>
+          <p *ngIf="!scheduleInfo.blockedDates || scheduleInfo.blockedDates.length === 0" class="no-blocked">
+            No hay fechas bloqueadas
+          </p>
+        </div>
+
+        <!-- Preview -->
+        <div class="schedule-preview">
+          <div class="preview-header"><i class="fas fa-eye"></i> Vista previa en el bot</div>
+          <div class="preview-body">
+            <strong>📅 Horarios de Atención</strong><br /><br />
+            <ng-container *ngFor="let day of scheduleInfo.days">
+              <ng-container *ngIf="day.active">
+                <strong>{{ day.name }}:</strong>
+                <span *ngFor="let s of day.shifts; let last = last">
+                  {{ s.from }} - {{ s.to }}<span *ngIf="!last"> | </span>
+                </span><br />
+              </ng-container>
+            </ng-container>
+            <em *ngIf="!hasActiveDays()" style="color:#94a3b8;">No hay días activos configurados</em>
+          </div>
+        </div>
+
+        <div class="schedule-save-warning" *ngIf="scheduleNeedsServices">
+          <i class="fas fa-exclamation-triangle"></i>
+          Tienes <strong>Citas por WhatsApp</strong> activas pero no has agregado servicios. Agrega al menos uno para guardar.
+        </div>
+        <button class="btn-save" (click)="saveScheduleInfo()" [disabled]="saving || scheduleNeedsServices">
+          <i class="fas" [class.fa-save]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
+          {{ saving ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

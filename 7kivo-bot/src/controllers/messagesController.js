@@ -80,6 +80,24 @@ const requestMessageFromWhatsapp = async (req, res) => {
       } catch (e) { /* best effort */ }
       return res.sendStatus(200);
     }
+    if (orgStatus.botBlocked === true) {
+      try {
+        await _rawSendText(
+          "Hola, gracias por escribirnos. En este momento nuestro servicio de chat no está disponible. Por favor contáctanos por otro medio.",
+          phoneNumber
+        );
+      } catch (e) { /* best effort */ }
+      return res.sendStatus(200);
+    }
+    if (orgStatus.botPaused === true) {
+      try {
+        await _rawSendText(
+          "Hola, gracias por escribirnos. Estamos realizando ajustes en nuestro servicio. Por favor intenta nuevamente en unos minutos.",
+          phoneNumber
+        );
+      } catch (e) { /* best effort */ }
+      return res.sendStatus(200);
+    }
 
     const contactName = change?.value?.contacts?.[0]?.profile?.name || null;
 
@@ -193,7 +211,8 @@ const buildMenuItems = async () => {
   // Fallback: auto-generate from builtins + active flows
   const rows = [
     { id: "builtin_schedule", title: "Horarios", description: "Horarios de atención" },
-    { id: "builtin_contact", title: "Ubicación", description: "Dirección" },
+    { id: "builtin_contact", title: "Contáctanos", description: "Información de contacto" },
+    { id: "builtin_services", title: "Servicios", description: "Conoce nuestros servicios" },
     { id: "builtin_general", title: "Información General", description: "Sobre nosotros" }
   ];
 
@@ -259,7 +278,51 @@ const sendMenu = async (phoneNumber) => {
 const handleInteractiveResponse = async (phoneNumber, buttonId) => {
   const session = getSession(phoneNumber);
 
+  // Handle service info selection
+  if (session && session.step === "svc_info_select" && buttonId.startsWith("svc_info_")) {
+    const schedule = await getScheduleInfo();
+    const idx = parseInt(buttonId.substring(9), 10);
+    const svc = schedule?.services?.[idx];
+    if (!svc) {
+      await sendTextMessage("Servicio no encontrado.", phoneNumber);
+      await showServices(phoneNumber);
+      return;
+    }
+    let info = `*${svc.title || svc.name}*`;
+    if (svc.subtitle) info += `\n_${svc.subtitle}_`;
+    if (svc.description) info += `\n\n${svc.description}`;
+    if (svc.duration) info += `\n\n⏱️ Duración: ${svc.duration} min`;
+
+    const canBook = schedule?.offersAppointments === true && schedule?.businessType !== "products" && schedule?.services?.length > 0;
+    const buttons = [];
+    if (canBook) buttons.push({ id: "start_appt_flow", title: "Agendar cita" });
+    buttons.push({ id: "builtin_services", title: "Ver más servicios" });
+    if (buttons.length < 3) buttons.push({ id: "back_main", title: "Menú Principal" });
+
+    setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+    await sendInteractiveButtons(info.substring(0, 1024), buttons, phoneNumber);
+    return;
+  }
+
   // Handle appointment_slot steps (within a flow)
+  if (session && session.step === "appt_select_service" && buttonId.startsWith("appt_svc_")) {
+    const schedule = await getScheduleInfo();
+    const idx = parseInt(buttonId.substring(9), 10);
+    const svc = schedule?.services?.[idx];
+    if (!svc) {
+      await sendTextMessage("Servicio no válido. Por favor selecciona una opción.", phoneNumber);
+      return;
+    }
+    const flow = await getFlow(session.flowId);
+    if (!flow) return;
+    const prevFlowData = session.flowData || {};
+    setSession(phoneNumber, {
+      flowData: { ...prevFlowData, _apptDuration: svc.duration, _apptService: svc.title || svc.name }
+    });
+    await sendAppointmentDays(phoneNumber, flow, flow.steps[session.flowStepIndex], session.flowStepIndex);
+    return;
+  }
+
   if (session && session.step === "appt_select_day" && buttonId.startsWith("appt_day_")) {
     await handleApptDaySelected(phoneNumber, buttonId.substring(9), session);
     return;
@@ -319,13 +382,26 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     const builtinActions = {
       schedule: () => showSchedule(phoneNumber),
       contact: () => showContact(phoneNumber),
-      general: () => showGeneralInfo(phoneNumber)
+      general: () => showGeneralInfo(phoneNumber),
+      services: () => showServices(phoneNumber)
     };
 
     if (builtinActions[action]) {
       await builtinActions[action]();
       return;
     }
+  }
+
+  // Start appointment flow shortcut (from service info card)
+  if (buttonId === "start_appt_flow") {
+    const flows = await getFlows();
+    const apptFlow = flows.find(f => f.steps && f.steps.some(s => s.type === "appointment_slot"));
+    if (apptFlow) {
+      await startFlow(phoneNumber, apptFlow.id);
+    } else {
+      await sendTextMessage("Las citas no están disponibles.", phoneNumber);
+    }
+    return;
   }
 
   // Flow actions
@@ -851,13 +927,31 @@ const showContact = async (phoneNumber) => {
 
   let info;
   if (contact) {
-    info = "*Ubicación*\n\n";
-    info += `*Dirección:*\n${contact.address}\n\n`;
-    if (contact.city) info += `*Ciudad:* ${contact.city}`;
-    if (contact.country) info += `, ${contact.country}`;
-    if (contact.city || contact.country) info += "\n";
+    const show = contact.showFields || {};
+    const lines = [];
+
+    if (contact.address && show.address !== false)
+      lines.push(`📍 *Dirección:* ${contact.address}`);
+
+    const cityCountry = [
+      contact.city && show.city !== false ? contact.city : null,
+      contact.country && show.country !== false ? contact.country : null
+    ].filter(Boolean).join(", ");
+    if (cityCountry) lines.push(`🏙️ ${cityCountry}`);
+
+    if (contact.phone && show.phone !== false)
+      lines.push(`📱 *Teléfono:* ${contact.phone}`);
+
+    if (contact.email && show.email !== false)
+      lines.push(`✉️ *Email:* ${contact.email}`);
+
+    if (lines.length > 0) {
+      info = "*Contáctanos*\n\n" + lines.join("\n");
+    } else {
+      info = await getMessage("contact_info", "Información de contacto no disponible.");
+    }
   } else {
-    info = await getMessage("contact_info", "Información de ubicación no disponible.");
+    info = await getMessage("contact_info", "Información de contacto no disponible.");
   }
 
   const buttons = [
@@ -872,18 +966,10 @@ const showGeneralInfo = async (phoneNumber) => {
   const general = await getGeneralInfo();
 
   let info;
-  if (general) {
+  if (general && (general.name || general.description)) {
     info = "*Información General*\n\n";
-    info += `*${general.orgName || general.schoolName || ""}*\n${general.description}\n\n`;
-    if (general.focus && general.focus.length > 0) {
-      info += "*Enfoque:*\n";
-      general.focus.forEach(f => { info += `• ${f}\n`; });
-    }
-    info += `\n*Modalidad:* ${general.modality}\n\n`;
-    info += `*Instrumentos:*\n${general.instrumentsNote}\n\n`;
-    if (general.openToAll) {
-      info += "Abierto a todos sin discriminación.";
-    }
+    if (general.name) info += `*${general.name}*\n\n`;
+    if (general.description) info += `${general.description}`;
   } else {
     info = await getMessage("general_info", "Información no disponible.");
   }
@@ -894,6 +980,34 @@ const showGeneralInfo = async (phoneNumber) => {
   ];
 
   await sendInteractiveButtons(info, buttons, phoneNumber);
+};
+
+const showServices = async (phoneNumber) => {
+  const schedule = await getScheduleInfo();
+  const services = schedule?.services || [];
+
+  if (services.length === 0) {
+    const general = await getGeneralInfo();
+    let info = "*Nuestros Servicios*\n\n";
+    if (general?.description) info += general.description;
+    else info = await getMessage("services_info", "Información de servicios no disponible.");
+    await sendInteractiveButtons(info, [{ id: "back_main", title: "Menú Principal" }], phoneNumber);
+    return;
+  }
+
+  const rows = services.map((svc, i) => ({
+    id: `svc_info_${i}`,
+    title: (svc.title || svc.name || "").substring(0, 20),
+    description: (svc.subtitle || "").substring(0, 72)
+  }));
+
+  setSession(phoneNumber, { step: "svc_info_select" });
+  await sendInteractiveList(
+    "*Nuestros Servicios*\n\nSelecciona un servicio para conocer más:",
+    "Ver servicios",
+    [{ title: "Servicios", rows }],
+    phoneNumber
+  );
 };
 
 // ==================== APPOINTMENT SLOT (flow step type) ====================
@@ -938,10 +1052,41 @@ const getFreeSlots = (allSlots, duration, booked) => {
   });
 };
 
+const sendServiceSelection = async (phoneNumber, flow, stepIndex, services) => {
+  const rows = services.map((svc, i) => ({
+    id: `appt_svc_${i}`,
+    title: (svc.title || svc.name || "").substring(0, 20),
+    description: svc.subtitle ? svc.subtitle.substring(0, 72) : `${svc.duration} min`
+  }));
+  setSession(phoneNumber, {
+    step: "appt_select_service",
+    flowId: flow.id,
+    flowStepIndex: stepIndex,
+    flowStartTime: Date.now()
+  });
+  const sections = [{ title: "Servicios disponibles", rows }];
+  await sendInteractiveList("¿Qué servicio necesitas agendar?", "Ver servicios", sections, phoneNumber);
+};
+
 const sendAppointmentDays = async (phoneNumber, flow, step, stepIndex) => {
   const schedule = await getScheduleInfo();
   const session = getSession(phoneNumber);
-  const apptDuration = session?.flowData?._apptDuration || schedule?.slotDuration;
+
+  // Appointments require offersAppointments=true AND at least one service configured
+  if (!schedule?.offersAppointments || !schedule?.services?.length) {
+    const nextIndex = stepIndex + 1;
+    setSession(phoneNumber, { flowStepIndex: nextIndex });
+    await executeFlowStep(phoneNumber, flow, nextIndex);
+    return;
+  }
+
+  // If no service has been selected yet → ask first
+  if (!session?.flowData?._apptDuration) {
+    await sendServiceSelection(phoneNumber, flow, stepIndex, schedule.services);
+    return;
+  }
+
+  const apptDuration = session?.flowData?._apptDuration;
 
   if (!schedule || !schedule.days || !apptDuration) {
     await sendTextMessage("Las citas no están disponibles en este momento.", phoneNumber);
@@ -1006,7 +1151,7 @@ const handleApptDaySelected = async (phoneNumber, dateStr, session) => {
   const flow = await getFlow(session.flowId);
   if (!flow) return;
 
-  const apptDuration = session.flowData?._apptDuration || schedule.slotDuration;
+  const apptDuration = session.flowData?._apptDuration || 30;
   const date = new Date(dateStr + "T12:00:00");
   const dayName = DAY_NAMES[date.getDay()];
   const dayConfig = schedule.days.find(d => d.name === dayName);
@@ -1059,7 +1204,7 @@ const handleApptSlotSelected = async (phoneNumber, timeSlot, session) => {
   const step = flow.steps[session.flowStepIndex];
   const dateFieldKey = step.fieldKey || "fecha";
   const timeFieldKey = step.timeFieldKey || "hora";
-  const apptDuration = session.flowData?._apptDuration || schedule?.slotDuration || 30;
+  const apptDuration = session.flowData?._apptDuration || 30;
 
   const flowData = { ...session.flowData };
   flowData[dateFieldKey] = session.apptDateLabel || session.apptDate;
@@ -1127,6 +1272,8 @@ const handleUserMessage = async (phoneNumber, message, session) => {
 
   // Waiting for select/browse/appointment but user typed text
   if (session.step === "flow_select" || session.step === "flow_browse" || session.step === "flow_browse_detail"
+      || session.step === "svc_info_select"
+      || session.step === "appt_select_service"
       || session.step === "appt_select_day" || session.step === "appt_select_time") {
     await sendTextMessage("Por favor selecciona una opción del menú.", phoneNumber);
     return;
@@ -1148,12 +1295,18 @@ const handleUserMessage = async (phoneNumber, message, session) => {
   } else if (lowerMessage.includes("registr") || lowerMessage.includes("inscrib")) {
     await startLegacyOrFlowRegistration(phoneNumber);
   } else if (lowerMessage.includes("cita") || lowerMessage.includes("reserv") || lowerMessage.includes("agendar")) {
-    const flows = await getFlows();
-    const apptFlow = flows.find(f => f.steps && f.steps.some(s => s.type === "appointment_slot"));
-    if (apptFlow) {
-      await startFlow(phoneNumber, apptFlow.id);
+    const scheduleCheck = await getScheduleInfo();
+    const apptReady = scheduleCheck?.offersAppointments === true && scheduleCheck?.services?.length > 0;
+    if (!apptReady) {
+      await sendTextMessage("Las citas no están disponibles en este momento.", phoneNumber);
     } else {
-      await sendTextMessage("Las citas no están disponibles.", phoneNumber);
+      const flows = await getFlows();
+      const apptFlow = flows.find(f => f.steps && f.steps.some(s => s.type === "appointment_slot"));
+      if (apptFlow) {
+        await startFlow(phoneNumber, apptFlow.id);
+      } else {
+        await sendTextMessage("Las citas no están disponibles.", phoneNumber);
+      }
     }
   } else {
     // Fallback: show menu
