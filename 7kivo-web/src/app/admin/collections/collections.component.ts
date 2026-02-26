@@ -161,24 +161,38 @@ export class CollectionsComponent implements OnInit {
 
   generateFieldKey(field: CollectionField): void {
     if (!field.label) return;
-    // For reference fields the key input is hidden — always keep it in sync with the label
-    if (!field.key || field.type === 'reference') {
-      const base = field.label
-        .toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/(^_|_$)/g, '');
 
-      // Ensure uniqueness among sibling fields (excluding this field itself)
-      const siblings = this.currentCollection.fields.filter(f => f !== field);
-      const usedKeys = new Set(siblings.map(f => f.key));
-      let candidate = base;
-      let counter = 2;
-      while (usedKeys.has(candidate)) {
-        candidate = `${base}_${counter++}`;
-      }
-      field.key = candidate;
+    const toKey = (s: string) => s
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/(^_|_$)/g, '');
+
+    const currentBase = toKey(field.label);
+    if (!currentBase) return;
+
+    // Detect if the key is still "in sync" with the auto-generated value so we
+    // keep updating while the user types. Stop updating once they manually edit.
+    // A key is considered auto-generated if it matches the current base, the
+    // previous base (one char less), or a uniqueness-suffixed version (_2, _3…).
+    const prevBase = toKey(field.label.slice(0, -1));
+    const keyBase = (field.key || '').replace(/_\d+$/, '');
+    const isTracking = field.type === 'reference'
+      || !field.key
+      || keyBase === currentBase
+      || keyBase === prevBase;
+
+    if (!isTracking) return;
+
+    // Ensure uniqueness among sibling fields (excluding this field itself)
+    const siblings = this.currentCollection.fields.filter(f => f !== field);
+    const usedKeys = new Set(siblings.map(f => f.key));
+    let candidate = currentBase;
+    let counter = 2;
+    while (usedKeys.has(candidate)) {
+      candidate = `${currentBase}_${counter++}`;
     }
+    field.key = candidate;
   }
 
   onFieldTypeChange(field: CollectionField): void {
