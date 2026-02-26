@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node src/index.js",
-    "create-base": "node create-base.js",
+    "reset-canzion": "node reset-canzion-sonsonate.js",
     "verify-firebase": "node verify-firebase.js"
   },
   "keywords": ["whatsapp", "bot", "meta"],

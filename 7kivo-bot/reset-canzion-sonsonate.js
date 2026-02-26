@@ -12,7 +12,7 @@
  * PRESERVES: WhatsApp credentials, botApiUrl, user mappings, org config doc
  * DOES NOT TOUCH: admin user (admin@canzion.com)
  *
- * Usage: node reset-database.js
+ * Usage: node reset-canzion-sonsonate.js
  */
 
 require("dotenv").config();
@@ -563,10 +563,10 @@ async function resetDatabase() {
 
     await orgRef.update({
       botEnabled:  true,
-      plan:        "Business",
-      monthlyRate: 19.99
+      plan:        "Enterprise",
+      monthlyRate: 0
     });
-    console.log(`   Org ${ORG_ID}: plan Business, bot habilitado.\n`);
+    console.log(`   Org ${ORG_ID}: plan Enterprise ($0), bot habilitado.\n`);
 
     // ==================== SUMMARY ====================
 
@@ -583,7 +583,7 @@ async function resetDatabase() {
     console.log(`  Flujos:         Ver Programas (browse), Inscríbete (registro)`);
     console.log(`  Citas:          NO — esta organización no agenda citas por bot`);
     console.log(`  Menú:           Programas | Inscríbete | Horarios | Ubicación | Sobre Nosotros`);
-    console.log(`  Planes:         Starter ($9.99), Business ($19.99), Premium ($39.99), Enterprise ($100)`);
+    console.log(`  Plan:           Enterprise ($0 — cortesía)`);
     console.log(`  Super Admin:    admin@7kivo.com`);
     console.log(`\n  Siguiente: npm start\n`);
 
