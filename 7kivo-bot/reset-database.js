@@ -248,9 +248,9 @@ async function resetDatabase() {
         active: true, order: 1
       },
       {
-        nombre: "Teens", edad: "12 a 15 años",
+        nombre: "Canzion Instrumento", edad: "12 a 15 años",
         duracion: "2 años (4 semestres)",
-        descripcion: "Programa de desarrollo musical para adolescentes.",
+        descripcion: "Programa de formación en instrumento para jóvenes.",
         active: true, order: 2
       },
       {
@@ -578,7 +578,7 @@ async function resetDatabase() {
     console.log(`  botApiUrl:      ${savedBotApiUrl || "(vacío — configurar en superadmin)"}`);
     console.log(`  WhatsApp:       ${savedWAConfig?.token ? "Preservado" : "(vacío — configurar en superadmin)"}`);
     console.log(`  Bases de datos: programas, instrumentos, aspirantes (phoneNumber protegido)`);
-    console.log(`  Programas:      Curso Ministerial Musical, Teens, Kids`);
+    console.log(`  Programas:      Curso Ministerial Musical, Canzion Instrumento, Kids`);
     console.log(`  Instrumentos:   Guitarra, Batería, Bajo, Canto, Piano`);
     console.log(`  Flujos:         Ver Programas (browse), Inscríbete (registro)`);
     console.log(`  Citas:          NO — esta organización no agenda citas por bot`);
