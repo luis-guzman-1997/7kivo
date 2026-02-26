@@ -118,27 +118,21 @@
           </div>
           <div class="field-inputs">
             <input type="text" [(ngModel)]="field.label" (ngModelChange)="generateFieldKey(field)" placeholder="Etiqueta" class="input-sm" />
-            <input type="text" [(ngModel)]="field.key" placeholder="Clave (key)" class="input-sm input-key" />
-            <select [(ngModel)]="field.type" class="select-sm">
+            <input *ngIf="field.type !== 'reference'" type="text" [(ngModel)]="field.key" placeholder="Clave (key)" class="input-sm input-key" />
+            <select [(ngModel)]="field.type" (ngModelChange)="onFieldTypeChange(field)" class="select-sm">
               <option *ngFor="let ft of fieldTypes" [value]="ft.value">{{ ft.label }}</option>
             </select>
             <select *ngIf="field.type === 'reference'" [(ngModel)]="field.refCollection" class="select-sm">
               <option value="">-- Colección --</option>
               <option *ngFor="let c of getOtherCollections()" [value]="c.slug">{{ c.name }}</option>
             </select>
-            <!-- Reference sub-config: display & value fields -->
+            <!-- Reference sub-config: only display field (value is auto-synced) -->
             <div *ngIf="field.type === 'reference' && field.refCollection" class="ref-config">
               <div class="ref-config-group">
                 <span class="ref-label">Mostrar:</span>
-                <select [(ngModel)]="field.refDisplayField" class="select-sm">
+                <select [(ngModel)]="field.refDisplayField"
+                        (ngModelChange)="field.refValueField = $event" class="select-sm">
                   <option value="">-- Campo a mostrar --</option>
-                  <option *ngFor="let rf of getRefCollectionFields(field.refCollection)" [value]="rf.key">{{ rf.label || rf.key }}</option>
-                </select>
-              </div>
-              <div class="ref-config-group">
-                <span class="ref-label">Almacenar:</span>
-                <select [(ngModel)]="field.refValueField" class="select-sm">
-                  <option value="">ID del documento</option>
                   <option *ngFor="let rf of getRefCollectionFields(field.refCollection)" [value]="rf.key">{{ rf.label || rf.key }}</option>
                 </select>
               </div>

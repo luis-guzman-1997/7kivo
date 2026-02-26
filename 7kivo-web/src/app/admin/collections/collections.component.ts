@@ -160,12 +160,24 @@ export class CollectionsComponent implements OnInit {
   }
 
   generateFieldKey(field: CollectionField): void {
-    if (field.label && !field.key) {
+    if (!field.label) return;
+    // For reference fields the key input is hidden — always keep it in sync with the label
+    if (!field.key || field.type === 'reference') {
       field.key = field.label
         .toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/(^_|_$)/g, '');
+    }
+  }
+
+  onFieldTypeChange(field: CollectionField): void {
+    // When switching to reference, regenerate the key and clear ref-specific config
+    if (field.type === 'reference') {
+      this.generateFieldKey(field);
+      field.refCollection = field.refCollection || '';
+      field.refDisplayField = '';
+      field.refValueField = '';
     }
   }
 
