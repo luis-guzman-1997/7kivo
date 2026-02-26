@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { SwUpdate } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -16,7 +17,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private readonly sections = ['inicio', 'funcionalidades', 'planes', 'casos', 'nosotros'];
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private swUpdate: SwUpdate) {
+    if (swUpdate.isEnabled) {
+      swUpdate.versionUpdates.pipe(
+        filter(e => e.type === 'VERSION_READY')
+      ).subscribe(() => window.location.reload());
+    }
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
