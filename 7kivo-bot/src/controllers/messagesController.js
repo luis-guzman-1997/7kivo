@@ -122,16 +122,32 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
     const userMessage = messageObj?.text?.body?.trim() || "";
 
-    // Handle image messages from user (save for admin visibility)
+    // Handle image messages from user (download from Meta → Firebase Storage → save with URL)
     if (!userMessage && messageObj?.type === "image") {
       const imageCaption = messageObj?.image?.caption || "";
       const mediaId = messageObj?.image?.id || "";
       const displayText = imageCaption ? `📷 ${imageCaption}` : "📷 Foto";
-      saveMessage(phoneNumber, displayText, "user", {
-        contactName,
-        type: "image",
-        mediaId
-      }).catch(err => console.error("Error saving image message:", err.message));
+
+      // Process in background so webhook responds immediately
+      (async () => {
+        try {
+          const { downloadAndUploadMedia } = require("../services/mediaService");
+          const imageUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+          await saveMessage(phoneNumber, displayText, "user", {
+            contactName,
+            type: "image",
+            imageUrl,
+          });
+        } catch (err) {
+          console.error("Error processing user image:", err.message);
+          // Fallback: save placeholder without image URL
+          saveMessage(phoneNumber, displayText, "user", {
+            contactName,
+            type: "image",
+          }).catch(e => console.error("Error saving image placeholder:", e.message));
+        }
+      })();
+
       return res.sendStatus(200);
     }
 

@@ -218,6 +218,7 @@ const sendImageMessage = async (imageUrl, caption, phoneNumber) => {
 };
 
 module.exports = {
+  getWACredentials,
   sendTextMessage,
   sendInteractiveButtons,
   sendInteractiveList,
