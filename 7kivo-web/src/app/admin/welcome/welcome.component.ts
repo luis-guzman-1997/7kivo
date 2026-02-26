@@ -19,10 +19,10 @@ export class WelcomeComponent implements OnInit {
   planFeatures: string[] = [];
 
   planMap: Record<string, string[]> = {
-    'Starter': ['Bot WhatsApp con menú interactivo', '1 flujo conversacional', '1 colección de datos', 'Bandeja de entrada', 'Chat WhatsApp (solo lectura)'],
-    'Business': ['Hasta 3 flujos conversacionales', '3 colecciones de datos', 'Sistema de citas y agenda', 'Chat en vivo con clientes', '3 usuarios administradores'],
-    'Premium': ['Hasta 5 flujos conversacionales', '10 colecciones de datos', 'Roles y permisos avanzados', '5 usuarios administradores'],
-    'Enterprise': ['Hasta 20 flujos', 'Colecciones ilimitadas', 'Usuarios ilimitados', 'Configuración avanzada']
+    'Starter': ['Bot WhatsApp con menú interactivo', '1 flujo conversacional', '1 base de datos', 'Bandeja de entrada', 'Chat WhatsApp (solo lectura)'],
+    'Business': ['Hasta 3 flujos conversacionales', '3 bases de datos', 'Sistema de citas y agenda', 'Chat en vivo con clientes', '3 usuarios administradores'],
+    'Premium': ['Hasta 5 flujos conversacionales', '10 bases de datos', 'Roles y permisos avanzados', '5 usuarios administradores'],
+    'Enterprise': ['Hasta 20 flujos', 'Bases de datos ilimitadas', 'Usuarios ilimitados', 'Configuración avanzada']
   };
 
   constructor(

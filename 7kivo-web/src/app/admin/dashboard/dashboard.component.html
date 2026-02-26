@@ -22,48 +22,62 @@
 
   <div *ngIf="!loading">
     <!-- Onboarding for new orgs -->
-    <div class="onboarding" *ngIf="isNewOrg">
+    <div class="onboarding" *ngIf="showOnboarding">
       <div class="onboarding-header">
-        <h2>Bienvenido a 7kivo</h2>
-        <p>Tu organización ha sido creada. Sigue estos pasos para empezar:</p>
+        <div>
+          <h2>Configura tu bot</h2>
+          <p>Completa estos pasos para tener tu bot de WhatsApp listo:</p>
+        </div>
+        <div class="ob-progress">
+          <span class="ob-progress-count">{{ (step1Done ? 1 : 0) + (step2Done ? 1 : 0) + (step3Done ? 1 : 0) }} / 3</span>
+          <span class="ob-progress-label">completados</span>
+        </div>
       </div>
       <div class="onboarding-steps">
-        <a routerLink="/admin/configuracion" class="onboarding-step">
-          <div class="ob-step-num">1</div>
+
+        <!-- Step 1 -->
+        <a routerLink="/admin/configuracion" class="onboarding-step" [class.ob-done]="step1Done" [class.ob-pending]="!step1Done">
+          <div class="ob-step-icon" [class.ob-icon-done]="step1Done" [class.ob-icon-pending]="!step1Done">
+            <i class="fas" [class.fa-check]="step1Done" [class.fa-building]="!step1Done"></i>
+          </div>
           <div class="ob-step-body">
             <h4>Configura tu empresa</h4>
-            <p>Agrega el nombre, logo y datos de contacto de tu negocio</p>
+            <p *ngIf="step1Done" class="ob-done-hint"><i class="fas fa-check-circle"></i> Nombre y descripción guardados</p>
+            <p *ngIf="!step1Done" class="ob-missing-hint"><i class="fas fa-exclamation-circle"></i> {{ step1Missing }}</p>
           </div>
-          <i class="fas fa-chevron-right"></i>
+          <i class="fas fa-chevron-right ob-arrow"></i>
         </a>
-        <a routerLink="/admin/colecciones" class="onboarding-step">
-          <div class="ob-step-num">2</div>
-          <div class="ob-step-body">
-            <h4>Crea tus colecciones</h4>
-            <p>Define las bases de datos donde se guardará la información (productos, servicios, etc.)</p>
+
+        <!-- Step 2 -->
+        <a routerLink="/admin/flujos" class="onboarding-step" [class.ob-done]="step2Done" [class.ob-pending]="!step2Done">
+          <div class="ob-step-icon" [class.ob-icon-done]="step2Done" [class.ob-icon-pending]="!step2Done">
+            <i class="fas" [class.fa-check]="step2Done" [class.fa-project-diagram]="!step2Done"></i>
           </div>
-          <i class="fas fa-chevron-right"></i>
-        </a>
-        <a routerLink="/admin/flujos" class="onboarding-step">
-          <div class="ob-step-num">3</div>
           <div class="ob-step-body">
             <h4>Construye tus flujos</h4>
-            <p>Diseña las conversaciones que tu bot tendrá con los clientes</p>
+            <p *ngIf="step2Done" class="ob-done-hint"><i class="fas fa-check-circle"></i> {{ totalFlows }} flujo{{ totalFlows !== 1 ? 's' : '' }} creado{{ totalFlows !== 1 ? 's' : '' }}</p>
+            <p *ngIf="!step2Done" class="ob-missing-hint"><i class="fas fa-exclamation-circle"></i> {{ step2Missing }}</p>
           </div>
-          <i class="fas fa-chevron-right"></i>
+          <i class="fas fa-chevron-right ob-arrow"></i>
         </a>
-        <a routerLink="/admin/bot" class="onboarding-step">
-          <div class="ob-step-num">4</div>
+
+        <!-- Step 3 -->
+        <a routerLink="/admin/flujos" class="onboarding-step" [class.ob-done]="step3Done" [class.ob-pending]="!step3Done">
+          <div class="ob-step-icon" [class.ob-icon-done]="step3Done" [class.ob-icon-pending]="!step3Done">
+            <i class="fas" [class.fa-check]="step3Done" [class.fa-comment-dots]="!step3Done"></i>
+          </div>
           <div class="ob-step-body">
-            <h4>Personaliza la mensajería</h4>
-            <p>Configura mensajes de saludo, despedida e información general del bot</p>
+            <h4>Configura el mensaje de saludo</h4>
+            <p *ngIf="step3Done" class="ob-done-hint"><i class="fas fa-check-circle"></i> Mensaje de saludo guardado</p>
+            <p *ngIf="!step3Done" class="ob-missing-hint"><i class="fas fa-exclamation-circle"></i> {{ step3Missing }}</p>
           </div>
-          <i class="fas fa-chevron-right"></i>
+          <i class="fas fa-chevron-right ob-arrow"></i>
         </a>
+
       </div>
       <div class="onboarding-note">
         <i class="fas fa-info-circle"></i>
-        Tu bot de WhatsApp se activará cuando el administrador de la plataforma configure tus credenciales. Mientras tanto, puedes preparar todo el contenido.
+        Tu bot se activará cuando el administrador de 7kivo configure tus credenciales. Mientras tanto, prepara todo el contenido.
       </div>
     </div>
 
@@ -110,7 +124,7 @@
         <span class="usage-count">{{ totalFlows }} / {{ planLimits.flows }}</span>
       </div>
       <div class="usage-item">
-        <span class="usage-label">Colecciones</span>
+        <span class="usage-label">Bases de Datos</span>
         <div class="usage-bar-track">
           <div class="usage-bar-fill" [style.width.%]="(totalCollections / planLimits.collections) * 100"></div>
         </div>
@@ -143,18 +157,18 @@
     <div class="panel">
       <div class="panel-header">
         <h3><i class="fas fa-clock"></i> Registros Recientes</h3>
-        <a routerLink="/admin/colecciones" class="btn-view-all">Colecciones <i class="fas fa-arrow-right"></i></a>
+        <a routerLink="/admin/colecciones" class="btn-view-all">Bases de Datos <i class="fas fa-arrow-right"></i></a>
       </div>
       <div class="panel-body">
         <div *ngIf="recentItems.length === 0" class="empty-state">
           <i class="fas fa-inbox"></i>
-          <p>No hay registros aún. Crea colecciones y flujos para comenzar.</p>
+          <p>No hay registros aún. Crea bases de datos y flujos para comenzar.</p>
         </div>
         <table class="data-table" *ngIf="recentItems.length > 0">
           <thead>
             <tr>
               <th>Registro</th>
-              <th>Colección</th>
+              <th>Base de Datos</th>
               <th>Fecha</th>
               <th>Estado</th>
             </tr>

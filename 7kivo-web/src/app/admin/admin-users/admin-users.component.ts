@@ -16,8 +16,8 @@ export class AdminUsersComponent implements OnInit {
   formSuccess = '';
 
   availableRoles = [
-    { value: 'admin',  label: 'Gerente',   desc: 'Gestión operativa: mensajería, flujos, colecciones y usuarios (sin configuración de empresa)' },
-    { value: 'editor', label: 'Operador',  desc: 'Operaciones del día a día: dashboard, contactos, chat, bandeja y colecciones' },
+    { value: 'admin',  label: 'Gerente',   desc: 'Gestión operativa: mensajería, flujos, bases de datos y usuarios (sin configuración de empresa)' },
+    { value: 'editor', label: 'Operador',  desc: 'Operaciones del día a día: dashboard, contactos, chat, bandeja y bases de datos' },
     { value: 'viewer', label: 'Agente',    desc: 'Atención al cliente: dashboard, bandeja de entrada y chat (sin acceso a contactos)' }
   ];
 
@@ -26,7 +26,7 @@ export class AdminUsersComponent implements OnInit {
     { key: 'contacts', label: 'Contactos' },
     { key: 'chat', label: 'Chat WhatsApp' },
     { key: 'inbox', label: 'Bandeja de Entrada' },
-    { key: 'collections', label: 'Colecciones' },
+    { key: 'collections', label: 'Base de Datos' },
     { key: 'flows', label: 'Flujos del Bot' },
     { key: 'bot_config', label: 'Mensajería Bot' },
     { key: 'users', label: 'Administradores' },

@@ -11,18 +11,18 @@
         <p class="page-subtitle">Crea y administra las bases de datos que alimentan tus flujos del bot</p>
       </div>
       <button class="btn-new" *ngIf="canEditSchema" (click)="openNewCollection()" [disabled]="!canCreateCollection">
-        <i class="fas fa-plus"></i> Nueva Colección
+        <i class="fas fa-plus"></i> Nueva Base de Datos
       </button>
       <span class="plan-limit-hint" *ngIf="canEditSchema && !canCreateCollection">Límite del plan: {{ collectionLimit }}</span>
     </div>
 
     <div *ngIf="loading" class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i> Cargando colecciones...
+      <i class="fas fa-spinner fa-spin"></i> Cargando bases de datos...
     </div>
 
     <div *ngIf="!loading && collections.length === 0" class="empty-state">
       <i class="fas fa-database"></i>
-      <p>No hay colecciones creadas. Crea la primera para alimentar tus flujos del bot.</p>
+      <p>No hay bases de datos creadas. Crea la primera para alimentar tus flujos del bot.</p>
     </div>
 
     <div *ngIf="!loading" class="collection-grid">

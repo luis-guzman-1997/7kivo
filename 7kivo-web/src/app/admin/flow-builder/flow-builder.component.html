@@ -91,15 +91,19 @@
             </div>
           </div>
 
-          <button class="btn-add-item" (click)="showAddMenuPanel = !showAddMenuPanel">
-            <i class="fas fa-plus"></i> Agregar Opción al Menú
+          <button class="btn-add-item" (click)="showAddMenuPanel = !showAddMenuPanel" [class.btn-add-item-full]="!canAddMenuItem">
+            <i class="fas fa-plus" *ngIf="canAddMenuItem"></i>
+            <i class="fas fa-lock" *ngIf="!canAddMenuItem"></i>
+            {{ canAddMenuItem ? 'Agregar Opción al Menú' : 'Menú lleno' }}
+            <span class="menu-count-badge" [class.menu-count-full]="!canAddMenuItem">{{ menuConfig.items.length }}/7</span>
           </button>
 
           <!-- Quick-add panel -->
           <div class="add-menu-panel" *ngIf="showAddMenuPanel">
             <div class="amp-header">
               <h5>Agregar opción al menú</h5>
-              <p>Usa una plantilla o crea una opción personalizada</p>
+              <p *ngIf="canAddMenuItem">Usa una plantilla o crea una opción personalizada</p>
+              <p class="amp-limit-notice" *ngIf="!canAddMenuItem"><i class="fas fa-exclamation-circle"></i> Límite de 7 opciones alcanzado. Los flujos predefinidos aún pueden crearse pero no se agregarán al menú automáticamente.</p>
             </div>
 
             <!-- Flow templates (create flow + collection) -->
@@ -127,8 +131,8 @@
             <div class="amp-templates">
               <button *ngFor="let tpl of menuTemplates"
                 class="amp-tpl"
-                [class.amp-disabled]="isTemplateAlreadyInMenu(tpl)"
-                [disabled]="isTemplateAlreadyInMenu(tpl)"
+                [class.amp-disabled]="isTemplateAlreadyInMenu(tpl) || !canAddMenuItem"
+                [disabled]="isTemplateAlreadyInMenu(tpl) || !canAddMenuItem"
                 (click)="addMenuFromTemplate(tpl)">
                 <i class="fas" [ngClass]="tpl.icon"></i>
                 <div class="amp-tpl-text">
@@ -143,17 +147,17 @@
             <div class="amp-divider"><span>o</span></div>
 
             <div class="amp-custom-row">
-              <button class="amp-custom" (click)="addMenuItem()">
+              <button class="amp-custom" (click)="addMenuItem()" [disabled]="!canAddMenuItem" [class.amp-disabled]="!canAddMenuItem">
                 <i class="fas fa-sliders-h"></i> Opción personalizada
               </button>
-              <button class="amp-custom amp-custom-msg" (click)="addMessageMenuItem()">
+              <button class="amp-custom amp-custom-msg" (click)="addMessageMenuItem()" [disabled]="!canAddMenuItem" [class.amp-disabled]="!canAddMenuItem">
                 <i class="fas fa-comment-alt"></i> Mensaje directo
               </button>
             </div>
           </div>
 
           <!-- Template creation modal -->
-          <div class="template-modal-overlay" *ngIf="showTemplateModal" (click)="cancelTemplateModal()">
+          <div class="template-modal-overlay" *ngIf="showTemplateModal">
             <div class="template-modal" (click)="$event.stopPropagation()">
               <div class="template-modal-header">
                 <i class="fas" [ngClass]="pendingTemplateFlow?.icon"></i>
@@ -233,409 +237,412 @@
     </div>
   </div>
 
-  <!-- ==================== EDIT VIEW ==================== -->
-  <div *ngIf="editMode" class="flow-editor">
-    <div class="editor-header">
-      <button class="btn-back" (click)="cancelEdit()">
-        <i class="fas fa-arrow-left"></i> Volver
-      </button>
-      <h2>{{ currentFlow.id ? 'Editar Flujo' : 'Nuevo Flujo' }}</h2>
-    </div>
-
-    <!-- FLOW DETAILS -->
-    <div class="config-section">
-      <h3><i class="fas fa-info-circle"></i> Información del Flujo</h3>
-      <div class="config-form">
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Nombre del Flujo *</label>
-            <input type="text" [(ngModel)]="currentFlow.name" placeholder="Ej: Registro de Contactos" />
-          </div>
-          <div class="form-group-config">
-            <label>Tipo</label>
-            <select [(ngModel)]="currentFlow.type">
-              <option value="registration">Registro / Formulario</option>
-              <option value="inquiry">Consulta / Contacto</option>
-              <option value="feedback">Comentarios</option>
-              <option value="custom">Personalizado</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group-config">
-          <label>Descripción</label>
-          <input type="text" [(ngModel)]="currentFlow.description" placeholder="Descripción interna del flujo" />
-        </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Etiqueta en Menú *</label>
-            <input type="text" [(ngModel)]="currentFlow.menuLabel" placeholder="Ej: Registrarse" maxlength="24" />
-            <span class="field-hint">Máximo 24 caracteres ({{ currentFlow.menuLabel.length }}/24)</span>
-          </div>
-          <div class="form-group-config">
-            <label>Descripción en Menú</label>
-            <input type="text" [(ngModel)]="currentFlow.menuDescription" placeholder="Ej: Inscripción a programas" maxlength="72" />
-            <span class="field-hint">Máximo 72 caracteres ({{ currentFlow.menuDescription.length }}/72)</span>
-          </div>
-        </div>
-        <div class="form-row-config">
-          <div class="form-group-config">
-            <label>Orden en menú</label>
-            <input type="number" [(ngModel)]="currentFlow.order" />
-          </div>
-          <div class="form-group-config">
-            <label>Guardar respuestas en colección</label>
-            <select [(ngModel)]="currentFlow.saveToCollection">
-              <option value="">-- No guardar --</option>
-              <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }} ({{ col.slug }})</option>
-            </select>
-            <span class="field-hint">Los datos del flujo se guardarán en esta colección</span>
-          </div>
-        </div>
-        <div class="form-row-config">
-          <div class="form-group-config checkbox-group">
-            <label>
-              <input type="checkbox" [(ngModel)]="currentFlow.notifyAdmin" />
-              Notificar al admin cuando se complete
-            </label>
-          </div>
-          <div class="form-group-config checkbox-group">
-            <label>
-              <input type="checkbox" [(ngModel)]="currentFlow.active" />
-              Flujo activo
-            </label>
-          </div>
-        </div>
+  <!-- ==================== DELETE FLOW MODAL ==================== -->
+  <div class="template-modal-overlay" *ngIf="deleteFlowTarget" (click)="cancelDeleteFlow()">
+    <div class="template-modal delete-flow-modal" (click)="$event.stopPropagation()">
+      <div class="template-modal-header delete-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4>Eliminar flujo</h4>
       </div>
-    </div>
-
-    <!-- STEPS BUILDER -->
-    <div class="config-section">
-      <div class="section-header-row">
-        <h3><i class="fas fa-route"></i> Pasos del Flujo</h3>
-        <button class="btn-add-step" (click)="addStep()">
-          <i class="fas fa-plus"></i> Agregar Paso
+      <p class="template-modal-desc">
+        ¿Estás seguro de eliminar el flujo <strong>{{ deleteFlowTarget.name }}</strong>?
+      </p>
+      <div class="delete-options">
+        <button class="delete-option-btn delete-only"
+                (click)="confirmDeleteFlow(false)"
+                [disabled]="deletingFlow">
+          <i class="fas fa-project-diagram"></i>
+          <div>
+            <strong>Solo el flujo</strong>
+            <span>Se elimina el flujo pero los datos de la base de datos <em>{{ deleteFlowTarget.saveToCollection || 'N/A' }}</em> se conservan</span>
+          </div>
+        </button>
+        <button class="delete-option-btn delete-all"
+                *ngIf="deleteFlowTarget.saveToCollection"
+                (click)="confirmDeleteFlow(true)"
+                [disabled]="deletingFlow">
+          <i class="fas fa-database"></i>
+          <div>
+            <strong>Flujo y base de datos</strong>
+            <span>Elimina el flujo y todos los datos guardados en <em>{{ deleteFlowTarget.saveToCollection }}</em></span>
+          </div>
         </button>
       </div>
-
-      <div *ngIf="currentFlow.steps.length === 0" class="empty-steps">
-        <i class="fas fa-plus-circle"></i>
-        <p>Agrega pasos para definir la conversación del bot con el usuario.</p>
+      <div class="template-modal-actions">
+        <button class="btn-tpl-cancel" (click)="cancelDeleteFlow()" [disabled]="deletingFlow">Cancelar</button>
+        <div *ngIf="deletingFlow" class="deleting-spinner">
+          <i class="fas fa-spinner fa-spin"></i> Eliminando...
+        </div>
       </div>
+    </div>
+  </div>
 
-      <div *ngFor="let step of currentFlow.steps; let i = index" class="step-card" [class.step-expanded]="expandedStepIndex === i">
-        <div class="step-header" (click)="toggleStepExpand(i)">
-          <div class="step-header-left">
-            <div class="step-reorder">
-              <button class="btn-icon-xs" (click)="moveStepUp(i); $event.stopPropagation()" [disabled]="i === 0">
-                <i class="fas fa-chevron-up"></i>
-              </button>
-              <button class="btn-icon-xs" (click)="moveStepDown(i); $event.stopPropagation()" [disabled]="i === currentFlow.steps.length - 1">
-                <i class="fas fa-chevron-down"></i>
-              </button>
+  <!-- ==================== EDIT VIEW ==================== -->
+  <div *ngIf="editMode" class="flow-editor-v2">
+
+    <!-- Top Bar -->
+    <div class="fe-topbar">
+      <button class="fe-back-btn" (click)="cancelEdit()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <input class="fe-name-input" type="text" [(ngModel)]="currentFlow.name" placeholder="Nombre del flujo..." />
+      <label class="fe-active-toggle">
+        <input type="checkbox" [(ngModel)]="currentFlow.active" />
+        <span [class.fe-active-on]="currentFlow.active">{{ currentFlow.active ? 'Activo' : 'Inactivo' }}</span>
+      </label>
+      <button class="fe-save-btn" (click)="saveFlow()" [disabled]="saving">
+        <i class="fas fa-save" *ngIf="!saving"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+        {{ saving ? 'Guardando…' : (currentFlow.id ? 'Guardar cambios' : 'Crear flujo') }}
+      </button>
+    </div>
+
+    <!-- Split layout -->
+    <div class="fe-split">
+
+      <!-- ── LEFT: Editor ── -->
+      <div class="fe-left">
+
+        <!-- Bloque: Menú -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-tag"></i> Cómo aparece en el menú del bot</div>
+          <div class="fe-row-3">
+            <div class="fe-field">
+              <label>Etiqueta <span class="fe-char">{{ currentFlow.menuLabel.length }}/24</span></label>
+              <input type="text" [(ngModel)]="currentFlow.menuLabel" placeholder="Ej: Agendar Cita" maxlength="24" />
             </div>
-            <span class="step-number">{{ i + 1 }}</span>
-            <span class="step-type-badge" [attr.data-type]="step.type">
-              <i class="fas" [ngClass]="getStepTypeInfo(step.type).icon"></i>
-              {{ getStepTypeInfo(step.type).label }}
-            </span>
-            <span class="step-preview" *ngIf="step.prompt">{{ step.prompt.substring(0, 60) }}{{ step.prompt.length > 60 ? '...' : '' }}</span>
-            <span class="step-field-badge" *ngIf="step.fieldKey && step.type !== 'message'">{{ '{' + step.fieldKey + '}' }}</span>
+            <div class="fe-field">
+              <label>Descripción corta</label>
+              <input type="text" [(ngModel)]="currentFlow.menuDescription" placeholder="Ej: Reserva tu espacio" maxlength="72" />
+            </div>
+            <div class="fe-field">
+              <label>Guardar datos en</label>
+              <select [(ngModel)]="currentFlow.saveToCollection">
+                <option value="">— No guardar —</option>
+                <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
+              </select>
+            </div>
           </div>
-          <div class="step-header-right">
-            <button class="btn-icon-xs btn-danger" (click)="removeStep(i); $event.stopPropagation()" title="Eliminar paso">
-              <i class="fas fa-trash"></i>
-            </button>
-            <i class="fas fa-chevron-down step-expand-icon" [class.rotated]="expandedStepIndex === i"></i>
-          </div>
+          <label class="fe-check">
+            <input type="checkbox" [(ngModel)]="currentFlow.notifyAdmin" />
+            Notificarme cuando alguien complete este flujo
+          </label>
         </div>
 
-        <div class="step-body" *ngIf="expandedStepIndex === i">
-          <div class="form-group-config">
-            <label>Tipo de paso</label>
-            <div class="step-type-selector">
-              <button *ngFor="let st of stepTypes" class="step-type-option" [class.selected]="step.type === st.value"
-                      (click)="step.type = st.value">
-                <i class="fas" [ngClass]="st.icon"></i>
-                <span>{{ st.label }}</span>
-              </button>
-            </div>
-          </div>
+        <!-- Bloque: Pasos -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-comments"></i> Conversación paso a paso</div>
+          <p class="fe-hint">Cada paso es un mensaje que el bot envía y espera la respuesta del usuario.</p>
 
-          <div class="form-group-config">
-            <label>Mensaje / Pregunta *</label>
-            <textarea [(ngModel)]="step.prompt" rows="2" [placeholder]="step.type === 'message' ? 'Mensaje automático...' : '¿Cuál es tu nombre completo?'"></textarea>
-          </div>
+          <!-- Lista de pasos -->
+          <div class="fe-steps" *ngIf="currentFlow.steps.length > 0">
+            <div *ngFor="let step of currentFlow.steps; let i = index"
+                 class="fe-step" [class.fe-step-open]="expandedStepIndex === i">
 
-          <div *ngIf="step.type !== 'message'" class="form-row-config">
-            <div class="form-group-config">
-              <label>Clave del campo (fieldKey) *</label>
-              <input type="text" [(ngModel)]="step.fieldKey" placeholder="Ej: fullName, age, comment" />
-              <span class="field-hint">Se usa en el mensaje de completado como {{ '{' + (step.fieldKey || 'clave') + '}' }}</span>
-            </div>
-            <div class="form-group-config">
-              <label>Etiqueta visible</label>
-              <input type="text" [(ngModel)]="step.fieldLabel" placeholder="Ej: Nombre Completo" />
-            </div>
-          </div>
-
-          <!-- Validation for text -->
-          <div *ngIf="step.type === 'text_input'" class="form-row-config">
-            <div class="form-group-config">
-              <label>Longitud mínima</label>
-              <input type="number" [(ngModel)]="step.validation.minLength" placeholder="3" />
-            </div>
-            <div class="form-group-config">
-              <label>Longitud máxima</label>
-              <input type="number" [(ngModel)]="step.validation.maxLength" placeholder="200" />
-            </div>
-          </div>
-
-          <!-- Validation for number -->
-          <div *ngIf="step.type === 'number_input'" class="form-row-config">
-            <div class="form-group-config">
-              <label>Valor mínimo</label>
-              <input type="number" [(ngModel)]="step.validation.min" placeholder="1" />
-            </div>
-            <div class="form-group-config">
-              <label>Valor máximo</label>
-              <input type="number" [(ngModel)]="step.validation.max" placeholder="100" />
-            </div>
-          </div>
-
-          <!-- Options source for select types -->
-          <div *ngIf="step.type === 'select_list' || step.type === 'select_buttons'">
-            <div class="form-row-config">
-              <div class="form-group-config">
-                <label>Origen de opciones</label>
-                <select [(ngModel)]="step.optionsSource">
-                  <option value="custom">Opciones personalizadas</option>
-                  <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }} (colección)</option>
-                </select>
+              <!-- Step header -->
+              <div class="fe-step-head" (click)="toggleStepExpand(i)">
+                <span class="fe-step-num">{{ i + 1 }}</span>
+                <div class="fe-step-meta">
+                  <span class="fe-step-type-tag" [attr.data-type]="step.type">
+                    <i class="fas" [ngClass]="getStepTypeInfo(step.type).icon"></i>
+                    {{ getStepTypeInfo(step.type).label }}
+                  </span>
+                  <span class="fe-step-preview">{{ step.prompt ? step.prompt.substring(0,60) + (step.prompt.length>60?'…':'') : '(sin mensaje)' }}</span>
+                </div>
+                <div class="fe-step-controls" (click)="$event.stopPropagation()">
+                  <button class="fe-ctrl-btn" (click)="moveStepUp(i)" [disabled]="i===0" title="Subir"><i class="fas fa-chevron-up"></i></button>
+                  <button class="fe-ctrl-btn" (click)="moveStepDown(i)" [disabled]="i===currentFlow.steps.length-1" title="Bajar"><i class="fas fa-chevron-down"></i></button>
+                  <button class="fe-ctrl-btn fe-ctrl-del" (click)="removeStep(i)" title="Eliminar"><i class="fas fa-trash"></i></button>
+                  <i class="fas fa-chevron-down fe-chevron" [class.fe-chevron-open]="expandedStepIndex===i"></i>
+                </div>
               </div>
-              <div class="form-group-config" *ngIf="step.type === 'select_list'">
-                <label>Texto del botón</label>
-                <input type="text" [(ngModel)]="step.buttonText" placeholder="Ver opciones" />
-              </div>
-            </div>
 
-            <!-- Collection field mapping -->
-            <div *ngIf="step.optionsSource && step.optionsSource !== 'custom'" class="form-row-config">
-              <div class="form-group-config">
-                <label>Campo para título *</label>
-                <select [(ngModel)]="step.optionsTitleField">
-                  <option value="">-- Usar nombre por defecto --</option>
-                  <option *ngFor="let f of getCollectionFields(step.optionsSource)" [value]="f.key">{{ f.label || f.key }}</option>
-                </select>
-                <span class="field-hint">Máx. 24 caracteres en lista, 20 en botones</span>
-              </div>
-              <div class="form-group-config" *ngIf="step.type === 'select_list'">
-                <label>Campo para descripción (opcional)</label>
-                <select [(ngModel)]="step.optionsDescField">
-                  <option value="">-- Sin descripción --</option>
-                  <option *ngFor="let f of getCollectionFields(step.optionsSource)" [value]="f.key">{{ f.label || f.key }}</option>
-                </select>
-                <span class="field-hint">Máx. 72 caracteres. Se muestra debajo del título</span>
-              </div>
-            </div>
+              <!-- Step body -->
+              <div class="fe-step-body" *ngIf="expandedStepIndex === i">
 
-            <!-- Custom options -->
-            <div *ngIf="step.optionsSource === 'custom'" class="custom-options-section">
-              <label>Opciones personalizadas</label>
-              <div *ngFor="let opt of step.customOptions; let oi = index" class="custom-option-row">
-                <input type="text" [(ngModel)]="opt.label" placeholder="Texto visible" class="input-sm" maxlength="24" />
-                <input type="text" [(ngModel)]="opt.value" placeholder="Valor (ID)" class="input-sm" />
-                <input *ngIf="step.type === 'select_list'" type="text" [(ngModel)]="opt.description" placeholder="Descripción (opcional)" class="input-sm" maxlength="72" />
-                <input *ngIf="flowHasAppointmentStep()" type="number" [(ngModel)]="opt.duration" placeholder="Min." class="input-sm input-duration" min="5" max="480" />
-                <button class="btn-icon-xs btn-danger" (click)="removeCustomOption(step, oi)">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-              <button class="btn-add-option" (click)="addCustomOption(step)">
-                <i class="fas fa-plus"></i> Agregar opción
-              </button>
-              <p class="field-hint" *ngIf="step.type === 'select_buttons'">Máximo 3 opciones para botones (20 caracteres máx. por título).</p>
-              <p class="field-hint" *ngIf="step.type === 'select_list'">Título: máx. 24 caracteres. Descripción: máx. 72 caracteres.</p>
-              <p class="field-hint" *ngIf="flowHasAppointmentStep()"><i class="fas fa-clock"></i> <strong>Min.</strong> = duración de la cita en minutos para esa opción. Define cuánto tiempo ocupa cada tipo de cita.</p>
-            </div>
-
-            <!-- Collection preview -->
-            <div *ngIf="step.optionsSource && step.optionsSource !== 'custom'" class="collection-preview-box">
-              <label><i class="fas fa-eye"></i> Vista previa (como se verá en WhatsApp)</label>
-              <div class="collection-preview-items" *ngIf="getCollectionPreview(step.optionsSource).length > 0">
-                <div *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0, step.type === 'select_buttons' ? 3 : 10); let pi = index"
-                     class="collection-preview-item"
-                     [class.btn-style]="step.type === 'select_buttons'" [class.list-style]="step.type === 'select_list'">
-                  <span class="preview-item-num" *ngIf="step.type === 'select_list'">{{ pi + 1 }}.</span>
-                  <div class="preview-item-content">
-                    <span class="preview-item-title">{{ getPreviewItemField(item, step.optionsTitleField).substring(0, step.type === 'select_buttons' ? 20 : 24) }}</span>
-                    <span class="preview-item-desc" *ngIf="step.type === 'select_list' && step.optionsDescField && item[step.optionsDescField]">
-                      {{ ('' + item[step.optionsDescField]).substring(0, 72) }}
-                    </span>
+                <!-- Tipo -->
+                <div class="fe-field">
+                  <label>Tipo de respuesta del usuario</label>
+                  <div class="fe-type-row">
+                    <button *ngFor="let st of stepTypes"
+                            class="fe-type-btn" [class.fe-type-active]="step.type === st.value"
+                            (click)="step.type = st.value" [title]="st.desc">
+                      <i class="fas" [ngClass]="st.icon"></i>
+                      <span>{{ st.label }}</span>
+                    </button>
                   </div>
                 </div>
-                <p class="field-hint" *ngIf="step.type === 'select_buttons' && getCollectionPreview(step.optionsSource).length > 3">
-                  <i class="fas fa-info-circle"></i> Solo se mostrarán las primeras 3 opciones en botones de WhatsApp.
-                </p>
-              </div>
-              <div *ngIf="getCollectionPreview(step.optionsSource).length === 0" class="collection-preview-empty">
-                <i class="fas fa-database"></i> No hay datos en esta colección.
-              </div>
-            </div>
-          </div>
 
-          <!-- Browse collection config -->
-          <div *ngIf="step.type === 'browse_collection'">
-            <div class="form-row-config">
-              <div class="form-group-config">
-                <label>Colección fuente *</label>
-                <select [(ngModel)]="step.sourceCollection" (ngModelChange)="onBrowseCollectionChange(step)">
-                  <option value="">-- Seleccionar --</option>
-                  <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
-                </select>
-              </div>
-              <div class="form-group-config">
-                <label>Campo a mostrar en la lista</label>
-                <select [(ngModel)]="step.displayField">
-                  <option value="">-- Seleccionar --</option>
-                  <option *ngFor="let f of getCollectionFields(step.sourceCollection)" [value]="f.key">{{ f.label || f.key }}</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group-config" *ngIf="step.sourceCollection">
-              <label>Campos a mostrar en el detalle</label>
-              <div class="detail-fields-checks">
-                <label *ngFor="let f of getCollectionFields(step.sourceCollection)" class="check-detail">
-                  <input type="checkbox" [checked]="step.detailFields.includes(f.key)" (change)="toggleDetailField(step, f.key)" />
-                  {{ f.label || f.key }}
+                <!-- Prompt -->
+                <div class="fe-field">
+                  <label>{{ step.type === 'message' ? 'Mensaje del bot' : '¿Qué le pregunta el bot?' }}</label>
+                  <textarea [(ngModel)]="step.prompt" rows="2"
+                    [placeholder]="step.type === 'message' ? 'Escribe el mensaje automático...' : 'Ej: ¿Cuál es tu nombre completo?'"></textarea>
+                </div>
+
+                <!-- Nombre del dato (todos excepto message, appointment y browse) -->
+                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection'">
+                  <label>¿Con qué nombre guardas esta respuesta?
+                    <span class="fe-var-tag" *ngIf="step.fieldKey">{{ '{' + step.fieldKey + '}' }}</span>
+                  </label>
+                  <input type="text" [(ngModel)]="step.fieldLabel"
+                    placeholder="Ej: Nombre, Correo, Servicio…"
+                    (ngModelChange)="onStepLabelChange(step)" />
+                </div>
+
+                <!-- Obligatorio -->
+                <label class="fe-check fe-field-inline" *ngIf="step.type !== 'message'">
+                  <input type="checkbox" [(ngModel)]="step.required" />
+                  Respuesta obligatoria
                 </label>
+
+                <!-- ── BOTONES / LISTA ── -->
+                <ng-container *ngIf="step.type === 'select_buttons' || step.type === 'select_list'">
+
+                  <div class="fe-field">
+                    <label>¿De dónde vienen las opciones?</label>
+                    <div class="fe-src-row">
+                      <button class="fe-src-btn" [class.fe-src-active]="step.optionsSource === 'custom'"
+                              (click)="step.optionsSource = 'custom'">
+                        <i class="fas fa-pen"></i> Las escribo yo
+                      </button>
+                      <button *ngFor="let col of collectionDefs"
+                              class="fe-src-btn" [class.fe-src-active]="step.optionsSource === col.slug"
+                              (click)="step.optionsSource = col.slug; step.optionsTitleField = ''">
+                        <i class="fas fa-database"></i> {{ col.name }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Opciones manuales -->
+                  <div class="fe-field" *ngIf="step.optionsSource === 'custom'">
+                    <label>Opciones <span class="fe-hint-inline" *ngIf="step.type === 'select_buttons'">(máx. 3)</span></label>
+                    <div class="fe-opts-list">
+                      <div *ngFor="let opt of step.customOptions; let oi = index" class="fe-opt-row">
+                        <input type="text" [(ngModel)]="opt.label" (ngModelChange)="opt.value = opt.label"
+                               [placeholder]="step.type === 'select_buttons' ? 'Opción ' + (oi+1) : 'Texto de la opción'"
+                               maxlength="24" class="fe-opt-input" />
+                        <input *ngIf="step.type === 'select_list'" type="text" [(ngModel)]="opt.description"
+                               placeholder="Descripción opcional" maxlength="72" class="fe-opt-desc" />
+                        <button class="fe-opt-del" (click)="removeCustomOption(step, oi)"><i class="fas fa-times"></i></button>
+                      </div>
+                    </div>
+                    <button class="fe-add-opt"
+                            (click)="addCustomOption(step)"
+                            *ngIf="step.type !== 'select_buttons' || step.customOptions.length < 3">
+                      <i class="fas fa-plus"></i> Agregar opción
+                    </button>
+                  </div>
+
+                  <!-- Opciones desde base de datos -->
+                  <div class="fe-field" *ngIf="step.optionsSource && step.optionsSource !== 'custom'">
+                    <label>Campo a mostrar</label>
+                    <select [(ngModel)]="step.optionsTitleField">
+                      <option value="">— Automático —</option>
+                      <option *ngFor="let f of getCollectionFields(step.optionsSource)" [value]="f.key">{{ f.label || f.key }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Botón de lista -->
+                  <div class="fe-field" *ngIf="step.type === 'select_list'">
+                    <label>Texto del botón "Ver lista"</label>
+                    <input type="text" [(ngModel)]="step.buttonText" placeholder="Ver opciones" />
+                  </div>
+
+                </ng-container>
+
+                <!-- ── CATÁLOGO ── -->
+                <ng-container *ngIf="step.type === 'browse_collection'">
+                  <div class="fe-row-2">
+                    <div class="fe-field">
+                      <label>Base de datos a mostrar</label>
+                      <select [(ngModel)]="step.sourceCollection" (ngModelChange)="onBrowseCollectionChange(step)">
+                        <option value="">— Seleccionar —</option>
+                        <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
+                      </select>
+                    </div>
+                    <div class="fe-field" *ngIf="step.sourceCollection">
+                      <label>Campo para el título</label>
+                      <select [(ngModel)]="step.displayField">
+                        <option value="">— Automático —</option>
+                        <option *ngFor="let f of getCollectionFields(step.sourceCollection)" [value]="f.key">{{ f.label || f.key }}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="fe-field" *ngIf="step.sourceCollection">
+                    <label>Datos que se muestran al ver el detalle</label>
+                    <div class="fe-detail-chips">
+                      <label *ngFor="let f of getCollectionFields(step.sourceCollection)" class="fe-detail-chip">
+                        <input type="checkbox" [checked]="step.detailFields.includes(f.key)" (change)="toggleDetailField(step, f.key)" />
+                        {{ f.label || f.key }}
+                      </label>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <!-- ── CITA ── -->
+                <div class="fe-appt-info" *ngIf="step.type === 'appointment_slot'">
+                  <i class="fas fa-info-circle"></i>
+                  El bot mostrará automáticamente los días y horarios disponibles según la configuración de <strong>Horarios de Atención</strong>. No se permiten dobles reservas.
+                </div>
+
+                <!-- Error message -->
+                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot'">
+                  <label class="fe-label-secondary">Mensaje si la respuesta no es válida <span class="fe-hint-inline">(opcional)</span></label>
+                  <input type="text" [(ngModel)]="step.errorMessage" placeholder="Ej: Por favor escribe un nombre válido." />
+                </div>
+
               </div>
             </div>
           </div>
 
-          <!-- Appointment slot config -->
-          <div *ngIf="step.type === 'appointment_slot'" class="appt-config-box">
-            <div class="info-banner-mini">
-              <i class="fas fa-info-circle"></i>
-              <span>Este paso muestra automáticamente los días y horarios disponibles según la configuración de horarios y duración de cita en <strong>Configuración del Bot → Info & Contacto</strong>. No se permiten dobles reservas.</span>
+          <!-- Empty state -->
+          <div class="fe-steps-empty" *ngIf="currentFlow.steps.length === 0">
+            <i class="fas fa-comment-dots"></i>
+            <p>El flujo aún no tiene pasos. Agrega el primero para definir la conversación.</p>
+          </div>
+
+          <button class="fe-add-step-btn" (click)="addStep()">
+            <i class="fas fa-plus"></i> Agregar paso
+          </button>
+        </div>
+
+        <!-- Bloque: Mensaje de confirmación -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-check-circle"></i> Mensaje de confirmación</div>
+          <p class="fe-hint">Mensaje que el bot envía cuando el usuario termina el flujo.</p>
+          <div class="fe-field">
+            <textarea [(ngModel)]="currentFlow.completionMessage" rows="4"
+              placeholder="Ej: ✅ ¡Listo, {nombre}! Recibimos tu solicitud y te contactaremos pronto."></textarea>
+            <div class="fe-vars" *ngIf="getAvailableFields().length > 0">
+              <span>Puedes usar:</span>
+              <code *ngFor="let f of getAvailableFields()">{{ f }}</code>
+              <code>{{'{'}}phoneNumber{{'}'}}</code>
             </div>
-            <div class="form-row-config">
-              <div class="form-group-config">
-                <label>Campo para la fecha *</label>
-                <input type="text" [(ngModel)]="step.fieldKey" placeholder="fecha" />
-                <span class="hint-mini">Clave donde se guarda la fecha (ej: fecha)</span>
+          </div>
+        </div>
+
+        <!-- Barra guardar -->
+        <div class="fe-save-bar">
+          <button class="fe-save-main" (click)="saveFlow()" [disabled]="saving">
+            <i class="fas fa-save" *ngIf="!saving"></i>
+            <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+            {{ saving ? 'Guardando…' : (currentFlow.id ? 'Guardar cambios' : 'Crear flujo') }}
+          </button>
+          <button class="fe-cancel-main" (click)="cancelEdit()">Cancelar</button>
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: WhatsApp Preview ── -->
+      <div class="fe-right">
+        <div class="fe-preview-wrap">
+          <div class="fe-preview-label"><i class="fab fa-whatsapp"></i> Vista previa en WhatsApp</div>
+          <div class="wa-phone-frame">
+            <div class="wa-notch"></div>
+            <div class="wa-header-bar">
+              <i class="fas fa-arrow-left wa-hdr-back"></i>
+              <div class="wa-hdr-avatar"><i class="fas fa-robot"></i></div>
+              <div class="wa-hdr-info">
+                <span class="wa-hdr-name">Bot de WhatsApp</span>
+                <span class="wa-hdr-status">en línea</span>
               </div>
-              <div class="form-group-config">
-                <label>Campo para la hora *</label>
-                <input type="text" [(ngModel)]="step.timeFieldKey" placeholder="hora" />
-                <span class="hint-mini">Clave donde se guarda la hora (ej: hora)</span>
+              <i class="fas fa-ellipsis-v wa-hdr-more"></i>
+            </div>
+            <div class="wa-chat-area">
+
+              <div class="wa-date-pill">hoy</div>
+
+              <!-- El usuario elige la opción del menú -->
+              <div class="wa-row wa-row-out" *ngIf="currentFlow.menuLabel">
+                <div class="wa-bubble-out">{{ currentFlow.menuLabel }}</div>
               </div>
+
+              <!-- Pasos -->
+              <ng-container *ngFor="let step of currentFlow.steps; let i = index">
+
+                <!-- Bot pregunta -->
+                <div class="wa-row wa-row-in" *ngIf="step.prompt">
+                  <div class="wa-bubble-in">{{ step.prompt }}</div>
+                </div>
+
+                <!-- Respuesta simulada según tipo -->
+                <ng-container [ngSwitch]="step.type">
+
+                  <div class="wa-row wa-row-out" *ngSwitchCase="'text_input'">
+                    <div class="wa-bubble-out wa-bubble-placeholder">{{ step.fieldLabel || 'Texto del usuario…' }}</div>
+                  </div>
+
+                  <div class="wa-row wa-row-out" *ngSwitchCase="'number_input'">
+                    <div class="wa-bubble-out wa-bubble-placeholder">{{ step.fieldLabel || '0' }}</div>
+                  </div>
+
+                  <!-- Botones -->
+                  <div class="wa-interactive" *ngSwitchCase="'select_buttons'">
+                    <ng-container *ngIf="step.customOptions && step.customOptions.length > 0">
+                      <button class="wa-btn" *ngFor="let opt of step.customOptions.slice(0,3)">{{ opt.label || 'Opción' }}</button>
+                    </ng-container>
+                    <ng-container *ngIf="(!step.customOptions || step.customOptions.length === 0) && step.optionsSource && step.optionsSource !== 'custom'">
+                      <button class="wa-btn" *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0,3)">
+                        {{ getPreviewItemField(item, step.optionsTitleField).substring(0,20) }}
+                      </button>
+                    </ng-container>
+                    <button class="wa-btn wa-btn-ph" *ngIf="(!step.customOptions||step.customOptions.length===0) && (!step.optionsSource||step.optionsSource==='custom')">Opción…</button>
+                  </div>
+
+                  <!-- Lista -->
+                  <div class="wa-interactive" *ngSwitchCase="'select_list'">
+                    <button class="wa-list-btn">
+                      <i class="fas fa-list"></i> {{ step.buttonText || 'Ver opciones' }}
+                    </button>
+                    <div class="wa-list-items" *ngIf="(step.customOptions && step.customOptions.length > 0) || (step.optionsSource && step.optionsSource !== 'custom')">
+                      <ng-container *ngIf="step.optionsSource === 'custom'">
+                        <div class="wa-list-item" *ngFor="let opt of step.customOptions.slice(0,3)">{{ opt.label || 'Opción' }}</div>
+                      </ng-container>
+                      <ng-container *ngIf="step.optionsSource && step.optionsSource !== 'custom'">
+                        <div class="wa-list-item" *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0,3)">
+                          {{ getPreviewItemField(item, step.optionsTitleField).substring(0,24) }}
+                        </div>
+                      </ng-container>
+                    </div>
+                  </div>
+
+                  <!-- Catálogo -->
+                  <div class="wa-interactive" *ngSwitchCase="'browse_collection'">
+                    <button class="wa-list-btn"><i class="fas fa-search"></i> Explorar catálogo</button>
+                  </div>
+
+                  <!-- Cita -->
+                  <div class="wa-interactive wa-appt-preview" *ngSwitchCase="'appointment_slot'">
+                    <div class="wa-appt-line"><i class="fas fa-calendar-day"></i> Lun 10 · Mar 11 · Mié 12…</div>
+                    <div class="wa-appt-line wa-appt-time"><i class="fas fa-clock"></i> 09:00 · 09:30 · 10:00…</div>
+                  </div>
+
+                  <!-- Mensaje solo (sin respuesta) -->
+                  <ng-container *ngSwitchCase="'message'"></ng-container>
+
+                </ng-container>
+
+              </ng-container>
+
+              <!-- Mensaje de confirmación -->
+              <div class="wa-row wa-row-in" *ngIf="currentFlow.completionMessage">
+                <div class="wa-bubble-in wa-bubble-done">
+                  {{ currentFlow.completionMessage.substring(0,200) }}{{ currentFlow.completionMessage.length > 200 ? '…' : '' }}
+                </div>
+              </div>
+
+              <!-- Estado vacío -->
+              <div class="wa-empty" *ngIf="currentFlow.steps.length === 0 && !currentFlow.completionMessage">
+                <i class="fas fa-comment-slash"></i>
+                <span>Agrega pasos para ver la conversación</span>
+              </div>
+
             </div>
-          </div>
-
-          <div *ngIf="step.type !== 'message' && step.type !== 'appointment_slot'" class="form-group-config">
-            <label>Mensaje de error</label>
-            <input type="text" [(ngModel)]="step.errorMessage" placeholder="Respuesta inválida. Intenta de nuevo." />
-          </div>
-
-          <div *ngIf="step.type !== 'message'" class="form-group-config checkbox-group">
-            <label>
-              <input type="checkbox" [(ngModel)]="step.required" /> Campo requerido
-            </label>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- COMPLETION -->
-    <div class="config-section">
-      <h3><i class="fas fa-flag-checkered"></i> Mensaje de Completado</h3>
-      <div class="config-form">
-        <div class="form-group-config">
-          <label>Mensaje al finalizar el flujo</label>
-          <textarea [(ngModel)]="currentFlow.completionMessage" rows="5"
-                    placeholder="*REGISTRO COMPLETADO*&#10;&#10;Nombre: {fullName}&#10;&#10;Gracias, nos pondremos en contacto pronto."></textarea>
-          <div class="field-hint" *ngIf="getAvailableFields().length > 0">
-            Variables disponibles: <code *ngFor="let f of getAvailableFields()">{{ f }} </code> <code>{{'{'}}phoneNumber{{'}'}}</code>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PREVIEW -->
-    <div class="config-section preview-section">
-      <h3><i class="fas fa-mobile-alt"></i> Vista Previa del Flujo</h3>
-      <div class="preview-chat">
-        <div *ngFor="let step of currentFlow.steps; let i = index" class="preview-message">
-          <div class="preview-bot">
-            <span class="preview-step-num">{{ i + 1 }}</span>
-            <div class="preview-bubble bot">{{ step.prompt || '(sin mensaje)' }}</div>
-          </div>
-          <div class="preview-user" *ngIf="step.type !== 'message'">
-            <div class="preview-bubble user" *ngIf="step.type === 'text_input' || step.type === 'number_input'">
-              <span *ngIf="step.type === 'text_input'">{{ step.fieldLabel || 'Texto...' }}</span>
-              <span *ngIf="step.type === 'number_input'">{{ step.fieldLabel || 'Número...' }}</span>
-            </div>
-            <div class="preview-bubble user preview-options" *ngIf="step.type === 'select_list' || step.type === 'select_buttons'">
-              <span class="preview-options-title">{{ step.type === 'select_list' ? 'Lista de opciones:' : 'Botones:' }}</span>
-              <ng-container *ngIf="step.optionsSource && step.optionsSource !== 'custom' && getCollectionPreview(step.optionsSource).length > 0">
-                <div class="preview-option-row" *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0, step.type === 'select_buttons' ? 3 : 10)"
-                     [class.btn-pill]="step.type === 'select_buttons'">
-                  <span class="preview-option-title">{{ getPreviewItemField(item, step.optionsTitleField).substring(0, step.type === 'select_buttons' ? 20 : 24) }}</span>
-                  <span class="preview-option-desc" *ngIf="step.type === 'select_list' && step.optionsDescField && item[step.optionsDescField]">
-                    {{ ('' + item[step.optionsDescField]).substring(0, 72) }}
-                  </span>
-                </div>
-              </ng-container>
-              <ng-container *ngIf="step.optionsSource === 'custom' && step.customOptions && step.customOptions.length > 0">
-                <div class="preview-option-row" *ngFor="let opt of step.customOptions.slice(0, step.type === 'select_buttons' ? 3 : 10)"
-                     [class.btn-pill]="step.type === 'select_buttons'">
-                  <span class="preview-option-title">{{ (opt.label || opt.value).substring(0, step.type === 'select_buttons' ? 20 : 24) }}<small *ngIf="opt.duration" class="duration-badge">{{ opt.duration }}min</small></span>
-                  <span class="preview-option-desc" *ngIf="step.type === 'select_list' && opt.description">{{ opt.description.substring(0, 72) }}</span>
-                </div>
-              </ng-container>
-              <span *ngIf="(!step.optionsSource || (step.optionsSource !== 'custom' && getCollectionPreview(step.optionsSource).length === 0)) && (!step.customOptions || step.customOptions.length === 0)">[Selecciona opción]</span>
-            </div>
-            <div class="preview-bubble user preview-options" *ngIf="step.type === 'browse_collection'">
-              <span class="preview-options-title">Items de la colección:</span>
-              <ng-container *ngIf="step.sourceCollection && getCollectionPreview(step.sourceCollection).length > 0">
-                <div class="preview-option-row" *ngFor="let item of getCollectionPreview(step.sourceCollection).slice(0, 5)">
-                  <span class="preview-option-title">{{ getPreviewItemField(item, step.displayField).substring(0, 24) }}</span>
-                </div>
-                <span class="field-hint" *ngIf="getCollectionPreview(step.sourceCollection).length > 5" style="font-size:0.75rem;color:#94a3b8">
-                  +{{ getCollectionPreview(step.sourceCollection).length - 5 }} más...
-                </span>
-              </ng-container>
-              <span *ngIf="!step.sourceCollection || getCollectionPreview(step.sourceCollection).length === 0">[Navega y selecciona item]</span>
-            </div>
-          </div>
-          <div class="preview-bot" *ngIf="step.type === 'appointment_slot'">
-            <span class="preview-step-num">{{ i + 1 }}</span>
-            <div class="preview-bubble bot">
-              {{ step.prompt || '📅 Selecciona el día para tu cita:' }}<br/>
-              <small style="color:#94a3b8;">📅 [Días disponibles] → 🕐 [Horarios libres]</small>
-            </div>
-          </div>
-        </div>
-        <div class="preview-message" *ngIf="currentFlow.completionMessage">
-          <div class="preview-bot">
-            <span class="preview-step-num"><i class="fas fa-check"></i></span>
-            <div class="preview-bubble bot completion">{{ currentFlow.completionMessage.substring(0, 150) }}{{ currentFlow.completionMessage.length > 150 ? '...' : '' }}</div>
-          </div>
-        </div>
-        <div *ngIf="currentFlow.steps.length === 0 && !currentFlow.completionMessage" class="preview-empty">
-          Agrega pasos para ver la vista previa
-        </div>
-      </div>
-    </div>
-
-    <!-- SAVE ACTIONS -->
-    <div class="editor-actions">
-      <button class="btn-save-flow" (click)="saveFlow()" [disabled]="saving">
-        <i class="fas fa-save"></i> {{ currentFlow.id ? 'Actualizar Flujo' : 'Crear Flujo' }}
-      </button>
-      <button class="btn-cancel-flow" (click)="cancelEdit()">
-        <i class="fas fa-times"></i> Cancelar
-      </button>
     </div>
   </div>
 </div>

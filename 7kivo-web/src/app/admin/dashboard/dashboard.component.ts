@@ -16,8 +16,16 @@ export class DashboardComponent implements OnInit {
   loading = true;
   planName = '';
   planLimits: any = { flows: 0, collections: 0, admins: 0, chatLive: false };
-  isNewOrg = false;
   botEnabled = true;
+
+  // Onboarding step states
+  showOnboarding = false;
+  step1Done = false;  // empresa configurada
+  step2Done = false;  // al menos 1 flujo
+  step3Done = false;  // mensaje de saludo/bot configurado
+  step1Missing = '';
+  step2Missing = '';
+  step3Missing = '';
 
   constructor(private firebaseService: FirebaseService, public authService: AuthService) {
     this.planName = this.authService.orgPlan || 'Sin plan';
@@ -27,10 +35,13 @@ export class DashboardComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const [admins, flows, colDefs] = await Promise.all([
+      const [admins, flows, colDefs, orgConfig, infoGeneral, menuConfig] = await Promise.all([
         this.firebaseService.getAdmins(),
         this.firebaseService.getFlows(),
-        this.firebaseService.getCollectionDefs()
+        this.firebaseService.getCollectionDefs(),
+        this.firebaseService.getOrgConfig(),
+        this.firebaseService.getDocument('info', 'general'),
+        this.firebaseService.getMenuConfig()
       ]);
 
       this.totalAdmins = admins.length;
@@ -57,7 +68,25 @@ export class DashboardComponent implements OnInit {
       this.recentItems.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       this.recentItems = this.recentItems.slice(0, 5);
 
-      this.isNewOrg = this.totalFlows === 0 && this.totalCollections === 0;
+      // ── Onboarding checks ──
+      // Step 1: empresa tiene nombre y descripción
+      const hasName = !!(infoGeneral?.name?.trim());
+      const hasDesc = !!(infoGeneral?.description?.trim());
+      this.step1Done = hasName && hasDesc;
+      if (!hasName && !hasDesc) this.step1Missing = 'Falta el nombre y descripción de tu empresa';
+      else if (!hasName) this.step1Missing = 'Falta el nombre de tu empresa';
+      else if (!hasDesc) this.step1Missing = 'Falta la descripción de tu empresa';
+
+      // Step 2: al menos 1 flujo creado
+      this.step2Done = this.totalFlows > 0;
+      this.step2Missing = 'Aún no has creado ningún flujo del bot';
+
+      // Step 3: mensaje de saludo configurado en el menú
+      const hasGreeting = !!(menuConfig?.greeting?.trim());
+      this.step3Done = hasGreeting;
+      this.step3Missing = 'El mensaje de saludo del bot no está configurado';
+
+      this.showOnboarding = !this.step1Done || !this.step2Done || !this.step3Done;
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {

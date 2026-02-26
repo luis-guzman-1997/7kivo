@@ -1,6 +1,6 @@
 <div class="chat-wrapper" [class.chat-has-selection]="selectedConversation">
   <!-- Settings Modal -->
-  <div class="modal-overlay" *ngIf="showSettings" (click)="showSettings = false">
+  <div class="modal-overlay" *ngIf="showSettings">
     <div class="modal-box" (click)="$event.stopPropagation()">
       <h3><i class="fas fa-cog"></i> Configuración de Chat</h3>
       <div class="form-group">
@@ -137,7 +137,7 @@
     </div>
     <div class="mode-banner bot-banner" *ngIf="isBotMode && isInFlow">
       <i class="fas fa-robot"></i>
-      <span>El usuario está en un flujo del bot ({{ sessionStep }}). Toma control si necesitas intervenir.</span>
+      <span>El usuario está en un flujo del bot. Toma control si necesitas intervenir.</span>
     </div>
 
     <!-- Messages -->

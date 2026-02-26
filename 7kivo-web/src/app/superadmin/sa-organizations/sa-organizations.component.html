@@ -93,7 +93,7 @@
   </div>
 
   <!-- Detail Modal -->
-  <div class="modal-overlay" *ngIf="selectedOrg" (click)="closeDetail()">
+  <div class="modal-overlay" *ngIf="selectedOrg">
     <div class="modal-content modal-wide" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div class="modal-header-info">
@@ -207,7 +207,7 @@
                 <span>{{ selectedOrg.customLimits.flows }}</span>
               </div>
               <div class="detail-item" *ngIf="selectedOrg.customLimits">
-                <label>Colecciones</label>
+                <label>Bases de Datos</label>
                 <span>{{ selectedOrg.customLimits.collections }}</span>
               </div>
               <div class="detail-item" *ngIf="selectedOrg.customLimits">
@@ -250,7 +250,7 @@
                   <input type="number" [(ngModel)]="editLimits.flows" min="1" />
                 </div>
                 <div class="form-group">
-                  <label>Colecciones</label>
+                  <label>Bases de Datos</label>
                   <input type="number" [(ngModel)]="editLimits.collections" min="1" />
                 </div>
                 <div class="form-group">
@@ -493,7 +493,7 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div class="modal-overlay delete-overlay" *ngIf="deleteConfirmOrg" (click)="cancelDelete()">
+  <div class="modal-overlay delete-overlay" *ngIf="deleteConfirmOrg">
     <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
 
       <!-- Before execution: confirmation -->
@@ -507,7 +507,7 @@
             Esta acción es <strong>irreversible</strong>. Se eliminarán permanentemente:
           </p>
           <ul class="delete-list">
-            <li><i class="fas fa-database"></i> Todos los datos en Firestore (flujos, colecciones, conversaciones, configuración, admins)</li>
+            <li><i class="fas fa-database"></i> Todos los datos en Firestore (flujos, bases de datos, conversaciones, configuración, admins)</li>
             <li><i class="fas fa-image"></i> Archivos en Storage (logos, imágenes)</li>
             <li><i class="fas fa-users"></i> Vínculos de usuarios con la organización</li>
             <li><i class="fas fa-file-invoice-dollar"></i> Registros de facturación asociados</li>
@@ -570,7 +570,7 @@
           </p>
           <ul class="delete-list">
             <li><i class="fas fa-project-diagram"></i> Se eliminarán todos los <strong>flujos</strong> creados</li>
-            <li><i class="fas fa-database"></i> Se eliminarán las <strong>colecciones y sus datos</strong></li>
+            <li><i class="fas fa-database"></i> Se eliminarán las <strong>bases de datos y sus datos</strong></li>
             <li><i class="fas fa-bars"></i> El menú volverá a tener solo Horarios, Ubicación y Sobre Nosotros</li>
           </ul>
           <p class="delete-note">

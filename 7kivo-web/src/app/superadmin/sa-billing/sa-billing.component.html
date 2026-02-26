@@ -99,7 +99,7 @@
   </div>
 
   <!-- Form Modal -->
-  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+  <div class="modal-overlay" *ngIf="showForm">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ editingRecord ? 'Editar Cobro' : 'Nuevo Cobro' }}</h2>

@@ -26,10 +26,10 @@ export class LoginComponent {
   regStep = 1; // 1 = org info, 2 = plan selection, 3 = user info
 
   availablePlans = [
-    { name: 'Starter', price: 9.99, features: ['Bot WhatsApp con menú interactivo', '1 flujo conversacional', '1 colección de datos', 'Bandeja de entrada', 'Chat WhatsApp (solo lectura)'] },
-    { name: 'Business', price: 19.99, popular: true, features: ['Hasta 3 flujos conversacionales', 'Hasta 3 colecciones de datos', 'Sistema de citas y agenda', 'Chat en vivo con clientes', '3 usuarios administradores'] },
-    { name: 'Premium', price: 39.99, features: ['Hasta 5 flujos conversacionales', 'Hasta 10 colecciones de datos', 'Roles y permisos avanzados', 'Horarios configurables', '5 usuarios administradores'] },
-    { name: 'Enterprise', price: 100, features: ['Hasta 20 flujos conversacionales', 'Colecciones ilimitadas', 'Usuarios ilimitados', 'Configuración avanzada del bot'] }
+    { name: 'Starter', price: 9.99, features: ['Bot WhatsApp con menú interactivo', '1 flujo conversacional', '1 base de datos', 'Bandeja de entrada', 'Chat WhatsApp (solo lectura)'] },
+    { name: 'Business', price: 19.99, popular: true, features: ['Hasta 3 flujos conversacionales', 'Hasta 3 bases de datos', 'Sistema de citas y agenda', 'Chat en vivo con clientes', '3 usuarios administradores'] },
+    { name: 'Premium', price: 39.99, features: ['Hasta 5 flujos conversacionales', 'Hasta 10 bases de datos', 'Roles y permisos avanzados', 'Horarios configurables', '5 usuarios administradores'] },
+    { name: 'Enterprise', price: 100, features: ['Hasta 20 flujos conversacionales', 'Bases de datos ilimitadas', 'Usuarios ilimitados', 'Configuración avanzada del bot'] }
   ];
 
   constructor(

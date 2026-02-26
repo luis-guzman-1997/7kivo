@@ -105,15 +105,15 @@ export class FirebaseService {
     // Info: schedule
     await setDoc(doc(this.db, orgPath, 'info', 'schedule'), {
       days: [
-        { name: 'Lunes', active: false, shifts: [] },
-        { name: 'Martes', active: false, shifts: [] },
+        { name: 'Lunes',     active: false, shifts: [] },
+        { name: 'Martes',    active: false, shifts: [] },
         { name: 'Miércoles', active: false, shifts: [] },
-        { name: 'Jueves', active: false, shifts: [] },
-        { name: 'Viernes', active: false, shifts: [] },
-        { name: 'Sábado', active: false, shifts: [] },
-        { name: 'Domingo', active: false, shifts: [] }
+        { name: 'Jueves',    active: false, shifts: [] },
+        { name: 'Viernes',   active: false, shifts: [] },
+        { name: 'Sábado',    active: true,  shifts: [{ from: '08:00', to: '12:00' }] },
+        { name: 'Domingo',   active: false, shifts: [] }
       ],
-      slotDuration: 30, blockedDates: [], createdAt: ts()
+      slotDuration: 30, blockedDates: [], offersAppointments: false, createdAt: ts()
     });
 
     // Info: general
@@ -127,9 +127,7 @@ export class FirebaseService {
     // Flows and collections are created on-demand via the Flow Builder template system.
 
     const menuItems: any[] = [
-      { id: 'm1', type: 'builtin', action: 'schedule', label: 'Horarios', description: 'Días y horarios de atención', order: 1, active: true },
-      { id: 'm2', type: 'builtin', action: 'contact', label: 'Ubicación', description: 'Cómo encontrarnos', order: 2, active: true },
-      { id: 'm3', type: 'builtin', action: 'general', label: 'Sobre Nosotros', description: 'Conoce quiénes somos', order: 3, active: true }
+      { id: 'm1', type: 'builtin', action: 'general', label: 'Sobre Nosotros', description: 'Conoce quiénes somos', order: 1, active: true }
     ];
 
     await setDoc(doc(this.db, orgPath, 'config', 'menu'), {
@@ -454,6 +452,22 @@ export class FirebaseService {
     await this.deleteDocument('_collections', defId);
   }
 
+  async deleteCollectionWithData(slug: string): Promise<void> {
+    // Delete collection definition doc
+    const defsSnap = await getDocs(collection(this.db, this.orgPath(), '_collections'));
+    for (const d of defsSnap.docs) {
+      if (d.data()['slug'] === slug) {
+        await deleteDoc(d.ref);
+        break;
+      }
+    }
+    // Delete all data items in batches
+    const itemsSnap = await getDocs(collection(this.db, this.orgPath(), slug));
+    const batch = writeBatch(this.db);
+    itemsSnap.docs.forEach(d => batch.delete(d.ref));
+    if (itemsSnap.docs.length > 0) await batch.commit();
+  }
+
   // Sync flow steps → collection fields (add missing fields, never removes existing ones)
   async syncFlowToCollection(slug: string, steps: any[]): Promise<void> {
     const colDefs = await this.getCollectionDefs();
@@ -512,7 +526,7 @@ export class FirebaseService {
     }
   }
 
-  // SA: reset org bot to default state (clears flows, collections, menu)
+  // SA: reset org bot to default state (clears flows, collections, menu, conversations)
   async resetOrgBotToDefault(orgId: string): Promise<void> {
     const orgBase = `organizations/${orgId}`;
 
@@ -543,7 +557,37 @@ export class FirebaseService {
       }
     }
 
-    // 3. Reset menu config to 3 builtins (preserve text customizations)
+    // 3. Reset schedule: only Saturday active 08-12, appointments disabled
+    const scheduleRef = doc(this.db, orgBase, 'info', 'schedule');
+    await setDoc(scheduleRef, {
+      days: [
+        { name: 'Lunes',     active: false, shifts: [] },
+        { name: 'Martes',    active: false, shifts: [] },
+        { name: 'Miércoles', active: false, shifts: [] },
+        { name: 'Jueves',    active: false, shifts: [] },
+        { name: 'Viernes',   active: false, shifts: [] },
+        { name: 'Sábado',    active: true,  shifts: [{ from: '08:00', to: '12:00' }] },
+        { name: 'Domingo',   active: false, shifts: [] }
+      ],
+      slotDuration: 30, blockedDates: [], offersAppointments: false,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    // 4. Delete all conversations (with nested messages)
+    const convsSnap = await getDocs(collection(this.db, orgBase, 'conversations'));
+    for (const convDoc of convsSnap.docs) {
+      const msgsSnap = await getDocs(collection(this.db, convDoc.ref.path, 'messages'));
+      if (!msgsSnap.empty) {
+        for (let i = 0; i < msgsSnap.docs.length; i += 400) {
+          const batch = writeBatch(this.db);
+          msgsSnap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+      await deleteDoc(convDoc.ref);
+    }
+
+    // 5. Reset menu config to 3 builtins (preserve text customizations)
     const menuRef = doc(this.db, orgBase, 'config', 'menu');
     const menuSnap = await getDoc(menuRef);
     const existing = menuSnap.exists() ? menuSnap.data() : {};
@@ -553,9 +597,7 @@ export class FirebaseService {
       fallbackMessage: existing['fallbackMessage'] || 'No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones.',
       exitMessage: existing['exitMessage'] || '¡Hasta pronto!',
       items: [
-        { id: 'm1', type: 'builtin', action: 'schedule', label: 'Horarios', description: 'Días y horarios de atención', order: 1, active: true },
-        { id: 'm2', type: 'builtin', action: 'contact', label: 'Ubicación', description: 'Cómo encontrarnos', order: 2, active: true },
-        { id: 'm3', type: 'builtin', action: 'general', label: 'Sobre Nosotros', description: 'Conoce quiénes somos', order: 3, active: true }
+        { id: 'm1', type: 'builtin', action: 'general', label: 'Sobre Nosotros', description: 'Conoce quiénes somos', order: 1, active: true }
       ],
       updatedAt: serverTimestamp()
     });

@@ -21,7 +21,7 @@
   <div *ngIf="!loading && tabs.length === 0" class="empty-state">
     <i class="fas fa-inbox"></i>
     <p>No hay flujos con bandeja configurada.</p>
-    <p class="empty-hint">Los flujos que guardan en colecciones distintas a "applicants" aparecen aquí automáticamente.</p>
+    <p class="empty-hint">Los flujos que guardan en bases de datos distintas a "applicants" aparecen aquí automáticamente.</p>
   </div>
 
   <!-- Content -->
@@ -217,7 +217,7 @@
   </div>
 
   <!-- ==================== DETAIL MODAL ==================== -->
-  <div class="modal-overlay" *ngIf="selectedItem" (click)="closeDetail()">
+  <div class="modal-overlay" *ngIf="selectedItem">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>

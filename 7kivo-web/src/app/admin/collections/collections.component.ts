@@ -90,7 +90,7 @@ export class CollectionsComponent implements OnInit {
       this.collections = await this.firebaseService.getCollectionDefs();
     } catch (err) {
       console.error('Error loading collections:', err);
-      this.error = 'Error al cargar colecciones';
+      this.error = 'Error al cargar bases de datos';
       setTimeout(() => this.error = '', 3000);
     } finally {
       this.loading = false;

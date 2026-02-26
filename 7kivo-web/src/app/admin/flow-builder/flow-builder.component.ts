@@ -61,13 +61,13 @@ export class FlowBuilderComponent implements OnInit {
   collectionPreviewCache: Record<string, any[]> = {};
 
   stepTypes = [
-    { value: 'text_input', label: 'Texto libre', icon: 'fa-keyboard', desc: 'El usuario escribe texto' },
-    { value: 'number_input', label: 'Número', icon: 'fa-hashtag', desc: 'El usuario escribe un número' },
-    { value: 'select_list', label: 'Lista de opciones', icon: 'fa-list', desc: 'Menú desplegable con opciones' },
-    { value: 'select_buttons', label: 'Botones (máx 3)', icon: 'fa-hand-pointer', desc: 'Botones interactivos' },
-    { value: 'browse_collection', label: 'Explorar colección', icon: 'fa-database', desc: 'Navegar y ver detalles de items' },
-    { value: 'appointment_slot', label: 'Selección de cita', icon: 'fa-calendar-check', desc: 'El usuario elige día y hora disponible' },
-    { value: 'message', label: 'Mensaje automático', icon: 'fa-comment', desc: 'Envía un mensaje sin esperar respuesta' }
+    { value: 'text_input',       label: 'Texto',    icon: 'fa-keyboard',       desc: 'El usuario escribe texto libremente' },
+    { value: 'number_input',     label: 'Número',   icon: 'fa-hashtag',        desc: 'El usuario escribe un número' },
+    { value: 'select_buttons',   label: 'Botones',  icon: 'fa-hand-pointer',   desc: 'Hasta 3 botones de respuesta rápida' },
+    { value: 'select_list',      label: 'Lista',    icon: 'fa-list',           desc: 'Lista desplegable de opciones' },
+    { value: 'browse_collection',label: 'Catálogo', icon: 'fa-th-large',       desc: 'El usuario navega un catálogo' },
+    { value: 'appointment_slot', label: 'Cita',     icon: 'fa-calendar-check', desc: 'El usuario elige fecha y hora disponible' },
+    { value: 'message',          label: 'Mensaje',  icon: 'fa-comment',        desc: 'El bot envía un mensaje sin esperar respuesta' }
   ];
 
   planLimit = 999;
@@ -79,9 +79,18 @@ export class FlowBuilderComponent implements OnInit {
   templateTitle = '';
   creatingTemplate = false;
 
+  // Delete flow modal state
+  deleteFlowTarget: Flow | null = null;
+  deletingFlow = false;
+
   templateFlows = [
-    { icon: 'fa-calendar-check', label: 'Agendar Cita', description: 'Reserva de citas con disponibilidad en tiempo real', requiresPlan: 'appointments', key: 'appointments' },
-    { icon: 'fa-clipboard-list', label: 'Registro', description: 'Formulario de inscripción o registro de datos', requiresPlan: null, key: 'registration' }
+    { icon: 'fa-calendar-check',      label: 'Agendar Cita',     description: 'Reserva de citas con disponibilidad en tiempo real', requiresPlan: 'appointments', key: 'appointments' },
+    { icon: 'fa-clipboard-list',      label: 'Registro',          description: 'Formulario de inscripción o registro de datos',       requiresPlan: null, key: 'registration' },
+    { icon: 'fa-question-circle',     label: 'Consulta',          description: 'Formulario de preguntas y consultas al equipo',       requiresPlan: null, key: 'consultation' },
+    { icon: 'fa-file-invoice-dollar', label: 'Cotización',        description: 'Solicitud de presupuesto o precio estimado',          requiresPlan: null, key: 'quote' },
+    { icon: 'fa-headset',             label: 'Soporte / Reclamo', description: 'Atención a problemas, quejas y sugerencias',          requiresPlan: null, key: 'support' },
+    { icon: 'fa-star',                label: 'Encuesta',          description: 'Encuesta de satisfacción post-servicio',              requiresPlan: null, key: 'feedback' },
+    { icon: 'fa-hourglass-half',      label: 'Lista de Espera',   description: 'Registro para lista de espera o turno',              requiresPlan: null, key: 'waitlist' }
   ];
 
   constructor(private firebaseService: FirebaseService, public authService: AuthService) {
@@ -90,6 +99,10 @@ export class FlowBuilderComponent implements OnInit {
 
   get canCreateFlow(): boolean {
     return this.flows.length < this.planLimit;
+  }
+
+  get canAddMenuItem(): boolean {
+    return this.menuConfig.items.length < 7;
   }
 
   async ngOnInit(): Promise<void> {
@@ -288,11 +301,30 @@ export class FlowBuilderComponent implements OnInit {
     }
   }
 
-  async deleteFlow(flow: Flow): Promise<void> {
-    if (!confirm(`¿Eliminar el flujo "${flow.name}"?`)) return;
-    this.saving = true;
+  deleteFlow(flow: Flow): void {
+    this.deleteFlowTarget = flow;
+  }
+
+  cancelDeleteFlow(): void {
+    this.deleteFlowTarget = null;
+  }
+
+  async confirmDeleteFlow(withCollection: boolean): Promise<void> {
+    if (!this.deleteFlowTarget) return;
+    const flow = this.deleteFlowTarget;
+    this.deletingFlow = true;
     try {
       await this.firebaseService.deleteFlow(flow.id!);
+      if (withCollection && flow.saveToCollection) {
+        await this.firebaseService.deleteCollectionWithData(flow.saveToCollection);
+      }
+      // Remove any menu items that reference this flow
+      const before = this.menuConfig.items.length;
+      this.menuConfig.items = this.menuConfig.items.filter((it: any) => it.flowId !== flow.id);
+      if (this.menuConfig.items.length !== before) {
+        await this.firebaseService.saveMenuConfig(this.menuConfig);
+      }
+      this.deleteFlowTarget = null;
       this.notice = `Flujo "${flow.name}" eliminado`;
       await this.loadData();
       setTimeout(() => this.notice = '', 3000);
@@ -300,7 +332,7 @@ export class FlowBuilderComponent implements OnInit {
       this.error = 'Error al eliminar flujo';
       setTimeout(() => this.error = '', 3000);
     } finally {
-      this.saving = false;
+      this.deletingFlow = false;
     }
   }
 
@@ -358,6 +390,22 @@ export class FlowBuilderComponent implements OnInit {
     return this.stepTypes.find(t => t.value === type) || this.stepTypes[0];
   }
 
+  fieldKeyFromLabel(label: string): string {
+    return label.toLowerCase().trim()
+      .replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u').replace(/ñ/g, 'n')
+      .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+      .substring(0, 20);
+  }
+
+  onStepLabelChange(step: FlowStep): void {
+    const expected = this.fieldKeyFromLabel(step.fieldLabel);
+    if (!step.fieldKey || step.fieldKey === this.fieldKeyFromLabel(step.fieldLabel.slice(0, -1)) || step.fieldKey === expected) {
+      step.fieldKey = expected;
+    }
+  }
+
   getAvailableFields(): string[] {
     return this.currentFlow.steps
       .filter(s => s.fieldKey && s.type !== 'message')
@@ -394,6 +442,7 @@ export class FlowBuilderComponent implements OnInit {
   }
 
   addMenuFromTemplate(tpl: any): void {
+    if (!this.canAddMenuItem) return;
     const item: any = {
       id: 'item_' + Date.now(),
       label: tpl.label,
@@ -414,6 +463,7 @@ export class FlowBuilderComponent implements OnInit {
   }
 
   addMenuItem(): void {
+    if (!this.canAddMenuItem) return;
     this.menuConfig.items.push({
       id: 'item_' + Date.now(),
       type: 'builtin',
@@ -427,6 +477,7 @@ export class FlowBuilderComponent implements OnInit {
   }
 
   addMessageMenuItem(): void {
+    if (!this.canAddMenuItem) return;
     this.menuConfig.items.push({
       id: 'item_' + Date.now(),
       type: 'message',
@@ -511,74 +562,150 @@ export class FlowBuilderComponent implements OnInit {
     this.creatingTemplate = true;
     try {
       const title = this.templateTitle.trim();
-      const slug = tfl.key === 'appointments' ? 'citas' : this.slugify(title);
+      const slug = this.slugify(title);
       const menuLabel = title.substring(0, 24);
       const now = Date.now();
+      const sb = { required: true, validation: {}, errorMessage: '', optionsSource: 'custom', optionsTitleField: '', optionsDescField: '', customOptions: [], buttonText: 'Ver opciones', sourceCollection: '', displayField: '', detailFields: [], timeFieldKey: '' };
 
-      const colDef: any = {
-        name: title,
-        slug,
-        description: tfl.key === 'appointments' ? 'Citas agendadas por el bot' : `Registros de ${title}`,
-        displayField: 'nombre',
-        fields: tfl.key === 'appointments'
-          ? [
-              { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-              { key: 'fecha', label: 'Fecha', type: 'text', required: false },
-              { key: 'hora', label: 'Hora', type: 'text', required: false },
-              { key: '_apptService', label: 'Servicio', type: 'text', required: false },
-              { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
-            ]
-          : [
-              { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-              { key: 'correo', label: 'Correo', type: 'text', required: false },
-              { key: 'telefono', label: 'Teléfono', type: 'text', required: false },
-              { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
-            ]
+      // ── Base de datos ──
+      const colFieldsMap: Record<string, any[]> = {
+        appointments: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+          { key: 'fecha', label: 'Fecha', type: 'text', required: false },
+          { key: 'hora', label: 'Hora', type: 'text', required: false },
+          { key: '_apptService', label: 'Servicio', type: 'text', required: false },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        consultation: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+          { key: 'consulta', label: 'Consulta', type: 'text', required: true },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        quote: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+          { key: 'descripcion', label: 'Descripción', type: 'text', required: true },
+          { key: 'presupuesto', label: 'Presupuesto', type: 'text', required: false },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        support: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+          { key: 'tipo', label: 'Tipo', type: 'text', required: true },
+          { key: 'descripcion', label: 'Descripción', type: 'text', required: true },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        feedback: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: false },
+          { key: 'calificacion', label: 'Calificación', type: 'text', required: true },
+          { key: 'comentario', label: 'Comentario', type: 'text', required: false },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        waitlist: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+          { key: 'interes', label: 'Interés', type: 'text', required: true },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ]
       };
-      await this.firebaseService.saveCollectionDef(colDef);
+      const colFields = colFieldsMap[tfl.key] || [
+        { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+        { key: 'correo', label: 'Correo', type: 'text', required: false },
+        { key: 'telefono', label: 'Teléfono', type: 'text', required: false },
+        { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+      ];
+      await this.firebaseService.saveCollectionDef({ name: title, slug, description: `Registros de ${title}`, displayField: 'nombre', fields: colFields });
 
-      const stepBase = { required: true, validation: {}, errorMessage: '', optionsSource: 'custom', optionsTitleField: '', optionsDescField: '', customOptions: [], buttonText: 'Ver opciones', sourceCollection: '', displayField: '', detailFields: [], timeFieldKey: '' };
+      // ── Pasos del flujo ──
+      const stepsMap: Record<string, any[]> = {
+        appointments: [
+          { id: `step_${now}`,   ...sb, type: 'text_input',       prompt: '¿Cuál es tu nombre completo?',                                                        fieldKey: 'nombre',      fieldLabel: 'Nombre',      validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+          { id: `step_${now+1}`, ...sb, type: 'appointment_slot', prompt: '¿En qué fecha y hora te gustaría agendar?',                                            fieldKey: 'fecha',       fieldLabel: 'Fecha',       timeFieldKey: 'hora' }
+        ],
+        registration: [
+          { id: `step_${now}`,   ...sb, type: 'text_input', prompt: '¿Cuál es tu nombre completo?',       fieldKey: 'nombre',   fieldLabel: 'Nombre',   validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+          { id: `step_${now+1}`, ...sb, type: 'text_input', prompt: '¿Cuál es tu correo electrónico?',    fieldKey: 'correo',   fieldLabel: 'Correo',   required: false },
+          { id: `step_${now+2}`, ...sb, type: 'text_input', prompt: '¿Cuál es tu número de teléfono?',    fieldKey: 'telefono', fieldLabel: 'Teléfono', required: false }
+        ],
+        consultation: [
+          { id: `step_${now}`,   ...sb, type: 'text_input', prompt: '¿Cuál es tu nombre completo?',                                            fieldKey: 'nombre',   fieldLabel: 'Nombre',   validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+          { id: `step_${now+1}`, ...sb, type: 'text_input', prompt: '¿Cuál es tu consulta? Descríbela con el mayor detalle posible.',          fieldKey: 'consulta', fieldLabel: 'Consulta', validation: { minLength: 5 }, errorMessage: 'Por favor describe tu consulta.' }
+        ],
+        quote: [
+          { id: `step_${now}`,   ...sb, type: 'text_input', prompt: '¿Cuál es tu nombre completo?',                                                       fieldKey: 'nombre',      fieldLabel: 'Nombre',       validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+          { id: `step_${now+1}`, ...sb, type: 'text_input', prompt: '¿Qué producto o servicio necesitas cotizar? Descríbelo con detalle.',                 fieldKey: 'descripcion', fieldLabel: 'Descripción',  validation: { minLength: 5 }, errorMessage: 'Por favor describe lo que necesitas.' },
+          { id: `step_${now+2}`, ...sb, type: 'text_input', prompt: '¿Tienes algún presupuesto en mente? (Escribe el monto o "No lo sé")',                 fieldKey: 'presupuesto', fieldLabel: 'Presupuesto',  required: false }
+        ],
+        support: [
+          { id: `step_${now}`,   ...sb, type: 'text_input',      prompt: '¿Cuál es tu nombre completo?',                         fieldKey: 'nombre',      fieldLabel: 'Nombre',      validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+          { id: `step_${now+1}`, ...sb, type: 'select_buttons',  prompt: '¿Sobre qué nos contactas?',                           fieldKey: 'tipo',        fieldLabel: 'Tipo',        customOptions: [{ label: 'Reclamo', value: 'Reclamo' }, { label: 'Consulta', value: 'Consulta' }, { label: 'Sugerencia', value: 'Sugerencia' }] },
+          { id: `step_${now+2}`, ...sb, type: 'text_input',      prompt: 'Cuéntanos con detalle. ¿Qué sucedió o qué necesitas?', fieldKey: 'descripcion', fieldLabel: 'Descripción', validation: { minLength: 10 }, errorMessage: 'Por favor brinda más detalle.' }
+        ],
+        feedback: [
+          { id: `step_${now}`,   ...sb, type: 'text_input',     prompt: '¿Cuál es tu nombre? (opcional)',                 fieldKey: 'nombre',      fieldLabel: 'Nombre',       required: false },
+          { id: `step_${now+1}`, ...sb, type: 'select_buttons', prompt: '¿Cómo calificarías nuestro servicio?',           fieldKey: 'calificacion', fieldLabel: 'Calificación', customOptions: [{ label: '⭐ Regular', value: 'Regular' }, { label: '⭐⭐⭐ Bueno', value: 'Bueno' }, { label: '⭐⭐⭐⭐⭐ Excelente', value: 'Excelente' }] },
+          { id: `step_${now+2}`, ...sb, type: 'text_input',     prompt: '¿Deseas dejarnos algún comentario? (opcional)',  fieldKey: 'comentario',  fieldLabel: 'Comentario',   required: false }
+        ],
+        waitlist: [
+          { id: `step_${now}`,   ...sb, type: 'text_input', prompt: '¿Cuál es tu nombre completo?',                                                   fieldKey: 'nombre',  fieldLabel: 'Nombre',   validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+          { id: `step_${now+1}`, ...sb, type: 'text_input', prompt: '¿Para qué servicio o producto deseas reservar tu lugar en la lista de espera?',  fieldKey: 'interes', fieldLabel: 'Interés',  validation: { minLength: 3 }, errorMessage: 'Por favor indica el servicio o producto.' }
+        ]
+      };
+
+      const completionMap: Record<string, string> = {
+        appointments: `✅ *CITA AGENDADA*\n\nNombre: {nombre}\nFecha: {fecha}\nHora: {hora}\n\n¡Te esperamos! Si necesitas cancelar, escríbenos.`,
+        registration:  `✅ *REGISTRO COMPLETADO*\n\nNombre: {nombre}\n\n¡Gracias! Nos pondremos en contacto pronto.`,
+        consultation:  `✅ *CONSULTA RECIBIDA*\n\nNombre: {nombre}\n\nNos pondremos en contacto pronto para responderte.`,
+        quote:         `✅ *SOLICITUD DE COTIZACIÓN RECIBIDA*\n\nNombre: {nombre}\nDescripción: {descripcion}\n\nEnviaremos tu cotización a la brevedad.`,
+        support:       `✅ *CASO REGISTRADO*\n\nNombre: {nombre} | Tipo: {tipo}\n\nNuestro equipo revisará tu caso y te contactará pronto.`,
+        feedback:      `🙏 *¡GRACIAS POR TU OPINIÓN!*\n\nCalificación: {calificacion}\n\nTu retroalimentación nos ayuda a mejorar.`,
+        waitlist:      `✅ *¡ANOTADO EN LISTA DE ESPERA!*\n\nNombre: {nombre}\nInterés: {interes}\n\nTe avisaremos cuando haya disponibilidad.`
+      };
+
+      const menuDescMap: Record<string, string> = {
+        appointments: 'Elige fecha y hora disponible',
+        registration:  'Completa tu registro',
+        consultation:  'Envíanos tu consulta',
+        quote:         'Solicita un precio estimado',
+        support:       'Reporta un problema o sugerencia',
+        feedback:      'Dinos cómo lo estamos haciendo',
+        waitlist:      'Reserva tu lugar en la lista'
+      };
+
       const flowData: any = {
         name: title,
-        description: tfl.key === 'appointments' ? 'Flujo de agendamiento de citas' : `Flujo de registro: ${title}`,
+        description: `Flujo: ${title}`,
         menuLabel,
-        menuDescription: tfl.key === 'appointments' ? 'Elige fecha y hora disponible' : 'Completa tu registro',
+        menuDescription: menuDescMap[tfl.key] || 'Completa el formulario',
         type: tfl.key === 'appointments' ? 'appointment' : 'registration',
         active: true,
         order: this.flows.length + 1,
         saveToCollection: slug,
         notifyAdmin: true,
-        completionMessage: tfl.key === 'appointments'
-          ? `✅ *CITA AGENDADA*\n\nNombre: {nombre}\nFecha: {fecha}\nHora: {hora}\n\n¡Te esperamos! Si necesitas cancelar, escríbenos.`
-          : `✅ *REGISTRO COMPLETADO*\n\nNombre: {nombre}\n\n¡Gracias! Nos pondremos en contacto pronto.`,
-        steps: tfl.key === 'appointments'
-          ? [
-              { id: `step_${now}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu nombre completo?', fieldKey: 'nombre', fieldLabel: 'Nombre', validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
-              { id: `step_${now + 1}`, ...stepBase, type: 'appointment_slot', prompt: '¿En qué fecha y hora te gustaría agendar?', fieldKey: 'fecha', fieldLabel: 'Fecha', timeFieldKey: 'hora' }
-            ]
-          : [
-              { id: `step_${now}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu nombre completo?', fieldKey: 'nombre', fieldLabel: 'Nombre', validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
-              { id: `step_${now + 1}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu correo electrónico?', fieldKey: 'correo', fieldLabel: 'Correo', required: false, errorMessage: 'Por favor ingresa un correo válido.' },
-              { id: `step_${now + 2}`, ...stepBase, type: 'text_input', prompt: '¿Cuál es tu número de teléfono?', fieldKey: 'telefono', fieldLabel: 'Teléfono', required: false, errorMessage: '' }
-            ]
+        completionMessage: completionMap[tfl.key] || completionMap['registration'],
+        steps: stepsMap[tfl.key] || stepsMap['registration']
       };
       const newFlowId = await this.firebaseService.addFlow(flowData);
 
-      this.menuConfig.items.push({
-        id: 'item_' + Date.now(),
-        type: 'flow',
-        flowId: newFlowId,
-        label: menuLabel,
-        description: flowData.menuDescription,
-        order: this.menuConfig.items.length + 1,
-        active: true
-      });
+      // Agregar al menú solo si hay espacio
+      const addedToMenu = this.canAddMenuItem;
+      if (addedToMenu) {
+        this.menuConfig.items.push({
+          id: 'item_' + Date.now(),
+          type: 'flow',
+          flowId: newFlowId,
+          label: menuLabel,
+          description: flowData.menuDescription,
+          order: this.menuConfig.items.length + 1,
+          active: true
+        });
+        await this.firebaseService.saveMenuConfig(this.menuConfig);
+      }
 
       this.cancelTemplateModal();
       this.showAddMenuPanel = false;
       await this.loadData();
-      this.notice = `Flujo "${title}" creado y agregado al menú`;
-      setTimeout(() => this.notice = '', 4000);
+      this.notice = addedToMenu
+        ? `Flujo "${title}" creado y agregado al menú`
+        : `Flujo "${title}" creado (menú lleno — agrégalo desde el menú manualmente)`;
+      setTimeout(() => this.notice = '', 5000);
     } catch {
       this.error = 'Error al crear flujo desde plantilla';
       setTimeout(() => this.error = '', 3000);
