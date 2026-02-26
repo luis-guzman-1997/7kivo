@@ -100,23 +100,18 @@
       </div>
       <!-- Fila secundaria: control de modo -->
       <div class="chat-header-actions">
-        <div class="mode-control">
-          <div class="mode-badge" [class.mode-admin]="isAdminMode" [class.mode-bot]="isBotMode">
-            <i class="fas" [class.fa-headset]="isAdminMode" [class.fa-robot]="isBotMode"></i>
-            {{ isAdminMode ? 'Admin' : 'Bot' }}
+
+        <!-- Admin mode: nombre + teléfono del cliente + botones compactos -->
+        <ng-container *ngIf="isAdminMode">
+          <div class="admin-client-info">
+            <span class="admin-client-name">{{ getContactDisplayName(selectedConversation) }}</span>
+            <span class="admin-client-phone">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
           </div>
-          <button class="btn-mode-toggle"
-                  *ngIf="isBotMode && authService.userRole !== 'viewer' && chatLiveAllowed"
-                  (click)="takeControl()"
-                  [disabled]="togglingMode"
-                  title="Tomar control de la conversación">
-            <i class="fas fa-hand-paper"></i> Tomar Control
-          </button>
           <button class="btn-mode-toggle btn-release"
-                  *ngIf="isAdminMode && authService.userRole !== 'viewer'"
+                  *ngIf="authService.userRole !== 'viewer'"
                   (click)="releaseToBot()"
                   [disabled]="togglingMode"
-                  title="Devolver conversación al bot">
+                  title="Devolver al bot">
             <i class="fas fa-robot"></i> Devolver al Bot
           </button>
           <button class="btn-clear-conv"
@@ -125,7 +120,28 @@
                   title="Limpiar conversación">
             <i class="fas fa-trash-alt"></i>
           </button>
-        </div>
+        </ng-container>
+
+        <!-- Bot mode: badge + tomar control + limpiar -->
+        <ng-container *ngIf="isBotMode">
+          <div class="mode-badge mode-bot">
+            <i class="fas fa-robot"></i> Bot
+          </div>
+          <button class="btn-mode-toggle"
+                  *ngIf="authService.userRole !== 'viewer' && chatLiveAllowed"
+                  (click)="takeControl()"
+                  [disabled]="togglingMode"
+                  title="Tomar control de la conversación">
+            <i class="fas fa-hand-paper"></i> Tomar Control
+          </button>
+          <button class="btn-clear-conv"
+                  *ngIf="authService.userRole !== 'viewer'"
+                  (click)="clearMessages()"
+                  title="Limpiar conversación">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </ng-container>
+
       </div>
     </div>
 

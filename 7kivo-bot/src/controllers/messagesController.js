@@ -122,48 +122,65 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
     const userMessage = messageObj?.text?.body?.trim() || "";
 
-    // Handle image messages from user
-    if (!userMessage && messageObj?.type === "image") {
-      const imageCaption = messageObj?.image?.caption || "";
-      const mediaId = messageObj?.image?.id || "";
-      const displayText = imageCaption ? `📷 ${imageCaption}` : "📷 Foto";
+    // Handle all non-text multimedia messages
+    if (!userMessage) {
+      const msgType = messageObj?.type;
+
+      const MEDIA_LABELS = {
+        image:    { label: "📷 Foto",       save: true },
+        audio:    { label: "🎵 Audio",       save: true },
+        voice:    { label: "🎵 Nota de voz", save: true },
+        video:    { label: "🎥 Video",       save: true },
+        document: { label: "📄 Documento",   save: true },
+        sticker:  { label: "🗒️ Sticker",     save: true },
+        location: { label: "📍 Ubicación",   save: true },
+        contacts: { label: "👤 Contacto",    save: true },
+        reaction: { label: null,             save: false }, // silently ignore reactions
+      };
+
+      const mediaInfo = MEDIA_LABELS[msgType];
+
+      // Silently skip reactions and unknown types
+      if (!mediaInfo || !mediaInfo.label) {
+        return res.sendStatus(200);
+      }
 
       const mode = await getConversationMode(phoneNumber);
 
       if (mode === "admin") {
-        // Admin mode: download from Meta → upload to Firebase Storage → save with imageUrl
-        (async () => {
-          try {
-            const { downloadAndUploadMedia } = require("../services/mediaService");
-            const imageUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
-            await saveMessage(phoneNumber, displayText, "user", {
-              contactName,
-              type: "image",
-              imageUrl,
-            });
-          } catch (err) {
-            console.error("Error processing user image:", err.message);
-            saveMessage(phoneNumber, displayText, "user", {
-              contactName,
-              type: "image",
-            }).catch(e => console.error("Error saving image placeholder:", e.message));
-          }
-        })();
+        if (msgType === "image") {
+          // Images in admin mode: download from Meta → Firebase Storage → save with imageUrl
+          const imageCaption = messageObj?.image?.caption || "";
+          const mediaId = messageObj?.image?.id || "";
+          const displayText = imageCaption ? `📷 ${imageCaption}` : "📷 Foto";
+          (async () => {
+            try {
+              const { downloadAndUploadMedia } = require("../services/mediaService");
+              const imageUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+              await saveMessage(phoneNumber, displayText, "user", {
+                contactName, type: "image", imageUrl,
+              });
+            } catch (err) {
+              console.error("Error processing user image:", err.message);
+              saveMessage(phoneNumber, displayText, "user", { contactName, type: "image" })
+                .catch(e => console.error("Error saving image placeholder:", e.message));
+            }
+          })();
+        } else {
+          // Other media in admin mode: save label so admin sees it in chat
+          saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
+            .catch(err => console.error("Error saving media message:", err.message));
+        }
       } else {
-        // Bot mode: notify user that images are not supported
+        // Bot mode: auto-reply that multimedia is not supported
         try {
           await sendTextMessage(
-            "Lo sentimos, no podemos recibir imágenes por este canal. Por favor describe tu consulta con texto. 📝",
+            "Lo sentimos, no podemos procesar archivos multimedia por este canal. Por favor describe tu consulta en texto. 📝",
             phoneNumber
           );
         } catch (e) { /* best effort */ }
       }
 
-      return res.sendStatus(200);
-    }
-
-    // Skip other non-text messages (stickers, audio, reactions, documents, etc.)
-    if (!userMessage) {
       return res.sendStatus(200);
     }
 

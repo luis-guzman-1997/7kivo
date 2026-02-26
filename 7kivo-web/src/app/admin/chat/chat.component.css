@@ -317,6 +317,27 @@
   border-left: 1px solid #f0f0f0;
 }
 
+.admin-client-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-client-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-client-phone {
+  font-size: 0.75rem;
+  color: #888;
+}
+
 .btn-back {
   display: none;
   background: none;
