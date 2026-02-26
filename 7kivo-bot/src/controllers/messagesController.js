@@ -122,31 +122,42 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
     const userMessage = messageObj?.text?.body?.trim() || "";
 
-    // Handle image messages from user (download from Meta → Firebase Storage → save with URL)
+    // Handle image messages from user
     if (!userMessage && messageObj?.type === "image") {
       const imageCaption = messageObj?.image?.caption || "";
       const mediaId = messageObj?.image?.id || "";
       const displayText = imageCaption ? `📷 ${imageCaption}` : "📷 Foto";
 
-      // Process in background so webhook responds immediately
-      (async () => {
+      const mode = await getConversationMode(phoneNumber);
+
+      if (mode === "admin") {
+        // Admin mode: download from Meta → upload to Firebase Storage → save with imageUrl
+        (async () => {
+          try {
+            const { downloadAndUploadMedia } = require("../services/mediaService");
+            const imageUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+            await saveMessage(phoneNumber, displayText, "user", {
+              contactName,
+              type: "image",
+              imageUrl,
+            });
+          } catch (err) {
+            console.error("Error processing user image:", err.message);
+            saveMessage(phoneNumber, displayText, "user", {
+              contactName,
+              type: "image",
+            }).catch(e => console.error("Error saving image placeholder:", e.message));
+          }
+        })();
+      } else {
+        // Bot mode: notify user that images are not supported
         try {
-          const { downloadAndUploadMedia } = require("../services/mediaService");
-          const imageUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
-          await saveMessage(phoneNumber, displayText, "user", {
-            contactName,
-            type: "image",
-            imageUrl,
-          });
-        } catch (err) {
-          console.error("Error processing user image:", err.message);
-          // Fallback: save placeholder without image URL
-          saveMessage(phoneNumber, displayText, "user", {
-            contactName,
-            type: "image",
-          }).catch(e => console.error("Error saving image placeholder:", e.message));
-        }
-      })();
+          await sendTextMessage(
+            "Lo sentimos, no podemos recibir imágenes por este canal. Por favor describe tu consulta con texto. 📝",
+            phoneNumber
+          );
+        } catch (e) { /* best effort */ }
+      }
 
       return res.sendStatus(200);
     }

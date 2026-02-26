@@ -677,6 +677,16 @@ export class FirebaseService {
     await updateDoc(docRef, { unreadCount: 0 });
   }
 
+  async clearConversationMessages(phoneNumber: string): Promise<void> {
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const colRef = collection(this.db, this.orgPath(), 'conversations', cleanPhone, 'messages');
+    const snapshot = await getDocs(colRef);
+    if (snapshot.empty) return;
+    const batch = writeBatch(this.db);
+    snapshot.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  }
+
   // ==================== PLATFORM (SUPER ADMIN) ====================
 
   async getAllOrganizations(): Promise<any[]> {

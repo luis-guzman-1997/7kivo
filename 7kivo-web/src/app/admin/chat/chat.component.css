@@ -422,6 +422,29 @@
   cursor: not-allowed;
 }
 
+.btn-clear-conv {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: #c62828;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s, background 0.2s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.btn-clear-conv:hover {
+  opacity: 1;
+  background: rgba(198, 40, 40, 0.1);
+}
+
 /* ==================== Error Banner ==================== */
 .error-banner {
   display: flex;

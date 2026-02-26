@@ -269,6 +269,17 @@ export class ChatComponent implements OnInit, OnDestroy {
     window.open(url, '_blank');
   }
 
+  async clearMessages(): Promise<void> {
+    if (!this.selectedConversation) return;
+    if (!confirm('¿Limpiar todos los mensajes de esta conversación? Esta acción no se puede deshacer.')) return;
+    try {
+      await this.firebaseService.clearConversationMessages(this.selectedConversation.phoneNumber);
+      this.messages = [];
+    } catch (err) {
+      this.error = 'No se pudo limpiar la conversación.';
+    }
+  }
+
   triggerImageUpload(): void {
     this.imageInput?.nativeElement?.click();
   }

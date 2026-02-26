@@ -119,6 +119,12 @@
                   title="Devolver conversación al bot">
             <i class="fas fa-robot"></i> Devolver al Bot
           </button>
+          <button class="btn-clear-conv"
+                  *ngIf="authService.userRole !== 'viewer'"
+                  (click)="clearMessages()"
+                  title="Limpiar conversación">
+            <i class="fas fa-trash-alt"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -195,7 +201,8 @@
       <div class="input-row">
         <input type="file" accept="image/*" #imageInput style="display:none"
                (change)="onImageSelected($event)">
-        <button class="btn-attach" (click)="triggerImageUpload()"
+        <button class="btn-attach" *ngIf="isAdminMode"
+                (click)="triggerImageUpload()"
                 [disabled]="sending || sendingImage"
                 title="Enviar imagen">
           <i class="fas" [class.fa-image]="!sendingImage" [class.fa-spinner]="sendingImage" [class.fa-spin]="sendingImage"></i>
