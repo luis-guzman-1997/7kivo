@@ -122,11 +122,14 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
     const userMessage = messageObj?.text?.body?.trim() || "";
 
-    if (userMessage) {
-      saveMessage(phoneNumber, userMessage, "user", { contactName }).catch(err =>
-        console.error("Error saving user message:", err.message)
-      );
+    // Skip non-text messages (stickers, images, audio, reactions, documents, etc.)
+    if (!userMessage) {
+      return res.sendStatus(200);
     }
+
+    saveMessage(phoneNumber, userMessage, "user", { contactName }).catch(err =>
+      console.error("Error saving user message:", err.message)
+    );
 
     // Check conversation mode - if admin is handling, don't process
     const mode = await getConversationMode(phoneNumber);
@@ -1298,6 +1301,19 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
+  // Custom keyword responses from message-type menu items (e.g. "pago", "precio", etc.)
+  const menuConfig = await getMenuConfig();
+  const messageItems = (menuConfig?.items || []).filter(
+    i => i.type === "message" && i.active !== false && i.label && i.messageContent
+  );
+  for (const item of messageItems) {
+    if (lowerMessage.includes(item.label.toLowerCase())) {
+      await sendTextMessage(item.messageContent, phoneNumber);
+      setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+      return;
+    }
+  }
+
   // General keywords
   if (lowerMessage.includes("hola") || lowerMessage.includes("hi")) {
     await sendGreeting(phoneNumber);
@@ -1329,7 +1345,6 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     }
   } else {
     // Fallback: show menu
-    const menuConfig = await getMenuConfig();
     const fallbackText = menuConfig?.fallbackMessage ||
       await getMessage("fallback", "No estoy seguro de qué necesitas. Selecciona una opción:");
 

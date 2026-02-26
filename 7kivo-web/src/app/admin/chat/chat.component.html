@@ -100,7 +100,7 @@
             <i class="fas fa-hand-paper"></i> Tomar Control
           </button>
           <button class="btn-mode-toggle btn-release"
-                  *ngIf="isAdminMode && authService.userRole !== 'viewer' && chatLiveAllowed"
+                  *ngIf="isAdminMode && authService.userRole !== 'viewer'"
                   (click)="releaseToBot()"
                   [disabled]="togglingMode"
                   title="Devolver conversación al bot">
