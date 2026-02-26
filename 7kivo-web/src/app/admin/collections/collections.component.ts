@@ -163,11 +163,21 @@ export class CollectionsComponent implements OnInit {
     if (!field.label) return;
     // For reference fields the key input is hidden — always keep it in sync with the label
     if (!field.key || field.type === 'reference') {
-      field.key = field.label
+      const base = field.label
         .toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/(^_|_$)/g, '');
+
+      // Ensure uniqueness among sibling fields (excluding this field itself)
+      const siblings = this.currentCollection.fields.filter(f => f !== field);
+      const usedKeys = new Set(siblings.map(f => f.key));
+      let candidate = base;
+      let counter = 2;
+      while (usedKeys.has(candidate)) {
+        candidate = `${base}_${counter++}`;
+      }
+      field.key = candidate;
     }
   }
 
