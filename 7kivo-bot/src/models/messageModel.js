@@ -62,8 +62,10 @@ const sendTextMessage = async (text, phoneNumber) => {
     return result;
 
   } catch (error) {
-    console.log("Error al enviar mensaje:", error?.response?.data);
-    throw new Error(error?.response?.data || "Failed to send message");
+    const errData = error?.response?.data;
+    console.log("Error al enviar mensaje:", errData);
+    const errMsg = errData?.error?.message || (typeof errData === 'string' ? errData : null) || error?.message || "Failed to send message";
+    throw new Error(errMsg);
   }
 };
 
@@ -126,8 +128,10 @@ const sendInteractiveButtons = async (text, buttons, phoneNumber) => {
     return result;
 
   } catch (error) {
-    console.log("Error al enviar botones:", error?.response?.data);
-    throw new Error(error?.response?.data || "Failed to send buttons");
+    const errData = error?.response?.data;
+    console.log("Error al enviar botones:", errData);
+    const errMsg = errData?.error?.message || (typeof errData === 'string' ? errData : null) || error?.message || "Failed to send buttons";
+    throw new Error(errMsg);
   }
 };
 
@@ -168,8 +172,10 @@ const sendInteractiveList = async (text, buttonText, sections, phoneNumber) => {
     return result;
 
   } catch (error) {
-    console.log("Error al enviar lista:", error?.response?.data);
-    throw new Error(error?.response?.data || "Failed to send list");
+    const errData = error?.response?.data;
+    console.log("Error al enviar lista:", errData);
+    const errMsg = errData?.error?.message || (typeof errData === 'string' ? errData : null) || error?.message || "Failed to send list";
+    throw new Error(errMsg);
   }
 };
 
