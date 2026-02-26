@@ -19,6 +19,9 @@
   <!-- Sidebar: Conversations List -->
   <div class="chat-sidebar">
     <div class="chat-sidebar-header">
+      <button class="btn-back-admin" (click)="goBackToAdmin()" title="Volver al panel">
+        <i class="fas fa-arrow-left"></i>
+      </button>
       <h2>
         <i class="fab fa-whatsapp"></i> Conversaciones
         <span class="unread-total" *ngIf="getTotalUnread() > 0">{{ getTotalUnread() }}</span>

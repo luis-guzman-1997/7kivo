@@ -553,3 +553,78 @@
 .role-admin { background: rgba(59,130,246,0.12); color: #1e40af; }
 .role-editor { background: rgba(16,185,129,0.12); color: #065f46; }
 .role-viewer { background: rgba(100,116,139,0.12); color: #475569; }
+
+/* ─── Mobile bottom nav (hidden on desktop) ─── */
+.mobile-bottom-nav { display: none; }
+.topbar-org { display: none; }
+
+@media (max-width: 768px) {
+  /* Topbar: show org name, hide email */
+  .topbar-org {
+    display: block;
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1e293b;
+    padding-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* admin-content: let flex handle height instead of fixed calc */
+  .admin-content {
+    height: auto !important;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Bottom navigation bar */
+  .mobile-bottom-nav {
+    display: flex;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    height: 58px;
+    overflow: hidden;
+  }
+
+  .bn-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #94a3b8;
+    font-size: 0.6rem;
+    font-weight: 500;
+    gap: 3px;
+    padding: 4px 2px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+
+  .bn-item i { font-size: 1.2rem; display: block; }
+  .bn-item.active,
+  .bn-item:hover { color: #10b981; }
+
+  /* ── Chat page: full-screen immersive (no topbar, no bottom nav) ── */
+  .on-chat-page .admin-topbar,
+  .on-chat-page .mobile-bottom-nav,
+  .on-chat-page .bot-status-banner,
+  .on-chat-page .bot-setup-banner { display: none; }
+
+  .on-chat-page .admin-content {
+    height: 100vh !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Hide email on very small screens — accessible via sidebar */
+  .topbar-right { display: none; }
+}

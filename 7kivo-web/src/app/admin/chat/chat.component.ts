@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
@@ -56,8 +57,13 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   constructor(
     private firebaseService: FirebaseService,
-    public authService: AuthService
+    public authService: AuthService,
+    private router: Router
   ) {}
+
+  goBackToAdmin(): void {
+    this.router.navigate(['/admin']);
+  }
 
   async ngOnInit(): Promise<void> {
     this.chatLiveAllowed = this.authService.getPlanLimits().chatLive;

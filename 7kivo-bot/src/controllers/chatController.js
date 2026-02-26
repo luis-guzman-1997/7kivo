@@ -131,8 +131,13 @@ const releaseToBot = async (req, res) => {
 
     if (adminSentMessages.length > 0) {
       const farewellMsg = "La conversación con nuestro equipo ha finalizado. ¡Gracias por comunicarte! 👋\n\nSi necesitas algo más, escribe *hola* para volver al menú.";
-      await sendTextMessage(farewellMsg, phone);
-      await saveMessage(phone, farewellMsg, "admin", { adminName: "Sistema" });
+      try {
+        await sendTextMessage(farewellMsg, phone);
+        await saveMessage(phone, farewellMsg, "admin", { adminName: "Sistema" });
+      } catch (msgErr) {
+        // Ventana de 24h expirada u otro error de WA — continuamos de todas formas
+        console.warn("releaseToBot: no se pudo enviar despedida:", msgErr.message);
+      }
     }
 
     await clearSession(phone);

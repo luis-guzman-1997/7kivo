@@ -1,4 +1,4 @@
-<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed">
+<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed" [class.on-chat-page]="isOnChatPage">
   <!-- Backdrop (mobile) -->
   <div class="sidebar-backdrop" *ngIf="!sidebarCollapsed" (click)="toggleSidebar()" aria-hidden="true"></div>
   <!-- Sidebar -->
@@ -108,6 +108,7 @@
       <button class="topbar-toggle" (click)="toggleSidebar()">
         <i class="fas fa-bars"></i>
       </button>
+      <span class="topbar-org">{{ orgName }}</span>
       <div class="topbar-right">
         <span class="topbar-user">
           <i class="fas fa-user-circle"></i> {{ userEmail }}
@@ -154,5 +155,27 @@
     <div class="admin-content">
       <router-outlet></router-outlet>
     </div>
+
+    <!-- Mobile bottom navigation (hidden on desktop via CSS) -->
+    <nav class="mobile-bottom-nav">
+      <a *ngIf="botEnabled" routerLink="/admin" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="active" class="bn-item">
+        <i class="fas fa-home"></i><span>Inicio</span>
+      </a>
+      <a *ngIf="botEnabled && authService.hasPermission('chat')" routerLink="/admin/chat" routerLinkActive="active" class="bn-item">
+        <i class="fas fa-comments"></i><span>Chat</span>
+      </a>
+      <a *ngIf="botEnabled && authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="bn-item">
+        <i class="fas fa-project-diagram"></i><span>Flujos</span>
+      </a>
+      <a *ngIf="botEnabled && authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="bn-item">
+        <i class="fas fa-database"></i><span>Datos</span>
+      </a>
+      <a *ngIf="!botEnabled && authService.hasPermission('bot_config')" routerLink="/admin/bot" routerLinkActive="active" class="bn-item">
+        <i class="fas fa-robot"></i><span>Bot</span>
+      </a>
+      <button class="bn-item" (click)="toggleSidebar()">
+        <i class="fas fa-ellipsis-h"></i><span>Más</span>
+      </button>
+    </nav>
   </main>
 </div>

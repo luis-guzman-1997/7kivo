@@ -8,6 +8,9 @@
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
+/* Back to admin (mobile only) */
+.btn-back-admin { display: none; }
+
 /* ==================== Sidebar ==================== */
 .chat-sidebar {
   width: 360px;
@@ -850,8 +853,8 @@
 
   /* ── Layout ── */
   .chat-wrapper {
-    height: calc(100vh - 65px);
-    margin: -16px;
+    height: 100%;
+    margin: 0;
     border-radius: 0;
     box-shadow: none;
     background: #e5ddd5;
@@ -862,6 +865,23 @@
     width: 100%;
     min-width: unset;
   }
+
+  /* Back to admin button */
+  .btn-back-admin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.85);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .btn-back-admin:hover { background: rgba(255,255,255,0.15); }
 
   /* Sidebar header: verde WA */
   .chat-sidebar-header {
@@ -1045,19 +1065,6 @@
   /* ── Empty / loading ── */
   .empty-convs, .loading-state { padding: 32px 16px; }
   .empty-convs i, .loading-state i { font-size: 2.2rem; }
-}
-
-@media (max-width: 576px) {
-  .chat-wrapper {
-    height: calc(100vh - 58px);
-    margin: -12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .chat-wrapper {
-    margin: -10px;
-  }
 }
 
 .viewer-notice {

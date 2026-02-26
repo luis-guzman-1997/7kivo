@@ -20,6 +20,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   setupComplete = false;
   botPaused = false;
   botBlocked = false;
+  isOnChatPage = false;
   private subs: Subscription[] = [];
 
   constructor(
@@ -49,13 +50,20 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       }),
       this.authService.botPaused$.subscribe(val => { this.botPaused = val; }),
       this.authService.botBlocked$.subscribe(val => { this.botBlocked = val; }),
-      this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
+      this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe((e) => {
+        const ne = e as NavigationEnd;
+        this.isOnChatPage = ne.url.startsWith('/admin/chat');
+        // Auto-close sidebar on mobile when navigating
+        if (typeof window !== 'undefined' && window.innerWidth < 768 && !this.sidebarCollapsed) {
+          this.sidebarCollapsed = true;
+        }
         this.checkSetupComplete();
       })
     );
   }
 
   async ngOnInit(): Promise<void> {
+    this.isOnChatPage = this.router.url.startsWith('/admin/chat');
     await this.checkSetupComplete();
   }
 
