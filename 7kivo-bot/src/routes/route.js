@@ -7,6 +7,7 @@ const {
   listConversations,
   getConversationMessages,
   sendAdminMessage,
+  sendAdminImage,
   takeControl,
   releaseToBot,
   checkWindow
@@ -32,6 +33,7 @@ router.get("/api/conversations", listConversations);
 router.get("/api/conversations/:phone", getConversationMessages);
 router.get("/api/conversations/:phone/window", checkWindow);
 router.post("/api/send-message", sendAdminMessage);
+router.post("/api/send-image", sendAdminImage);
 router.post("/api/take-control", takeControl);
 router.post("/api/release-to-bot", releaseToBot);
 

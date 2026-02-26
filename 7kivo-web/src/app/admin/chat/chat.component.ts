@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
@@ -21,6 +21,8 @@ interface ChatMessage {
   id: string;
   from: 'user' | 'bot' | 'admin';
   text: string;
+  type?: string;
+  imageUrl?: string;
   timestamp?: any;
   createdMs?: number;
   adminName?: string;
@@ -34,6 +36,7 @@ interface ChatMessage {
 })
 export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
+  @ViewChild('imageInput') imageInput!: ElementRef;
 
   conversations: Conversation[] = [];
   filteredConversations: Conversation[] = [];
@@ -50,6 +53,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   showSettings = false;
   settingsPhone = '';
   chatLiveAllowed = true;
+  sendingImage = false;
 
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
@@ -58,7 +62,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   goBackToAdmin(): void {
@@ -257,6 +262,65 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.newMessage = text;
     } finally {
       this.sending = false;
+    }
+  }
+
+  openImage(url: string): void {
+    window.open(url, '_blank');
+  }
+
+  triggerImageUpload(): void {
+    this.imageInput?.nativeElement?.click();
+  }
+
+  async onImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.selectedConversation) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.error = 'Solo se permiten imágenes.';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.error = 'La imagen no debe superar 5 MB.';
+      return;
+    }
+
+    this.sendingImage = true;
+    this.error = '';
+
+    try {
+      const path = `chat-images/${this.selectedConversation.phoneNumber}/${Date.now()}_${file.name}`;
+      const imageUrl = await this.firebaseService.uploadFile(file, path);
+
+      const user = this.authService.currentUser;
+      const response = await fetch(`${this.botApiUrl}/api/send-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: this.selectedConversation.phoneNumber,
+          imageUrl,
+          caption: '',
+          adminEmail: user?.email || '',
+          adminName: user?.displayName || user?.email || 'Admin'
+        })
+      });
+
+      const data = await response.json().catch(() => ({ ok: false, error: `Error HTTP ${response.status}` }));
+      if (!data.ok) {
+        if (data.error === '24h_window_expired') {
+          this.error = 'La ventana de 24h expiró. Use WhatsApp personal.';
+        } else {
+          this.error = data.error || 'Error al enviar imagen.';
+        }
+      }
+    } catch (err: any) {
+      this.error = 'No se pudo enviar la imagen.';
+    } finally {
+      this.sendingImage = false;
+      if (this.imageInput) this.imageInput.nativeElement.value = '';
+      this.cdr.detectChanges();
     }
   }
 

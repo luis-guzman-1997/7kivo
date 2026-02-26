@@ -179,8 +179,47 @@ const sendInteractiveList = async (text, buttonText, sections, phoneNumber) => {
   }
 };
 
+const sendImageMessage = async (imageUrl, caption, phoneNumber) => {
+  try {
+    if (!phoneNumber) {
+      throw new Error("phoneNumber es requerido para enviar imagen");
+    }
+
+    const { version, phoneId, token } = await getWACredentials();
+
+    const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
+    const body = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "image",
+      image: {
+        link: imageUrl,
+        caption: caption || ""
+      }
+    };
+
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    const result = await axios.post(url, body, config);
+    return result;
+
+  } catch (error) {
+    const errData = error?.response?.data;
+    console.log("Error al enviar imagen:", errData);
+    const errMsg = errData?.error?.message || (typeof errData === 'string' ? errData : null) || error?.message || "Failed to send image";
+    throw new Error(errMsg);
+  }
+};
+
 module.exports = {
   sendTextMessage,
   sendInteractiveButtons,
   sendInteractiveList,
+  sendImageMessage,
 };

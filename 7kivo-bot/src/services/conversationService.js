@@ -43,6 +43,9 @@ const saveMessage = async (phoneNumber, text, from, extra = {}) => {
 
   if (extra.adminEmail) msgData.adminEmail = extra.adminEmail;
   if (extra.adminName) msgData.adminName = extra.adminName;
+  if (extra.type) msgData.type = extra.type;
+  if (extra.mediaId) msgData.mediaId = extra.mediaId;
+  if (extra.imageUrl) msgData.imageUrl = extra.imageUrl;
 
   await convRef.collection("messages").add(msgData);
 };

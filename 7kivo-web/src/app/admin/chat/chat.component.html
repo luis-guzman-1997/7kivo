@@ -130,17 +130,15 @@
       <button (click)="error = ''"><i class="fas fa-times"></i></button>
     </div>
 
-    <!-- Mode Banner -->
+    <!-- Mode Banner (compact) -->
     <div class="mode-banner admin-banner" *ngIf="isAdminMode">
       <i class="fas fa-headset"></i>
-      <span>Estás en control de esta conversación. El bot no responderá automáticamente.</span>
-      <span class="mode-admin-name" *ngIf="selectedConversation.modeAdminName">
-        ({{ selectedConversation.modeAdminName }})
-      </span>
+      <span>Modo manual — el bot no responde</span>
+      <span class="mode-admin-name" *ngIf="selectedConversation.modeAdminName">&nbsp;· {{ selectedConversation.modeAdminName }}</span>
     </div>
     <div class="mode-banner bot-banner" *ngIf="isBotMode && isInFlow">
       <i class="fas fa-robot"></i>
-      <span>El usuario está en un flujo del bot. Toma control si necesitas intervenir.</span>
+      <span>Usuario en flujo activo</span>
     </div>
 
     <!-- Messages -->
@@ -156,7 +154,12 @@
               {{ msg.adminName }}
             </span>
             <span class="message-sender bot-label" *ngIf="msg.from === 'bot'">Bot</span>
-            <p class="message-text">{{ msg.text }}</p>
+            <img *ngIf="msg.type === 'image' && msg.imageUrl"
+                 [src]="msg.imageUrl" class="message-image"
+                 (click)="openImage(msg.imageUrl!)" alt="Imagen">
+            <p class="message-text" *ngIf="msg.type !== 'image' || !msg.imageUrl">{{ msg.text }}</p>
+            <p class="message-caption" *ngIf="msg.type === 'image' && msg.imageUrl && msg.text && msg.text !== '📷 Foto'">{{ msg.text }}</p>
+            <span class="message-text msg-image-placeholder" *ngIf="msg.type === 'image' && !msg.imageUrl">{{ msg.text }}</span>
             <span class="message-time">{{ formatMessageTime(msg.timestamp) }}</span>
           </div>
         </div>
@@ -190,14 +193,21 @@
         <button (click)="error = ''"><i class="fas fa-times"></i></button>
       </div>
       <div class="input-row">
+        <input type="file" accept="image/*" #imageInput style="display:none"
+               (change)="onImageSelected($event)">
+        <button class="btn-attach" (click)="triggerImageUpload()"
+                [disabled]="sending || sendingImage"
+                title="Enviar imagen">
+          <i class="fas" [class.fa-image]="!sendingImage" [class.fa-spinner]="sendingImage" [class.fa-spin]="sendingImage"></i>
+        </button>
         <textarea
           [(ngModel)]="newMessage"
           (keypress)="onKeyPress($event)"
           placeholder="Escribe un mensaje..."
           rows="1"
-          [disabled]="sending"
+          [disabled]="sending || sendingImage"
         ></textarea>
-        <button class="btn-send" (click)="sendMessage()" [disabled]="sending || !newMessage.trim()">
+        <button class="btn-send" (click)="sendMessage()" [disabled]="sending || sendingImage || !newMessage.trim()">
           <i class="fas" [class.fa-paper-plane]="!sending" [class.fa-spinner]="sending" [class.fa-spin]="sending"></i>
         </button>
       </div>

@@ -1,4 +1,4 @@
-const { sendTextMessage } = require("../models/messageModel");
+const { sendTextMessage, sendImageMessage } = require("../models/messageModel");
 const {
   saveMessage,
   getConversations,
@@ -179,10 +179,57 @@ const checkWindow = async (req, res) => {
   }
 };
 
+const sendAdminImage = async (req, res) => {
+  try {
+    const { phone, imageUrl, caption, adminEmail, adminName } = req.body;
+
+    if (!phone || !imageUrl) {
+      return res.status(400).json({ ok: false, error: "phone and imageUrl are required" });
+    }
+
+    const conversation = await getConversation(phone);
+    let withinWindow = false;
+    if (conversation?.lastUserMessageMs) {
+      withinWindow = (Date.now() - conversation.lastUserMessageMs) < WINDOW_24H_MS;
+    }
+
+    if (!withinWindow) {
+      return res.status(403).json({
+        ok: false,
+        error: "24h_window_expired",
+        message: "La ventana de 24 horas expiró.",
+        windowExpiredAt: conversation?.lastUserMessageMs
+          ? new Date(conversation.lastUserMessageMs + WINDOW_24H_MS).toISOString()
+          : null
+      });
+    }
+
+    const currentMode = await getConversationMode(phone);
+    if (currentMode !== "admin") {
+      await clearSession(phone);
+      await setConversationMode(phone, "admin", { adminEmail, adminName });
+    }
+
+    await sendImageMessage(imageUrl, caption || "", phone);
+    await saveMessage(phone, caption || "📷 Foto", "admin", {
+      adminEmail,
+      adminName,
+      type: "image",
+      imageUrl
+    });
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error("Error sending admin image:", error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
 module.exports = {
   listConversations,
   getConversationMessages,
   sendAdminMessage,
+  sendAdminImage,
   takeControl,
   releaseToBot,
   checkWindow

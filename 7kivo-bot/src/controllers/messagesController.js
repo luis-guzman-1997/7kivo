@@ -122,7 +122,20 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
     const userMessage = messageObj?.text?.body?.trim() || "";
 
-    // Skip non-text messages (stickers, images, audio, reactions, documents, etc.)
+    // Handle image messages from user (save for admin visibility)
+    if (!userMessage && messageObj?.type === "image") {
+      const imageCaption = messageObj?.image?.caption || "";
+      const mediaId = messageObj?.image?.id || "";
+      const displayText = imageCaption ? `📷 ${imageCaption}` : "📷 Foto";
+      saveMessage(phoneNumber, displayText, "user", {
+        contactName,
+        type: "image",
+        mediaId
+      }).catch(err => console.error("Error saving image message:", err.message));
+      return res.sendStatus(200);
+    }
+
+    // Skip other non-text messages (stickers, audio, reactions, documents, etc.)
     if (!userMessage) {
       return res.sendStatus(200);
     }
