@@ -48,6 +48,18 @@ export class CollectionsComponent implements OnInit {
   itemForm: Record<string, any> = {};
   refCollectionData: Record<string, any[]> = {};
 
+  // Filtros
+  filterText = '';
+  filters: Record<string, any> = {};
+  filtersFrom: Record<string, any> = {};
+  filtersTo: Record<string, any> = {};
+  filteredData: any[] = [];
+  showFilterPanel = false;
+
+  // Columnas
+  visibleFieldKeys: string[] = [];
+  showColumnPanel = false;
+
   // Excel import
   showImportPanel = false;
   importMode: 'overwrite' | 'merge' = 'merge';
@@ -123,6 +135,7 @@ export class CollectionsComponent implements OnInit {
     this.originalFieldKeys = (col.fields || []).map(f => f.key);
     this.view = 'schema';
     this.activeTab = 'data';
+    this.initViewState(col.slug);
     this.loadCollectionData();
   }
 
@@ -292,6 +305,8 @@ export class CollectionsComponent implements OnInit {
     this.dataLoading = true;
     try {
       this.collectionData = await this.firebaseService.getCollectionData(this.currentCollection.slug);
+      await this.loadRefCollectionData();
+      this.applyFilters();
     } catch (err) {
       console.error('Error loading collection data:', err);
     } finally {
@@ -409,12 +424,17 @@ export class CollectionsComponent implements OnInit {
   }
 
   getVisibleFields(): CollectionField[] {
-    const fields = this.currentCollection.fields.slice(0, 5);
-    const hasPhoneField = fields.some(f => f.key === 'phoneNumber');
-    if (!hasPhoneField) {
-      fields.push({ key: 'phoneNumber', label: 'WhatsApp', type: 'phone', required: false });
+    if (!this.visibleFieldKeys.length) {
+      const defaults = this.currentCollection.fields.slice(0, 6);
+      const hasPhone = defaults.some(f => f.key === 'phoneNumber');
+      if (!hasPhone) {
+        const phoneField = this.currentCollection.fields.find(f => f.key === 'phoneNumber');
+        if (phoneField) defaults.push(phoneField);
+        else defaults.push({ key: 'phoneNumber', label: 'WhatsApp', type: 'phone', required: false });
+      }
+      return defaults;
     }
-    return fields;
+    return this.currentCollection.fields.filter(f => this.visibleFieldKeys.includes(f.key));
   }
 
   getFieldValue(item: any, field: CollectionField): string {
@@ -428,6 +448,157 @@ export class CollectionsComponent implements OnInit {
   getWhatsAppLink(phone: string): string {
     const cleaned = phone?.replace(/[^0-9]/g, '') || '';
     return `https://wa.me/${cleaned}`;
+  }
+
+  // ==================== VIEW STATE (FILTERS + COLUMNS) ====================
+
+  initViewState(slug: string): void {
+    try {
+      const saved = localStorage.getItem(`col_view_${slug}`);
+      if (saved) {
+        const s = JSON.parse(saved);
+        this.filterText = s.filterText || '';
+        this.filters = s.filters || {};
+        this.filtersFrom = s.filtersFrom || {};
+        this.filtersTo = s.filtersTo || {};
+        this.visibleFieldKeys = s.visibleFieldKeys || [];
+      } else {
+        this.filterText = '';
+        this.filters = {};
+        this.filtersFrom = {};
+        this.filtersTo = {};
+        this.visibleFieldKeys = [];
+      }
+    } catch { /* ignore */ }
+  }
+
+  saveViewState(): void {
+    try {
+      localStorage.setItem(`col_view_${this.currentCollection.slug}`, JSON.stringify({
+        filterText: this.filterText,
+        filters: this.filters,
+        filtersFrom: this.filtersFrom,
+        filtersTo: this.filtersTo,
+        visibleFieldKeys: this.visibleFieldKeys
+      }));
+    } catch { /* ignore */ }
+  }
+
+  applyFilters(): void {
+    let data = this.collectionData;
+
+    if (this.filterText.trim()) {
+      const q = this.filterText.toLowerCase();
+      data = data.filter(item =>
+        this.currentCollection.fields.some(f => {
+          const v = String(this.getFieldDisplayValue(item, f)).toLowerCase();
+          return v.includes(q);
+        })
+      );
+    }
+
+    for (const f of this.currentCollection.fields) {
+      const fv = this.filters[f.key];
+      const from = this.filtersFrom[f.key];
+      const to = this.filtersTo[f.key];
+
+      if (f.type === 'boolean' && fv) {
+        data = data.filter(item =>
+          fv === 'true' ? !!item[f.key] : !item[f.key]
+        );
+      } else if ((f.type === 'text' || f.type === 'list') && fv) {
+        data = data.filter(item =>
+          String(this.getFieldDisplayValue(item, f)).toLowerCase().includes(String(fv).toLowerCase())
+        );
+      } else if ((f.type === 'select' || f.type === 'reference') && fv) {
+        data = data.filter(item => String(item[f.key] ?? '') === String(fv));
+      } else if (f.type === 'number') {
+        if (from !== null && from !== undefined && from !== '') {
+          data = data.filter(item => Number(item[f.key]) >= Number(from));
+        }
+        if (to !== null && to !== undefined && to !== '') {
+          data = data.filter(item => Number(item[f.key]) <= Number(to));
+        }
+      } else if (f.type === 'date') {
+        if (from) data = data.filter(item => (item[f.key] || '') >= from);
+        if (to)   data = data.filter(item => (item[f.key] || '') <= to);
+      }
+    }
+
+    this.filteredData = data;
+  }
+
+  clearFilters(): void {
+    this.filterText = '';
+    this.filters = {};
+    this.filtersFrom = {};
+    this.filtersTo = {};
+    this.applyFilters();
+    this.saveViewState();
+  }
+
+  clearFilter(key: string): void {
+    delete this.filters[key];
+    delete this.filtersFrom[key];
+    delete this.filtersTo[key];
+    this.applyFilters();
+    this.saveViewState();
+  }
+
+  get activeFilterCount(): number {
+    let n = this.filterText.trim() ? 1 : 0;
+    for (const k of Object.keys(this.filters)) {
+      if (this.filters[k] !== null && this.filters[k] !== undefined && this.filters[k] !== '') n++;
+    }
+    for (const k of Object.keys(this.filtersFrom)) {
+      if (this.filtersFrom[k] !== null && this.filtersFrom[k] !== undefined && this.filtersFrom[k] !== '') n++;
+    }
+    for (const k of Object.keys(this.filtersTo)) {
+      if (this.filtersTo[k] !== null && this.filtersTo[k] !== undefined && this.filtersTo[k] !== '') n++;
+    }
+    return n;
+  }
+
+  toggleVisibleField(key: string): void {
+    const idx = this.visibleFieldKeys.indexOf(key);
+    if (idx >= 0) this.visibleFieldKeys.splice(idx, 1);
+    else this.visibleFieldKeys.push(key);
+    this.saveViewState();
+  }
+
+  isFieldVisible(key: string): boolean {
+    if (!this.visibleFieldKeys.length) {
+      return this.currentCollection.fields.slice(0, 6).some(f => f.key === key)
+          || key === 'phoneNumber';
+    }
+    return this.visibleFieldKeys.includes(key);
+  }
+
+  getFieldDisplayValue(item: any, field: CollectionField): string {
+    const val = item[field.key];
+    if (val === undefined || val === null || val === '') return '-';
+    if (field.type === 'boolean') return val ? 'Sí' : 'No';
+    if (field.type === 'list' && Array.isArray(val)) return val.join(', ');
+    if (field.type === 'reference' && field.refCollection) {
+      const refItems = this.refCollectionData[field.refCollection] || [];
+      const match = refItems.find((r: any) =>
+        r.id === val || String(r[field.refValueField || 'id']) === String(val)
+      );
+      if (match) return this.getRefItemOptionLabel(match, field);
+    }
+    return String(val);
+  }
+
+  downloadData(): void {
+    const fields = this.getVisibleFields().filter(f => f.type !== 'phone');
+    const headers = ['#', ...fields.map(f => f.label || f.key)];
+    const rows = this.filteredData.map((item, i) =>
+      [i + 1, ...fields.map(f => this.getFieldDisplayValue(item, f))]
+    );
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, this.currentCollection.name || 'Datos');
+    XLSX.writeFile(wb, `${this.currentCollection.slug}_datos.xlsx`);
   }
 
   // ==================== REFERENCE FIELD HELPERS ====================
