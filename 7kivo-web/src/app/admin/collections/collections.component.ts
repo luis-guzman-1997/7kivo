@@ -55,6 +55,7 @@ export class CollectionsComponent implements OnInit {
   filtersTo: Record<string, any> = {};
   filteredData: any[] = [];
   showFilterPanel = false;
+  showAdvancedFilters = false;
 
   // Columnas
   visibleFieldKeys: string[] = [];

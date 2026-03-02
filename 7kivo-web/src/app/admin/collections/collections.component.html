@@ -209,23 +209,25 @@
 
         <!-- Filter Panel -->
         <div class="filter-panel" *ngIf="showFilterPanel">
-          <div class="filter-panel-header">
-            <span><i class="fas fa-filter"></i> Filtros</span>
+          <div class="filter-panel-top">
+            <div class="filter-global">
+              <i class="fas fa-search"></i>
+              <input [(ngModel)]="filterText" (ngModelChange)="applyFilters(); saveViewState()"
+                     placeholder="Buscar en todos los campos..." />
+              <button *ngIf="filterText" (click)="filterText=''; applyFilters(); saveViewState()" class="fg-clear">×</button>
+            </div>
+            <button class="fp-advanced-toggle" (click)="showAdvancedFilters = !showAdvancedFilters"
+                    [class.fp-advanced-open]="showAdvancedFilters">
+              <i class="fas fa-sliders-h"></i>
+              <span>Por campo</span>
+              <i class="fas fa-chevron-down fp-chevron"></i>
+            </button>
             <button class="fp-clear" (click)="clearFilters()" *ngIf="activeFilterCount > 0">
-              <i class="fas fa-times"></i> Limpiar todo
+              <i class="fas fa-times"></i> Limpiar
             </button>
           </div>
 
-          <!-- Búsqueda global -->
-          <div class="filter-global">
-            <i class="fas fa-search"></i>
-            <input [(ngModel)]="filterText" (ngModelChange)="applyFilters(); saveViewState()"
-                   placeholder="Buscar en todos los campos..." />
-            <button *ngIf="filterText" (click)="filterText=''; applyFilters(); saveViewState()" class="fg-clear">×</button>
-          </div>
-
-          <!-- Grilla de filtros por campo -->
-          <div class="filter-fields-grid">
+          <div class="filter-fields-grid" *ngIf="showAdvancedFilters">
             <ng-container *ngFor="let f of currentCollection.fields">
 
               <div class="filter-field" *ngIf="f.type === 'text' || f.type === 'list'">
@@ -234,7 +236,7 @@
                        (ngModelChange)="applyFilters(); saveViewState()" placeholder="Contiene..." />
               </div>
 
-              <div class="filter-field" *ngIf="f.type === 'number'">
+              <div class="filter-field filter-field-wide" *ngIf="f.type === 'number'">
                 <label>{{ f.label }}</label>
                 <div class="filter-range">
                   <input type="number" [(ngModel)]="filtersFrom[f.key]"
@@ -245,7 +247,7 @@
                 </div>
               </div>
 
-              <div class="filter-field" *ngIf="f.type === 'date'">
+              <div class="filter-field filter-field-wide" *ngIf="f.type === 'date'">
                 <label>{{ f.label }}</label>
                 <div class="filter-range">
                   <input type="date" [(ngModel)]="filtersFrom[f.key]"
