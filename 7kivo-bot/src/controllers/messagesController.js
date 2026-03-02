@@ -590,8 +590,9 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     return;
   }
 
-  const fallbackMsg = await getMessage("option_not_recognized", "Opción no reconocida. Selecciona una opción del menú.");
-  await sendTextMessage(fallbackMsg, phoneNumber);
+  // Unrecognized or stale button (e.g. old message clicked later) — show menu gracefully
+  await sendMenu(phoneNumber);
+  setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
 };
 
 const startLegacyOrFlowRegistration = async (phoneNumber) => {
@@ -1071,7 +1072,7 @@ const completeFlow = async (phoneNumber, flow) => {
     completionMsg = completionMsg.replace(regex, displayValue);
   }
 
-  clearSession(phoneNumber);
+  await clearSession(phoneNumber);
   await sendTextMessage(completionMsg, phoneNumber);
 };
 
