@@ -18,6 +18,9 @@
     <button class="tab" [class.active]="activeTab === 'messages'" (click)="activeTab = 'messages'">
       <i class="fas fa-comment-dots"></i> Mensajes
     </button>
+    <button class="tab" [class.active]="activeTab === 'keywords'" (click)="activeTab = 'keywords'">
+      <i class="fas fa-key"></i> Palabras clave
+    </button>
     <button class="tab" [class.active]="activeTab === 'config'" (click)="activeTab = 'config'">
       <i class="fas fa-sliders-h"></i> Configuración
     </button>
@@ -128,6 +131,103 @@
     </div>
   </div>
 
+  <!-- ==================== KEYWORDS TAB ==================== -->
+  <div *ngIf="!loading && activeTab === 'keywords'" class="tab-content">
+
+    <div class="info-banner">
+      <i class="fas fa-lightbulb"></i>
+      <p>Define palabras o frases que, al ser escritas por el usuario, disparan una respuesta automática del bot — incluso fuera del menú.</p>
+    </div>
+
+    <!-- Empty state -->
+    <div class="kw-empty" *ngIf="keywords.length === 0 && !showNewKwForm">
+      <i class="fas fa-key"></i>
+      <p>Aún no hay palabras clave. Agrega una para que el bot responda automáticamente cuando el usuario escriba esa palabra.</p>
+    </div>
+
+    <!-- Keywords list -->
+    <div class="kw-list" *ngIf="keywords.length > 0">
+      <div *ngFor="let kw of keywords" class="kw-card" [class.kw-inactive]="!kw.active" [class.kw-editing]="editingKeywordId === kw.id">
+
+        <!-- View mode -->
+        <ng-container *ngIf="editingKeywordId !== kw.id">
+          <div class="kw-top">
+            <div class="kw-badge" [class.kw-badge-exact]="kw.matchType === 'exact'">
+              <i class="fas fa-search"></i>
+              <span class="kw-word">{{ kw.keyword }}</span>
+              <span class="kw-match-tag">{{ kw.matchType === 'exact' ? 'exacta' : 'contiene' }}</span>
+            </div>
+            <div class="kw-card-actions">
+              <button class="kw-toggle" (click)="toggleKeyword(kw)" [title]="kw.active ? 'Desactivar' : 'Activar'">
+                <i class="fas" [class.fa-toggle-on]="kw.active" [class.fa-toggle-off]="!kw.active"></i>
+              </button>
+              <button class="kw-btn-edit" (click)="startEditKeyword(kw)"><i class="fas fa-pen"></i></button>
+              <button class="kw-btn-del" (click)="deleteKeyword(kw.id)"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="kw-response-preview">
+            <i class="fas fa-reply kw-reply-icon"></i>
+            <span>{{ kw.response }}</span>
+          </div>
+        </ng-container>
+
+        <!-- Edit mode -->
+        <ng-container *ngIf="editingKeywordId === kw.id">
+          <div class="kw-form-row">
+            <input type="text" class="kw-input" [(ngModel)]="editKw.keyword" placeholder="Palabra o frase..." />
+            <select class="kw-select" [(ngModel)]="editKw.matchType">
+              <option value="contains">Contiene</option>
+              <option value="exact">Exacta</option>
+            </select>
+          </div>
+          <textarea class="kw-textarea" [(ngModel)]="editKw.response" rows="3" placeholder="Respuesta del bot..."></textarea>
+          <div class="kw-edit-actions">
+            <button class="btn-save-msg" (click)="saveEditKeyword()" [disabled]="saving || !editKw.keyword.trim() || !editKw.response.trim()">
+              <i class="fas fa-check"></i> Guardar
+            </button>
+            <button class="btn-cancel-msg" (click)="cancelEditKeyword()">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+          </div>
+        </ng-container>
+
+      </div>
+    </div>
+
+    <!-- Add new keyword form -->
+    <div class="kw-new-form" *ngIf="showNewKwForm">
+      <h4><i class="fas fa-plus-circle"></i> Nueva palabra clave</h4>
+      <div class="kw-form-row">
+        <input type="text" class="kw-input" [(ngModel)]="newKw.keyword" placeholder="Ej: precio, horario, pago..." />
+        <select class="kw-select" [(ngModel)]="newKw.matchType">
+          <option value="contains">Contiene</option>
+          <option value="exact">Exacta</option>
+        </select>
+      </div>
+      <p class="kw-hint">
+        <strong>Contiene</strong>: responde si el mensaje incluye la palabra (Ej: "precio del servicio" dispara "precio").<br>
+        <strong>Exacta</strong>: solo responde si el mensaje es exactamente esa palabra.
+      </p>
+      <textarea class="kw-textarea" [(ngModel)]="newKw.response" rows="3" placeholder="Respuesta que enviará el bot..."></textarea>
+      <div class="kw-edit-actions">
+        <button class="btn-save-msg" (click)="addKeyword()" [disabled]="saving || !newKw.keyword.trim() || !newKw.response.trim()">
+          <i class="fas fa-save"></i> Agregar
+        </button>
+        <button class="btn-cancel-msg" (click)="showNewKwForm = false; newKw = emptyKeyword()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+    </div>
+
+    <!-- Actions bar -->
+    <div class="messages-actions" *ngIf="!showNewKwForm">
+      <button class="btn-add-msg" (click)="showNewKwForm = true; newKw = emptyKeyword()">
+        <i class="fas fa-plus"></i> Nueva palabra clave
+      </button>
+    </div>
+
+  </div>
+
   <!-- ==================== CONFIG TAB ==================== -->
   <div *ngIf="!loading && activeTab === 'config'" class="tab-content">
     <div class="config-card">
@@ -147,22 +247,10 @@
           <label><i class="fas fa-hand-sparkles"></i> Mensaje de Bienvenida</label>
           <textarea [(ngModel)]="config.welcomeMessage" rows="3" placeholder="¡Hola! Bienvenido a..."></textarea>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label><i class="fas fa-hourglass-half"></i> Timeout de Registro (ms)</label>
-            <input type="number" [(ngModel)]="config.registrationTimeout" placeholder="300000" />
-            <span class="hint">Tiempo máximo para completar un flujo de registro</span>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-power-off"></i> Bot Activo</label>
-            <div class="toggle-row">
-              <select [(ngModel)]="config.active" class="select-status">
-                <option [ngValue]="true">Activo</option>
-                <option [ngValue]="false">Inactivo</option>
-              </select>
-              <span class="status-dot" [class.active]="config.active" [class.inactive]="!config.active"></span>
-            </div>
-          </div>
+        <div class="form-group">
+          <label><i class="fas fa-hourglass-half"></i> Timeout de Registro (ms)</label>
+          <input type="number" [(ngModel)]="config.registrationTimeout" placeholder="300000" />
+          <span class="hint">Tiempo máximo para completar un flujo de registro</span>
         </div>
         <button class="btn-save-section" (click)="saveConfig()" [disabled]="saving">
           <i class="fas fa-save"></i> Guardar Configuración

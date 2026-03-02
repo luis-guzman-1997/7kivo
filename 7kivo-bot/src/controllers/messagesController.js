@@ -9,16 +9,24 @@ const {
   getFlows,
   getFlow,
   getMenuConfig,
+  getKeywords,
   getCollectionItems,
   getCollectionItem,
   getCollectionDef,
   saveFlowSubmission,
   getAppointmentsByDate,
+  getUpcomingAppointmentsByPhone,
+  cancelAppointment,
   getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
 
 const disabledNotified = {};
+
+// Deduplication: WhatsApp retries failed webhooks (5xx) with the same message ID.
+// We track processed IDs to silently ignore retries and prevent duplicate saves.
+const processedMessageIds = new Set();
+setInterval(() => processedMessageIds.clear(), 60 * 60 * 1000); // clear every hour
 
 const sendTextMessage = async (text, phoneNumber) => {
   const result = await _rawSendText(text, phoneNumber);
@@ -52,6 +60,15 @@ const requestMessageFromWhatsapp = async (req, res) => {
   try {
     const change = req.body?.entry?.[0]?.changes?.[0];
     const messageObj = change?.value?.messages?.[0];
+
+    // Deduplicate: if we've already processed this WhatsApp message ID, ignore the retry
+    const waMessageId = messageObj?.id;
+    if (waMessageId) {
+      if (processedMessageIds.has(waMessageId)) {
+        return res.sendStatus(200);
+      }
+      processedMessageIds.add(waMessageId);
+    }
 
     let phoneNumber = messageObj?.from ||
                      change?.value?.contacts?.[0]?.wa_id ||
@@ -172,7 +189,36 @@ const requestMessageFromWhatsapp = async (req, res) => {
             .catch(err => console.error("Error saving media message:", err.message));
         }
       } else {
-        // Bot mode: auto-reply that multimedia is not supported
+        // Bot mode: check if user is in a flow_image step first
+        const currentSession = getSession(phoneNumber);
+        if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined &&
+            (msgType === "image" || msgType === "document")) {
+          const flow = await getFlow(currentSession.flowId);
+          const currentStep = flow?.steps?.[currentSession.flowStepIndex];
+          if (currentStep?.type === "image_input") {
+            const mediaId = messageObj?.[msgType]?.id;
+            if (mediaId) {
+              try {
+                const { downloadAndUploadMedia } = require("../services/mediaService");
+                const fileUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+                const fieldKey = currentStep.fieldKey || "archivoUrl";
+                const flowData = { ...currentSession.flowData, [fieldKey]: fileUrl };
+                const nextIndex = currentSession.flowStepIndex + 1;
+                setSession(phoneNumber, { flowData, flowStepIndex: nextIndex, flowStartTime: Date.now() });
+                await executeFlowStep(phoneNumber, flow, nextIndex);
+                return res.sendStatus(200);
+              } catch (e) {
+                console.error("Error processing flow image:", e.message);
+              }
+            } else if (currentStep.optional) {
+              const nextIndex = currentSession.flowStepIndex + 1;
+              setSession(phoneNumber, { flowStepIndex: nextIndex, flowStartTime: Date.now() });
+              await executeFlowStep(phoneNumber, flow, nextIndex);
+              return res.sendStatus(200);
+            }
+          }
+        }
+        // Auto-reply that multimedia is not supported
         try {
           await sendTextMessage(
             "Lo sentimos, no podemos procesar archivos multimedia por este canal. Por favor describe tu consulta en texto. 📝",
@@ -230,7 +276,9 @@ const requestMessageFromWhatsapp = async (req, res) => {
     return res.sendStatus(200);
   } catch (error) {
     console.error("Error al procesar mensaje:", error.message || error);
-    return res.sendStatus(500);
+    // Always return 200 to prevent WhatsApp from retrying the webhook,
+    // which would cause duplicate message saves in Firestore.
+    return res.sendStatus(200);
   }
 };
 
@@ -435,6 +483,34 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     }
   }
 
+  // Cancel appointment: selecting which appointment
+  if (session?.step === "cancel_appt_select" && buttonId.startsWith("cancel_pick_")) {
+    const idx = parseInt(buttonId.substring(12));
+    const appts = session.pendingCancelOptions;
+    const a = appts?.[idx];
+    if (!a) { await sendMenu(phoneNumber); return; }
+    setSession(phoneNumber, { step: "cancel_appt_confirm", pendingCancelId: a.id, pendingCancelCollection: a.collectionName });
+    const buttons = [{ id: "cancel_appt_yes", title: "Sí, cancelar" }, { id: "cancel_appt_no", title: "No, mantener" }];
+    await sendInteractiveButtons(
+      `¿Confirmas cancelar?\n*${a._apptService || "Cita"}*\n📅 ${a._apptFecha} ${a._apptHora}`,
+      buttons, phoneNumber
+    );
+    return;
+  }
+
+  // Cancel appointment: confirm/reject
+  if (session?.step === "cancel_appt_confirm") {
+    if (buttonId === "cancel_appt_yes") {
+      await cancelAppointment(session.pendingCancelCollection, session.pendingCancelId);
+      await sendTextMessage("✅ Tu cita ha sido cancelada.", phoneNumber);
+    } else {
+      await sendTextMessage("De acuerdo, tu cita se mantiene. 👍", phoneNumber);
+    }
+    setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+    await sendMenu(phoneNumber);
+    return;
+  }
+
   // Exit chat
   if (buttonId === "exit_chat") {
     await sendTextMessage("¡Hasta luego! Escribe cuando necesites ayuda.", phoneNumber);
@@ -449,7 +525,9 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
       schedule: () => showSchedule(phoneNumber),
       contact: () => showContact(phoneNumber),
       general: () => showGeneralInfo(phoneNumber),
-      services: () => showServices(phoneNumber)
+      services: () => showServices(phoneNumber),
+      cancel_appointment: () => handleCancelAppointment(phoneNumber),
+      my_appointments: () => handleMyAppointments(phoneNumber)
     };
 
     if (builtinActions[action]) {
@@ -601,6 +679,19 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
         flowStartTime: Date.now()
       });
       await executeFlowStep(phoneNumber, flow, stepIndex + 1);
+      break;
+
+    case "image_input":
+      await sendTextMessage(step.prompt || "📷 Por favor envía una imagen o foto.", phoneNumber);
+      if (step.optional) {
+        await sendTextMessage("_(Puedes escribir *omitir* si no deseas adjuntar)_", phoneNumber);
+      }
+      setSession(phoneNumber, {
+        step: "flow_image",
+        flowId: flow.id,
+        flowStepIndex: stepIndex,
+        flowStartTime: Date.now()
+      });
       break;
 
     default:
@@ -1122,12 +1213,13 @@ const slotsOverlap = (startA, durationA, startB, durationB) => {
   return a0 < b1 && b0 < a1;
 };
 
-const getFreeSlots = (allSlots, duration, booked) => {
+const getFreeSlots = (allSlots, duration, booked, capacity = 1) => {
   return allSlots.filter(slot => {
-    return !booked.some(b => {
+    const count = booked.filter(b => {
       const bDuration = b._apptDuration || b.duracion || duration;
       return slotsOverlap(slot, duration, b._apptHora || b.hora, bDuration);
-    });
+    }).length;
+    return count < capacity;
   });
 };
 
@@ -1192,7 +1284,9 @@ const sendAppointmentDays = async (phoneNumber, flow, step, stepIndex) => {
 
     const allSlots = generateTimeSlots(dayConfig.shifts, apptDuration);
     const booked = await getAppointmentsByDate(dateStr, saveToCollection);
-    const freeSlots = getFreeSlots(allSlots, apptDuration, booked);
+    const svc = schedule.services.find(s => s.title === session?.flowData?._apptService);
+    const capacity = svc?.capacity || 1;
+    const freeSlots = getFreeSlots(allSlots, apptDuration, booked, capacity);
     if (freeSlots.length === 0) continue;
 
     const label = `${dayName} ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
@@ -1239,7 +1333,9 @@ const handleApptDaySelected = async (phoneNumber, dateStr, session) => {
   const saveToCollection = flow.saveToCollection || "";
   const allSlots = generateTimeSlots(dayConfig.shifts, apptDuration);
   const booked = await getAppointmentsByDate(dateStr, saveToCollection);
-  const freeSlots = getFreeSlots(allSlots, apptDuration, booked);
+  const svc = schedule?.services?.find(s => s.title === session.flowData?._apptService);
+  const capacity = svc?.capacity || 1;
+  const freeSlots = getFreeSlots(allSlots, apptDuration, booked, capacity);
 
   if (freeSlots.length === 0) {
     await sendTextMessage("Este día ya no tiene horarios disponibles. Selecciona otro.", phoneNumber);
@@ -1291,10 +1387,13 @@ const handleApptSlotSelected = async (phoneNumber, timeSlot, session) => {
 
   const saveToCollection = flow.saveToCollection || "";
   const existing = await getAppointmentsByDate(session.apptDate, saveToCollection);
-  const hasConflict = existing.some(b => {
+  const svcForConflict = schedule?.services?.find(s => s.title === session.flowData?._apptService);
+  const capacityForConflict = svcForConflict?.capacity || 1;
+  const conflictCount = existing.filter(b => {
     const bDuration = b._apptDuration || b.duracion || apptDuration;
     return slotsOverlap(timeSlot, apptDuration, b._apptHora || b.hora, bDuration);
-  });
+  }).length;
+  const hasConflict = conflictCount >= capacityForConflict;
 
   if (hasConflict) {
     await sendTextMessage("⚠️ Ese horario acaba de ser reservado. Selecciona otro.", phoneNumber);
@@ -1318,6 +1417,67 @@ const handleApptSlotSelected = async (phoneNumber, timeSlot, session) => {
 };
 
 // ==================== TEXT MESSAGE HANDLER ====================
+
+// ==================== MY APPOINTMENTS ====================
+
+const handleMyAppointments = async (phoneNumber) => {
+  const appts = await getUpcomingAppointmentsByPhone(phoneNumber);
+  if (!appts || appts.length === 0) {
+    await sendTextMessage("No tienes citas próximas registradas.", phoneNumber);
+    setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+    await sendMenu(phoneNumber);
+    return;
+  }
+  const lines = appts.map((a, i) => {
+    const svc = a._apptService ? `*${a._apptService}*` : "*Cita*";
+    return `${i + 1}. ${svc}\n   📅 ${a._apptFecha} a las ${a._apptHora}`;
+  });
+  await sendTextMessage(`📋 *Tus citas próximas:*\n\n${lines.join("\n\n")}`, phoneNumber);
+  setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+  await sendMenu(phoneNumber);
+};
+
+// ==================== CANCEL APPOINTMENT ====================
+
+const handleCancelAppointment = async (phoneNumber) => {
+  const appts = await getUpcomingAppointmentsByPhone(phoneNumber);
+  if (!appts || appts.length === 0) {
+    await sendTextMessage("No tienes citas próximas para cancelar.", phoneNumber);
+    setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+    await sendMenu(phoneNumber);
+    return;
+  }
+  if (appts.length === 1) {
+    const a = appts[0];
+    const svc = a._apptService || "Cita";
+    setSession(phoneNumber, {
+      step: "cancel_appt_confirm",
+      pendingCancelId: a.id,
+      pendingCancelCollection: a.collectionName,
+      hasGreeted: true
+    });
+    const buttons = [
+      { id: "cancel_appt_yes", title: "Sí, cancelar" },
+      { id: "cancel_appt_no",  title: "No, mantener" }
+    ];
+    await sendInteractiveButtons(
+      `¿Deseas cancelar tu cita?\n\n*${svc}*\n📅 ${a._apptFecha} a las ${a._apptHora}`,
+      buttons, phoneNumber
+    );
+  } else {
+    const rows = appts.map((a, i) => ({
+      id: `cancel_pick_${i}`,
+      title: (a._apptService || "Cita").substring(0, 24),
+      description: `${a._apptFecha} ${a._apptHora}`
+    }));
+    setSession(phoneNumber, {
+      step: "cancel_appt_select",
+      pendingCancelOptions: appts,
+      hasGreeted: true
+    });
+    await sendInteractiveList("¿Cuál cita deseas cancelar?", "Ver citas", [{ title: "Tus citas", rows }], phoneNumber);
+  }
+};
 
 const handleUserMessage = async (phoneNumber, message, session) => {
   const lowerMessage = message.toLowerCase();
@@ -1349,6 +1509,22 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
+  // Waiting for image input but user typed text
+  if (session.step === "flow_image") {
+    if (["omitir", "skip", "no"].includes(lowerMessage)) {
+      const flow = await getFlow(session.flowId);
+      const currentStep = flow?.steps?.[session.flowStepIndex];
+      if (currentStep?.optional) {
+        const nextIndex = session.flowStepIndex + 1;
+        setSession(phoneNumber, { flowStepIndex: nextIndex });
+        await executeFlowStep(phoneNumber, flow, nextIndex);
+        return;
+      }
+    }
+    await sendTextMessage("Por favor envía una imagen o foto 📷", phoneNumber);
+    return;
+  }
+
   // Waiting for select/browse/appointment but user typed text
   if (session.step === "flow_select" || session.step === "flow_browse" || session.step === "flow_browse_detail"
       || session.step === "svc_info_select"
@@ -1356,6 +1532,21 @@ const handleUserMessage = async (phoneNumber, message, session) => {
       || session.step === "appt_select_day" || session.step === "appt_select_time") {
     await sendTextMessage("Por favor selecciona una opción del menú.", phoneNumber);
     return;
+  }
+
+  // Configurable keyword responses (config/keywords in Firebase)
+  const keywords = await getKeywords();
+  const activeKeywords = keywords.filter(k => k.active !== false && k.keyword && k.response);
+  for (const kw of activeKeywords) {
+    const kwLower = kw.keyword.toLowerCase().trim();
+    const matched = kw.matchType === "exact"
+      ? lowerMessage === kwLower
+      : lowerMessage.includes(kwLower);
+    if (matched) {
+      await sendTextMessage(kw.response, phoneNumber);
+      setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+      return;
+    }
   }
 
   // Custom keyword responses from message-type menu items (e.g. "pago", "precio", etc.)

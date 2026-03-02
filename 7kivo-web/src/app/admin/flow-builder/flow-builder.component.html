@@ -11,8 +11,8 @@
         <p class="page-subtitle">Diseña flujos conversacionales dinámicos para el bot de WhatsApp</p>
       </div>
       <div class="header-actions">
-        <button class="btn-menu-config" (click)="toggleMenuConfig()">
-          <i class="fas fa-bars"></i> {{ showMenuConfig ? 'Ocultar Menú' : 'Configurar Menú' }}
+        <button class="btn-tour" (click)="startTour()">
+          <i class="fas fa-question-circle"></i> Cómo funciona
         </button>
       </div>
     </div>
@@ -29,159 +29,181 @@
       </div>
     </div>
 
-    <!-- ========== MENU CONFIG PANEL ========== -->
-    <div class="menu-config-panel" *ngIf="showMenuConfig">
-      <div class="config-section">
-        <h3><i class="fas fa-robot"></i> Menú Principal del Bot</h3>
-        <p class="section-hint">Configura el saludo, las opciones del menú y el mensaje cuando el usuario envía algo no reconocido.</p>
+    <!-- ========== BOT MENU PANEL (always visible) ========== -->
+    <div class="bot-menu-panel">
+      <div class="bmp-header">
+        <div class="bmp-title">
+          <i class="fas fa-robot"></i>
+          <span>Menú de tu bot</span>
+          <span class="bmp-count">{{ menuConfig.items.length }}/7 opciones</span>
+        </div>
+        <div class="bmp-actions">
+          <button class="fe-save-btn bmp-save-btn" (click)="saveMenuConfig()" [disabled]="saving">
+            <i class="fas fa-save"></i> Guardar menú
+          </button>
+        </div>
+      </div>
 
-        <div class="config-form">
+      <!-- Bot settings (always visible) -->
+      <div class="bmp-settings">
+        <p class="bmp-settings-title"><i class="fas fa-sliders-h"></i> Ajustes del bot</p>
+        <div class="form-group-config">
+          <label>Mensaje de Saludo</label>
+          <textarea [(ngModel)]="menuConfig.greeting" rows="3"
+                    placeholder="¡Hola{name}!&#10;Bienvenido a *Tu Organización*&#10;Selecciona una opción:"></textarea>
+          <span class="field-hint">Usa <code>{{'{'}}name{{'}'}}</code> para incluir el nombre del contacto</span>
+        </div>
+        <div class="form-row-config">
           <div class="form-group-config">
-            <label>Mensaje de Saludo</label>
-            <textarea [(ngModel)]="menuConfig.greeting" rows="3"
-                      placeholder="¡Hola{name}!&#10;Bienvenido a *Tu Organización*&#10;Selecciona una opción:"></textarea>
-            <span class="field-hint">Usa <code>{{'{'}}name{{'}'}}</code> para incluir el nombre del contacto</span>
+            <label>Texto del Botón del Menú</label>
+            <input type="text" [(ngModel)]="menuConfig.menuButtonText" placeholder="Ver opciones" />
           </div>
-          <div class="form-row-config">
-            <div class="form-group-config">
-              <label>Texto del Botón del Menú</label>
-              <input type="text" [(ngModel)]="menuConfig.menuButtonText" placeholder="Ver opciones" />
-            </div>
-            <div class="form-group-config">
-              <label>Mensaje Fallback</label>
-              <input type="text" [(ngModel)]="menuConfig.fallbackMessage" placeholder="No entendí tu mensaje..." />
-            </div>
+          <div class="form-group-config">
+            <label>Mensaje Fallback</label>
+            <input type="text" [(ngModel)]="menuConfig.fallbackMessage" placeholder="No entendí tu mensaje..." />
           </div>
+        </div>
+      </div>
 
-          <h4 class="subsection-title"><i class="fas fa-list-ol"></i> Opciones del Menú</h4>
-          <p class="section-hint">Define qué opciones aparecen en el menú del bot. Puedes usar acciones predefinidas o vincular flujos.</p>
-
-          <div class="menu-items-list">
-            <div *ngFor="let item of menuConfig.items; let i = index" class="menu-item-row">
-              <div class="menu-item-handle">
-                <button class="btn-icon-sm" (click)="moveMenuItemUp(i)" [disabled]="i === 0" title="Subir">
-                  <i class="fas fa-chevron-up"></i>
-                </button>
-                <span class="order-badge">{{ i + 1 }}</span>
-                <button class="btn-icon-sm" (click)="moveMenuItemDown(i)" [disabled]="i === menuConfig.items.length - 1" title="Bajar">
-                  <i class="fas fa-chevron-down"></i>
-                </button>
-              </div>
-              <div class="menu-item-fields">
-                <select [(ngModel)]="item.type" (ngModelChange)="onMenuItemTypeChange(item)" class="select-sm">
-                  <option value="builtin">Acción predefinida</option>
-                  <option value="flow">Flujo personalizado</option>
-                  <option value="message">Mensaje directo</option>
-                </select>
-                <select *ngIf="item.type === 'builtin'" [(ngModel)]="item.action" class="select-sm">
-                  <option value="schedule">Horarios</option>
-                  <option value="contact">Contacto / Ubicación</option>
-                  <option value="general">Información General</option>
-                </select>
-                <select *ngIf="item.type === 'flow'" [(ngModel)]="item.flowId" class="select-sm">
-                  <option *ngFor="let f of flows" [value]="f.id">{{ f.name }}</option>
-                </select>
-                <input type="text" [(ngModel)]="item.label" placeholder="Etiqueta" class="input-sm" />
-                <input *ngIf="item.type !== 'message'" type="text" [(ngModel)]="item.description" placeholder="Descripción" class="input-sm" />
-                <textarea *ngIf="item.type === 'message'" [(ngModel)]="item.messageContent" placeholder="Mensaje que enviará el bot al seleccionar esta opción..." class="input-sm textarea-message" rows="2"></textarea>
-              </div>
-              <button class="btn-icon-sm btn-danger" (click)="removeMenuItem(i)" title="Eliminar">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
+      <!-- Items list (always visible) -->
+      <div class="bmp-items">
+        <div *ngIf="menuConfig.items.length === 0" class="bmp-empty">
+          <i class="fas fa-comment-slash"></i>
+          <span>El menú está vacío. Agrega opciones para que los usuarios puedan interactuar con el bot.</span>
+        </div>
+        <div *ngFor="let item of menuConfig.items; let i = index" class="bmp-item">
+          <span class="bmp-num">{{ i + 1 }}</span>
+          <i class="fas bmp-item-icon" [ngClass]="getMenuItemIcon(item)"></i>
+          <div class="bmp-item-body">
+            <select [(ngModel)]="item.type" (ngModelChange)="onMenuItemTypeChange(item)" class="select-sm">
+              <option value="builtin">Acción predefinida</option>
+              <option value="flow">Flujo personalizado</option>
+              <option value="message">Mensaje directo</option>
+            </select>
+            <select *ngIf="item.type === 'builtin'" [(ngModel)]="item.action" class="select-sm">
+              <option value="schedule">Horarios</option>
+              <option value="contact">Contacto / Ubicación</option>
+              <option value="general">Información General</option>
+              <option value="my_appointments">Ver mis citas</option>
+              <option value="cancel_appointment">Cancelar mi cita</option>
+            </select>
+            <select *ngIf="item.type === 'flow'" [(ngModel)]="item.flowId" class="select-sm">
+              <option *ngFor="let f of flows" [value]="f.id">{{ f.name }}</option>
+            </select>
+            <input type="text" [(ngModel)]="item.label" placeholder="Etiqueta" class="input-sm" />
+            <input *ngIf="item.type !== 'message'" type="text" [(ngModel)]="item.description" placeholder="Descripción" class="input-sm" />
+            <textarea *ngIf="item.type === 'message'" [(ngModel)]="item.messageContent" placeholder="Mensaje que enviará el bot al seleccionar esta opción..." class="input-sm textarea-message" rows="2"></textarea>
           </div>
+          <div class="bmp-item-controls">
+            <button class="btn-icon-sm" (click)="moveMenuItemUp(i)" [disabled]="i === 0" title="Subir"><i class="fas fa-chevron-up"></i></button>
+            <button class="btn-icon-sm" (click)="moveMenuItemDown(i)" [disabled]="i === menuConfig.items.length-1" title="Bajar"><i class="fas fa-chevron-down"></i></button>
+            <button class="btn-icon-sm btn-danger" (click)="removeMenuItem(i)" title="Eliminar"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
 
-          <button class="btn-add-item" (click)="showAddMenuPanel = !showAddMenuPanel" [class.btn-add-item-full]="!canAddMenuItem">
-            <i class="fas fa-plus" *ngIf="canAddMenuItem"></i>
-            <i class="fas fa-lock" *ngIf="!canAddMenuItem"></i>
-            {{ canAddMenuItem ? 'Agregar Opción al Menú' : 'Menú lleno' }}
-            <span class="menu-count-badge" [class.menu-count-full]="!canAddMenuItem">{{ menuConfig.items.length }}/7</span>
+      <!-- Add button -->
+      <button class="btn-add-item" (click)="showAddMenuPanel = !showAddMenuPanel" [class.btn-add-item-full]="!canAddMenuItem">
+        <i class="fas fa-plus" *ngIf="canAddMenuItem"></i>
+        <i class="fas fa-lock" *ngIf="!canAddMenuItem"></i>
+        {{ canAddMenuItem ? 'Agregar opción al menú' : 'Menú lleno' }}
+        <span class="menu-count-badge" [class.menu-count-full]="!canAddMenuItem">{{ menuConfig.items.length }}/7</span>
+      </button>
+
+      <!-- Quick-add panel -->
+      <div class="add-menu-panel" *ngIf="showAddMenuPanel">
+        <div class="amp-header">
+          <h5>Agregar opción al menú</h5>
+          <p *ngIf="canAddMenuItem">Usa una plantilla o crea una opción personalizada</p>
+          <p class="amp-limit-notice" *ngIf="!canAddMenuItem"><i class="fas fa-exclamation-circle"></i> Límite de 7 opciones alcanzado. Los flujos predefinidos aún pueden crearse pero no se agregarán al menú automáticamente.</p>
+        </div>
+
+        <!-- Flow templates (create flow + collection) -->
+        <p class="amp-section-label"><i class="fas fa-magic"></i> Flujos predefinidos</p>
+
+        <div class="amp-filter-row">
+          <input class="amp-filter-input" type="text" [(ngModel)]="templateFilter" placeholder="Buscar plantilla..." />
+        </div>
+
+        <div class="amp-cat-tabs">
+          <button class="amp-cat-tab" [class.amp-cat-active]="activeCategoryTab==='all'"       (click)="activeCategoryTab='all'">Todos</button>
+          <button class="amp-cat-tab" [class.amp-cat-active]="activeCategoryTab==='citas'"     (click)="activeCategoryTab='citas'">Citas</button>
+          <button class="amp-cat-tab" [class.amp-cat-active]="activeCategoryTab==='registros'" (click)="activeCategoryTab='registros'">Registros</button>
+          <button class="amp-cat-tab" [class.amp-cat-active]="activeCategoryTab==='consultas'" (click)="activeCategoryTab='consultas'">Consultas</button>
+          <button class="amp-cat-tab" [class.amp-cat-active]="activeCategoryTab==='soporte'"   (click)="activeCategoryTab='soporte'">Soporte</button>
+        </div>
+
+        <p class="amp-no-results" *ngIf="filteredTemplateFlows.length === 0">
+          <i class="fas fa-search"></i> Sin resultados para "{{ templateFilter }}"
+        </p>
+
+        <div class="amp-templates" *ngIf="filteredTemplateFlows.length > 0">
+          <button *ngFor="let tfl of filteredTemplateFlows" class="amp-tpl"
+            [class.amp-disabled]="isTemplateFlowPlanBlocked(tfl) || !canCreateFlow"
+            [disabled]="isTemplateFlowPlanBlocked(tfl) || !canCreateFlow"
+            (click)="openTemplateModal(tfl)">
+            <i class="fas" [ngClass]="tfl.icon"></i>
+            <div class="amp-tpl-text">
+              <strong>{{ tfl.label }}</strong>
+              <span>{{ tfl.description }}</span>
+            </div>
+            <span class="amp-tag amp-tag-plan" *ngIf="isTemplateFlowPlanBlocked(tfl)">Plan superior</span>
+            <span class="amp-tag amp-tag-plan" *ngIf="!isTemplateFlowPlanBlocked(tfl) && !canCreateFlow">Límite alcanzado</span>
+            <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateFlowPlanBlocked(tfl) && canCreateFlow"></i>
           </button>
+        </div>
 
-          <!-- Quick-add panel -->
-          <div class="add-menu-panel" *ngIf="showAddMenuPanel">
-            <div class="amp-header">
-              <h5>Agregar opción al menú</h5>
-              <p *ngIf="canAddMenuItem">Usa una plantilla o crea una opción personalizada</p>
-              <p class="amp-limit-notice" *ngIf="!canAddMenuItem"><i class="fas fa-exclamation-circle"></i> Límite de 7 opciones alcanzado. Los flujos predefinidos aún pueden crearse pero no se agregarán al menú automáticamente.</p>
+        <div class="amp-divider"><span>acciones rápidas</span></div>
+
+        <!-- Builtin templates -->
+        <div class="amp-templates">
+          <button *ngFor="let tpl of menuTemplates"
+            class="amp-tpl"
+            [class.amp-disabled]="isTemplateAlreadyInMenu(tpl) || !canAddMenuItem"
+            [disabled]="isTemplateAlreadyInMenu(tpl) || !canAddMenuItem"
+            (click)="addMenuFromTemplate(tpl)">
+            <i class="fas" [ngClass]="tpl.icon"></i>
+            <div class="amp-tpl-text">
+              <strong>{{ tpl.label }}</strong>
+              <span>{{ tpl.description }}</span>
             </div>
-
-            <!-- Flow templates (create flow + collection) -->
-            <p class="amp-section-label"><i class="fas fa-magic"></i> Flujos predefinidos</p>
-            <div class="amp-templates">
-              <button *ngFor="let tfl of templateFlows"
-                class="amp-tpl"
-                [class.amp-disabled]="isTemplateFlowPlanBlocked(tfl) || !canCreateFlow"
-                [disabled]="isTemplateFlowPlanBlocked(tfl) || !canCreateFlow"
-                (click)="openTemplateModal(tfl)">
-                <i class="fas" [ngClass]="tfl.icon"></i>
-                <div class="amp-tpl-text">
-                  <strong>{{ tfl.label }}</strong>
-                  <span>{{ tfl.description }}</span>
-                </div>
-                <span class="amp-tag amp-tag-plan" *ngIf="isTemplateFlowPlanBlocked(tfl)">Plan superior</span>
-                <span class="amp-tag amp-tag-plan" *ngIf="!isTemplateFlowPlanBlocked(tfl) && !canCreateFlow">Límite alcanzado</span>
-                <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateFlowPlanBlocked(tfl) && canCreateFlow"></i>
-              </button>
-            </div>
-
-            <div class="amp-divider"><span>acciones rápidas</span></div>
-
-            <!-- Builtin templates -->
-            <div class="amp-templates">
-              <button *ngFor="let tpl of menuTemplates"
-                class="amp-tpl"
-                [class.amp-disabled]="isTemplateAlreadyInMenu(tpl) || !canAddMenuItem"
-                [disabled]="isTemplateAlreadyInMenu(tpl) || !canAddMenuItem"
-                (click)="addMenuFromTemplate(tpl)">
-                <i class="fas" [ngClass]="tpl.icon"></i>
-                <div class="amp-tpl-text">
-                  <strong>{{ tpl.label }}</strong>
-                  <span>{{ tpl.description }}</span>
-                </div>
-                <span class="amp-tag" *ngIf="isTemplateAlreadyInMenu(tpl)">Ya agregado</span>
-                <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateAlreadyInMenu(tpl)"></i>
-              </button>
-            </div>
-
-            <div class="amp-divider"><span>o</span></div>
-
-            <div class="amp-custom-row">
-              <button class="amp-custom" (click)="addMenuItem()" [disabled]="!canAddMenuItem" [class.amp-disabled]="!canAddMenuItem">
-                <i class="fas fa-sliders-h"></i> Opción personalizada
-              </button>
-              <button class="amp-custom amp-custom-msg" (click)="addMessageMenuItem()" [disabled]="!canAddMenuItem" [class.amp-disabled]="!canAddMenuItem">
-                <i class="fas fa-comment-alt"></i> Mensaje directo
-              </button>
-            </div>
-          </div>
-
-          <!-- Template creation modal -->
-          <div class="template-modal-overlay" *ngIf="showTemplateModal">
-            <div class="template-modal" (click)="$event.stopPropagation()">
-              <div class="template-modal-header">
-                <i class="fas" [ngClass]="pendingTemplateFlow?.icon"></i>
-                <h4>Crear flujo: {{ pendingTemplateFlow?.label }}</h4>
-              </div>
-              <p class="template-modal-desc">{{ pendingTemplateFlow?.description }}. Puedes personalizar el nombre del flujo.</p>
-              <div class="form-group-config" style="margin-bottom:0">
-                <label>Nombre del flujo *</label>
-                <input type="text" [(ngModel)]="templateTitle" placeholder="Ej: Citas Médicas" maxlength="40" (keydown.enter)="confirmCreateTemplate()" />
-              </div>
-              <div class="template-modal-actions">
-                <button class="btn-tpl-cancel" (click)="cancelTemplateModal()" [disabled]="creatingTemplate">Cancelar</button>
-                <button class="btn-tpl-create" (click)="confirmCreateTemplate()" [disabled]="!templateTitle.trim() || creatingTemplate">
-                  <i class="fas fa-spinner fa-spin" *ngIf="creatingTemplate"></i>
-                  <i class="fas fa-plus-circle" *ngIf="!creatingTemplate"></i>
-                  {{ creatingTemplate ? 'Creando...' : 'Crear y agregar al menú' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <button class="btn-save-section" (click)="saveMenuConfig()" [disabled]="saving" style="margin-top:16px">
-            <i class="fas fa-save"></i> Guardar Menú
+            <span class="amp-tag" *ngIf="isTemplateAlreadyInMenu(tpl)">Ya agregado</span>
+            <i class="fas fa-plus-circle amp-add-icon" *ngIf="!isTemplateAlreadyInMenu(tpl)"></i>
           </button>
+        </div>
+
+        <div class="amp-divider"><span>o</span></div>
+
+        <div class="amp-custom-row">
+          <button class="amp-custom" (click)="addMenuItem()" [disabled]="!canAddMenuItem" [class.amp-disabled]="!canAddMenuItem">
+            <i class="fas fa-sliders-h"></i> Opción personalizada
+          </button>
+          <button class="amp-custom amp-custom-msg" (click)="addMessageMenuItem()" [disabled]="!canAddMenuItem" [class.amp-disabled]="!canAddMenuItem">
+            <i class="fas fa-comment-alt"></i> Mensaje directo
+          </button>
+        </div>
+      </div>
+
+      <!-- Template creation modal -->
+      <div class="template-modal-overlay" *ngIf="showTemplateModal">
+        <div class="template-modal" (click)="$event.stopPropagation()">
+          <div class="template-modal-header">
+            <i class="fas" [ngClass]="pendingTemplateFlow?.icon"></i>
+            <h4>Crear flujo: {{ pendingTemplateFlow?.label }}</h4>
+          </div>
+          <p class="template-modal-desc">{{ pendingTemplateFlow?.description }}. Puedes personalizar el nombre del flujo.</p>
+          <div class="form-group-config" style="margin-bottom:0">
+            <label>Nombre del flujo *</label>
+            <input type="text" [(ngModel)]="templateTitle" placeholder="Ej: Citas Médicas" maxlength="40" (keydown.enter)="confirmCreateTemplate()" />
+          </div>
+          <div class="template-modal-actions">
+            <button class="btn-tpl-cancel" (click)="cancelTemplateModal()" [disabled]="creatingTemplate">Cancelar</button>
+            <button class="btn-tpl-create" (click)="confirmCreateTemplate()" [disabled]="!templateTitle.trim() || creatingTemplate">
+              <i class="fas fa-spinner fa-spin" *ngIf="creatingTemplate"></i>
+              <i class="fas fa-plus-circle" *ngIf="!creatingTemplate"></i>
+              {{ creatingTemplate ? 'Creando...' : 'Crear y agregar al menú' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -236,6 +258,35 @@
       </div>
     </div>
   </div>
+
+  <!-- Tour overlay + tooltip: siblings so tooltip z-index isn't trapped inside overlay's stacking context -->
+  <ng-container *ngIf="tourActive">
+    <div class="tour-overlay" (click)="closeTour()"></div>
+    <div class="tour-tooltip"
+         [class.tour-tooltip-wide]="activeTourSteps[tourStep]?.position === 'center'"
+         [style.top.px]="tourTooltipTop" [style.left.px]="tourTooltipLeft"
+         (click)="$event.stopPropagation()">
+      <div class="tour-header">
+        <span class="tour-step-badge">{{ tourStep + 1 }} / {{ activeTourSteps.length }}</span>
+        <button class="tour-close" (click)="closeTour()">&#x2715;</button>
+      </div>
+      <h4>{{ activeTourSteps[tourStep].title }}</h4>
+      <p>{{ activeTourSteps[tourStep].body }}</p>
+      <div class="tour-nav">
+        <button class="tour-btn-prev"
+                (click)="prevTourStep(); $event.stopPropagation()"
+                [disabled]="tourStep === 0">&#8592; Anterior</button>
+        <div class="tour-dots">
+          <span *ngFor="let s of activeTourSteps; let si = index"
+                class="tour-dot" [class.tour-dot-active]="si === tourStep"></span>
+        </div>
+        <button class="tour-btn-next"
+                (click)="nextTourStep(); $event.stopPropagation()">
+          {{ tourStep < activeTourSteps.length - 1 ? 'Siguiente \u2192' : '\u00a1Listo!' }}
+        </button>
+      </div>
+    </div>
+  </ng-container>
 
   <!-- ==================== DELETE FLOW MODAL ==================== -->
   <div class="template-modal-overlay" *ngIf="deleteFlowTarget" (click)="cancelDeleteFlow()">
@@ -316,7 +367,7 @@
               <input type="text" [(ngModel)]="currentFlow.menuDescription" placeholder="Ej: Reserva tu espacio" maxlength="72" />
             </div>
             <div class="fe-field">
-              <label>Guardar datos en</label>
+              <label>¿Dónde se guardan las respuestas? <span class="fe-help-tip" title="Las respuestas del usuario se guardan aquí para verlas en Bases de Datos">?</span></label>
               <select [(ngModel)]="currentFlow.saveToCollection">
                 <option value="">— No guardar —</option>
                 <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
@@ -325,13 +376,18 @@
           </div>
           <label class="fe-check">
             <input type="checkbox" [(ngModel)]="currentFlow.notifyAdmin" />
-            Notificarme cuando alguien complete este flujo
+            Recibir notificación al completarse
           </label>
         </div>
 
         <!-- Bloque: Pasos -->
-        <div class="fe-block">
-          <div class="fe-block-title"><i class="fas fa-comments"></i> Conversación paso a paso</div>
+        <div class="fe-block" id="fe-steps-block">
+          <div class="fe-block-title">
+            <i class="fas fa-comments"></i> Conversación paso a paso
+            <button class="fe-block-tour-btn" (click)="startEditTour()" title="Ver guía de tipos de paso">
+              <i class="fas fa-question-circle"></i> Guía de pasos
+            </button>
+          </div>
           <p class="fe-hint">Cada paso es un mensaje que el bot envía y espera la respuesta del usuario.</p>
 
           <!-- Lista de pasos -->
@@ -362,7 +418,7 @@
 
                 <!-- Tipo -->
                 <div class="fe-field">
-                  <label>Tipo de respuesta del usuario</label>
+                  <label>¿Cómo responde el usuario?</label>
                   <div class="fe-type-row">
                     <button *ngFor="let st of stepTypes"
                             class="fe-type-btn" [class.fe-type-active]="step.type === st.value"
@@ -380,31 +436,31 @@
                     [placeholder]="step.type === 'message' ? 'Escribe el mensaje automático...' : 'Ej: ¿Cuál es tu nombre completo?'"></textarea>
                 </div>
 
-                <!-- Nombre del dato (todos excepto message, appointment y browse) -->
-                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection'">
-                  <label>¿Con qué nombre guardas esta respuesta?
-                    <span class="fe-var-tag" *ngIf="step.fieldKey">{{ '{' + step.fieldKey + '}' }}</span>
-                  </label>
+                <!-- Nombre del dato (todos excepto message, appointment, browse, image_input) -->
+                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection' && step.type !== 'image_input'">
+                  <label>Nombre de este dato <span class="fe-help-tip" title="Úsalo en el mensaje final con {clave}">?</span></label>
                   <input type="text" [(ngModel)]="step.fieldLabel"
                     placeholder="Ej: Nombre, Correo, Servicio…"
                     (ngModelChange)="onStepLabelChange(step)" />
                 </div>
 
-                <!-- Obligatorio -->
-                <label class="fe-check fe-field-inline" *ngIf="step.type !== 'message'">
-                  <input type="checkbox" [(ngModel)]="step.required" />
-                  Respuesta obligatoria
-                </label>
+                <!-- Campo clave para image_input -->
+                <div class="fe-field" *ngIf="step.type === 'image_input'">
+                  <label>Nombre de este archivo</label>
+                  <input type="text" [(ngModel)]="step.fieldLabel"
+                    placeholder="Ej: Imagen médica, Foto paquete…"
+                    (ngModelChange)="onStepLabelChange(step)" />
+                </div>
 
                 <!-- ── BOTONES / LISTA ── -->
                 <ng-container *ngIf="step.type === 'select_buttons' || step.type === 'select_list'">
 
                   <div class="fe-field">
-                    <label>¿De dónde vienen las opciones?</label>
+                    <label>Opciones disponibles</label>
                     <div class="fe-src-row">
                       <button class="fe-src-btn" [class.fe-src-active]="step.optionsSource === 'custom'"
                               (click)="step.optionsSource = 'custom'">
-                        <i class="fas fa-pen"></i> Las escribo yo
+                        <i class="fas fa-pen"></i> Personalizadas
                       </button>
                       <button *ngFor="let col of collectionDefs"
                               class="fe-src-btn" [class.fe-src-active]="step.optionsSource === col.slug"
@@ -486,10 +542,52 @@
                   El bot mostrará automáticamente los días y horarios disponibles según la configuración de <strong>Horarios de Atención</strong>. No se permiten dobles reservas.
                 </div>
 
-                <!-- Error message -->
-                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot'">
-                  <label class="fe-label-secondary">Mensaje si la respuesta no es válida <span class="fe-hint-inline">(opcional)</span></label>
-                  <input type="text" [(ngModel)]="step.errorMessage" placeholder="Ej: Por favor escribe un nombre válido." />
+                <!-- ── IMAGEN ── -->
+                <ng-container *ngIf="step.type === 'image_input'">
+                  <label class="fe-check fe-field-inline">
+                    <input type="checkbox" [(ngModel)]="step.optional" />
+                    Campo opcional (el usuario puede escribir <em>omitir</em>)
+                  </label>
+                  <div class="fe-field">
+                    <label>Tipo de archivo aceptado</label>
+                    <select [(ngModel)]="step.allowedTypes">
+                      <option value="image">Solo imágenes</option>
+                      <option value="document">Solo documentos</option>
+                      <option value="any">Imágenes y documentos</option>
+                    </select>
+                  </div>
+                </ng-container>
+
+                <!-- Advanced toggle -->
+                <div class="fe-advanced-toggle" (click)="toggleStepAdvanced(i)">
+                  <i class="fas" [ngClass]="expandedStepAdvanced.has(i) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                  Opciones avanzadas
+                </div>
+
+                <!-- Advanced body -->
+                <div class="fe-advanced-body" *ngIf="expandedStepAdvanced.has(i)">
+
+                  <!-- Required -->
+                  <label class="fe-check fe-field-inline" *ngIf="step.type !== 'message' && step.type !== 'image_input'">
+                    <input type="checkbox" [(ngModel)]="step.required" />
+                    Respuesta obligatoria
+                  </label>
+
+                  <!-- Error message -->
+                  <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'image_input'">
+                    <label class="fe-label-secondary">Mensaje si la respuesta no es válida <span class="fe-hint-inline">(opcional)</span></label>
+                    <input type="text" [(ngModel)]="step.errorMessage" placeholder="Ej: Por favor escribe un nombre válido." />
+                  </div>
+
+                  <!-- fieldKey info (read-only) -->
+                  <div class="fe-field" *ngIf="step.fieldKey && step.type !== 'message'">
+                    <label class="fe-label-secondary">Clave interna de este dato</label>
+                    <div class="fe-fieldkey-info">
+                      <span class="fe-var-tag">{{ '{' + step.fieldKey + '}' }}</span>
+                      <span class="fe-hint-inline">Úsalo en el mensaje de confirmación</span>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -508,8 +606,8 @@
         </div>
 
         <!-- Bloque: Mensaje de confirmación -->
-        <div class="fe-block">
-          <div class="fe-block-title"><i class="fas fa-check-circle"></i> Mensaje de confirmación</div>
+        <div class="fe-block" id="fe-completion-block">
+          <div class="fe-block-title"><i class="fas fa-check-circle"></i> Mensaje de confirmación <span class="fe-help-tip" title="Se envía automáticamente cuando el usuario termina todos los pasos">?</span></div>
           <p class="fe-hint">Mensaje que el bot envía cuando el usuario termina el flujo.</p>
           <div class="fe-field">
             <textarea [(ngModel)]="currentFlow.completionMessage" rows="4"
@@ -616,6 +714,13 @@
                   <div class="wa-interactive wa-appt-preview" *ngSwitchCase="'appointment_slot'">
                     <div class="wa-appt-line"><i class="fas fa-calendar-day"></i> Lun 10 · Mar 11 · Mié 12…</div>
                     <div class="wa-appt-line wa-appt-time"><i class="fas fa-clock"></i> 09:00 · 09:30 · 10:00…</div>
+                  </div>
+
+                  <!-- Imagen -->
+                  <div class="wa-row wa-row-out" *ngSwitchCase="'image_input'">
+                    <div class="wa-bubble-out wa-bubble-placeholder">
+                      <i class="fas fa-image"></i> {{ step.optional ? '(opcional) ' : '' }}Foto / Documento
+                    </div>
                   </div>
 
                   <!-- Mensaje solo (sin respuesta) -->

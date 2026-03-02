@@ -606,3 +606,48 @@ textarea.input-new { resize: vertical; font-family: inherit; }
   }
   .config-card { padding: 16px 14px; }
 }
+
+/* ==================== KEYWORDS TAB ==================== */
+.kw-empty { text-align:center; padding:48px 24px; color:#94a3b8; }
+.kw-empty i { font-size:2.5rem; margin-bottom:12px; display:block; }
+.kw-empty p { font-size:0.9rem; max-width:380px; margin:0 auto; line-height:1.5; }
+
+.kw-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+
+.kw-card { background:white; border:1.5px solid #e2e8f0; border-radius:14px; padding:14px 16px; transition:border-color 0.2s; }
+.kw-card:hover { border-color:#c4b5fd; }
+.kw-inactive { opacity:0.5; }
+.kw-editing { border-color:#8b5cf6; background:#faf5ff; }
+
+.kw-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
+.kw-badge { display:inline-flex; align-items:center; gap:7px; background:#f1f5f9; border-radius:20px; padding:4px 12px 4px 8px; }
+.kw-badge i { color:#8b5cf6; font-size:0.78rem; }
+.kw-badge-exact { background:rgba(139,92,246,0.08); }
+.kw-word { font-weight:700; font-size:0.9rem; color:#1e293b; }
+.kw-match-tag { font-size:0.7rem; color:#64748b; background:#e2e8f0; border-radius:10px; padding:1px 7px; }
+
+.kw-card-actions { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.kw-toggle { background:none; border:none; cursor:pointer; font-size:1.3rem; padding:2px 4px; }
+.kw-toggle .fa-toggle-on { color:#8b5cf6; }
+.kw-toggle .fa-toggle-off { color:#cbd5e1; }
+.kw-btn-edit { background:#f1f5f9; border:none; border-radius:8px; padding:5px 10px; color:#64748b; cursor:pointer; font-size:0.78rem; transition:all 0.15s; }
+.kw-btn-edit:hover { background:#e2e8f0; color:#1e293b; }
+.kw-btn-del { background:#fef2f2; border:none; border-radius:8px; padding:5px 10px; color:#ef4444; cursor:pointer; font-size:0.78rem; transition:all 0.15s; }
+.kw-btn-del:hover { background:#fee2e2; }
+
+.kw-response-preview { display:flex; align-items:flex-start; gap:8px; font-size:0.85rem; color:#475569; line-height:1.45; }
+.kw-reply-icon { color:#8b5cf6; font-size:0.75rem; margin-top:3px; flex-shrink:0; }
+
+.kw-new-form { background:white; border:1.5px solid #8b5cf6; border-radius:14px; padding:16px; margin-bottom:12px; }
+.kw-new-form h4 { font-size:0.9rem; font-weight:700; color:#7c3aed; margin:0 0 12px; display:flex; align-items:center; gap:7px; }
+.kw-new-form h4 i { font-size:0.85rem; }
+
+.kw-form-row { display:flex; gap:8px; margin-bottom:8px; }
+.kw-input { flex:1; padding:8px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.85rem; color:#1e293b; font-family:inherit; transition:border-color 0.2s; }
+.kw-input:focus { outline:none; border-color:#8b5cf6; }
+.kw-select { padding:8px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.82rem; color:#475569; background:white; font-family:inherit; cursor:pointer; }
+.kw-select:focus { outline:none; border-color:#8b5cf6; }
+.kw-hint { font-size:0.78rem; color:#94a3b8; line-height:1.5; margin:0 0 8px; }
+.kw-textarea { width:100%; padding:8px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.85rem; color:#1e293b; font-family:inherit; resize:vertical; box-sizing:border-box; transition:border-color 0.2s; }
+.kw-textarea:focus { outline:none; border-color:#8b5cf6; }
+.kw-edit-actions { display:flex; gap:8px; margin-top:10px; }

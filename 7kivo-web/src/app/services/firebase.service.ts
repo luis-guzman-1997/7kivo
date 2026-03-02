@@ -426,6 +426,18 @@ export class FirebaseService {
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 
+  // ==================== KEYWORDS ====================
+
+  async getKeywords(): Promise<any[]> {
+    const result = await this.getDocument('config', 'keywords');
+    return result?.keywords || [];
+  }
+
+  async saveKeywords(keywords: any[]): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'config', 'keywords');
+    await setDoc(docRef, { keywords, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
   // ==================== DYNAMIC COLLECTIONS ====================
 
   async getCollectionDefs(): Promise<any[]> {

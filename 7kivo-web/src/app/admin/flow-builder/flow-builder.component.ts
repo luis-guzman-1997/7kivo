@@ -9,12 +9,15 @@ interface FlowStep {
   fieldKey: string;
   fieldLabel: string;
   required: boolean;
+  optional?: boolean;
+  allowedTypes?: string;
+  exitMessage?: string;
   validation: { minLength?: number; maxLength?: number; min?: number; max?: number };
   errorMessage: string;
   optionsSource: string;
   optionsTitleField: string;
   optionsDescField: string;
-  customOptions: { label: string; value: string; description?: string; duration?: number }[];
+  customOptions: { label: string; value: string; description?: string; duration?: number; exitMessage?: string }[];
   buttonText: string;
   sourceCollection: string;
   displayField: string;
@@ -37,6 +40,8 @@ interface Flow {
   notifyAdmin: boolean;
 }
 
+interface TourStep { selector: string; title: string; body: string; position: 'below' | 'above' | 'center'; }
+
 @Component({
   selector: 'app-flow-builder',
   templateUrl: './flow-builder.component.html',
@@ -53,10 +58,10 @@ export class FlowBuilderComponent implements OnInit {
   editMode = false;
   currentFlow: Flow = this.emptyFlow();
   expandedStepIndex: number | null = null;
+  expandedStepAdvanced: Set<number> = new Set();
 
   // Menu config
   menuConfig: any = { greeting: '', menuButtonText: 'Ver opciones', fallbackMessage: '', items: [] };
-  showMenuConfig = false;
   collectionDefs: any[] = [];
   collectionPreviewCache: Record<string, any[]> = {};
 
@@ -67,7 +72,8 @@ export class FlowBuilderComponent implements OnInit {
     { value: 'select_list',      label: 'Lista',    icon: 'fa-list',           desc: 'Lista desplegable de opciones' },
     { value: 'browse_collection',label: 'Catálogo', icon: 'fa-th-large',       desc: 'El usuario navega un catálogo' },
     { value: 'appointment_slot', label: 'Cita',     icon: 'fa-calendar-check', desc: 'El usuario elige fecha y hora disponible' },
-    { value: 'message',          label: 'Mensaje',  icon: 'fa-comment',        desc: 'El bot envía un mensaje sin esperar respuesta' }
+    { value: 'message',          label: 'Mensaje',  icon: 'fa-comment',        desc: 'El bot envía un mensaje sin esperar respuesta' },
+    { value: 'image_input',      label: 'Imagen',   icon: 'fa-image',          desc: 'El usuario envía una foto o documento' }
   ];
 
   planLimit = 999;
@@ -83,14 +89,76 @@ export class FlowBuilderComponent implements OnInit {
   deleteFlowTarget: Flow | null = null;
   deletingFlow = false;
 
+  // Tour state
+  tourActive = false;
+  tourStep = 0;
+  tourTooltipTop = 0;
+  tourTooltipLeft = 0;
+  tourContext: 'list' | 'edit' = 'list';
+
+  get activeTourSteps(): TourStep[] {
+    return this.tourContext === 'edit' ? this.editTourSteps : this.listTourSteps;
+  }
+
+  listTourSteps: TourStep[] = [
+    { selector: '.bot-menu-panel',          position: 'below', title: 'Menú de tu bot',    body: 'Aquí configuras qué opciones ve el usuario cuando te escribe. Puedes tener hasta 7 opciones y reordenarlas.' },
+    { selector: '.bmp-settings',            position: 'below', title: 'Ajustes del bot',   body: 'Personaliza el mensaje de bienvenida, el texto del botón y la respuesta cuando el bot no entienda al usuario.' },
+    { selector: '.bmp-items',               position: 'below', title: 'Opciones del menú', body: 'Cada opción puede ser una acción predefinida (horarios, ubicación), un flujo personalizado, o un mensaje directo.' },
+    { selector: '.btn-add-item',            position: 'above', title: 'Agregar opciones',  body: 'Con este botón agregas opciones al menú. Usa las plantillas para crear flujos completos en segundos.' },
+    { selector: '.flow-grid, .empty-state', position: 'above', title: 'Tus flujos',        body: 'Cada flujo es una conversación guiada. El bot lleva al usuario paso a paso recopilando la información que necesitas.' },
+  ];
+
+  editTourSteps: TourStep[] = [
+    {
+      selector: '#fe-steps-block',
+      position: 'below',
+      title: 'Conversación paso a paso',
+      body: 'Cada paso es un mensaje del bot que espera la respuesta del usuario. El flujo avanza automáticamente de paso en paso hasta completar la conversación y guardar los datos.'
+    },
+    {
+      selector: '',
+      position: 'center',
+      title: 'Texto  ·  Número',
+      body: '✏️ Texto — el usuario escribe libremente.\nEj: "¿Cuál es tu nombre?" → el usuario responde "María López"\n\n🔢 Número — solo acepta dígitos.\nEj: "¿Cuántas personas asistirán?" → el usuario responde "3"'
+    },
+    {
+      selector: '',
+      position: 'center',
+      title: 'Botones  ·  Lista',
+      body: '🔘 Botones — hasta 3 opciones de respuesta rápida.\nEj: "¿Cómo prefieres que te contactemos?"\n→  [WhatsApp]  [Llamada]  [Email]\n\n📋 Lista — opciones en menú desplegable (sin límite).\nEj: elegir un servicio cuando hay más de 3 opciones.'
+    },
+    {
+      selector: '',
+      position: 'center',
+      title: 'Cita  ·  Catálogo',
+      body: '📅 Cita — muestra fechas y horas disponibles según tus horarios. Evita dobles reservas automáticamente.\nEj: "¿Qué día te queda mejor?"\n→  Lun 10 · Mar 11 · Mié 12…  |  09:00 · 09:30 · 10:00…\n\n🗂️ Catálogo — el usuario navega y elige un ítem de una base de datos (productos, servicios, etc.).'
+    },
+    {
+      selector: '',
+      position: 'center',
+      title: 'Mensaje  ·  Imagen',
+      body: '💬 Mensaje — el bot envía información sin esperar respuesta.\nEj: "Tu número de caso es #1042. Un agente te contactará."\n\n📷 Imagen — el usuario envía una foto o documento.\nEj: "¿Tienes exámenes previos? Envíalos aquí."\n→ el usuario adjunta una foto o PDF.'
+    },
+    {
+      selector: '#fe-completion-block',
+      position: 'above',
+      title: 'Mensaje de confirmación',
+      body: 'Se envía al usuario cuando termina todos los pasos. Usa variables para personalizarlo con sus propios datos.\nEj: "✅ ¡Listo, {nombre}! Tu cita es el {fecha} a las {hora}."'
+    }
+  ];
+
   templateFlows = [
-    { icon: 'fa-calendar-check',      label: 'Agendar Cita',     description: 'Reserva de citas con disponibilidad en tiempo real', requiresPlan: 'appointments', key: 'appointments' },
-    { icon: 'fa-clipboard-list',      label: 'Registro',          description: 'Formulario de inscripción o registro de datos',       requiresPlan: null, key: 'registration' },
-    { icon: 'fa-question-circle',     label: 'Consulta',          description: 'Formulario de preguntas y consultas al equipo',       requiresPlan: null, key: 'consultation' },
-    { icon: 'fa-file-invoice-dollar', label: 'Cotización',        description: 'Solicitud de presupuesto o precio estimado',          requiresPlan: null, key: 'quote' },
-    { icon: 'fa-headset',             label: 'Soporte / Reclamo', description: 'Atención a problemas, quejas y sugerencias',          requiresPlan: null, key: 'support' },
-    { icon: 'fa-star',                label: 'Encuesta',          description: 'Encuesta de satisfacción post-servicio',              requiresPlan: null, key: 'feedback' },
-    { icon: 'fa-hourglass-half',      label: 'Lista de Espera',   description: 'Registro para lista de espera o turno',              requiresPlan: null, key: 'waitlist' }
+    { icon: 'fa-calendar-check',      label: 'Agendar Cita',     description: 'Reserva de citas con disponibilidad en tiempo real', requiresPlan: 'appointments', key: 'appointments',        category: 'citas' },
+    { icon: 'fa-clipboard-list',      label: 'Registro',          description: 'Formulario de inscripción o registro de datos',       requiresPlan: null,           key: 'registration',        category: 'registros' },
+    { icon: 'fa-question-circle',     label: 'Consulta',          description: 'Formulario de preguntas y consultas al equipo',       requiresPlan: null,           key: 'consultation',        category: 'consultas' },
+    { icon: 'fa-file-invoice-dollar', label: 'Cotización',        description: 'Solicitud de presupuesto o precio estimado',          requiresPlan: null,           key: 'quote',               category: 'consultas' },
+    { icon: 'fa-headset',             label: 'Soporte / Reclamo', description: 'Atención a problemas, quejas y sugerencias',          requiresPlan: null,           key: 'support',             category: 'soporte' },
+    { icon: 'fa-star',                label: 'Encuesta',          description: 'Encuesta de satisfacción post-servicio',              requiresPlan: null,           key: 'feedback',            category: 'soporte' },
+    { icon: 'fa-hourglass-half',      label: 'Lista de Espera',   description: 'Registro para lista de espera o turno',              requiresPlan: null,           key: 'waitlist',            category: 'registros' },
+    { icon: 'fa-ambulance',           label: 'Urgencias',         description: 'Mensaje rápido con info de urgencias/emergencias',    requiresPlan: null,           key: 'urgency',             category: 'soporte' },
+    { icon: 'fa-user-md',             label: 'Cita Médica',       description: 'Cita + opción de subir imágenes médicas',            requiresPlan: 'appointments', key: 'medical_appointment', category: 'citas' },
+    { icon: 'fa-school',              label: 'Pre-matrícula',     description: 'Registro de pre-inscripción escolar',                 requiresPlan: null,           key: 'school_enrollment',   category: 'registros' },
+    { icon: 'fa-box',                 label: 'Solicitud Envío',   description: 'Solicitud de envío/paquete con foto',                 requiresPlan: null,           key: 'shipping_request',    category: 'consultas' }
   ];
 
   constructor(private firebaseService: FirebaseService, public authService: AuthService) {
@@ -182,7 +250,8 @@ export class FlowBuilderComponent implements OnInit {
     return {
       id: 'step_' + Date.now(),
       type: 'text_input', prompt: '', fieldKey: '', fieldLabel: '',
-      required: true, validation: {}, errorMessage: '',
+      required: true, optional: false, allowedTypes: 'image',
+      validation: {}, errorMessage: '',
       optionsSource: 'custom', optionsTitleField: '', optionsDescField: '',
       customOptions: [], buttonText: 'Ver opciones',
       sourceCollection: '', displayField: '', detailFields: [],
@@ -236,6 +305,7 @@ export class FlowBuilderComponent implements OnInit {
     this.currentFlow.order = this.flows.length + 1;
     this.editMode = true;
     this.expandedStepIndex = null;
+    this.expandedStepAdvanced.clear();
   }
 
   openEditFlow(flow: Flow): void {
@@ -250,14 +320,18 @@ export class FlowBuilderComponent implements OnInit {
       if (!s.optionsTitleField) s.optionsTitleField = '';
       if (!s.optionsDescField) s.optionsDescField = '';
       if (!s.timeFieldKey) s.timeFieldKey = '';
+      if (s.optional === undefined) s.optional = false;
+      if (!s.allowedTypes) s.allowedTypes = 'image';
     });
     this.editMode = true;
     this.expandedStepIndex = null;
+    this.expandedStepAdvanced.clear();
   }
 
   cancelEdit(): void {
     this.editMode = false;
     this.expandedStepIndex = null;
+    this.expandedStepAdvanced.clear();
   }
 
   async saveFlow(): Promise<void> {
@@ -412,18 +486,52 @@ export class FlowBuilderComponent implements OnInit {
       .map(s => `{${s.fieldKey}}`);
   }
 
-  // ==================== MENU CONFIG ====================
+  // ==================== STEP ADVANCED ====================
 
-  toggleMenuConfig(): void {
-    this.showMenuConfig = !this.showMenuConfig;
+  toggleStepAdvanced(i: number): void {
+    if (this.expandedStepAdvanced.has(i)) {
+      this.expandedStepAdvanced.delete(i);
+    } else {
+      this.expandedStepAdvanced.add(i);
+    }
   }
 
+  getMenuItemIcon(item: any): string {
+    if (item.type === 'builtin') {
+      const icons: any = {
+        schedule: 'fa-clock',
+        contact: 'fa-map-marker-alt',
+        general: 'fa-info-circle',
+        my_appointments: 'fa-calendar-check',
+        cancel_appointment: 'fa-calendar-times'
+      };
+      return icons[item.action] || 'fa-bolt';
+    }
+    if (item.type === 'flow') return 'fa-project-diagram';
+    return 'fa-comment-alt';
+  }
+
+  // ==================== MENU CONFIG ====================
+
   showAddMenuPanel = false;
+  templateFilter = '';
+  activeCategoryTab = 'all';
+
+  get filteredTemplateFlows(): any[] {
+    const q = this.templateFilter.toLowerCase().trim();
+    return this.templateFlows.filter(tfl => {
+      const matchesCategory = this.activeCategoryTab === 'all' || tfl.category === this.activeCategoryTab;
+      const matchesText = !q || tfl.label.toLowerCase().includes(q) || tfl.description.toLowerCase().includes(q);
+      return matchesCategory && matchesText;
+    });
+  }
 
   menuTemplates = [
-    { icon: 'fa-clock', label: 'Horarios', description: 'Días y horarios de atención', type: 'builtin', action: 'schedule', requiresPlan: null },
-    { icon: 'fa-map-marker-alt', label: 'Ubicación', description: 'Cómo encontrarnos', type: 'builtin', action: 'contact', requiresPlan: null },
-    { icon: 'fa-info-circle', label: 'Sobre Nosotros', description: 'Información general', type: 'builtin', action: 'general', requiresPlan: null },
+    { icon: 'fa-clock',            label: 'Horarios',         description: 'Días y horarios de atención',    type: 'builtin', action: 'schedule',            requiresPlan: null },
+    { icon: 'fa-map-marker-alt',   label: 'Ubicación',        description: 'Cómo encontrarnos',              type: 'builtin', action: 'contact',             requiresPlan: null },
+    { icon: 'fa-info-circle',      label: 'Sobre Nosotros',   description: 'Información general',            type: 'builtin', action: 'general',             requiresPlan: null },
+    { icon: 'fa-calendar-check',   label: 'Ver mis citas',    description: 'El usuario ve sus citas futuras', type: 'builtin', action: 'my_appointments',     requiresPlan: null },
+    { icon: 'fa-calendar-times',   label: 'Cancelar mi cita', description: 'El usuario cancela una cita',    type: 'builtin', action: 'cancel_appointment',  requiresPlan: null },
   ];
 
   isTemplatePlanBlocked(tpl: any): boolean {
@@ -460,6 +568,8 @@ export class FlowBuilderComponent implements OnInit {
     }
     this.menuConfig.items.push(item);
     this.showAddMenuPanel = false;
+    this.templateFilter = '';
+    this.activeCategoryTab = 'all';
   }
 
   addMenuItem(): void {
@@ -474,6 +584,8 @@ export class FlowBuilderComponent implements OnInit {
       active: true
     });
     this.showAddMenuPanel = false;
+    this.templateFilter = '';
+    this.activeCategoryTab = 'all';
   }
 
   addMessageMenuItem(): void {
@@ -487,6 +599,8 @@ export class FlowBuilderComponent implements OnInit {
       active: true
     });
     this.showAddMenuPanel = false;
+    this.templateFilter = '';
+    this.activeCategoryTab = 'all';
   }
 
   removeMenuItem(index: number): void {
@@ -603,6 +717,28 @@ export class FlowBuilderComponent implements OnInit {
           { key: 'nombre', label: 'Nombre', type: 'text', required: true },
           { key: 'interes', label: 'Interés', type: 'text', required: true },
           { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        medical_appointment: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+          { key: 'fecha', label: 'Fecha', type: 'text', required: false },
+          { key: 'hora', label: 'Hora', type: 'text', required: false },
+          { key: '_apptService', label: 'Servicio', type: 'text', required: false },
+          { key: 'archivoUrl', label: 'Imagen médica', type: 'text', required: false },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        school_enrollment: [
+          { key: 'nombreEstudiante', label: 'Nombre estudiante', type: 'text', required: true },
+          { key: 'grado', label: 'Grado / Nivel', type: 'text', required: true },
+          { key: 'telefonoPadre', label: 'Teléfono padre/madre', type: 'text', required: true },
+          { key: 'transporte', label: 'Necesita transporte', type: 'text', required: false },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        shipping_request: [
+          { key: 'nombre', label: 'Nombre', type: 'text', required: true },
+          { key: 'origen', label: 'Dirección origen', type: 'text', required: true },
+          { key: 'destino', label: 'Dirección destino', type: 'text', required: true },
+          { key: 'fotoUrl', label: 'Foto del paquete', type: 'text', required: false },
+          { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
         ]
       };
       const colFields = colFieldsMap[tfl.key] || [
@@ -646,27 +782,55 @@ export class FlowBuilderComponent implements OnInit {
         waitlist: [
           { id: `step_${now}`,   ...sb, type: 'text_input', prompt: '¿Cuál es tu nombre completo?',                                                   fieldKey: 'nombre',  fieldLabel: 'Nombre',   validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
           { id: `step_${now+1}`, ...sb, type: 'text_input', prompt: '¿Para qué servicio o producto deseas reservar tu lugar en la lista de espera?',  fieldKey: 'interes', fieldLabel: 'Interés',  validation: { minLength: 3 }, errorMessage: 'Por favor indica el servicio o producto.' }
+        ],
+        urgency: [
+          { id: `step_${now}`, ...sb, type: 'message', prompt: '🚨 *URGENCIAS / EMERGENCIAS*\n\nSi tienes una emergencia médica llama al 911.\n\nPara contacto directo escríbenos al número de atención de urgencias o visítanos en nuestra sede.', fieldKey: '', fieldLabel: '' }
+        ],
+        medical_appointment: [
+          { id: `step_${now}`,   ...sb, type: 'text_input',       prompt: '¿Cuál es tu nombre completo?',                                               fieldKey: 'nombre',  fieldLabel: 'Nombre',  validation: { minLength: 3 }, errorMessage: 'Por favor ingresa un nombre válido.' },
+          { id: `step_${now+1}`, ...sb, type: 'appointment_slot', prompt: '¿En qué fecha y hora deseas tu consulta?',                                   fieldKey: 'fecha',   fieldLabel: 'Fecha',   timeFieldKey: 'hora' },
+          { id: `step_${now+2}`, ...sb, type: 'image_input',      prompt: '📎 ¿Tienes exámenes o imágenes médicas previas? Puedes enviarlas aquí.', fieldKey: 'archivoUrl', fieldLabel: 'Imagen médica', required: false, optional: true, allowedTypes: 'any' }
+        ],
+        school_enrollment: [
+          { id: `step_${now}`,   ...sb, type: 'text_input',     prompt: '¿Cuál es el nombre completo del estudiante?',                            fieldKey: 'nombreEstudiante', fieldLabel: 'Nombre estudiante', validation: { minLength: 3 }, errorMessage: 'Por favor ingresa el nombre del estudiante.' },
+          { id: `step_${now+1}`, ...sb, type: 'text_input',     prompt: '¿A qué grado o nivel desea ingresar?',                                  fieldKey: 'grado',            fieldLabel: 'Grado / Nivel',     validation: { minLength: 1 }, errorMessage: 'Por favor indica el grado.' },
+          { id: `step_${now+2}`, ...sb, type: 'text_input',     prompt: '¿Cuál es el número de teléfono del padre o madre de familia?',           fieldKey: 'telefonoPadre',    fieldLabel: 'Teléfono padre',    validation: { minLength: 8 }, errorMessage: 'Por favor ingresa un teléfono válido.' },
+          { id: `step_${now+3}`, ...sb, type: 'select_buttons', prompt: '¿El estudiante necesita servicio de transporte escolar?',               fieldKey: 'transporte',       fieldLabel: 'Necesita transporte', customOptions: [{ label: 'Sí, necesito', value: 'Sí' }, { label: 'No, gracias', value: 'No' }] }
+        ],
+        shipping_request: [
+          { id: `step_${now}`,   ...sb, type: 'text_input',  prompt: '¿Cuál es tu nombre completo?',                                  fieldKey: 'nombre',  fieldLabel: 'Nombre',            validation: { minLength: 3 }, errorMessage: 'Por favor ingresa tu nombre.' },
+          { id: `step_${now+1}`, ...sb, type: 'text_input',  prompt: '¿Cuál es la dirección de origen del paquete?',                  fieldKey: 'origen',  fieldLabel: 'Dirección origen',  validation: { minLength: 5 }, errorMessage: 'Por favor ingresa la dirección de origen.' },
+          { id: `step_${now+2}`, ...sb, type: 'text_input',  prompt: '¿Cuál es la dirección de destino del paquete?',                 fieldKey: 'destino', fieldLabel: 'Dirección destino', validation: { minLength: 5 }, errorMessage: 'Por favor ingresa la dirección de destino.' },
+          { id: `step_${now+3}`, ...sb, type: 'image_input', prompt: '📦 Por favor envía una foto del paquete (opcional).', fieldKey: 'fotoUrl', fieldLabel: 'Foto del paquete', required: false, optional: true, allowedTypes: 'image' }
         ]
       };
 
       const completionMap: Record<string, string> = {
-        appointments: `✅ *CITA AGENDADA*\n\nNombre: {nombre}\nFecha: {fecha}\nHora: {hora}\n\n¡Te esperamos! Si necesitas cancelar, escríbenos.`,
-        registration:  `✅ *REGISTRO COMPLETADO*\n\nNombre: {nombre}\n\n¡Gracias! Nos pondremos en contacto pronto.`,
-        consultation:  `✅ *CONSULTA RECIBIDA*\n\nNombre: {nombre}\n\nNos pondremos en contacto pronto para responderte.`,
-        quote:         `✅ *SOLICITUD DE COTIZACIÓN RECIBIDA*\n\nNombre: {nombre}\nDescripción: {descripcion}\n\nEnviaremos tu cotización a la brevedad.`,
-        support:       `✅ *CASO REGISTRADO*\n\nNombre: {nombre} | Tipo: {tipo}\n\nNuestro equipo revisará tu caso y te contactará pronto.`,
-        feedback:      `🙏 *¡GRACIAS POR TU OPINIÓN!*\n\nCalificación: {calificacion}\n\nTu retroalimentación nos ayuda a mejorar.`,
-        waitlist:      `✅ *¡ANOTADO EN LISTA DE ESPERA!*\n\nNombre: {nombre}\nInterés: {interes}\n\nTe avisaremos cuando haya disponibilidad.`
+        appointments:        `✅ *CITA AGENDADA*\n\nNombre: {nombre}\nFecha: {fecha}\nHora: {hora}\n\n¡Te esperamos! Si necesitas cancelar, escríbenos.`,
+        registration:        `✅ *REGISTRO COMPLETADO*\n\nNombre: {nombre}\n\n¡Gracias! Nos pondremos en contacto pronto.`,
+        consultation:        `✅ *CONSULTA RECIBIDA*\n\nNombre: {nombre}\n\nNos pondremos en contacto pronto para responderte.`,
+        quote:               `✅ *SOLICITUD DE COTIZACIÓN RECIBIDA*\n\nNombre: {nombre}\nDescripción: {descripcion}\n\nEnviaremos tu cotización a la brevedad.`,
+        support:             `✅ *CASO REGISTRADO*\n\nNombre: {nombre} | Tipo: {tipo}\n\nNuestro equipo revisará tu caso y te contactará pronto.`,
+        feedback:            `🙏 *¡GRACIAS POR TU OPINIÓN!*\n\nCalificación: {calificacion}\n\nTu retroalimentación nos ayuda a mejorar.`,
+        waitlist:            `✅ *¡ANOTADO EN LISTA DE ESPERA!*\n\nNombre: {nombre}\nInterés: {interes}\n\nTe avisaremos cuando haya disponibilidad.`,
+        urgency:             ``,
+        medical_appointment: `✅ *CITA MÉDICA CONFIRMADA*\n\nNombre: {nombre}\nFecha: {fecha}\nHora: {hora}\n\n¡Te esperamos! Llega 10 minutos antes de tu cita.`,
+        school_enrollment:   `✅ *PRE-MATRÍCULA RECIBIDA*\n\nEstudiante: {nombreEstudiante}\nGrado: {grado}\n\nNuestro equipo de secretaría te contactará para completar el proceso.`,
+        shipping_request:    `✅ *SOLICITUD DE ENVÍO RECIBIDA*\n\nNombre: {nombre}\nOrigen: {origen}\nDestino: {destino}\n\nUn agente revisará tu solicitud y te dará el precio pronto.`
       };
 
       const menuDescMap: Record<string, string> = {
-        appointments: 'Elige fecha y hora disponible',
-        registration:  'Completa tu registro',
-        consultation:  'Envíanos tu consulta',
-        quote:         'Solicita un precio estimado',
-        support:       'Reporta un problema o sugerencia',
-        feedback:      'Dinos cómo lo estamos haciendo',
-        waitlist:      'Reserva tu lugar en la lista'
+        appointments:        'Elige fecha y hora disponible',
+        registration:        'Completa tu registro',
+        consultation:        'Envíanos tu consulta',
+        quote:               'Solicita un precio estimado',
+        support:             'Reporta un problema o sugerencia',
+        feedback:            'Dinos cómo lo estamos haciendo',
+        waitlist:            'Reserva tu lugar en la lista',
+        urgency:             'Información de urgencias y emergencias',
+        medical_appointment: 'Agenda tu consulta médica',
+        school_enrollment:   'Inicia tu pre-inscripción escolar',
+        shipping_request:    'Solicita un envío o paquetería'
       };
 
       const flowData: any = {
@@ -674,7 +838,7 @@ export class FlowBuilderComponent implements OnInit {
         description: `Flujo: ${title}`,
         menuLabel,
         menuDescription: menuDescMap[tfl.key] || 'Completa el formulario',
-        type: tfl.key === 'appointments' ? 'appointment' : 'registration',
+        type: (tfl.key === 'appointments' || tfl.key === 'medical_appointment') ? 'appointment' : 'registration',
         active: true,
         order: this.flows.length + 1,
         saveToCollection: slug,
@@ -701,6 +865,8 @@ export class FlowBuilderComponent implements OnInit {
 
       this.cancelTemplateModal();
       this.showAddMenuPanel = false;
+      this.templateFilter = '';
+      this.activeCategoryTab = 'all';
       await this.loadData();
       this.notice = addedToMenu
         ? `Flujo "${title}" creado y agregado al menú`
@@ -727,5 +893,57 @@ export class FlowBuilderComponent implements OnInit {
     } finally {
       this.saving = false;
     }
+  }
+
+  // ==================== TOUR ====================
+
+  startTour(): void { this.tourContext = 'list'; this.tourActive = true; this.tourStep = 0; this.updateTourPosition(); }
+  startEditTour(): void { this.tourContext = 'edit'; this.tourActive = true; this.tourStep = 0; this.updateTourPosition(); }
+  closeTour(): void { this.tourActive = false; this.clearTourHighlight(); }
+
+  nextTourStep(): void {
+    if (this.tourStep < this.activeTourSteps.length - 1) { this.tourStep++; this.updateTourPosition(); }
+    else { this.closeTour(); }
+  }
+
+  prevTourStep(): void {
+    if (this.tourStep > 0) { this.tourStep--; this.updateTourPosition(); }
+  }
+
+  private clearTourHighlight(): void {
+    document.querySelectorAll('.tour-highlight-el').forEach(el => el.classList.remove('tour-highlight-el'));
+  }
+
+  private updateTourPosition(): void {
+    const step = this.activeTourSteps[this.tourStep];
+
+    // Center: no target element, center in viewport
+    if (step.position === 'center' || !step.selector) {
+      this.clearTourHighlight();
+      setTimeout(() => {
+        const tooltipW = 420, tooltipH = 280;
+        this.tourTooltipTop  = Math.max(80,  (window.innerHeight - tooltipH) / 2);
+        this.tourTooltipLeft = Math.max(16,  (window.innerWidth  - tooltipW) / 2);
+      }, 50);
+      return;
+    }
+
+    const selectors = step.selector.split(', ');
+    let el: Element | null = null;
+    for (const sel of selectors) { el = document.querySelector(sel.trim()); if (el) break; }
+    this.clearTourHighlight();
+    if (!el) return;
+    el.classList.add('tour-highlight-el');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => {
+      const rect = el!.getBoundingClientRect();
+      const tooltipW = 340, tooltipH = 200;
+      let top = step.position === 'below' ? rect.bottom + 14 : rect.top - tooltipH - 14;
+      let left = rect.left + rect.width / 2 - tooltipW / 2;
+      top  = Math.max(16, Math.min(top,  window.innerHeight - tooltipH - 16));
+      left = Math.max(16, Math.min(left, window.innerWidth  - tooltipW - 16));
+      this.tourTooltipTop = top;
+      this.tourTooltipLeft = left;
+    }, 300);
   }
 }

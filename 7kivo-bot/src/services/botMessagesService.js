@@ -35,6 +35,9 @@ let flowsCacheTimestamp = 0;
 let menuCache = null;
 let menuCacheTimestamp = 0;
 
+let keywordsCache = null;
+let keywordsCacheTimestamp = 0;
+
 const clearCache = () => {
   messagesCache = {};
   cacheTimestamp = 0;
@@ -42,6 +45,8 @@ const clearCache = () => {
   flowsCacheTimestamp = 0;
   menuCache = null;
   menuCacheTimestamp = 0;
+  keywordsCache = null;
+  keywordsCacheTimestamp = 0;
 };
 
 // ==================== BOT MESSAGES ====================
@@ -249,6 +254,53 @@ const getAppointmentsByDate = async (fecha, collectionName = "citas") => {
   }
 };
 
+// ==================== APPOINTMENTS BY PHONE ====================
+const getUpcomingAppointmentsByPhone = async (phoneNumber) => {
+  try {
+    const flows = await getFlows();
+    const apptFlows = flows.filter(f => f.steps && f.steps.some(s => s.type === 'appointment_slot'));
+    const collections = [...new Set(apptFlows.map(f => f.saveToCollection).filter(Boolean))];
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const results = [];
+    for (const collectionName of collections) {
+      try {
+        const snapshot = await getOrgRef().collection(collectionName)
+          .where('phoneNumber', '==', phoneNumber)
+          .where('status', 'in', ['confirmed', 'pending'])
+          .get();
+        const items = snapshot.docs.map(doc => ({ id: doc.id, collectionName, ...doc.data() }));
+        const future = items.filter(item => item._apptFecha && item._apptFecha >= todayStr);
+        results.push(...future);
+      } catch (err) {
+        console.error(`Error querying ${collectionName}:`, err.message);
+      }
+    }
+    results.sort((a, b) => {
+      const da = (a._apptFecha || '') + (a._apptHora || '');
+      const db = (b._apptFecha || '') + (b._apptHora || '');
+      return da.localeCompare(db);
+    });
+    return results;
+  } catch (err) {
+    console.error('Error getting upcoming appointments:', err.message);
+    return [];
+  }
+};
+
+const cancelAppointment = async (collectionName, docId) => {
+  try {
+    const { admin } = require('../config/firebase');
+    await getOrgRef().collection(collectionName).doc(docId).update({
+      status: 'cancelled',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    console.error('Error cancelling appointment:', err.message);
+    throw err;
+  }
+};
+
 // ==================== SAVE FLOW SUBMISSION ====================
 const saveFlowSubmission = async (collectionName, data) => {
   try {
@@ -268,6 +320,23 @@ const saveFlowSubmission = async (collectionName, data) => {
   }
 };
 
+// ==================== KEYWORDS ====================
+const getKeywords = async () => {
+  const now = Date.now();
+  if (keywordsCache && now - keywordsCacheTimestamp < CACHE_TTL) {
+    return keywordsCache;
+  }
+  try {
+    const doc = await getOrgRef().collection("config").doc("keywords").get();
+    keywordsCache = doc.exists ? (doc.data().keywords || []) : [];
+    keywordsCacheTimestamp = now;
+    return keywordsCache;
+  } catch (error) {
+    console.error("Error loading keywords:", error);
+    return keywordsCache || [];
+  }
+};
+
 module.exports = {
   loadBotMessages,
   getMessage,
@@ -281,11 +350,14 @@ module.exports = {
   getFlows,
   getFlow,
   getMenuConfig,
+  getKeywords,
   getCollectionItems,
   getCollectionItem,
   getCollectionDef,
   saveFlowSubmission,
   getAppointmentsByDate,
+  getUpcomingAppointmentsByPhone,
+  cancelAppointment,
   getOrgStatus,
   clearCache
 };
