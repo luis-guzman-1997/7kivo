@@ -23,6 +23,11 @@ interface FlowStep {
   displayField: string;
   detailFields: string[];
   timeFieldKey: string;
+  lookupCollection?: string;
+  authField?: string;
+  resultTemplate?: string;
+  notFoundMessage?: string;
+  maxRetries?: number;
 }
 
 interface Flow {
@@ -66,14 +71,15 @@ export class FlowBuilderComponent implements OnInit {
   collectionPreviewCache: Record<string, any[]> = {};
 
   stepTypes = [
-    { value: 'text_input',       label: 'Texto',    icon: 'fa-keyboard',       desc: 'El usuario escribe texto libremente' },
-    { value: 'number_input',     label: 'Número',   icon: 'fa-hashtag',        desc: 'El usuario escribe un número' },
-    { value: 'select_buttons',   label: 'Botones',  icon: 'fa-hand-pointer',   desc: 'Hasta 3 botones de respuesta rápida' },
-    { value: 'select_list',      label: 'Lista',    icon: 'fa-list',           desc: 'Lista desplegable de opciones' },
-    { value: 'browse_collection',label: 'Catálogo', icon: 'fa-th-large',       desc: 'El usuario navega un catálogo' },
-    { value: 'appointment_slot', label: 'Cita',     icon: 'fa-calendar-check', desc: 'El usuario elige fecha y hora disponible' },
-    { value: 'message',          label: 'Mensaje',  icon: 'fa-comment',        desc: 'El bot envía un mensaje sin esperar respuesta' },
-    { value: 'image_input',      label: 'Imagen',   icon: 'fa-image',          desc: 'El usuario envía una foto o documento' }
+    { value: 'text_input',       label: 'Texto',          icon: 'fa-keyboard',       desc: 'El usuario escribe texto libremente' },
+    { value: 'number_input',     label: 'Número',         icon: 'fa-hashtag',        desc: 'El usuario escribe un número' },
+    { value: 'select_buttons',   label: 'Botones',        icon: 'fa-hand-pointer',   desc: 'Hasta 3 botones de respuesta rápida' },
+    { value: 'select_list',      label: 'Lista',          icon: 'fa-list',           desc: 'Lista desplegable de opciones' },
+    { value: 'browse_collection',label: 'Catálogo',       icon: 'fa-th-large',       desc: 'El usuario navega un catálogo' },
+    { value: 'appointment_slot', label: 'Cita',           icon: 'fa-calendar-check', desc: 'El usuario elige fecha y hora disponible' },
+    { value: 'message',          label: 'Mensaje',        icon: 'fa-comment',        desc: 'El bot envía un mensaje sin esperar respuesta' },
+    { value: 'image_input',      label: 'Imagen',         icon: 'fa-image',          desc: 'El usuario envía una foto o documento' },
+    { value: 'auth_lookup',      label: 'Autenticación',  icon: 'fa-id-card',        desc: 'El usuario escribe un código único y el bot responde con sus datos' }
   ];
 
   planLimit = 999;
@@ -158,7 +164,8 @@ export class FlowBuilderComponent implements OnInit {
     { icon: 'fa-ambulance',           label: 'Urgencias',         description: 'Mensaje rápido con info de urgencias/emergencias',    requiresPlan: null,           key: 'urgency',             category: 'soporte' },
     { icon: 'fa-user-md',             label: 'Cita Médica',       description: 'Cita + opción de subir imágenes médicas',            requiresPlan: 'appointments', key: 'medical_appointment', category: 'citas' },
     { icon: 'fa-school',              label: 'Pre-matrícula',     description: 'Registro de pre-inscripción escolar',                 requiresPlan: null,           key: 'school_enrollment',   category: 'registros' },
-    { icon: 'fa-box',                 label: 'Solicitud Envío',   description: 'Solicitud de envío/paquete con foto',                 requiresPlan: null,           key: 'shipping_request',    category: 'consultas' }
+    { icon: 'fa-box',                 label: 'Solicitud Envío',   description: 'Solicitud de envío/paquete con foto',                 requiresPlan: null,           key: 'shipping_request',    category: 'consultas' },
+    { icon: 'fa-credit-card',         label: 'Consulta de Pago',  description: 'El usuario consulta su estado de cuenta con su código', requiresPlan: null,          key: 'payment_lookup',      category: 'consultas' }
   ];
 
   constructor(private firebaseService: FirebaseService, public authService: AuthService) {
@@ -255,7 +262,8 @@ export class FlowBuilderComponent implements OnInit {
       optionsSource: 'custom', optionsTitleField: '', optionsDescField: '',
       customOptions: [], buttonText: 'Ver opciones',
       sourceCollection: '', displayField: '', detailFields: [],
-      timeFieldKey: ''
+      timeFieldKey: '',
+      lookupCollection: '', authField: '', resultTemplate: '', notFoundMessage: '', maxRetries: 3
     };
   }
 
@@ -322,6 +330,11 @@ export class FlowBuilderComponent implements OnInit {
       if (!s.timeFieldKey) s.timeFieldKey = '';
       if (s.optional === undefined) s.optional = false;
       if (!s.allowedTypes) s.allowedTypes = 'image';
+      if (!s.lookupCollection) s.lookupCollection = '';
+      if (!s.authField) s.authField = '';
+      if (!s.resultTemplate) s.resultTemplate = '';
+      if (!s.notFoundMessage) s.notFoundMessage = '';
+      if (s.maxRetries === undefined) s.maxRetries = 3;
     });
     this.editMode = true;
     this.expandedStepIndex = null;
@@ -739,6 +752,13 @@ export class FlowBuilderComponent implements OnInit {
           { key: 'destino', label: 'Dirección destino', type: 'text', required: true },
           { key: 'fotoUrl', label: 'Foto del paquete', type: 'text', required: false },
           { key: 'phoneNumber', label: 'WhatsApp', type: 'text', required: false, protected: true }
+        ],
+        payment_lookup: [
+          { key: 'codigo_alumno',      label: 'Código de Alumno',      type: 'text',   required: true },
+          { key: 'proxima_fecha_pago', label: 'Próxima Fecha de Pago', type: 'date',   required: false },
+          { key: 'monto_pagar',        label: 'Monto a Pagar',         type: 'number', required: false },
+          { key: 'formas_pago',        label: 'Formas de Pago',        type: 'text',   required: false },
+          { key: 'cuotas_pendientes',  label: 'Cuotas Pendientes',     type: 'number', required: false }
         ]
       };
       const colFields = colFieldsMap[tfl.key] || [
@@ -802,6 +822,19 @@ export class FlowBuilderComponent implements OnInit {
           { id: `step_${now+1}`, ...sb, type: 'text_input',  prompt: '¿Cuál es la dirección de origen del paquete?',                  fieldKey: 'origen',  fieldLabel: 'Dirección origen',  validation: { minLength: 5 }, errorMessage: 'Por favor ingresa la dirección de origen.' },
           { id: `step_${now+2}`, ...sb, type: 'text_input',  prompt: '¿Cuál es la dirección de destino del paquete?',                 fieldKey: 'destino', fieldLabel: 'Dirección destino', validation: { minLength: 5 }, errorMessage: 'Por favor ingresa la dirección de destino.' },
           { id: `step_${now+3}`, ...sb, type: 'image_input', prompt: '📦 Por favor envía una foto del paquete (opcional).', fieldKey: 'fotoUrl', fieldLabel: 'Foto del paquete', required: false, optional: true, allowedTypes: 'image' }
+        ],
+        payment_lookup: [
+          {
+            id: `step_${now}`, ...sb,
+            type: 'auth_lookup',
+            prompt: 'Por favor escribe tu código de alumno:',
+            fieldKey: 'codigo_alumno', fieldLabel: 'Código de Alumno',
+            lookupCollection: slug,
+            authField: 'codigo_alumno',
+            resultTemplate: '📋 *Estado de Cuenta*\n\nCódigo: {codigo_alumno}\n📅 Próxima fecha de pago: {proxima_fecha_pago}\n💰 Monto a pagar: ${monto_pagar}\n💳 Formas de pago: {formas_pago}\n📊 Cuotas pendientes: {cuotas_pendientes}',
+            notFoundMessage: 'No encontramos ese código de alumno. Por favor verifica e intenta de nuevo.',
+            maxRetries: 3
+          }
         ]
       };
 
@@ -816,7 +849,8 @@ export class FlowBuilderComponent implements OnInit {
         urgency:             ``,
         medical_appointment: `✅ *CITA MÉDICA CONFIRMADA*\n\nNombre: {nombre}\nFecha: {fecha}\nHora: {hora}\n\n¡Te esperamos! Llega 10 minutos antes de tu cita.`,
         school_enrollment:   `✅ *PRE-MATRÍCULA RECIBIDA*\n\nEstudiante: {nombreEstudiante}\nGrado: {grado}\n\nNuestro equipo de secretaría te contactará para completar el proceso.`,
-        shipping_request:    `✅ *SOLICITUD DE ENVÍO RECIBIDA*\n\nNombre: {nombre}\nOrigen: {origen}\nDestino: {destino}\n\nUn agente revisará tu solicitud y te dará el precio pronto.`
+        shipping_request:    `✅ *SOLICITUD DE ENVÍO RECIBIDA*\n\nNombre: {nombre}\nOrigen: {origen}\nDestino: {destino}\n\nUn agente revisará tu solicitud y te dará el precio pronto.`,
+        payment_lookup:      ''
       };
 
       const menuDescMap: Record<string, string> = {
@@ -830,20 +864,25 @@ export class FlowBuilderComponent implements OnInit {
         urgency:             'Información de urgencias y emergencias',
         medical_appointment: 'Agenda tu consulta médica',
         school_enrollment:   'Inicia tu pre-inscripción escolar',
-        shipping_request:    'Solicita un envío o paquetería'
+        shipping_request:    'Solicita un envío o paquetería',
+        payment_lookup:      'Consulta tu próxima fecha de pago'
       };
 
+      const saveToCollection = tfl.key === 'payment_lookup' ? '' : slug;
+      const flowType = (tfl.key === 'appointments' || tfl.key === 'medical_appointment') ? 'appointment'
+                     : tfl.key === 'payment_lookup' ? 'lookup'
+                     : 'registration';
       const flowData: any = {
         name: title,
         description: `Flujo: ${title}`,
         menuLabel,
         menuDescription: menuDescMap[tfl.key] || 'Completa el formulario',
-        type: (tfl.key === 'appointments' || tfl.key === 'medical_appointment') ? 'appointment' : 'registration',
+        type: flowType,
         active: true,
         order: this.flows.length + 1,
-        saveToCollection: slug,
-        notifyAdmin: true,
-        completionMessage: completionMap[tfl.key] || completionMap['registration'],
+        saveToCollection,
+        notifyAdmin: tfl.key !== 'payment_lookup',
+        completionMessage: completionMap[tfl.key] ?? completionMap['registration'],
         steps: stepsMap[tfl.key] || stepsMap['registration']
       };
       const newFlowId = await this.firebaseService.addFlow(flowData);

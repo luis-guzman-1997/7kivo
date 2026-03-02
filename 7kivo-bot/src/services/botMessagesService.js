@@ -337,6 +337,21 @@ const getKeywords = async () => {
   }
 };
 
+const lookupCollectionByField = async (collectionName, fieldKey, value) => {
+  try {
+    const snapshot = await getOrgRef().collection(collectionName)
+      .where(fieldKey, '==', value)
+      .limit(1)
+      .get();
+    if (snapshot.empty) return null;
+    const d = snapshot.docs[0];
+    return { id: d.id, ...d.data() };
+  } catch (error) {
+    console.error(`Error looking up ${fieldKey}=${value} in ${collectionName}:`, error);
+    return null;
+  }
+};
+
 module.exports = {
   loadBotMessages,
   getMessage,
@@ -358,6 +373,7 @@ module.exports = {
   getAppointmentsByDate,
   getUpcomingAppointmentsByPhone,
   cancelAppointment,
+  lookupCollectionByField,
   getOrgStatus,
   clearCache
 };

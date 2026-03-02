@@ -436,8 +436,8 @@
                     [placeholder]="step.type === 'message' ? 'Escribe el mensaje automático...' : 'Ej: ¿Cuál es tu nombre completo?'"></textarea>
                 </div>
 
-                <!-- Nombre del dato (todos excepto message, appointment, browse, image_input) -->
-                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection' && step.type !== 'image_input'">
+                <!-- Nombre del dato (todos excepto message, appointment, browse, image_input, auth_lookup) -->
+                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection' && step.type !== 'image_input' && step.type !== 'auth_lookup'">
                   <label>Nombre de este dato <span class="fe-help-tip" title="Úsalo en el mensaje final con {clave}">?</span></label>
                   <input type="text" [(ngModel)]="step.fieldLabel"
                     placeholder="Ej: Nombre, Correo, Servicio…"
@@ -555,6 +555,43 @@
                       <option value="document">Solo documentos</option>
                       <option value="any">Imágenes y documentos</option>
                     </select>
+                  </div>
+                </ng-container>
+
+                <!-- ── AUTH LOOKUP ── -->
+                <ng-container *ngIf="step.type === 'auth_lookup'">
+                  <div class="fe-field">
+                    <label>Colección a consultar</label>
+                    <select [(ngModel)]="step.lookupCollection">
+                      <option value="">Seleccionar colección...</option>
+                      <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
+                    </select>
+                  </div>
+                  <div class="fe-field" *ngIf="step.lookupCollection">
+                    <label>Campo de búsqueda (clave única)</label>
+                    <select [(ngModel)]="step.authField">
+                      <option value="">Seleccionar campo...</option>
+                      <option *ngFor="let f of getCollectionFields(step.lookupCollection)" [value]="f.key">{{ f.label }}</option>
+                    </select>
+                  </div>
+                  <div class="fe-field">
+                    <label>Plantilla de respuesta</label>
+                    <p class="fe-hint" style="margin:2px 0 6px;">Usa <code>&#123;nombre_campo&#125;</code> para insertar datos del registro.</p>
+                    <textarea [(ngModel)]="step.resultTemplate" rows="5"
+                      placeholder="📋 Tu próximo pago es el &#123;proxima_fecha_pago&#125; por $&#123;monto_pagar&#125;"></textarea>
+                    <div class="fe-keys-preview" *ngIf="step.lookupCollection && getCollectionFields(step.lookupCollection).length">
+                      <span class="fe-keys-label">Variables disponibles:</span>
+                      <span class="fe-var-tag" *ngFor="let f of getCollectionFields(step.lookupCollection)">{{ '{' + f.key + '}' }}</span>
+                    </div>
+                  </div>
+                  <div class="fe-field">
+                    <label>Mensaje cuando no se encuentra</label>
+                    <input type="text" [(ngModel)]="step.notFoundMessage"
+                      placeholder="No encontramos ese código. Por favor intenta de nuevo." />
+                  </div>
+                  <div class="fe-field">
+                    <label>Intentos máximos</label>
+                    <input type="number" [(ngModel)]="step.maxRetries" min="1" max="5" style="width:80px;" />
                   </div>
                 </ng-container>
 

@@ -884,6 +884,12 @@
   background: rgba(16,185,129,0.1); color: #059669;
   padding: 1px 7px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;
 }
+.fe-keys-preview {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  margin-top: 6px; padding: 8px 10px;
+  background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 6px;
+}
+.fe-keys-label { font-size: 0.75rem; color: #64748b; font-weight: 500; margin-right: 2px; }
 .fe-label-secondary { font-weight: 500 !important; color: #64748b !important; }
 .fe-check { display: flex; align-items: center; gap: 7px; font-size: 0.83rem; color: #475569; cursor: pointer; }
 .fe-check input { accent-color: #8b5cf6; width: 15px; height: 15px; }

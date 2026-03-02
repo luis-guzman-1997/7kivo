@@ -183,7 +183,30 @@
 .btn-cancel i { color: inherit !important; }
 
 /* Data Tab */
-.data-actions-header { display: flex; gap: 8px; }
+.data-actions-header { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.btn-import { display: flex; align-items: center; gap: 7px; padding: 8px 14px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; color: #16a34a; font-size: 0.83rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.btn-import:hover { background: #dcfce7; border-color: #4ade80; }
+.btn-template { display: flex; align-items: center; gap: 7px; padding: 8px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; color: #64748b; font-size: 0.83rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.btn-template:hover { border-color: #8b5cf6; color: #7c3aed; }
+
+.import-panel { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+.import-panel h4 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+.import-error { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px 14px; color: #dc2626; font-size: 0.83rem; margin-bottom: 12px; }
+.import-row { margin-bottom: 12px; }
+.import-row label { display: block; font-size: 0.82rem; font-weight: 600; color: #64748b; margin-bottom: 5px; }
+.import-info { font-size: 0.82rem; color: #475569; margin-bottom: 12px; }
+.import-map-table { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+.import-map-header { display: grid; grid-template-columns: 1fr 1fr; background: #f1f5f9; padding: 8px 12px; font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+.import-map-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 12px; border-top: 1px solid #f1f5f9; align-items: center; font-size: 0.83rem; }
+.import-map-row select { padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.82rem; font-family: inherit; }
+.import-mode-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.import-mode-row label { display: flex; align-items: center; gap: 8px; font-size: 0.83rem; color: #475569; cursor: pointer; }
+.import-mode-row input[type=radio] { accent-color: #8b5cf6; }
+.import-actions { display: flex; gap: 10px; margin-top: 16px; }
+.btn-import-confirm { padding: 10px 20px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+.btn-import-confirm:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-import-cancel { padding: 10px 16px; background: #f1f5f9; color: #64748b; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
 
 .item-form {
   background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px;

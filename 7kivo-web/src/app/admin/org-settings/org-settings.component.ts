@@ -28,7 +28,7 @@ export class OrgSettingsComponent implements OnInit {
   contactInfo: any = {};
   scheduleInfo: any = { days: [] };
   newBlockedDate = '';
-  newService: any = { title: '', subtitle: '', description: '', duration: 30 };
+  newService: any = { title: '', subtitle: '', description: '', duration: 30, capacity: 1 };
 
   readonly WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -178,7 +178,19 @@ export class OrgSettingsComponent implements OnInit {
     const labels: Record<string, string> = {
       education: 'Educación', healthcare: 'Salud / Clínica', retail: 'Comercio / Tienda',
       restaurant: 'Restaurante', services: 'Servicios', realestate: 'Bienes Raíces',
-      technology: 'Tecnología', general: 'General', other: 'General'
+      technology: 'Tecnología', general: 'General', other: 'General',
+      barbershop: 'Barbería',
+      beauty_salon: 'Salón de Belleza',
+      nail_salon: 'Uñas y Pestañas',
+      spa: 'Spa y Estética',
+      carwash: 'Carwash',
+      medical: 'Médico / Clínica',
+      tours: 'Tours y Viajes',
+      academy: 'Academia',
+      school: 'Colegio / Centro Educativo',
+      cleaning: 'Limpieza y Lavandería',
+      photography: 'Fotografía',
+      shipping: 'Empresa de Envíos'
     };
     return labels[industry] || 'General';
   }
@@ -252,9 +264,144 @@ export class OrgSettingsComponent implements OnInit {
       businessType: 'services', offersAppointments: true,
       activeDays: { 'Lunes': {from:'08:00',to:'18:00'}, 'Martes': {from:'08:00',to:'18:00'}, 'Miércoles': {from:'08:00',to:'18:00'}, 'Jueves': {from:'08:00',to:'18:00'}, 'Viernes': {from:'08:00',to:'18:00'} },
       services: [
-        { title: 'Consultoría Tech', subtitle: 'Análisis de necesidades tecnológicas', description: 'Consultoría para analizar tu situación tecnológica actual, identificar oportunidades de mejora y proponer soluciones digitales a medida para tu negocio.', duration: 60 },
-        { title: 'Soporte Técnico', subtitle: 'Resolución de problemas técnicos', description: 'Sesión de soporte para resolver problemas, configurar sistemas o capacitar al equipo en el uso eficiente de herramientas y plataformas digitales.', duration: 45 }
+        { title: 'Consultoría Tech', subtitle: 'Análisis de necesidades tecnológicas', description: 'Consultoría para analizar tu situación tecnológica actual, identificar oportunidades de mejora y proponer soluciones digitales a medida para tu negocio.', duration: 60, capacity: 1 },
+        { title: 'Soporte Técnico', subtitle: 'Resolución de problemas técnicos', description: 'Sesión de soporte para resolver problemas, configurar sistemas o capacitar al equipo en el uso eficiente de herramientas y plataformas digitales.', duration: 45, capacity: 1 }
       ]
+    },
+    barbershop: {
+      description: 'Barbería profesional con los mejores estilistas, cortes modernos y clásicos. Reserva tu turno y luce siempre bien.',
+      address: '3a Calle Oriente #12, Centro', city: 'San Salvador',
+      phone: '+503 2255-6677', email: 'citas@barberia.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'09:00',to:'19:00'}, 'Martes': {from:'09:00',to:'19:00'}, 'Miércoles': {from:'09:00',to:'19:00'}, 'Jueves': {from:'09:00',to:'19:00'}, 'Viernes': {from:'09:00',to:'20:00'}, 'Sábado': {from:'08:00',to:'20:00'} },
+      services: [
+        { title: 'Corte de cabello', subtitle: 'Corte + lavado', description: 'Corte profesional de cabello con lavado y peinado incluido. Elige el estilo que prefieras.', duration: 30, capacity: 2 },
+        { title: 'Corte + barba', subtitle: 'Corte y arreglo de barba', description: 'Corte de cabello más arreglo y perfilado de barba con navaja y acabados profesionales.', duration: 45, capacity: 2 },
+        { title: 'Afeitado clásico', subtitle: 'Afeitado con navaja y toalla', description: 'Afeitado tradicional con navaja caliente, espuma artesanal y toalla caliente. Experiencia premium.', duration: 30, capacity: 1 }
+      ]
+    },
+    beauty_salon: {
+      description: 'Salón de belleza con servicios de corte, color, tratamientos y más. Nuestro equipo te hará lucir espectacular.',
+      address: 'Av. Masferrer Norte #78, Col. Escalón', city: 'San Salvador',
+      phone: '+503 2266-3344', email: 'reservas@salon.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'09:00',to:'19:00'}, 'Martes': {from:'09:00',to:'19:00'}, 'Miércoles': {from:'09:00',to:'19:00'}, 'Jueves': {from:'09:00',to:'19:00'}, 'Viernes': {from:'09:00',to:'19:00'}, 'Sábado': {from:'09:00',to:'18:00'} },
+      services: [
+        { title: 'Corte dama', subtitle: 'Corte, lavado y peinado', description: 'Corte de cabello para dama con lavado, acondicionamiento y peinado final.', duration: 60, capacity: 2 },
+        { title: 'Tinte / Color', subtitle: 'Coloración completa', description: 'Aplicación de tinte de raíz a puntas con productos premium. Incluye tratamiento post-color.', duration: 90, capacity: 1 },
+        { title: 'Tratamiento', subtitle: 'Nutrición e hidratación', description: 'Tratamiento intensivo de nutrición e hidratación para cabello dañado o reseco.', duration: 45, capacity: 2 }
+      ]
+    },
+    nail_salon: {
+      description: 'Especialistas en uñas, pestañas y cejas. Diseños personalizados y técnicas de última generación.',
+      address: 'Centro Comercial La Gran Vía, Local 34', city: 'Antiguo Cuscatlán',
+      phone: '+503 2288-9900', email: 'citas@nailstudio.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'09:00',to:'18:00'}, 'Martes': {from:'09:00',to:'18:00'}, 'Miércoles': {from:'09:00',to:'18:00'}, 'Jueves': {from:'09:00',to:'18:00'}, 'Viernes': {from:'09:00',to:'19:00'}, 'Sábado': {from:'09:00',to:'19:00'} },
+      services: [
+        { title: 'Manicure', subtitle: 'Manicure completo', description: 'Manicure completo con limpieza de cutículas, forma y esmaltado regular o semipermanente.', duration: 45, capacity: 2 },
+        { title: 'Pedicure', subtitle: 'Pedicure spa', description: 'Pedicure spa con exfoliación, masaje relajante y esmaltado de tu elección.', duration: 60, capacity: 2 },
+        { title: 'Uñas acrílicas', subtitle: 'Juego completo acrílico', description: 'Aplicación de uñas acrílicas con diseño personalizado, longitud y forma a elección.', duration: 90, capacity: 1 }
+      ]
+    },
+    spa: {
+      description: 'Spa y centro de estética para relajarte y revitalizarte. Tratamientos corporales y faciales de alta calidad.',
+      address: 'Calle El Mirador #5, San Benito', city: 'San Salvador',
+      phone: '+503 2244-1122', email: 'reservas@spa.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'10:00',to:'19:00'}, 'Martes': {from:'10:00',to:'19:00'}, 'Miércoles': {from:'10:00',to:'19:00'}, 'Jueves': {from:'10:00',to:'19:00'}, 'Viernes': {from:'10:00',to:'20:00'}, 'Sábado': {from:'09:00',to:'20:00'}, 'Domingo': {from:'10:00',to:'17:00'} },
+      services: [
+        { title: 'Masaje relajante', subtitle: 'Masaje cuerpo completo', description: 'Masaje de cuerpo completo con aceites esenciales para liberar tensiones y alcanzar relajación total.', duration: 60, capacity: 1 },
+        { title: 'Facial hidratante', subtitle: 'Limpieza y nutrición facial', description: 'Limpieza profunda facial con exfoliación, vapor, extracción y mascarilla hidratante.', duration: 75, capacity: 1 },
+        { title: 'Aromaterapia', subtitle: 'Terapia con aromas naturales', description: 'Sesión de aromaterapia con esencias naturales y masaje suave para equilibrar cuerpo y mente.', duration: 45, capacity: 1 }
+      ]
+    },
+    carwash: {
+      description: 'Servicio de lavado y detailing para tu vehículo. Dejamos tu carro como nuevo con los mejores productos.',
+      address: 'Bulevar del Ejército Km 4.5', city: 'San Salvador',
+      phone: '+503 2233-5566', email: 'citas@carwash.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'07:00',to:'17:00'}, 'Martes': {from:'07:00',to:'17:00'}, 'Miércoles': {from:'07:00',to:'17:00'}, 'Jueves': {from:'07:00',to:'17:00'}, 'Viernes': {from:'07:00',to:'17:00'}, 'Sábado': {from:'07:00',to:'16:00'} },
+      services: [
+        { title: 'Lavado básico', subtitle: 'Exterior + interior', description: 'Lavado exterior con champú, aspirado de interiores y limpieza de vidrios.', duration: 30, capacity: 3 },
+        { title: 'Lavado completo', subtitle: 'Lavado + encerado', description: 'Lavado completo exterior e interior, encerado, brillado de llantas y aromatizante.', duration: 60, capacity: 2 },
+        { title: 'Detailing', subtitle: 'Detailing profesional', description: 'Detailing completo: pulido, encerado, limpieza de motor, tapizado y restauración de plásticos.', duration: 120, capacity: 1 }
+      ]
+    },
+    medical: {
+      description: 'Consultorio médico especializado en atención integral a la salud, con tecnología moderna y personal certificado.',
+      address: 'Av. La Capilla #222, Col. Médica', city: 'San Salvador',
+      phone: '+503 2244-5577', email: 'citas@consultorio.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'07:00',to:'17:00'}, 'Martes': {from:'07:00',to:'17:00'}, 'Miércoles': {from:'07:00',to:'17:00'}, 'Jueves': {from:'07:00',to:'17:00'}, 'Viernes': {from:'07:00',to:'17:00'}, 'Sábado': {from:'08:00',to:'12:00'} },
+      services: [
+        { title: 'Consulta General', subtitle: 'Consulta médica 30 min', description: 'Consulta con médico general para diagnóstico, tratamiento y orientación. Se revisa historial clínico.', duration: 30, capacity: 1 },
+        { title: 'Revisión', subtitle: 'Revisión de seguimiento', description: 'Revisión de seguimiento para pacientes con tratamiento activo. Evaluación de evolución y ajuste de medicación.', duration: 20, capacity: 2 },
+        { title: 'Examen físico', subtitle: 'Examen completo anual', description: 'Examen físico completo anual con toma de signos vitales, análisis básicos y evaluación general.', duration: 45, capacity: 1 }
+      ]
+    },
+    tours: {
+      description: 'Agencia de tours y viajes. Organizamos experiencias únicas nacionales e internacionales para grupos e individuales.',
+      address: 'Centro Comercial Multiplaza, Local 12', city: 'San Salvador',
+      phone: '+503 2211-4433', email: 'reservas@toursagencia.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'08:00',to:'17:00'}, 'Martes': {from:'08:00',to:'17:00'}, 'Miércoles': {from:'08:00',to:'17:00'}, 'Jueves': {from:'08:00',to:'17:00'}, 'Viernes': {from:'08:00',to:'17:00'}, 'Sábado': {from:'09:00',to:'14:00'} },
+      services: [
+        { title: 'Asesoría de viaje', subtitle: 'Planificación personalizada', description: 'Sesión de asesoría para planificar tu viaje ideal: destinos, presupuesto, itinerario y trámites.', duration: 60, capacity: 1 },
+        { title: 'Tour día completo', subtitle: 'Excursión nacional', description: 'Tour de día completo a destinos nacionales con guía, transporte y alimentación incluida.', duration: 60, capacity: 10 }
+      ]
+    },
+    academy: {
+      description: 'Academia de formación profesional con cursos técnicos, talleres y diplomados en diversas áreas.',
+      address: 'Calle Arce #456, Col. Flor Blanca', city: 'San Salvador',
+      phone: '+503 2222-7788', email: 'info@academia.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'07:00',to:'20:00'}, 'Martes': {from:'07:00',to:'20:00'}, 'Miércoles': {from:'07:00',to:'20:00'}, 'Jueves': {from:'07:00',to:'20:00'}, 'Viernes': {from:'07:00',to:'20:00'}, 'Sábado': {from:'08:00',to:'17:00'} },
+      services: [
+        { title: 'Orientación', subtitle: 'Orientación vocacional', description: 'Sesión de orientación para elegir el curso o carrera técnica más adecuada según tus intereses.', duration: 45, capacity: 1 },
+        { title: 'Inscripción', subtitle: 'Proceso de inscripción', description: 'Cita para completar el proceso de inscripción, entrega de documentos y pago de matrícula.', duration: 30, capacity: 2 }
+      ]
+    },
+    school: {
+      description: 'Centro educativo comprometido con la formación integral de niños y jóvenes. Admisiones abiertas.',
+      address: '5a Av. Sur #89, Reparto Las Palmas', city: 'Santa Ana',
+      phone: '+503 2441-2233', email: 'secretaria@colegio.edu.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'07:00',to:'15:00'}, 'Martes': {from:'07:00',to:'15:00'}, 'Miércoles': {from:'07:00',to:'15:00'}, 'Jueves': {from:'07:00',to:'15:00'}, 'Viernes': {from:'07:00',to:'15:00'} },
+      services: [
+        { title: 'Pre-matrícula', subtitle: 'Proceso de pre-inscripción', description: 'Cita para iniciar el proceso de pre-matrícula para el próximo año escolar. Traer documentos del alumno.', duration: 30, capacity: 2 },
+        { title: 'Reunión padres', subtitle: 'Reunión con maestro', description: 'Cita para reunión entre padres de familia y maestro del grado para revisar rendimiento escolar.', duration: 20, capacity: 1 }
+      ]
+    },
+    cleaning: {
+      description: 'Empresa de limpieza y lavandería. Servicio residencial y empresarial con garantía de calidad.',
+      address: 'Calle Delgado #33, Res. Altavista', city: 'San Salvador',
+      phone: '+503 2200-9988', email: 'servicio@limpieza.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Lunes': {from:'07:00',to:'17:00'}, 'Martes': {from:'07:00',to:'17:00'}, 'Miércoles': {from:'07:00',to:'17:00'}, 'Jueves': {from:'07:00',to:'17:00'}, 'Viernes': {from:'07:00',to:'17:00'}, 'Sábado': {from:'07:00',to:'15:00'} },
+      services: [
+        { title: 'Limpieza básica', subtitle: 'Hogar o negocio', description: 'Servicio de limpieza general de interiores: barrer, trapear, limpiar superficies y baños.', duration: 120, capacity: 2 },
+        { title: 'Lavandería', subtitle: 'Entrega de ropa para lavar', description: 'Cita para entrega y recepción de prendas de lavandería. Incluye lavado, secado y doblado.', duration: 30, capacity: 3 }
+      ]
+    },
+    photography: {
+      description: 'Estudio fotográfico profesional para retratos, eventos, productos y fotografía corporativa.',
+      address: 'Pasaje los Pinos #8, Zona Rosa', city: 'San Salvador',
+      phone: '+503 2277-3344', email: 'sesiones@fotografia.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: true,
+      activeDays: { 'Martes': {from:'09:00',to:'18:00'}, 'Miércoles': {from:'09:00',to:'18:00'}, 'Jueves': {from:'09:00',to:'18:00'}, 'Viernes': {from:'09:00',to:'18:00'}, 'Sábado': {from:'09:00',to:'17:00'} },
+      services: [
+        { title: 'Sesión retrato', subtitle: 'Estudio o exterior', description: 'Sesión fotográfica de retrato individual o familiar en estudio o locación exterior. Incluye edición de 10 fotos.', duration: 60, capacity: 1 },
+        { title: 'Fotos de producto', subtitle: 'Fotografía comercial', description: 'Sesión de fotografía de productos para catálogo, e-commerce o redes sociales. Hasta 20 productos.', duration: 120, capacity: 1 }
+      ]
+    },
+    shipping: {
+      description: 'Empresa de envíos y paquetería nacional. Servicio rápido, seguro y económico para personas y empresas.',
+      address: 'Bulevar Constitución #102, Soyapango', city: 'San Salvador',
+      phone: '+503 2299-1100', email: 'envios@paqueteria.com.sv', country: 'El Salvador',
+      businessType: 'services', offersAppointments: false,
+      activeDays: { 'Lunes': {from:'08:00',to:'17:00'}, 'Martes': {from:'08:00',to:'17:00'}, 'Miércoles': {from:'08:00',to:'17:00'}, 'Jueves': {from:'08:00',to:'17:00'}, 'Viernes': {from:'08:00',to:'17:00'}, 'Sábado': {from:'08:00',to:'12:00'} },
+      services: []
     }
   };
 
@@ -354,9 +501,10 @@ export class OrgSettingsComponent implements OnInit {
       title: this.newService.title.trim().substring(0, 20),
       subtitle: (this.newService.subtitle || '').trim().substring(0, 70),
       description: (this.newService.description || '').trim().substring(0, 500),
-      duration: this.newService.duration
+      duration: this.newService.duration,
+      capacity: this.newService.capacity || 1
     });
-    this.newService = { title: '', subtitle: '', description: '', duration: 30 };
+    this.newService = { title: '', subtitle: '', description: '', duration: 30, capacity: 1 };
   }
 
   removeService(index: number): void {

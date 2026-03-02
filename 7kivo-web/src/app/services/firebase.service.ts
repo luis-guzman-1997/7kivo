@@ -636,6 +636,66 @@ export class FirebaseService {
     await this.deleteDocument(slug, itemId);
   }
 
+  async batchWriteCollectionItems(
+    slug: string,
+    items: any[],
+    mode: 'overwrite' | 'merge',
+    uniqueField?: string
+  ): Promise<{ added: number; updated: number }> {
+    const orgId = this.getOrgId();
+    const colRef = collection(this.db, `organizations/${orgId}/${slug}`);
+
+    if (mode === 'overwrite') {
+      const existing = await getDocs(colRef);
+      for (let i = 0; i < existing.docs.length; i += 500) {
+        const batch = writeBatch(this.db);
+        existing.docs.slice(i, i + 500).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      for (let i = 0; i < items.length; i += 500) {
+        const batch = writeBatch(this.db);
+        items.slice(i, i + 500).forEach(item => {
+          const newRef = doc(colRef);
+          batch.set(newRef, { ...item, active: true, createdAt: serverTimestamp() });
+        });
+        await batch.commit();
+      }
+      return { added: items.length, updated: 0 };
+    }
+
+    // Merge mode
+    let added = 0, updated = 0;
+    const existingMap: Record<string, string> = {};
+    if (uniqueField) {
+      const existing = await getDocs(colRef);
+      existing.docs.forEach(d => {
+        const val = d.data()[uniqueField];
+        if (val !== undefined && val !== null) {
+          existingMap[String(val)] = d.id;
+        }
+      });
+    }
+
+    for (let i = 0; i < items.length; i += 500) {
+      const batch = writeBatch(this.db);
+      items.slice(i, i + 500).forEach(item => {
+        const fieldVal = uniqueField ? String(item[uniqueField] ?? '') : '';
+        const existingId = uniqueField ? existingMap[fieldVal] : undefined;
+        if (existingId) {
+          const ref = doc(this.db, `organizations/${orgId}/${slug}/${existingId}`);
+          batch.update(ref, { ...item, updatedAt: serverTimestamp() });
+          updated++;
+        } else {
+          const newRef = doc(colRef);
+          batch.set(newRef, { ...item, active: true, createdAt: serverTimestamp() });
+          added++;
+        }
+      });
+      await batch.commit();
+    }
+    return { added, updated };
+  }
+
   // ==================== FLOW SUBMISSIONS ====================
 
   async getFlowSubmissions(collectionName: string): Promise<any[]> {

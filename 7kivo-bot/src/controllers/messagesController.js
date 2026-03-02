@@ -17,6 +17,7 @@ const {
   getAppointmentsByDate,
   getUpcomingAppointmentsByPhone,
   cancelAppointment,
+  lookupCollectionByField,
   getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
@@ -690,6 +691,17 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
         step: "flow_image",
         flowId: flow.id,
         flowStepIndex: stepIndex,
+        flowStartTime: Date.now()
+      });
+      break;
+
+    case "auth_lookup":
+      await sendTextMessage(step.prompt || "Por favor escribe tu código:", phoneNumber);
+      setSession(phoneNumber, {
+        step: "flow_auth",
+        flowId: flow.id,
+        flowStepIndex: stepIndex,
+        authRetries: 0,
         flowStartTime: Date.now()
       });
       break;
@@ -1479,6 +1491,48 @@ const handleCancelAppointment = async (phoneNumber) => {
   }
 };
 
+const handleFlowAuthInput = async (phoneNumber, message, session) => {
+  const flow = await getFlow(session.flowId);
+  if (!flow) {
+    await sendTextMessage("Error en el proceso. Escribe *menu* para volver.", phoneNumber);
+    setSession(phoneNumber, { step: "main_menu" });
+    return;
+  }
+
+  const step = flow.steps[session.flowStepIndex];
+  const userInput = message.trim();
+
+  if (!userInput) {
+    await sendTextMessage(step.notFoundMessage || "Por favor ingresa un valor válido.", phoneNumber);
+    return;
+  }
+
+  const record = await lookupCollectionByField(step.lookupCollection, step.authField, userInput);
+
+  if (record) {
+    let response = step.resultTemplate || "Registro encontrado.";
+    for (const [key, val] of Object.entries(record)) {
+      if (key && typeof key === 'string') {
+        response = response.replace(new RegExp(`\\{${key}\\}`, 'g'), String(val ?? ''));
+      }
+    }
+    await sendTextMessage(response, phoneNumber);
+    const nextIndex = session.flowStepIndex + 1;
+    setSession(phoneNumber, { step: "flow_pending", flowStepIndex: nextIndex, flowStartTime: Date.now() });
+    await executeFlowStep(phoneNumber, flow, nextIndex);
+  } else {
+    const retries = (session.authRetries || 0) + 1;
+    const maxRetries = step.maxRetries || 3;
+    if (retries >= maxRetries) {
+      await sendTextMessage("No pudimos encontrar tu registro. Por favor contacta con nuestro equipo de soporte.", phoneNumber);
+      clearSession(phoneNumber);
+    } else {
+      await sendTextMessage(step.notFoundMessage || "No encontramos ese código. Intenta de nuevo.", phoneNumber);
+      setSession(phoneNumber, { authRetries: retries, flowStartTime: Date.now() });
+    }
+  }
+};
+
 const handleUserMessage = async (phoneNumber, message, session) => {
   const lowerMessage = message.toLowerCase();
 
@@ -1522,6 +1576,11 @@ const handleUserMessage = async (phoneNumber, message, session) => {
       }
     }
     await sendTextMessage("Por favor envía una imagen o foto 📷", phoneNumber);
+    return;
+  }
+
+  if (session.step === "flow_auth") {
+    await handleFlowAuthInput(phoneNumber, message, session);
     return;
   }
 

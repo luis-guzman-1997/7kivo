@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
+import * as XLSX from 'xlsx';
 
 interface CollectionField {
   key: string;
@@ -46,6 +47,17 @@ export class CollectionsComponent implements OnInit {
   editingItemId: string | null = null;
   itemForm: Record<string, any> = {};
   refCollectionData: Record<string, any[]> = {};
+
+  // Excel import
+  showImportPanel = false;
+  importMode: 'overwrite' | 'merge' = 'merge';
+  importUniqueField = '';
+  importRows: any[] = [];
+  importHeaders: string[] = [];
+  importColMap: Record<string, string> = {};
+  importing = false;
+  importPreviewCount = 0;
+  importError = '';
 
   fieldTypes = [
     { value: 'text', label: 'Texto' },
@@ -440,5 +452,98 @@ export class CollectionsComponent implements OnInit {
       return String(refItem[field.refValueField]);
     }
     return refItem.id || '';
+  }
+
+  // ==================== EXCEL IMPORT / EXPORT ====================
+
+  downloadTemplate(): void {
+    const headers = this.currentCollection.fields.map(f => f.label || f.key);
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, this.currentCollection.name || 'Datos');
+    XLSX.writeFile(wb, `plantilla_${this.currentCollection.slug}.xlsx`);
+  }
+
+  onExcelFile(event: any): void {
+    this.importError = '';
+    const file: File = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (!rawRows || rawRows.length < 2) {
+          this.importError = 'El archivo debe tener al menos una fila de encabezados y una de datos.';
+          return;
+        }
+        this.importHeaders = (rawRows[0] as string[]).map(h => String(h || '').trim());
+        this.importColMap = {};
+        for (const header of this.importHeaders) {
+          const match = this.currentCollection.fields.find(f =>
+            f.label?.toLowerCase() === header.toLowerCase() ||
+            f.key?.toLowerCase() === header.toLowerCase()
+          );
+          if (match) this.importColMap[header] = match.key;
+        }
+        this.importRows = rawRows.slice(1).map(row => {
+          const obj: Record<string, any> = {};
+          this.importHeaders.forEach((h, i) => {
+            obj[h] = (row as any[])[i] ?? '';
+          });
+          return obj;
+        }).filter(row => Object.values(row).some(v => v !== '' && v !== null && v !== undefined));
+        this.importPreviewCount = this.importRows.length;
+      } catch (err) {
+        this.importError = 'Error al leer el archivo. Asegúrate de que sea un .xlsx válido.';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  async importExcel(): Promise<void> {
+    if (!this.importRows.length) return;
+    if (this.importMode === 'merge' && this.importUniqueField) {
+      const excelCol = Object.keys(this.importColMap).find(h => this.importColMap[h] === this.importUniqueField);
+      if (excelCol) {
+        const values = this.importRows.map(r => String(r[excelCol] ?? '').trim()).filter(v => v);
+        const unique = new Set(values);
+        if (unique.size !== values.length) {
+          this.importError = `El campo "${this.importUniqueField}" tiene valores duplicados en el archivo. Corrígelo antes de importar.`;
+          return;
+        }
+      }
+    }
+    const items = this.importRows.map(row => {
+      const item: Record<string, any> = {};
+      for (const [excelHeader, fieldKey] of Object.entries(this.importColMap)) {
+        if (!fieldKey) continue;
+        const schemaField = this.currentCollection.fields.find(f => f.key === fieldKey);
+        let val = row[excelHeader];
+        if (schemaField?.type === 'number') val = Number(val) || 0;
+        else if (schemaField?.type === 'boolean') val = String(val).toLowerCase() === 'true' || val === 1;
+        else val = String(val ?? '').trim();
+        item[fieldKey] = val;
+      }
+      return item;
+    });
+    this.importing = true;
+    try {
+      const result = await this.firebaseService.batchWriteCollectionItems(
+        this.currentCollection.slug, items, this.importMode,
+        this.importMode === 'merge' ? this.importUniqueField : undefined
+      );
+      this.notice = `Importación completada: ${result.added} agregados, ${result.updated} actualizados.`;
+      this.showImportPanel = false;
+      this.importRows = [];
+      await this.loadCollectionData();
+      setTimeout(() => this.notice = '', 4000);
+    } catch (err) {
+      this.importError = 'Error al importar. Intenta de nuevo.';
+    } finally {
+      this.importing = false;
+    }
   }
 }

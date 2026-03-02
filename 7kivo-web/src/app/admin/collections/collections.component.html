@@ -171,6 +171,64 @@
             <button class="btn-add-field btn-add-primary" (click)="openNewItem()">
               <i class="fas fa-plus"></i> Agregar Registro
             </button>
+            <button class="btn-import" (click)="showImportPanel = !showImportPanel">
+              <i class="fas fa-file-excel"></i> Importar Excel
+            </button>
+            <button class="btn-template" (click)="downloadTemplate()">
+              <i class="fas fa-download"></i> Plantilla
+            </button>
+          </div>
+        </div>
+
+        <!-- Import Panel -->
+        <div class="import-panel" *ngIf="showImportPanel">
+          <h4><i class="fas fa-upload"></i> Importar desde Excel</h4>
+
+          <div class="import-error" *ngIf="importError">
+            <i class="fas fa-exclamation-circle"></i> {{ importError }}
+          </div>
+
+          <div class="import-row">
+            <label>Archivo Excel (.xlsx)</label>
+            <input type="file" accept=".xlsx,.xls" (change)="onExcelFile($event)" />
+          </div>
+
+          <div *ngIf="importHeaders.length > 0">
+            <p class="import-info"><i class="fas fa-table"></i> {{ importPreviewCount }} filas detectadas</p>
+
+            <div class="import-map-table">
+              <div class="import-map-header">
+                <span>Columna Excel</span><span>Campo en base de datos</span>
+              </div>
+              <div *ngFor="let h of importHeaders" class="import-map-row">
+                <span>{{ h }}</span>
+                <select [(ngModel)]="importColMap[h]">
+                  <option value="">— Ignorar —</option>
+                  <option *ngFor="let f of currentCollection.fields" [value]="f.key">{{ f.label }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="import-mode-row">
+              <label><input type="radio" [(ngModel)]="importMode" value="merge" /> Mantener datos existentes (agregar/actualizar)</label>
+              <label><input type="radio" [(ngModel)]="importMode" value="overwrite" /> Sobreescribir todo (borra todos los registros actuales)</label>
+            </div>
+
+            <div class="import-row" *ngIf="importMode === 'merge'">
+              <label>Campo único para identificar duplicados</label>
+              <select [(ngModel)]="importUniqueField">
+                <option value="">— Sin validación única —</option>
+                <option *ngFor="let f of currentCollection.fields" [value]="f.key">{{ f.label }}</option>
+              </select>
+            </div>
+
+            <div class="import-actions">
+              <button class="btn-import-confirm" (click)="importExcel()" [disabled]="importing">
+                <i class="fas" [class.fa-spinner]="importing" [class.fa-spin]="importing" [class.fa-upload]="!importing"></i>
+                {{ importing ? 'Importando...' : 'Importar ' + importPreviewCount + ' registros' }}
+              </button>
+              <button class="btn-import-cancel" (click)="showImportPanel = false">Cancelar</button>
+            </div>
           </div>
         </div>
 
