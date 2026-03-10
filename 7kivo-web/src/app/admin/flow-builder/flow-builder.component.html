@@ -437,7 +437,7 @@
                 </div>
 
                 <!-- Nombre del dato (todos excepto message, appointment, browse, image_input, auth_lookup) -->
-                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection' && step.type !== 'image_input' && step.type !== 'auth_lookup'">
+                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection' && step.type !== 'image_input' && step.type !== 'auth_lookup' && step.type !== 'select_services'">
                   <label>Nombre de este dato <span class="fe-help-tip" title="Úsalo en el mensaje final con {clave}">?</span></label>
                   <input type="text" [(ngModel)]="step.fieldLabel"
                     placeholder="Ej: Nombre, Correo, Servicio…"
@@ -568,6 +568,30 @@
                   </div>
                 </div>
 
+                <!-- ── LISTA DE SERVICIOS ── -->
+                <div class="fe-appt-info fe-svc-info" *ngIf="step.type === 'select_services'">
+                  <div class="fe-appt-info-row">
+                    <i class="fas fa-briefcase-medical"></i>
+                    <span>El bot mostrará la lista de <strong>servicios configurados</strong> en Horarios de Atención con título y subtítulo.</span>
+                  </div>
+                  <ng-container *ngIf="scheduleServices.length > 0">
+                    <div class="fe-appt-services-list">
+                      <div class="fe-appt-svc-item" *ngFor="let svc of scheduleServices">
+                        <span class="fe-appt-svc-name">{{ svc.title || svc.name }}</span>
+                        <span class="fe-appt-svc-dur">{{ svc.duration }} min</span>
+                      </div>
+                    </div>
+                    <div class="fe-appt-info-row fe-appt-info-tip">
+                      <i class="fas fa-link"></i>
+                      <span>El servicio seleccionado se guarda en <strong>{{ step.fieldKey || 'el campo' }}</strong> y la duración queda lista para el paso <em>Cita</em> siguiente.</span>
+                    </div>
+                  </ng-container>
+                  <div class="fe-appt-info-row fe-appt-info-warn" *ngIf="scheduleServices.length === 0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>No hay servicios configurados en <strong>Horarios de Atención</strong>. Agrégalos primero.</span>
+                  </div>
+                </div>
+
                 <!-- ── IMAGEN ── -->
                 <ng-container *ngIf="step.type === 'image_input'">
                   <label class="fe-check fe-field-inline">
@@ -637,7 +661,7 @@
                   </label>
 
                   <!-- Error message -->
-                  <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'image_input'">
+                  <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'image_input' && step.type !== 'select_services'">
                     <label class="fe-label-secondary">Mensaje si la respuesta no es válida <span class="fe-hint-inline">(opcional)</span></label>
                     <input type="text" [(ngModel)]="step.errorMessage" placeholder="Ej: Por favor escribe un nombre válido." />
                   </div>
@@ -771,6 +795,11 @@
                   <!-- Catálogo -->
                   <div class="wa-interactive" *ngSwitchCase="'browse_collection'">
                     <button class="wa-list-btn"><i class="fas fa-search"></i> Explorar catálogo</button>
+                  </div>
+
+                  <!-- Lista de Servicios -->
+                  <div class="wa-interactive" *ngSwitchCase="'select_services'">
+                    <button class="wa-list-btn"><i class="fas fa-briefcase-medical"></i> {{ step.buttonText || 'Ver servicios' }}</button>
                   </div>
 
                   <!-- Cita -->

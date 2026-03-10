@@ -75,6 +75,7 @@ export class FlowBuilderComponent implements OnInit {
     { value: 'number_input',     label: 'Número',         icon: 'fa-hashtag',        desc: 'El usuario escribe un número' },
     { value: 'select_buttons',   label: 'Botones',        icon: 'fa-hand-pointer',   desc: 'Hasta 3 botones de respuesta rápida' },
     { value: 'select_list',      label: 'Lista',          icon: 'fa-list',           desc: 'Lista desplegable de opciones' },
+    { value: 'select_services',  label: 'Lista de Servicios', icon: 'fa-briefcase-medical', desc: 'Muestra los servicios de tu negocio con título, subtítulo y duración' },
     { value: 'browse_collection',label: 'Catálogo',       icon: 'fa-th-large',       desc: 'El usuario navega un catálogo' },
     { value: 'appointment_slot', label: 'Cita',           icon: 'fa-calendar-check', desc: 'El usuario elige fecha y hora disponible' },
     { value: 'message',          label: 'Mensaje',        icon: 'fa-comment',        desc: 'El bot envía un mensaje sin esperar respuesta' },

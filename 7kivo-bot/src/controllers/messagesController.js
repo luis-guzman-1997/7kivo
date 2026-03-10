@@ -419,6 +419,37 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     return;
   }
 
+  // Handle select_services step
+  if (session && session.step === "flow_select_services" && buttonId.startsWith("svsvc_")) {
+    const idx = parseInt(buttonId.substring(6), 10);
+    const schedule = await getScheduleInfo();
+    const svc = schedule?.services?.[idx];
+    if (!svc) {
+      await sendTextMessage("Servicio no válido. Por favor selecciona una opción.", phoneNumber);
+      return;
+    }
+    const flow = await getFlow(session.flowId);
+    if (!flow) return;
+    const step = flow.steps[session.flowStepIndex];
+    const svcName = svc.title || svc.name;
+    const flowData = {
+      ...session.flowData,
+      [step.fieldKey]: svcName,
+      [`${step.fieldKey}Id`]: String(idx),
+      _apptDuration: svc.duration,
+      _apptService: svcName
+    };
+    const nextIndex = session.flowStepIndex + 1;
+    setSession(phoneNumber, {
+      step: "flow_pending",
+      flowData,
+      flowStepIndex: nextIndex,
+      flowStartTime: Date.now()
+    });
+    await executeFlowStep(phoneNumber, flow, nextIndex);
+    return;
+  }
+
   // Handle appointment_slot steps (within a flow)
   if (session && session.step === "appt_select_service" && buttonId.startsWith("appt_svc_")) {
     const schedule = await getScheduleInfo();
@@ -664,6 +695,10 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
 
     case "select_buttons":
       await sendSelectButtons(phoneNumber, flow, step, stepIndex);
+      break;
+
+    case "select_services":
+      await sendSelectServices(phoneNumber, flow, step, stepIndex);
       break;
 
     case "browse_collection":
@@ -1235,6 +1270,36 @@ const getFreeSlots = (allSlots, duration, booked, capacity = 1) => {
     }).length;
     return count < capacity;
   });
+};
+
+const sendSelectServices = async (phoneNumber, flow, step, stepIndex) => {
+  const schedule = await getScheduleInfo();
+  const services = (schedule?.services || []).filter(s => s.name || s.title);
+  if (!services.length) {
+    await sendTextMessage("Los servicios no están disponibles en este momento.", phoneNumber);
+    const nextIndex = stepIndex + 1;
+    setSession(phoneNumber, { step: "flow_pending", flowStepIndex: nextIndex, flowStartTime: Date.now() });
+    await executeFlowStep(phoneNumber, flow, nextIndex);
+    return;
+  }
+  const rows = services.map((svc, i) => ({
+    id: `svsvc_${i}`,
+    title: (svc.title || svc.name || "").substring(0, 24),
+    description: (svc.subtitle ? svc.subtitle.substring(0, 72) : `${svc.duration} min`)
+  }));
+  setSession(phoneNumber, {
+    step: "flow_select_services",
+    flowId: flow.id,
+    flowStepIndex: stepIndex,
+    flowStartTime: Date.now()
+  });
+  const sections = [{ title: step.fieldLabel || "Servicios", rows }];
+  await sendInteractiveList(
+    step.prompt || "¿Qué servicio necesitas?",
+    step.buttonText || "Ver servicios",
+    sections,
+    phoneNumber
+  );
 };
 
 const sendServiceSelection = async (phoneNumber, flow, stepIndex, services) => {
