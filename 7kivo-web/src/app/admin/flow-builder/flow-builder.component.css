@@ -944,11 +944,25 @@
 
 /* Appointment info */
 .fe-appt-info {
-  display: flex; gap: 8px; padding: 10px 14px; border-radius: 8px;
-  background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.15);
-  font-size: 0.82rem; color: #92400e; line-height: 1.5; align-items: flex-start; margin-bottom: 12px;
+  display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 8px;
+  background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.18);
+  font-size: 0.82rem; color: #92400e; line-height: 1.5; margin-bottom: 12px;
 }
-.fe-appt-info i { color: #f59e0b !important; margin-top: 2px; flex-shrink: 0; }
+.fe-appt-info-row { display: flex; gap: 8px; align-items: flex-start; }
+.fe-appt-info-row i { color: #f59e0b !important; margin-top: 2px; flex-shrink: 0; }
+.fe-appt-services-title { margin-top: 2px; }
+.fe-appt-services-list {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 0 0 2px 22px; padding: 8px 10px;
+  background: rgba(255,255,255,0.6); border-radius: 6px; border: 1px solid rgba(245,158,11,0.2);
+}
+.fe-appt-svc-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.fe-appt-svc-name { font-weight: 500; color: #78350f; }
+.fe-appt-svc-dur { font-size: 0.78rem; color: #b45309; background: rgba(245,158,11,0.12); padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.fe-appt-info-tip i { color: #6366f1 !important; }
+.fe-appt-info-tip span { color: #4338ca; }
+.fe-appt-info-warn i { color: #ef4444 !important; }
+.fe-appt-info-warn span { color: #b91c1c; }
 
 /* Steps list */
 .fe-steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }

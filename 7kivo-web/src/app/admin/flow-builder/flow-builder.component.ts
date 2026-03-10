@@ -84,6 +84,7 @@ export class FlowBuilderComponent implements OnInit {
 
   planLimit = 999;
   scheduleWarning = false;
+  scheduleServices: { name: string; title?: string; duration: number; capacity?: number }[] = [];
 
   // Template modal state
   showTemplateModal = false;
@@ -235,13 +236,13 @@ export class FlowBuilderComponent implements OnInit {
     const hasApptFlow = this.flows.some((f: any) =>
       f.type === 'appointment' || f.steps?.some((s: any) => s.type === 'appointment_slot')
     );
-    if (!hasApptFlow) { this.scheduleWarning = false; return; }
     try {
       const schedule = await this.firebaseService.getInfo('schedule');
       const hasActiveDays = schedule?.days?.some((d: any) => d.active && d.shifts?.length > 0);
-      this.scheduleWarning = !hasActiveDays;
+      this.scheduleWarning = hasApptFlow && !hasActiveDays;
+      this.scheduleServices = (schedule?.services || []).filter((s: any) => s.name || s.title);
     } catch {
-      this.scheduleWarning = true;
+      this.scheduleWarning = hasApptFlow;
     }
   }
 
