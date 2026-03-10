@@ -1,27 +1,29 @@
 /**
  * Script Seed — Instituto CanZion Sonsonate
  *
- * Configura el bot desde cero para el Instituto CanZion Sonsonate.
- * Preserva credenciales de WhatsApp y botApiUrl si ya existen.
+ * Limpia y reconfigura el contenido del bot desde cero.
  *
- * Menú del bot:
- *   1. Conócenos          → info general del instituto
- *   2. Nuestros Programas → browse de programas (Ministerial, Instrumento, Kids)
- *   3. Horarios           → sábados 8:00 AM – 12:00 MD
- *   4. Permisos           → flujo: nombre, programa, instrumento, tipo, motivo
- *   5. Ubícanos           → dirección y contacto
+ * ✅ Toca (contenido del bot):
+ *   - Flujos, menú, botMessages
+ *   - Esquemas de colecciones (_collections)
+ *   - Datos de colecciones: programas, instrumentos
+ *   - Limpia datos recibidos: permisos, quejas-o-sugerencias, consulta-de-pago
+ *   - info/contact, info/schedule, info/general
  *
- * Flujo "Permisos":
- *   Paso 1 — Nombre completo
- *   Paso 2 — Programa (Ministerial / Canzion Instrumento / Kids)
- *   Paso 3 — Instrumento (Guitarra, Batería, Bajo, Canto, Piano)
- *   Paso 4 — Tipo: Permiso anticipado / Falta justificada / Tardanza
- *   Paso 5 — Motivo (texto libre)
- *   → Guarda en colección "permisos"
+ * 🚫 NO toca (configuración del servicio):
+ *   - config/general  (botApiUrl, token WA, inactivityTimeout, etc.)
+ *   - config/whatsapp (token, phoneNumberId, verifyToken)
+ *   - Documento de organización (botEnabled, plan, active, etc.)
+ *   - Admins / usuarios
  *
- * Flujo "Nuestros Programas":
- *   Paso 1 — browse_collection sobre "programas"
- *   → Solo lectura, no guarda datos
+ * Menú (7 ítems):
+ *   1. Conócenos            → info general (builtin)
+ *   2. Nuestros Programas   → browse de programas (flow)
+ *   3. Horarios de Atención → horarios (builtin)
+ *   4. Permisos             → flujo 5 pasos (flow)
+ *   5. Quejas o Sugerencias → flujo 3 pasos (flow)
+ *   6. Ubícanos             → contacto (builtin)
+ *   7. Mis Pagos            → "próximamente" (message)
  *
  * Uso:
  *   cd 7kivo-bot
@@ -35,32 +37,41 @@ const projectId = process.env.FIREBASE_PROJECT_ID || "kivo7-app";
 const ORG_ID    = "instituto-canzion-sonsonate";
 const ORG_NAME  = "Instituto CanZion Sonsonate";
 
-// ==================== DATOS ====================
+// ==================== DATOS REALES ====================
 
 const PROGRAMAS = [
   {
     nombre:      "Curso Ministerial Musical",
     edad:        "Mayores de 16 años",
     duracion:    "2 años (4 semestres)",
-    descripcion: "Formación musical completa con enfoque en adoración y servicio ministerial.",
-    active:      true,
-    order:       1
+    descripcion:
+      "Programa de formación musical con enfoque en liderazgo y servicio ministerial. " +
+      "Los estudiantes desarrollan habilidades en su instrumento, ensamble musical " +
+      "y lenguaje musical, aplicando todo en el contexto de la alabanza y adoración.",
+    active: true,
+    order:  1
   },
   {
-    nombre:      "Canzion Instrumento",
+    nombre:      "CanZion Instrumento",
     edad:        "12 a 15 años",
     duracion:    "2 años (4 semestres)",
-    descripcion: "Programa de formación en instrumento para jóvenes.",
-    active:      true,
-    order:       2
+    descripcion:
+      "Programa diseñado para potenciar competencias musicales, actitudinales y cognitivas " +
+      "a través de la práctica musical en conjunto. Los jóvenes aprenden a interpretar su " +
+      "instrumento y participan en ensambles, con énfasis en principios bíblicos.",
+    active: true,
+    order:  2
   },
   {
     nombre:      "Kids",
     edad:        "6 a 10 años",
     duracion:    "2 años (4 semestres)",
-    descripcion: "Iniciación musical integral para niños.",
-    active:      true,
-    order:       3
+    descripcion:
+      "Espacio de iniciación musical basado en la exploración, orientación de instrumento, " +
+      "juego y enseñanza de principios bíblicos. Los niños aprenden a tocar su instrumento " +
+      "y participan en ensambles junto a otros niños.",
+    active: true,
+    order:  3
   }
 ];
 
@@ -124,111 +135,59 @@ async function seedCanzion() {
   console.log("========================================\n");
 
   try {
-    // ── 1. Preservar credenciales WA ───────────────────────────────────────
-    console.log("1. Verificando configuración WA existente...");
-    let savedWAConfig  = null;
-    let savedBotApiUrl = "";
-    try {
-      const waDoc = await orgRef.collection("config").doc("whatsapp").get();
-      if (waDoc.exists && waDoc.data()?.token) {
-        savedWAConfig = waDoc.data();
-        console.log(`   Token WA preservado (Phone: ${savedWAConfig.phoneNumberId || "N/A"})`);
-      }
-      const genDoc = await orgRef.collection("config").doc("general").get();
-      if (genDoc.exists && genDoc.data()?.botApiUrl) {
-        savedBotApiUrl = genDoc.data().botApiUrl;
-        console.log(`   botApiUrl preservado: ${savedBotApiUrl}`);
-      }
-    } catch (_) {}
-    if (!savedWAConfig) console.log("   Sin credenciales previas — se dejan vacías.");
-    console.log();
+    // ── 1. Limpiar contenido del bot ──────────────────────────────────────
+    console.log("1. Limpiando contenido del bot...");
 
-    // ── 2. Limpiar datos previos ───────────────────────────────────────────
-    console.log("2. Limpiando datos previos...");
-    const toClear = [
-      "_collections", "flows", "botMessages",
-      "citas", "permisos", "consultas", "contacts",
-      "programas", "instrumentos", "aspirantes"
-    ];
-    for (const col of toClear) {
+    // Flujos
+    const flowsN = await deleteCollection(orgRef.collection("flows"));
+    if (flowsN > 0) console.log(`   - flows: ${flowsN} docs`);
+
+    // BotMessages
+    const msgsN = await deleteCollection(orgRef.collection("botMessages"));
+    if (msgsN > 0) console.log(`   - botMessages: ${msgsN} docs`);
+
+    // Esquemas de colecciones
+    const colDefsN = await deleteCollection(orgRef.collection("_collections"));
+    if (colDefsN > 0) console.log(`   - _collections: ${colDefsN} docs`);
+
+    // Menú
+    const menuDoc = await orgRef.collection("config").doc("menu").get();
+    if (menuDoc.exists) { await menuDoc.ref.delete(); console.log("   - config/menu: eliminado"); }
+
+    // Info
+    for (const d of ["contact", "schedule", "general"]) {
+      const doc = await orgRef.collection("info").doc(d).get();
+      if (doc.exists) { await doc.ref.delete(); }
+    }
+    console.log("   - info/contact, info/schedule, info/general: eliminados");
+
+    // Datos recibidos (limpiar sin eliminar, se re-definen las colecciones)
+    const dataCols = ["programas", "instrumentos", "permisos", "quejas-o-sugerencias", "consulta-de-pago"];
+    for (const col of dataCols) {
       const n = await deleteCollection(orgRef.collection(col));
-      if (n > 0) console.log(`   - ${col}: ${n} docs eliminados`);
-    }
-    for (const doc of ["general", "menu"]) {
-      const d = await orgRef.collection("config").doc(doc).get();
-      if (d.exists) await d.ref.delete();
-    }
-    for (const doc of ["contact", "schedule", "general"]) {
-      const d = await orgRef.collection("info").doc(doc).get();
-      if (d.exists) await d.ref.delete();
+      if (n > 0) console.log(`   - ${col}: ${n} registros eliminados`);
     }
     console.log("   Limpieza completada.\n");
 
-    // ── 3. Documento de organización ───────────────────────────────────────
-    console.log("3. Creando organización...");
-    await orgRef.set({
-      name:          ORG_NAME,
-      orgId:         ORG_ID,
-      industry:      "academy",
-      active:        true,
-      plan:          "Business",
-      botEnabled:    true,
-      setupComplete: true,
-      createdAt:     ts()
-    }, { merge: true });
-    console.log("   OK\n");
-
-    // ── 4. config/general ──────────────────────────────────────────────────
-    console.log("4. Configuración general...");
-    await orgRef.collection("config").doc("general").set({
-      orgName:           ORG_NAME,
-      description:       "Instituto de música cristiana enfocado en la formación integral de músicos.",
-      industry:          "academy",
-      welcomeMessage:    `¡Bienvenido a *${ORG_NAME}*! 🎵`,
-      inactivityTimeout: 180000,
-      personalWhatsApp:  "",
-      botApiUrl:         savedBotApiUrl || "",
-      createdAt:         ts()
-    });
-    console.log("   OK\n");
-
-    // ── 5. config/whatsapp ─────────────────────────────────────────────────
-    console.log("5. Configuración WhatsApp...");
-    if (savedWAConfig?.token) {
-      await orgRef.collection("config").doc("whatsapp").set({ ...savedWAConfig, updatedAt: ts() });
-      console.log("   Credenciales RESTAURADAS.\n");
-    } else {
-      await orgRef.collection("config").doc("whatsapp").set({
-        phoneNumberId: process.env.PHONE_NUMBER_WHATSAPP || "",
-        token:         process.env.TOKEN_META_WHATSAPP   || "",
-        version:       process.env.VERSION_META_WHATSAPP || "v21.0",
-        verifyToken:   process.env.VERIFY_META_TOKEN     || "",
-        createdAt:     ts()
-      });
-      console.log("   Vacías (configurar en superadmin).\n");
-    }
-
-    // ── 6. Esquemas de colecciones (_collections) ─────────────────────────
-    console.log("6. Registrando esquemas de colecciones...");
+    // ── 2. Esquemas de colecciones ────────────────────────────────────────
+    console.log("2. Registrando esquemas de colecciones...");
 
     await orgRef.collection("_collections").add({
-      name:         "Programas",
-      slug:         "programas",
-      description:  "Cursos disponibles en ICZ Sonsonate",
+      name: "Programas", slug: "programas",
+      description: "Cursos disponibles en ICZ Sonsonate",
       displayField: "nombre",
       fields: [
-        { key: "nombre",      label: "Nombre del Curso",  type: "text", required: true  },
-        { key: "edad",        label: "Rango de Edad",     type: "text", required: true  },
-        { key: "duracion",    label: "Duración",          type: "text", required: false },
-        { key: "descripcion", label: "Descripción",       type: "text", required: false }
+        { key: "nombre",      label: "Nombre del Programa", type: "text",   required: true  },
+        { key: "edad",        label: "Rango de Edad",        type: "text",   required: true  },
+        { key: "duracion",    label: "Duración",             type: "text",   required: false },
+        { key: "descripcion", label: "Descripción",          type: "text",   required: false }
       ],
       createdAt: ts(), updatedAt: ts()
     });
 
     await orgRef.collection("_collections").add({
-      name:         "Instrumentos",
-      slug:         "instrumentos",
-      description:  "Instrumentos disponibles en el instituto",
+      name: "Instrumentos", slug: "instrumentos",
+      description: "Instrumentos disponibles en el instituto",
       displayField: "nombre",
       fields: [
         { key: "nombre", label: "Instrumento", type: "text", required: true }
@@ -237,49 +196,67 @@ async function seedCanzion() {
     });
 
     await orgRef.collection("_collections").add({
-      name:         "Permisos",
-      slug:         "permisos",
-      description:  "Solicitudes de permiso y falta enviadas desde el bot",
+      name: "Permisos", slug: "permisos",
+      description: "Solicitudes de permiso y falta enviadas desde el bot",
       displayField: "nombre",
       fields: [
-        { key: "nombre",      label: "Nombre alumno",  type: "text", required: true  },
-        { key: "programa",    label: "Programa",        type: "text", required: true  },
-        { key: "instrumento", label: "Instrumento",     type: "text", required: true  },
-        { key: "tipo",        label: "Tipo",            type: "text", required: true  },
-        { key: "motivo",      label: "Motivo",          type: "text", required: true  },
-        { key: "phoneNumber", label: "WhatsApp",        type: "text", required: false, protected: true }
+        { key: "nombre",      label: "Nombre alumno",    type: "text", required: true  },
+        { key: "programa",    label: "Programa",          type: "text", required: true  },
+        { key: "instrumento", label: "Instrumento",       type: "text", required: true  },
+        { key: "tipo",        label: "Tipo de solicitud", type: "text", required: true  },
+        { key: "motivo",      label: "Motivo",            type: "text", required: true  },
+        { key: "notas",       label: "Notas",             type: "text", required: false },
+        { key: "phoneNumber", label: "WhatsApp",          type: "text", required: false, protected: true }
       ],
       createdAt: ts(), updatedAt: ts()
     });
 
-    console.log("   Esquemas: programas, instrumentos, permisos creados.\n");
+    await orgRef.collection("_collections").add({
+      name: "Quejas o Sugerencias", slug: "quejas-o-sugerencias",
+      description: "Mensajes y reclamos recibidos desde el bot",
+      displayField: "nombre",
+      fields: [
+        { key: "nombre",      label: "Nombre",      type: "text", required: true  },
+        { key: "tipo",        label: "Tipo",         type: "text", required: true  },
+        { key: "descripcion", label: "Descripción",  type: "text", required: true  },
+        { key: "phoneNumber", label: "WhatsApp",     type: "text", required: false, protected: true }
+      ],
+      createdAt: ts(), updatedAt: ts()
+    });
 
-    // ── 7. Sembrar programas ───────────────────────────────────────────────
-    console.log(`7. Sembrando ${PROGRAMAS.length} programas...`);
+    await orgRef.collection("_collections").add({
+      name: "Consulta de Pago", slug: "consulta-de-pago",
+      description: "Registros de pagos por alumno",
+      displayField: "nombre",
+      fields: [
+        { key: "codigo_alumno",      label: "Código de Alumno",       type: "text",   required: true  },
+        { key: "nombre",             label: "Nombre",                  type: "text",   required: false },
+        { key: "proxima_fecha_pago", label: "Próxima Fecha de Pago",   type: "date",   required: false },
+        { key: "monto_pagar",        label: "Monto a Pagar",           type: "number", required: false },
+        { key: "formas_pago",        label: "Formas de Pago",          type: "text",   required: false },
+        { key: "cuotas_pendientes",  label: "Cuotas Pendientes",       type: "number", required: false }
+      ],
+      createdAt: ts(), updatedAt: ts()
+    });
+
+    console.log("   5 esquemas: programas, instrumentos, permisos, quejas-o-sugerencias, consulta-de-pago.\n");
+
+    // ── 3. Datos: programas ───────────────────────────────────────────────
+    console.log(`3. Sembrando ${PROGRAMAS.length} programas...`);
     for (const prog of PROGRAMAS) {
-      await orgRef.collection("programas").add({
-        ...prog,
-        createdAt: ts(),
-        updatedAt: ts()
-      });
+      await orgRef.collection("programas").add({ ...prog, createdAt: ts(), updatedAt: ts() });
     }
-    console.log(`   OK\n`);
+    console.log("   OK\n");
 
-    // ── 8. Sembrar instrumentos ────────────────────────────────────────────
-    console.log(`8. Sembrando ${INSTRUMENTOS.length} instrumentos...`);
+    // ── 4. Datos: instrumentos ────────────────────────────────────────────
+    console.log(`4. Sembrando ${INSTRUMENTOS.length} instrumentos...`);
     for (const nombre of INSTRUMENTOS) {
-      await orgRef.collection("instrumentos").add({
-        nombre,
-        active:    true,
-        createdAt: ts(),
-        updatedAt: ts()
-      });
+      await orgRef.collection("instrumentos").add({ nombre, active: true, createdAt: ts(), updatedAt: ts() });
     }
-    console.log(`   OK\n`);
+    console.log("   OK\n");
 
-    // ── 9. Flujo: Nuestros Programas (browse_collection) ──────────────────
-    console.log("9. Creando flujo 'Nuestros Programas'...");
-
+    // ── 5. Flujo: Nuestros Programas ──────────────────────────────────────
+    console.log("5. Flujo 'Nuestros Programas'...");
     const programasFlowRef = await orgRef.collection("flows").add({
       name:             "Nuestros Programas",
       description:      "Conoce los programas de estudio del instituto",
@@ -295,7 +272,7 @@ async function seedCanzion() {
         {
           id:                "s1",
           type:              "browse_collection",
-          prompt:            "🎓 *Nuestros Programas*\n\nEstos son los cursos disponibles.\nSelecciona uno para ver todos los detalles:",
+          prompt:            "🎓 *Nuestros Programas*\n\nEstos son los programas disponibles en ICZ Sonsonate.\n\nSelecciona uno para ver los detalles:",
           sourceCollection:  "programas",
           displayField:      "nombre",
           optionsTitleField: "nombre",
@@ -313,16 +290,14 @@ async function seedCanzion() {
         }
       ],
       completionMessage:
-        `¿Te gustaría saber algo más?\n\n` +
-        `Escribe *hola* para volver al menú principal. 🎵`,
-      createdAt: ts(),
-      updatedAt: ts()
+        "¿Te gustaría saber algo más?\n\n" +
+        "Escribe *hola* para volver al menú principal. 🎵",
+      createdAt: ts(), updatedAt: ts()
     });
+    console.log(`   ✓ id: ${programasFlowRef.id}\n`);
 
-    console.log(`   ✓ Flujo "Nuestros Programas" creado (id: ${programasFlowRef.id})\n`);
-
-    // ── 10. Flujo: Solicitud de Permiso ────────────────────────────────────
-    console.log("10. Creando flujo 'Permisos'...");
+    // ── 6. Flujo: Permisos ────────────────────────────────────────────────
+    console.log("6. Flujo 'Permisos'...");
 
     const sb = {
       required: true, validation: {}, errorMessage: "",
@@ -347,12 +322,16 @@ async function seedCanzion() {
           ...sb,
           id:           "s1",
           type:         "text_input",
-          prompt:       `📋 *Solicitud de Permiso / Falta*\n\n_${ORG_NAME}_\n\nVamos a registrar tu solicitud. Por favor completa los siguientes datos.\n\n¿Cuál es tu *nombre completo*?`,
+          prompt:
+            `📋 *Solicitud de Permiso / Falta*\n\n_${ORG_NAME}_\n\n` +
+            "_Puedes escribir *cancelar* en cualquier momento para salir._\n\n" +
+            "¿Cuál es tu *nombre completo*?\n\n" +
+            "_Escríbelo tal como aparece en tu ficha de registro._",
           fieldKey:     "nombre",
           fieldLabel:   "Nombre",
           required:     true,
           validation:   { minLength: 3 },
-          errorMessage: "Por favor escribe tu nombre completo (mínimo 3 caracteres)."
+          errorMessage: "Por favor escribe tu nombre completo tal como aparece en tu ficha (mínimo 3 caracteres)."
         },
         {
           ...sb,
@@ -399,7 +378,9 @@ async function seedCanzion() {
           ...sb,
           id:           "s5",
           type:         "text_input",
-          prompt:       "Por favor describe el *motivo* de tu solicitud:\n\n_Indica la fecha, la razón y cualquier detalle relevante._",
+          prompt:
+            "Por favor describe el *motivo* de tu solicitud:\n\n" +
+            "_Indica la fecha, la razón y cualquier detalle relevante._",
           fieldKey:     "motivo",
           fieldLabel:   "Motivo",
           required:     true,
@@ -408,23 +389,83 @@ async function seedCanzion() {
         }
       ],
       completionMessage:
-        `✅ *Solicitud recibida*\n\n` +
-        `*Nombre:*      {nombre}\n` +
-        `*Programa:*    {programa}\n` +
-        `*Instrumento:* {instrumento}\n` +
-        `*Tipo:*        {tipo}\n` +
-        `*Motivo:*      {motivo}\n\n` +
+        "✅ *Solicitud recibida*\n\n" +
+        "*Nombre:*      {nombre}\n" +
+        "*Programa:*    {programa}\n" +
+        "*Instrumento:* {instrumento}\n" +
+        "*Tipo:*        {tipo}\n" +
+        "*Motivo:*      {motivo}\n\n" +
         `Tu solicitud ha sido enviada al equipo administrativo de *${ORG_NAME}*.\n` +
-        `Nos pondremos en contacto si necesitamos más información. 🎵`,
-      createdAt: ts(),
-      updatedAt: ts()
+        "Nos pondremos en contacto si necesitamos más información. 🎵",
+      createdAt: ts(), updatedAt: ts()
     });
+    console.log(`   ✓ id: ${permisosFlowRef.id}\n`);
 
-    console.log(`   ✓ Flujo "Permisos" creado (id: ${permisosFlowRef.id})\n`);
+    // ── 7. Flujo: Quejas o Sugerencias ────────────────────────────────────
+    console.log("7. Flujo 'Quejas o Sugerencias'...");
+    const quejasFlowRef = await orgRef.collection("flows").add({
+      name:             "Quejas o Sugerencias",
+      description:      "Recibe quejas, reclamos o sugerencias del alumno",
+      type:             "registration",
+      active:           true,
+      order:            3,
+      saveToCollection: "quejas-o-sugerencias",
+      notifyAdmin:      true,
+      menuLabel:        "Quejas o Sugerencias",
+      menuDescription:  "Reporta un problema o sugerencia",
+      showInMenu:       true,
+      steps: [
+        {
+          ...sb,
+          id:           "step_q1",
+          type:         "text_input",
+          prompt:
+            "📝 *Quejas o Sugerencias*\n\n_Instituto CanZion Sonsonate_\n\n" +
+            "_Puedes escribir *cancelar* en cualquier momento para salir._\n\n" +
+            "¿Cuál es tu *nombre completo*?",
+          fieldKey:     "nombre",
+          fieldLabel:   "Nombre",
+          required:     true,
+          validation:   { minLength: 3 },
+          errorMessage: "Por favor ingresa un nombre válido (mínimo 3 caracteres)."
+        },
+        {
+          ...sb,
+          id:            "step_q2",
+          type:          "select_buttons",
+          prompt:        "¿Sobre qué nos contactas?",
+          fieldKey:      "tipo",
+          fieldLabel:    "Tipo",
+          required:      true,
+          optionsSource: "custom",
+          customOptions: [
+            { label: "Reclamo",    value: "Reclamo"    },
+            { label: "Consulta",   value: "Consulta"   },
+            { label: "Sugerencia", value: "Sugerencia" }
+          ]
+        },
+        {
+          ...sb,
+          id:           "step_q3",
+          type:         "text_input",
+          prompt:       "Cuéntanos con detalle. ¿Qué sucedió o qué necesitas?",
+          fieldKey:     "descripcion",
+          fieldLabel:   "Descripción",
+          required:     true,
+          validation:   { minLength: 10 },
+          errorMessage: "Por favor brinda más detalle."
+        }
+      ],
+      completionMessage:
+        "✅ *Caso registrado*\n\n" +
+        "*Nombre:* {nombre} | *Tipo:* {tipo}\n\n" +
+        "Nuestro equipo revisará tu caso y te contactará pronto. 🎵",
+      createdAt: ts(), updatedAt: ts()
+    });
+    console.log(`   ✓ id: ${quejasFlowRef.id}\n`);
 
-    // ── 11. Menú ───────────────────────────────────────────────────────────
-    console.log("11. Configurando menú...");
-
+    // ── 8. Menú ───────────────────────────────────────────────────────────
+    console.log("8. Configurando menú (7 ítems)...");
     await orgRef.collection("config").doc("menu").set({
       greeting:
         `¡Hola{name}! 👋🎵\n\n` +
@@ -435,58 +476,52 @@ async function seedCanzion() {
       exitMessage:     `🎶 ¡Hasta pronto!\n\nEscribe *hola* cuando necesites ayuda.\n\n_${ORG_NAME}_`,
       items: [
         {
-          id:          "m1",
-          type:        "builtin",
-          action:      "general",
-          label:       "Conócenos",
-          description: "Qué es el Instituto CanZion",
-          order:       1,
-          active:      true
+          id: "m1", type: "builtin", action: "general",
+          label: "Conócenos", description: "Qué es el Instituto CanZion",
+          order: 1, active: true
         },
         {
-          id:          "m2",
-          type:        "flow",
-          flowId:      programasFlowRef.id,
-          label:       "Nuestros Programas",
-          description: "Conoce nuestra oferta académica",
-          order:       2,
-          active:      true
+          id: "m2", type: "flow", flowId: programasFlowRef.id,
+          label: "Nuestros Programas", description: "Conoce nuestra oferta académica",
+          order: 2, active: true
         },
         {
-          id:          "m3",
-          type:        "builtin",
-          action:      "schedule",
-          label:       "Horarios",
-          description: "Días y horas de atención",
-          order:       3,
-          active:      true
+          id: "m3", type: "builtin", action: "schedule",
+          label: "Horarios de Atención", description: "Días y horas de clases",
+          order: 3, active: true
         },
         {
-          id:          "m4",
-          type:        "flow",
-          flowId:      permisosFlowRef.id,
-          label:       "Permisos",
-          description: "Solicita un permiso o falta",
-          order:       4,
-          active:      true
+          id: "m4", type: "flow", flowId: permisosFlowRef.id,
+          label: "Permisos", description: "Solicita un permiso o justifica una falta",
+          order: 4, active: true
         },
         {
-          id:          "m5",
-          type:        "builtin",
-          action:      "contact",
-          label:       "Ubícanos",
-          description: "Dónde encontrarnos",
-          order:       5,
-          active:      true
+          id: "m5", type: "flow", flowId: quejasFlowRef.id,
+          label: "Quejas o Sugerencias", description: "Reporta un problema o sugerencia",
+          order: 5, active: true
+        },
+        {
+          id: "m6", type: "builtin", action: "contact",
+          label: "Ubícanos", description: "Dónde encontrarnos",
+          order: 6, active: true
+        },
+        {
+          id: "m7", type: "message",
+          label: "Mis Pagos", description: "Consulta tu información de pagos",
+          messageContent:
+            "💳 *Mis Pagos*\n\n" +
+            "¡Muy pronto podrás consultar tu estado de cuenta directamente aquí! 🎉\n\n" +
+            "Estamos trabajando en esta función y te avisaremos cuando esté disponible. 📢\n\n" +
+            "_Instituto CanZion Sonsonate_",
+          order: 7, active: true
         }
       ],
       createdAt: ts()
     });
+    console.log("   Conócenos | Nuestros Programas | Horarios | Permisos | Quejas | Ubícanos | Mis Pagos\n");
 
-    console.log("   5 ítems: Conócenos | Nuestros Programas | Horarios | Permisos | Ubícanos\n");
-
-    // ── 12. Bot messages ───────────────────────────────────────────────────
-    console.log("12. Mensajes del bot...");
+    // ── 9. Bot messages ───────────────────────────────────────────────────
+    console.log("9. Mensajes del bot...");
     const botMessages = [
       {
         key: "greeting",        label: "Saludo principal",       category: "greeting",
@@ -496,27 +531,32 @@ async function seedCanzion() {
       {
         key: "fallback",        label: "Mensaje no reconocido",  category: "fallback",
         description: "Cuando el bot no entiende",
-        content: "🤔 No entendí tu mensaje.\n\nEscribe *hola* para ver las opciones disponibles."
+        content: "🤔 No logré entender tu mensaje.\n\nEscribe *hola* para ver el menú de opciones."
       },
       {
         key: "goodbye",         label: "Despedida",              category: "general",
         description: "Cuando el usuario se despide",
-        content: "🎶 ¡Hasta pronto!\n\nEscribe *hola* cuando necesites ayuda."
+        content: "🎶 ¡Hasta pronto!\n\n_Instituto CanZion Sonsonate_"
       },
       {
         key: "session_expired", label: "Sesión expirada",        category: "general",
         description: "Cierre por inactividad",
-        content: "Tu sesión se cerró por inactividad.\n\nEscribe *hola* para volver al menú. 🎵"
+        content: "Tu sesión se cerró por inactividad. ⏱️\n\nEscribe *hola* para volver al menú cuando quieras."
       },
       {
         key: "cancel",          label: "Cancelación",            category: "general",
         description: "Cuando cancela un proceso",
-        content: "Proceso cancelado. Escribe *hola* para volver al menú."
+        content: "Entendido, proceso cancelado. ✋\n\nEscribe *hola* para volver al menú principal."
+      },
+      {
+        key: "flow_cancel_hint", label: "Aviso de cancelación",  category: "flow",
+        description: "Se muestra al iniciar un flujo",
+        content: "_Puedes escribir *cancelar* en cualquier momento para salir._\n"
       },
       {
         key: "flow_cancelled",  label: "Flujo cancelado",        category: "flow",
         description: "Cuando cancela dentro de un flujo",
-        content: "Solicitud cancelada. 👋\n\nEscribe *hola* si deseas volver al menú."
+        content: "Solicitud cancelada. ✋\n\nEscribe *hola* para volver al menú principal."
       },
       {
         key: "admin_farewell",  label: "Despedida de admin",     category: "admin",
@@ -534,20 +574,20 @@ async function seedCanzion() {
     }
     console.log(`   ${botMessages.length} mensajes creados.\n`);
 
-    // ── 13. info/contact ───────────────────────────────────────────────────
-    console.log("13. Información del instituto...");
+    // ── 10. info/contact ──────────────────────────────────────────────────
+    console.log("10. Información del instituto...");
     await orgRef.collection("info").doc("contact").set({
-      address:    "Final Av. El Triunfo, Colonia San Roque",
+      address:    "8va Av. Norte # 6-3, Colonia Aida",
       city:       "Sonsonate",
       country:    "El Salvador",
-      phone:      "+503 2451-XXXX",
-      email:      "info@canzion.edu.sv",
+      phone:      "6930-7473",
+      email:      "sonsonate@institutocanzion.com",
       maps:       "",
       showFields: { address: true, city: true, phone: true, email: true, country: true },
       createdAt:  ts()
     });
 
-    // ── 14. info/schedule ──────────────────────────────────────────────────
+    // ── 11. info/schedule ─────────────────────────────────────────────────
     await orgRef.collection("info").doc("schedule").set({
       days: [
         { name: "Lunes",     active: false, shifts: [] },
@@ -566,58 +606,53 @@ async function seedCanzion() {
       createdAt:          ts()
     });
 
-    // ── 15. info/general ───────────────────────────────────────────────────
+    // ── 12. info/general ──────────────────────────────────────────────────
     await orgRef.collection("info").doc("general").set({
-      name:        ORG_NAME,
+      name:  ORG_NAME,
       description:
         `*${ORG_NAME}* es una escuela de música cristiana dedicada a la formación ` +
         `integral de músicos al servicio de Dios y la iglesia.\n\n` +
-        `Ofrecemos programas de instrumentos, canto, teoría musical y producción, ` +
-        `con un enfoque en la excelencia y el carácter cristiano.\n\n` +
-        `📍 Sonsonate, El Salvador`,
-      focus:    ["Formación musical cristiana", "Guitarra, Batería, Bajo, Canto, Piano", "Producción Musical", "Desarrollo de carácter"],
+        `Ofrecemos programas para todas las edades: desde niños con *Kids*, ` +
+        `jóvenes con *Teens*, hasta adultos con el *Curso Ministerial Musical*.\n\n` +
+        `📍 8va Av. Norte # 6-3, Colonia Aida, Sonsonate, El Salvador`,
+      focus: [
+        "Formación musical cristiana",
+        "Guitarra, Batería, Bajo, Canto, Piano",
+        "Ensamble y Lenguaje Musical",
+        "Desarrollo de carácter y principios bíblicos"
+      ],
       modality: "Presencial",
       note:     "Abierto a toda persona que desee aprender música con propósito.",
       createdAt: ts()
     });
-
-    console.log("   contact, schedule (Sábado 08:00–12:00), general.\n");
+    console.log("   contact, schedule (Sábados 08:00–12:00), general.\n");
 
     // ── RESUMEN ────────────────────────────────────────────────────────────
     console.log("========================================");
     console.log("  Script completado ✓");
     console.log("========================================\n");
-    console.log(`  Org ID:    ${ORG_ID}`);
-    console.log(`  Nombre:    ${ORG_NAME}`);
-    console.log(`  Industria: academy`);
+    console.log(`  Org ID: ${ORG_ID}`);
     console.log();
-    console.log(`  Menú (5 ítems):`);
-    console.log(`    1. Conócenos          → info general`);
-    console.log(`    2. Nuestros Programas → browse (${PROGRAMAS.length} programas)`);
-    console.log(`    3. Horarios           → días y horas`);
-    console.log(`    4. Permisos           → flujo (5 pasos)`);
-    console.log(`    5. Ubícanos           → dirección y contacto`);
+    console.log("  Menú (7 ítems):");
+    console.log(`    1. Conócenos           → info general`);
+    console.log(`    2. Nuestros Programas  → browse (${PROGRAMAS.length} programas)`);
+    console.log(`    3. Horarios de Atención→ Sábados 08:00–12:00`);
+    console.log(`    4. Permisos            → flujo 5 pasos → permisos`);
+    console.log(`    5. Quejas o Sugerencias→ flujo 3 pasos → quejas-o-sugerencias`);
+    console.log(`    6. Ubícanos            → 8va Av. Norte # 6-3, Col. Aida`);
+    console.log(`    7. Mis Pagos           → mensaje "próximamente"`);
     console.log();
     console.log(`  Programas (${PROGRAMAS.length}):`);
     PROGRAMAS.forEach(p => console.log(`    - ${p.nombre} (${p.edad})`));
     console.log();
-    console.log(`  Instrumentos (${INSTRUMENTOS.length}): ${INSTRUMENTOS.join(", ")}`);
+    console.log(`  Instrumentos: ${INSTRUMENTOS.join(", ")}`);
     console.log();
-    console.log(`  Flujo "Permisos" (5 pasos):`);
-    console.log(`    Paso 1 — Nombre completo`);
-    console.log(`    Paso 2 — Programa (lista dinámica desde "programas")`);
-    console.log(`    Paso 3 — Instrumento (lista dinámica desde "instrumentos")`);
-    console.log(`    Paso 4 — Tipo: Permiso anticipado / Falta justificada / Tardanza`);
-    console.log(`    Paso 5 — Motivo (texto libre)`);
-    console.log(`    → Colección: permisos`);
+    console.log("  Colecciones (solo definiciones, sin datos):");
+    console.log("    - permisos, quejas-o-sugerencias, consulta-de-pago");
     console.log();
-    console.log(`  Horarios:`);
-    console.log(`    Sábado   08:00–12:00`);
+    console.log(`  BotMessages: ${botMessages.length} (incluye flow_cancel_hint)`);
     console.log();
-    console.log(`  ⚠️  Actualiza en el admin:`);
-    console.log(`    - info/contact → dirección y teléfono reales`);
-    console.log(`    - info/general → descripción final del instituto`);
-    console.log(`  WA: ${savedWAConfig?.token ? "✓ Preservado" : "Vacío (configurar en superadmin)"}`);
+    console.log("  🚫 NO modificado: config/general, config/whatsapp, admins");
     console.log();
 
   } catch (error) {

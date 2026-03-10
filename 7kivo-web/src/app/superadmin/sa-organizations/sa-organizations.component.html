@@ -4,6 +4,16 @@
       <h1 class="page-title">Organizaciones</h1>
       <p class="page-subtitle">{{ organizations.length }} organizaciones registradas</p>
     </div>
+    <div class="page-header-actions">
+      <button class="btn-header-import" (click)="openImport()" title="Importar organizaciones desde archivo JSON">
+        <i class="fas fa-file-import"></i> Importar
+      </button>
+      <button class="btn-header-export" (click)="exportAllOrgs()" [disabled]="exportingAll" title="Exportar todas las organizaciones a JSON">
+        <i class="fas fa-spinner fa-spin" *ngIf="exportingAll"></i>
+        <i class="fas fa-file-export" *ngIf="!exportingAll"></i>
+        {{ exportingAll ? 'Exportando...' : 'Exportar todo' }}
+      </button>
+    </div>
   </div>
 
   <div class="toolbar">
@@ -83,6 +93,11 @@
             <button class="btn-detail" (click)="openDetail(org); $event.stopPropagation()" title="Ver detalle">
               <i class="fas fa-eye"></i>
             </button>
+            <button class="btn-export-sm" (click)="exportOrg(org); $event.stopPropagation()" title="Exportar organización"
+              [disabled]="exportingOrgId === org.id">
+              <i class="fas fa-spinner fa-spin" *ngIf="exportingOrgId === org.id"></i>
+              <i class="fas fa-download" *ngIf="exportingOrgId !== org.id"></i>
+            </button>
             <button class="btn-delete-sm" (click)="openDeleteConfirm(org); $event.stopPropagation()" title="Eliminar organización">
               <i class="fas fa-trash-alt"></i>
             </button>
@@ -113,6 +128,14 @@
         </button>
         <button class="btn-view-org" (click)="viewOrgPage(selectedOrg, 'pendientes')" title="Ver checklist de configuración pendiente">
           <i class="fas fa-tasks"></i> Ver Pendientes
+        </button>
+        <button class="btn-export-org" (click)="exportOrg(selectedOrg)" [disabled]="exportingOrgId === selectedOrg.id" title="Exportar organización a JSON">
+          <i class="fas fa-spinner fa-spin" *ngIf="exportingOrgId === selectedOrg.id"></i>
+          <i class="fas fa-download" *ngIf="exportingOrgId !== selectedOrg.id"></i>
+          {{ exportingOrgId === selectedOrg.id ? 'Exportando...' : 'Exportar' }}
+        </button>
+        <button class="btn-load-config" (click)="openLoadConfig()" title="Cargar configuración desde archivo JSON">
+          <i class="fas fa-upload"></i> Cargar Config
         </button>
         <button class="btn-reset-bot" (click)="openResetBotConfirm(selectedOrg)" title="Restablecer bot a estado inicial">
           <i class="fas fa-redo-alt"></i> Resetear Bot
@@ -549,6 +572,168 @@
         </div>
         <div class="delete-actions">
           <button class="btn-save" (click)="closeDeleteResult()">Entendido</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Import Organizations Modal -->
+  <div class="modal-overlay delete-overlay" *ngIf="importModalOpen" (click)="!importSaving && cancelImport()">
+    <div class="modal-content import-modal" (click)="$event.stopPropagation()">
+
+      <div *ngIf="!importDone">
+        <div class="delete-header">
+          <i class="fas fa-file-import import-icon"></i>
+          <h2>Importar Organizaciones</h2>
+        </div>
+        <div class="delete-body">
+          <div class="load-config-upload">
+            <label class="load-config-label">Selecciona el archivo JSON de exportación</label>
+            <input type="file" accept=".json,application/json" (change)="onImportFileSelected($event)" [disabled]="importSaving" />
+          </div>
+
+          <div class="import-error" *ngIf="importError">
+            <i class="fas fa-exclamation-circle"></i> {{ importError }}
+          </div>
+
+          <!-- Preview orgs en el archivo -->
+          <div class="import-preview" *ngIf="importParsed.length > 0">
+            <div class="import-preview-title">
+              <i class="fas fa-list"></i> {{ importParsed.length }} organización(es) en el archivo
+            </div>
+            <div class="import-org-row" *ngFor="let o of importParsed">
+              <i class="fas fa-building"></i>
+              <div class="import-org-info">
+                <span class="import-org-name">{{ o.config?.general?.orgName || o.data?.name || o.id }}</span>
+                <span class="import-org-id">{{ o.id }}</span>
+              </div>
+              <span class="import-exists-badge" *ngIf="orgExistsInList(o.id)" title="Ya existe en el sistema">
+                <i class="fas fa-exclamation-triangle"></i> Existe
+              </span>
+              <span class="import-new-badge" *ngIf="!orgExistsInList(o.id)">
+                <i class="fas fa-plus-circle"></i> Nueva
+              </span>
+            </div>
+
+            <div class="import-overwrite-toggle">
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="importOverwrite" [disabled]="importSaving" />
+                Sobrescribir organizaciones que ya existen
+              </label>
+            </div>
+            <p class="import-note" *ngIf="!importOverwrite">
+              <i class="fas fa-info-circle"></i> Las orgs marcadas como "Existe" serán omitidas si no activas sobrescribir.
+            </p>
+            <p class="import-note warn" *ngIf="importOverwrite">
+              <i class="fas fa-exclamation-triangle"></i> Las orgs existentes serán sobrescritas completamente (flujos, datos, config).
+            </p>
+          </div>
+        </div>
+        <div class="delete-actions">
+          <button class="btn-cancel" (click)="cancelImport()" [disabled]="importSaving">Cancelar</button>
+          <button class="btn-import-confirm" (click)="executeImport()" [disabled]="!importParsed.length || importSaving">
+            <i class="fas fa-spinner fa-spin" *ngIf="importSaving"></i>
+            <i class="fas fa-file-import" *ngIf="!importSaving"></i>
+            {{ importSaving ? 'Importando...' : 'Importar' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Resultado -->
+      <div *ngIf="importDone">
+        <div class="delete-header">
+          <i class="fas fa-check-circle" style="color:#10b981;font-size:2rem;"></i>
+          <h2>Importación Completada</h2>
+        </div>
+        <div class="delete-body">
+          <div class="import-result-row" *ngFor="let r of importResults" [class.result-ok]="r.success" [class.result-err]="!r.success">
+            <i class="fas" [class.fa-check-circle]="r.success" [class.fa-times-circle]="!r.success"></i>
+            <div class="import-org-info">
+              <span class="import-org-name">{{ r.name }}</span>
+              <span class="import-org-id">{{ r.id }}</span>
+            </div>
+            <span *ngIf="r.success" class="import-status-ok">{{ r.existed ? 'Sobrescrita' : 'Creada' }}</span>
+            <span *ngIf="!r.success" class="import-status-err" [title]="r.error">Error</span>
+          </div>
+        </div>
+        <div class="delete-actions">
+          <button class="btn-save" (click)="cancelImport()">Entendido</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Load Config Modal -->
+  <div class="modal-overlay delete-overlay" *ngIf="loadConfigOrg" (click)="!loadConfigSaving && cancelLoadConfig()">
+    <div class="modal-content load-config-modal" (click)="$event.stopPropagation()">
+
+      <div *ngIf="!loadConfigDone">
+        <div class="delete-header">
+          <i class="fas fa-upload load-config-icon"></i>
+          <h2>Cargar Configuración</h2>
+        </div>
+        <div class="delete-body">
+          <p class="delete-warning">
+            Esto <strong>sobrescribirá</strong> la configuración del bot de <strong>{{ loadConfigOrg.orgName }}</strong>:
+          </p>
+          <ul class="delete-list load-config-list">
+            <li><i class="fas fa-project-diagram"></i> Flujos</li>
+            <li><i class="fas fa-database"></i> Definiciones de colecciones (datos existentes se borran)</li>
+            <li><i class="fas fa-bars"></i> Menú del bot</li>
+            <li><i class="fas fa-comment-dots"></i> Mensajes del bot</li>
+            <li><i class="fas fa-info-circle"></i> Info: contacto, horarios, Sobre Nosotros</li>
+          </ul>
+          <p class="delete-note">
+            <i class="fas fa-shield-alt"></i> <strong>No se toca:</strong> credenciales WhatsApp, URL del bot, ni usuarios.
+          </p>
+
+          <div class="load-config-upload">
+            <label class="load-config-label">Subir archivo JSON</label>
+            <input type="file" accept=".json,application/json" (change)="onLoadConfigFileSelected($event)" [disabled]="loadConfigSaving" />
+          </div>
+
+          <div class="load-config-or">— o pega el JSON directamente —</div>
+
+          <textarea
+            class="load-config-textarea"
+            placeholder='{ "version": "1", "flows": [...], ... }'
+            [(ngModel)]="loadConfigJson"
+            (ngModelChange)="parseLoadConfig()"
+            [disabled]="loadConfigSaving"
+            rows="6">
+          </textarea>
+
+          <div class="load-config-preview" *ngIf="loadConfigParsed">
+            <i class="fas fa-check-circle"></i>
+            Config válida &mdash;
+            <strong>{{ loadConfigParsed.flows?.length || 0 }}</strong> flujos,
+            <strong>{{ loadConfigParsed.collections?.length || 0 }}</strong> colecciones,
+            <strong>{{ loadConfigParsed.botMessages?.length || 0 }}</strong> mensajes
+            <span *ngIf="loadConfigParsed.exportedFrom"> &mdash; exportada de <em>{{ loadConfigParsed.exportedFrom }}</em></span>
+          </div>
+
+          <div class="load-config-error" *ngIf="loadConfigError">
+            <i class="fas fa-exclamation-circle"></i> {{ loadConfigError }}
+          </div>
+        </div>
+        <div class="delete-actions">
+          <button class="btn-cancel" (click)="cancelLoadConfig()" [disabled]="loadConfigSaving">Cancelar</button>
+          <button class="btn-load-config-confirm" (click)="executeLoadConfig()" [disabled]="!loadConfigParsed || loadConfigSaving">
+            <i class="fas fa-spinner fa-spin" *ngIf="loadConfigSaving"></i>
+            <i class="fas fa-upload" *ngIf="!loadConfigSaving"></i>
+            {{ loadConfigSaving ? 'Aplicando...' : 'Aplicar Configuración' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="loadConfigDone" class="delete-result">
+        <i class="fas fa-check-circle" style="color:#7c3aed;font-size:2.5rem;margin-bottom:12px;"></i>
+        <h3>¡Configuración aplicada!</h3>
+        <p>El bot de <strong>{{ loadConfigOrg.orgName }}</strong> fue actualizado correctamente.</p>
+        <div class="delete-actions" style="justify-content:center;padding-top:16px;">
+          <button class="btn-save" (click)="cancelLoadConfig()">Entendido</button>
         </div>
       </div>
 

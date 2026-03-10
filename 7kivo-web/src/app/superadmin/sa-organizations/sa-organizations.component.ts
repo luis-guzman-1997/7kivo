@@ -67,6 +67,24 @@ export class SaOrganizationsComponent implements OnInit {
   resettingBot = false;
   resetBotDone = false;
 
+  loadConfigOrg: any = null;
+  loadConfigJson = '';
+  loadConfigParsed: any = null;
+  loadConfigError = '';
+  loadConfigSaving = false;
+  loadConfigDone = false;
+
+  exportingOrgId: string | null = null;
+  exportingAll = false;
+
+  importModalOpen = false;
+  importParsed: any[] = [];
+  importError = '';
+  importOverwrite = false;
+  importSaving = false;
+  importDone = false;
+  importResults: { id: string; name: string; existed: boolean; success: boolean; error?: string }[] = [];
+
   constructor(
     private firebaseService: FirebaseService,
     private authService: AuthService,
@@ -563,6 +581,162 @@ export class SaOrganizationsComponent implements OnInit {
       console.error('Error resetting bot:', err);
     } finally {
       this.resettingBot = false;
+    }
+  }
+
+  // ── Export ──
+  async exportOrg(org: any): Promise<void> {
+    this.exportingOrgId = org.id;
+    try {
+      const data = await this.firebaseService.exportOrgData(org.id);
+      const payload = { version: '2', type: 'org_export', exportedAt: new Date().toISOString(), orgs: [data] };
+      this.downloadJson(payload, `org-${org.id}-${Date.now()}.json`);
+    } catch (err) {
+      console.error('Error exporting org:', err);
+    } finally {
+      this.exportingOrgId = null;
+    }
+  }
+
+  async exportAllOrgs(): Promise<void> {
+    this.exportingAll = true;
+    try {
+      const orgs = [];
+      for (const org of this.organizations) {
+        orgs.push(await this.firebaseService.exportOrgData(org.id));
+      }
+      const payload = { version: '2', type: 'multi_org_export', exportedAt: new Date().toISOString(), orgs };
+      this.downloadJson(payload, `orgs-all-${Date.now()}.json`);
+    } catch (err) {
+      console.error('Error exporting all orgs:', err);
+    } finally {
+      this.exportingAll = false;
+    }
+  }
+
+  private downloadJson(data: any, filename: string): void {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Import ──
+  openImport(): void {
+    this.importModalOpen = true;
+    this.importParsed = [];
+    this.importError = '';
+    this.importOverwrite = false;
+    this.importSaving = false;
+    this.importDone = false;
+    this.importResults = [];
+  }
+
+  cancelImport(): void {
+    this.importModalOpen = false;
+    this.importError = '';
+  }
+
+  onImportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target!.result as string);
+        if (!parsed.orgs || !Array.isArray(parsed.orgs)) {
+          this.importError = 'Archivo inválido: falta el campo "orgs"';
+          this.importParsed = [];
+          return;
+        }
+        this.importError = '';
+        this.importParsed = parsed.orgs;
+      } catch (_) {
+        this.importError = 'No se pudo parsear el archivo JSON';
+        this.importParsed = [];
+      }
+    };
+    reader.readAsText(input.files[0]);
+  }
+
+  orgExistsInList(orgId: string): boolean {
+    return this.organizations.some(o => o.id === orgId);
+  }
+
+  async executeImport(): Promise<void> {
+    if (!this.importParsed.length || this.importSaving) return;
+    this.importSaving = true;
+    this.importResults = [];
+    for (const orgExport of this.importParsed) {
+      const existed = this.orgExistsInList(orgExport.id);
+      try {
+        await this.firebaseService.importOrgData(orgExport, this.importOverwrite);
+        this.importResults.push({ id: orgExport.id, name: orgExport.config?.general?.orgName || orgExport.data?.name || orgExport.id, existed, success: true });
+      } catch (err: any) {
+        this.importResults.push({ id: orgExport.id, name: orgExport.config?.general?.orgName || orgExport.data?.name || orgExport.id, existed, success: false, error: err?.message || 'Error' });
+      }
+    }
+    this.importSaving = false;
+    this.importDone = true;
+    await this.loadOrganizations();
+  }
+
+  // ── Load Config ──
+  openLoadConfig(): void {
+    this.loadConfigOrg = this.selectedOrg;
+    this.loadConfigJson = '';
+    this.loadConfigParsed = null;
+    this.loadConfigError = '';
+    this.loadConfigSaving = false;
+    this.loadConfigDone = false;
+  }
+
+  cancelLoadConfig(): void {
+    this.loadConfigOrg = null;
+    this.loadConfigError = '';
+  }
+
+  onLoadConfigFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.loadConfigJson = e.target!.result as string;
+      this.parseLoadConfig();
+    };
+    reader.readAsText(input.files[0]);
+  }
+
+  parseLoadConfig(): void {
+    this.loadConfigError = '';
+    this.loadConfigParsed = null;
+    if (!this.loadConfigJson.trim()) return;
+    try {
+      const parsed = JSON.parse(this.loadConfigJson);
+      if (!parsed.version || !Array.isArray(parsed.flows)) {
+        this.loadConfigError = 'JSON inválido: falta "version" o "flows"';
+        return;
+      }
+      this.loadConfigParsed = parsed;
+    } catch (_) {
+      this.loadConfigError = 'No se pudo parsear el JSON';
+    }
+  }
+
+  async executeLoadConfig(): Promise<void> {
+    if (!this.loadConfigOrg || !this.loadConfigParsed || this.loadConfigSaving) return;
+    this.loadConfigSaving = true;
+    this.loadConfigError = '';
+    try {
+      await this.firebaseService.applyOrgSeedConfig(this.loadConfigOrg.id, this.loadConfigParsed);
+      this.loadConfigDone = true;
+    } catch (err: any) {
+      this.loadConfigError = err?.message || 'Error al aplicar la configuración';
+    } finally {
+      this.loadConfigSaving = false;
     }
   }
 

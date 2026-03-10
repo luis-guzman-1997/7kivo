@@ -615,6 +615,111 @@ export class FirebaseService {
     });
   }
 
+  async applyOrgSeedConfig(orgId: string, seed: any): Promise<void> {
+    const orgBase = `organizations/${orgId}`;
+
+    // 1. Limpiar colecciones existentes + sus datos
+    const colDefsSnap = await getDocs(collection(this.db, orgBase, '_collections'));
+    for (const colDoc of colDefsSnap.docs) {
+      const slug: string = colDoc.data()['slug'];
+      if (slug) {
+        const dataSnap = await getDocs(collection(this.db, orgBase, slug));
+        for (let i = 0; i < dataSnap.docs.length; i += 400) {
+          const batch = writeBatch(this.db);
+          dataSnap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+      await deleteDoc(colDoc.ref);
+    }
+
+    // 2. Limpiar flujos
+    const flowsSnap = await getDocs(collection(this.db, orgBase, 'flows'));
+    for (let i = 0; i < flowsSnap.docs.length; i += 400) {
+      const batch = writeBatch(this.db);
+      flowsSnap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+
+    // 3. Limpiar botMessages
+    const botMsgSnap = await getDocs(collection(this.db, orgBase, 'botMessages'));
+    for (let i = 0; i < botMsgSnap.docs.length; i += 400) {
+      const batch = writeBatch(this.db);
+      botMsgSnap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+
+    // 4. Crear flujos y construir mapa nombre→nuevo ID
+    const flowNameToId: { [name: string]: string } = {};
+    if (seed.flows?.length) {
+      for (const flow of seed.flows) {
+        const newRef = await addDoc(collection(this.db, orgBase, 'flows'), {
+          ...flow,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        if (flow.name) flowNameToId[flow.name] = newRef.id;
+      }
+    }
+
+    // 5. Crear definiciones de colecciones
+    if (seed.collections?.length) {
+      for (const col of seed.collections) {
+        await addDoc(collection(this.db, orgBase, '_collections'), {
+          ...col,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+    }
+
+    // 6. Crear menú (resolviendo flowName → nuevo flowId)
+    if (seed.menu) {
+      const menuItems = (seed.menu.items || []).map((item: any) => {
+        if (item.type === 'flow' && item.flowName) {
+          const { flowName, ...rest } = item;
+          return { ...rest, flowId: flowNameToId[flowName] || '' };
+        }
+        return item;
+      });
+      await setDoc(doc(this.db, orgBase, 'config', 'menu'), {
+        ...seed.menu,
+        items: menuItems,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    // 7. Crear botMessages
+    if (seed.botMessages?.length) {
+      for (const msg of seed.botMessages) {
+        await addDoc(collection(this.db, orgBase, 'botMessages'), {
+          ...msg,
+          createdAt: serverTimestamp()
+        });
+      }
+    }
+
+    // 8. Actualizar info (NO toca config/general ni config/whatsapp)
+    if (seed.info?.contact) {
+      await setDoc(doc(this.db, orgBase, 'info', 'contact'), {
+        ...seed.info.contact,
+        updatedAt: serverTimestamp()
+      });
+    }
+    if (seed.info?.schedule) {
+      await setDoc(doc(this.db, orgBase, 'info', 'schedule'), {
+        ...seed.info.schedule,
+        updatedAt: serverTimestamp()
+      });
+    }
+    if (seed.info?.general) {
+      await setDoc(doc(this.db, orgBase, 'info', 'general'), {
+        ...seed.info.general,
+        updatedAt: serverTimestamp()
+      });
+    }
+  }
+
   async getCollectionData(slug: string): Promise<any[]> {
     const items = await this.getCollection(slug);
     return items.sort((a, b) => {
@@ -966,5 +1071,171 @@ export class FirebaseService {
     await deleteDoc(orgDocRef);
 
     return { deletedUsers };
+  }
+
+  // ── Export / Import ──────────────────────────────────────────────────────
+
+  private stripTimestamps(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(v => this.stripTimestamps(v));
+    const result: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (k === 'createdAt' || k === 'updatedAt') continue;
+      if (v && typeof v === 'object' && typeof (v as any).toDate === 'function') continue;
+      result[k] = this.stripTimestamps(v);
+    }
+    return result;
+  }
+
+  async exportOrgData(orgId: string): Promise<any> {
+    const orgBase = `organizations/${orgId}`;
+
+    const [orgDoc, configGenDoc, configWaDoc, configMenuDoc] = await Promise.all([
+      getDoc(doc(this.db, 'organizations', orgId)),
+      getDoc(doc(this.db, orgBase, 'config', 'general')),
+      getDoc(doc(this.db, orgBase, 'config', 'whatsapp')),
+      getDoc(doc(this.db, orgBase, 'config', 'menu'))
+    ]);
+
+    const flowsSnap = await getDocs(collection(this.db, orgBase, 'flows'));
+    const flows = flowsSnap.docs.map(d => ({ id: d.id, data: this.stripTimestamps(d.data()) }));
+
+    const colDefsSnap = await getDocs(collection(this.db, orgBase, '_collections'));
+    const collections = colDefsSnap.docs.map(d => ({ id: d.id, data: this.stripTimestamps(d.data()) }));
+
+    const collectionData: any = {};
+    for (const colDoc of colDefsSnap.docs) {
+      const slug: string = colDoc.data()['slug'];
+      if (slug) {
+        const dataSnap = await getDocs(collection(this.db, orgBase, slug));
+        collectionData[slug] = dataSnap.docs.map(d => ({ id: d.id, data: this.stripTimestamps(d.data()) }));
+      }
+    }
+
+    const botMsgSnap = await getDocs(collection(this.db, orgBase, 'botMessages'));
+    const botMessages = botMsgSnap.docs.map(d => ({ id: d.id, data: this.stripTimestamps(d.data()) }));
+
+    const [contactDoc, scheduleDoc, infoGenDoc] = await Promise.all([
+      getDoc(doc(this.db, orgBase, 'info', 'contact')),
+      getDoc(doc(this.db, orgBase, 'info', 'schedule')),
+      getDoc(doc(this.db, orgBase, 'info', 'general'))
+    ]);
+
+    const adminsSnap = await getDocs(collection(this.db, orgBase, 'admins'));
+    const admins = adminsSnap.docs.map(d => ({ id: d.id, data: this.stripTimestamps(d.data()) }));
+
+    return {
+      id: orgId,
+      data: orgDoc.exists() ? this.stripTimestamps(orgDoc.data()) : {},
+      config: {
+        general: configGenDoc.exists() ? this.stripTimestamps(configGenDoc.data()) : null,
+        whatsapp: configWaDoc.exists() ? this.stripTimestamps(configWaDoc.data()) : null,
+        menu: configMenuDoc.exists() ? this.stripTimestamps(configMenuDoc.data()) : null
+      },
+      flows,
+      collections,
+      collectionData,
+      botMessages,
+      info: {
+        contact: contactDoc.exists() ? this.stripTimestamps(contactDoc.data()) : null,
+        schedule: scheduleDoc.exists() ? this.stripTimestamps(scheduleDoc.data()) : null,
+        general: infoGenDoc.exists() ? this.stripTimestamps(infoGenDoc.data()) : null
+      },
+      admins
+    };
+  }
+
+  async importOrgData(orgExport: any, overwrite: boolean): Promise<void> {
+    const orgId: string = orgExport.id;
+    const orgBase = `organizations/${orgId}`;
+
+    if (!overwrite) {
+      const existing = await getDoc(doc(this.db, 'organizations', orgId));
+      if (existing.exists()) throw new Error(`La organización "${orgId}" ya existe`);
+    }
+
+    // Org doc
+    await setDoc(doc(this.db, 'organizations', orgId), {
+      ...orgExport.data,
+      updatedAt: serverTimestamp()
+    });
+
+    // Config docs
+    if (orgExport.config?.general) {
+      await setDoc(doc(this.db, orgBase, 'config', 'general'), { ...orgExport.config.general, updatedAt: serverTimestamp() });
+    }
+    if (orgExport.config?.whatsapp) {
+      await setDoc(doc(this.db, orgBase, 'config', 'whatsapp'), { ...orgExport.config.whatsapp, updatedAt: serverTimestamp() });
+    }
+    if (orgExport.config?.menu) {
+      await setDoc(doc(this.db, orgBase, 'config', 'menu'), { ...orgExport.config.menu, updatedAt: serverTimestamp() });
+    }
+
+    // Clear + recreate flows (preserve original IDs so menu flowId refs stay valid)
+    const existingFlows = await getDocs(collection(this.db, orgBase, 'flows'));
+    for (let i = 0; i < existingFlows.docs.length; i += 400) {
+      const batch = writeBatch(this.db);
+      existingFlows.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    for (const flow of (orgExport.flows || [])) {
+      await setDoc(doc(this.db, orgBase, 'flows', flow.id), { ...flow.data, updatedAt: serverTimestamp() });
+    }
+
+    // Clear + recreate collection defs + data
+    const existingColDefs = await getDocs(collection(this.db, orgBase, '_collections'));
+    for (const colDoc of existingColDefs.docs) {
+      const slug: string = colDoc.data()['slug'];
+      if (slug) {
+        const dataSnap = await getDocs(collection(this.db, orgBase, slug));
+        for (let i = 0; i < dataSnap.docs.length; i += 400) {
+          const batch = writeBatch(this.db);
+          dataSnap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+      await deleteDoc(colDoc.ref);
+    }
+    for (const col of (orgExport.collections || [])) {
+      await setDoc(doc(this.db, orgBase, '_collections', col.id), { ...col.data, updatedAt: serverTimestamp() });
+    }
+    for (const [slug, docs] of Object.entries(orgExport.collectionData || {})) {
+      for (const item of (docs as any[])) {
+        await setDoc(doc(this.db, orgBase, slug, item.id), item.data);
+      }
+    }
+
+    // Clear + recreate botMessages
+    const existingBotMsg = await getDocs(collection(this.db, orgBase, 'botMessages'));
+    for (let i = 0; i < existingBotMsg.docs.length; i += 400) {
+      const batch = writeBatch(this.db);
+      existingBotMsg.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    for (const msg of (orgExport.botMessages || [])) {
+      await setDoc(doc(this.db, orgBase, 'botMessages', msg.id), msg.data);
+    }
+
+    // Info docs
+    if (orgExport.info?.contact) {
+      await setDoc(doc(this.db, orgBase, 'info', 'contact'), { ...orgExport.info.contact, updatedAt: serverTimestamp() });
+    }
+    if (orgExport.info?.schedule) {
+      await setDoc(doc(this.db, orgBase, 'info', 'schedule'), { ...orgExport.info.schedule, updatedAt: serverTimestamp() });
+    }
+    if (orgExport.info?.general) {
+      await setDoc(doc(this.db, orgBase, 'info', 'general'), { ...orgExport.info.general, updatedAt: serverTimestamp() });
+    }
+
+    // Admins (Firestore records only — Firebase Auth users deben existir o crearse aparte)
+    const existingAdmins = await getDocs(collection(this.db, orgBase, 'admins'));
+    for (let i = 0; i < existingAdmins.docs.length; i += 400) {
+      const batch = writeBatch(this.db);
+      existingAdmins.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    for (const adm of (orgExport.admins || [])) {
+      await setDoc(doc(this.db, orgBase, 'admins', adm.id), adm.data);
+    }
   }
 }
