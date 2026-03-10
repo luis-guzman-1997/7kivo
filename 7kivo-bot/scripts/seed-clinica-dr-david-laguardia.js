@@ -29,37 +29,79 @@ const ORG_ID = process.env.ORG_ID || "dr-david-laguardia";
 
 // ==================== CONFIGURACIÓN ====================
 const CLINIC = {
-  orgName: "Clínica Médica Laguardia",
+  orgName: "Clínica Dr. David Laguardia",
   doctorName: "Dr. David Laguardia",
-  description: "Atención médica de calidad con un trato cercano y personalizado.",
+  description: "Atención médica de calidad. Tu salud es nuestra prioridad.",
   industry: "medical",
 
   contact: {
-    address: "",
-    city: "",
+    address: "Centro Comercial El Sauce 2° Nivel Local 2B Sonzacate",
+    city: "Sonsonate",
     country: "El Salvador",
-    phone: "",
-    email: ""
+    phone: "+503 2487-2688",
+    email: "laguardiaclinica@gmail.com",
+    showFields: { address: true, city: true, country: true, phone: true, email: true }
   },
 
   schedule: {
     days: [
-      { name: "Lunes",     active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "14:00", to: "18:00" }] },
-      { name: "Martes",    active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "14:00", to: "18:00" }] },
-      { name: "Miércoles", active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "14:00", to: "18:00" }] },
-      { name: "Jueves",    active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "14:00", to: "18:00" }] },
-      { name: "Viernes",   active: true,  shifts: [{ from: "08:00", to: "12:00" }] },
-      { name: "Sábado",    active: false, shifts: [] },
-      { name: "Domingo",   active: false, shifts: [] }
+      { name: "Lunes",     active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "13:30", to: "17:00" }] },
+      { name: "Martes",    active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "13:30", to: "17:00" }] },
+      { name: "Miércoles", active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "13:30", to: "17:00" }] },
+      { name: "Jueves",    active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "13:30", to: "17:00" }] },
+      { name: "Viernes",   active: true,  shifts: [{ from: "08:00", to: "12:00" }, { from: "13:30", to: "17:00" }] },
+      { name: "Sábado",    active: true,  shifts: [{ from: "14:00", to: "17:30" }] },
+      { name: "Domingo",   active: false, shifts: [{ from: "08:00", to: "17:00" }] }
     ],
     slotDuration: 30,
-    blockedDates: []
+    blockedDates: [],
+    offersAppointments: true,
+    businessType: "services",
+    services: [
+      {
+        name: "Consulta general",
+        duration: 20,
+        capacity: 1
+      },
+      {
+        title: "Ultra Abdominal",
+        name: "Ultra Abdominal",
+        subtitle: "Evaluación de hígado, vesícula, páncreas y órganos abdominales",
+        description: "Este estudio permite evaluar órganos como hígado, vesícula, páncreas, riñones y bazo. Es un procedimiento seguro y sin dolor que ayuda a detectar inflamaciones, cálculos u otras alteraciones.\nSe recomienda asistir con 6 a 8 horas de ayuno para obtener mejores resultados.",
+        duration: 30,
+        capacity: 1
+      },
+      {
+        title: "Ultra Renal",
+        name: "Ultra Renal",
+        subtitle: "Estudio para evaluar riñones y sistema urinario",
+        description: "Este estudio permite evaluar el estado de los riñones, la vejiga y los uréteres, ayudando a detectar cálculos, quistes, infecciones u otras alteraciones en el sistema urinario. Es un procedimiento rápido, seguro y sin dolor.\nDebe de asistir con la vejiga llena para mejorar la visualización.",
+        duration: 30,
+        capacity: 1
+      },
+      {
+        title: "Ultra Embarazo",
+        name: "Ultra Embarazo",
+        subtitle: "Control y seguimiento del desarrollo del bebé",
+        description: "Permite evaluar el desarrollo del bebé, escuchar el latido fetal y verificar el estado general del embarazo.",
+        duration: 30,
+        capacity: 1
+      },
+      {
+        title: "Ultra Próstata",
+        name: "Ultra Próstata",
+        subtitle: "Evaluación del tamaño y estado de la próstata",
+        description: "Este estudio permite evaluar la vejiga y la próstata, ayudando a detectar posibles alteraciones como inflamación, agrandamiento prostático u otras irregularidades en la glándula. Es un procedimiento rápido, seguro y no invasivo.",
+        duration: 30,
+        capacity: 1
+      }
+    ]
   },
 
   general: {
     focus: ["Consulta general", "Medicina preventiva", "Seguimiento de pacientes"],
     modality: "Presencial",
-    services: "Consulta médica general, valoraciones, seguimiento de enfermedades crónicas.",
+    services: "Consulta médica general, ultrasonido abdominal, renal, de embarazo y prostático.",
     note: "Priorizamos un trato cercano y atención personalizada para cada paciente."
   }
 };
@@ -220,9 +262,10 @@ async function seedClinica() {
         { key: "nombre",      label: "Nombre",            type: "text",   required: true },
         { key: "phoneNumber", label: "Teléfono",          type: "text",   required: true },
         { key: "motivo",      label: "Motivo de consulta",type: "text",   required: false },
-        { key: "fecha",       label: "Fecha",             type: "text",   required: true },
-        { key: "hora",        label: "Hora",              type: "text",   required: true },
-        { key: "_apptDuration", label: "Duración (min)", type: "number", required: false }
+        { key: "fecha",         label: "Fecha",            type: "text",   required: true },
+        { key: "hora",          label: "Hora",             type: "text",   required: true },
+        { key: "_apptDuration", label: "Duración (min)",  type: "number", required: false },
+        { key: "_apptService",  label: "Servicio",         type: "text",   required: false }
       ],
       createdAt: ts(),
       updatedAt: ts()
@@ -315,20 +358,21 @@ async function seedClinica() {
         {
           id: "s2",
           type: "select_buttons",
-          prompt: "¿Cuál es el *motivo* de tu consulta?\n\nSelecciona la opción que mejor describe tu situación:",
+          prompt: "¿Qué servicio necesitas?\n\nSelecciona una opción:",
           fieldKey: "motivo",
-          fieldLabel: "Motivo",
+          fieldLabel: "Servicio",
           required: true,
           validation: {},
           errorMessage: "",
           optionsSource: "custom",
           customOptions: [
-            { label: "Consulta general",     value: "Consulta general",     description: "Revisión o síntomas generales",      duration: 20 },
-            { label: "Control / Seguimiento",value: "Control/Seguimiento",  description: "Seguimiento de tratamiento",         duration: 15 },
-            { label: "Primera vez",          value: "Primera vez",          description: "Primera consulta con el doctor",     duration: 30 },
-            { label: "Otro motivo",          value: "Otro motivo",          description: "Otra consulta médica",               duration: 20 }
+            { label: "Consulta general",  value: "Consulta general",  description: "Revisión médica o síntomas generales",                  duration: 20 },
+            { label: "Ultra Abdominal",   value: "Ultra Abdominal",   description: "Hígado, vesícula, páncreas, riñones y bazo",             duration: 30 },
+            { label: "Ultra Renal",       value: "Ultra Renal",       description: "Riñones, vejiga y sistema urinario",                    duration: 30 },
+            { label: "Ultra Embarazo",    value: "Ultra Embarazo",    description: "Control y seguimiento del desarrollo del bebé",         duration: 30 },
+            { label: "Ultra Próstata",    value: "Ultra Próstata",    description: "Vejiga y próstata",                                     duration: 30 }
           ],
-          buttonText: "Ver motivos",
+          buttonText: "Ver servicios",
           sourceCollection: "",
           displayField: "",
           detailFields: [],
@@ -402,12 +446,6 @@ async function seedClinica() {
     });
     await orgRef.collection("info").doc("schedule").set({
       ...CLINIC.schedule,
-      offersAppointments: true,
-      services: [
-        { name: "Consulta general",      duration: 20, capacity: 1 },
-        { name: "Control / Seguimiento", duration: 15, capacity: 1 },
-        { name: "Primera vez",           duration: 30, capacity: 1 }
-      ],
       createdAt: ts()
     });
     await orgRef.collection("info").doc("general").set({

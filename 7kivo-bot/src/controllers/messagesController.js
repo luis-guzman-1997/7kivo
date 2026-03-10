@@ -833,6 +833,7 @@ const handleFlowSelectResponse = async (phoneNumber, buttonId, session) => {
       if (found.duration) {
         session.flowData = session.flowData || {};
         session.flowData._apptDuration = found.duration;
+        session.flowData._apptService = found.label || found.value;
       }
     }
   }
@@ -1297,7 +1298,7 @@ const sendAppointmentDays = async (phoneNumber, flow, step, stepIndex) => {
 
     const allSlots = generateTimeSlots(dayConfig.shifts, apptDuration);
     const booked = await getAppointmentsByDate(dateStr, saveToCollection);
-    const svc = schedule.services.find(s => s.title === session?.flowData?._apptService);
+    const svc = schedule.services.find(s => (s.title || s.name) === session?.flowData?._apptService);
     const capacity = svc?.capacity || 1;
     const freeSlots = getFreeSlots(allSlots, apptDuration, booked, capacity);
     if (freeSlots.length === 0) continue;
@@ -1400,7 +1401,7 @@ const handleApptSlotSelected = async (phoneNumber, timeSlot, session) => {
 
   const saveToCollection = flow.saveToCollection || "";
   const existing = await getAppointmentsByDate(session.apptDate, saveToCollection);
-  const svcForConflict = schedule?.services?.find(s => s.title === session.flowData?._apptService);
+  const svcForConflict = schedule?.services?.find(s => (s.title || s.name) === session.flowData?._apptService);
   const capacityForConflict = svcForConflict?.capacity || 1;
   const conflictCount = existing.filter(b => {
     const bDuration = b._apptDuration || b.duracion || apptDuration;

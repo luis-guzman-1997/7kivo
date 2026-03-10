@@ -539,7 +539,10 @@
                 <!-- ── CITA ── -->
                 <div class="fe-appt-info" *ngIf="step.type === 'appointment_slot'">
                   <i class="fas fa-info-circle"></i>
-                  El bot mostrará automáticamente los días y horarios disponibles según la configuración de <strong>Horarios de Atención</strong>. No se permiten dobles reservas.
+                  El bot mostrará los días y horarios disponibles según <strong>Horarios de Atención</strong>. No se permiten dobles reservas.
+                  <br><br>
+                  <i class="fas fa-link"></i>
+                  Si el paso anterior (Lista o Botones) tiene opciones con <strong>duración</strong> definida, el bot usará esa duración por servicio para calcular los slots disponibles automáticamente.
                 </div>
 
                 <!-- ── IMAGEN ── -->
