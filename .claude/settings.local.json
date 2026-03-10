@@ -6,7 +6,14 @@
       "Bash(ls:*)",
       "Bash(git add:*)",
       "Bash(npm install:*)",
-      "Bash(npx firebase:*)"
+      "Bash(npx firebase:*)",
+      "Bash(git:*)",
+      "Bash(ORG_ID=dr-david-laguardia node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(firebase deploy:*)",
+      "WebFetch(domain:sv.institutocanzion.com)",
+      "WebFetch(domain:laguardia-dd0af.web.app)"
     ]
   }
 }

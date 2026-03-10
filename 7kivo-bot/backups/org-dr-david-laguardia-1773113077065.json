@@ -1,0 +1,677 @@
+{
+  "version": "2",
+  "type": "org_export",
+  "exportedAt": "2026-03-10T03:24:37.065Z",
+  "orgs": [
+    {
+      "id": "dr-david-laguardia",
+      "data": {
+        "name": "Clínica Dr. David Laguardia",
+        "botPaused": false,
+        "botPausedReason": null,
+        "active": true,
+        "botEnabled": true,
+        "customLimits": null,
+        "plan": "Business",
+        "setupComplete": true,
+        "industry": "healthcare",
+        "monthlyRate": 0
+      },
+      "config": {
+        "general": {
+          "orgName": "Clínica Dr. David Laguardia",
+          "welcomeMessage": "Bienvenido a Clínica Dr. David La Guardia",
+          "orgLogo": "https://firebasestorage.googleapis.com/v0/b/kivo7-app.firebasestorage.app/o/organizations%2Fdr-david-laguardia%2Flogo.jpg?alt=media&token=469bcfcb-7490-4264-949c-66f6bab715f1",
+          "description": "Atención médica de calidad. Tu salud es nuestra prioridad.",
+          "inactivityTimeout": 180000,
+          "industry": "healthcare",
+          "botApiUrl": "https://dr-david-laguardia.7kivo.com",
+          "id": "general",
+          "personalWhatsApp": ""
+        },
+        "whatsapp": {
+          "verifyToken": "dr-david-laguardia",
+          "token": "EAAd5hfbp1d4BQy1q65TLYp4DijlN9qvyJCBF4RfmcTDbacQ0bKJTWq9O6wfIMbEmfJZCvuTxYOJww0VgJDlwZAqXZAad7vbxHgRTzxmDbpEBPvtrZBIrYyh69KxUkR6kYQzdxJ1ZAR3XzOzXZAlYzn8N2ln0GQZA7h6LoJuIy1VlBRlLmo6TdQ9MbJyM9ZBqwAZDZD",
+          "phoneNumberId": "1058057224050756"
+        },
+        "menu": {
+          "exitMessage": "¡Hasta pronto! 👋\n\nFue un gusto atenderte. Escribe *hola* cuando necesites ayuda.\n\n_Clínica Dr. David Laguardia_",
+          "menuButtonText": "Ver opciones",
+          "items": [
+            {
+              "description": "Reserva tu cita médica",
+              "type": "flow",
+              "active": true,
+              "label": "Agendar Cita",
+              "id": "m1",
+              "flowId": "19ARGSw5gEx9uo9PAre0",
+              "order": 1
+            },
+            {
+              "description": "Consulta tus citas programadas",
+              "type": "builtin",
+              "action": "my_appointments",
+              "label": "Ver mis citas",
+              "id": "m2",
+              "active": true,
+              "order": 2
+            },
+            {
+              "order": 3,
+              "label": "Cancelar mi cita",
+              "action": "cancel_appointment",
+              "id": "m3",
+              "active": true,
+              "type": "builtin",
+              "description": "Cancela una cita existente"
+            },
+            {
+              "description": "Deja una consulta al Dr. Laguardia",
+              "type": "flow",
+              "id": "m4",
+              "active": true,
+              "label": "Mensaje al Doctor",
+              "flowId": "xIEabMwZeBqsbdehryzI",
+              "order": 4
+            },
+            {
+              "label": "Horarios",
+              "active": true,
+              "id": "m5",
+              "action": "schedule",
+              "description": "Días y horarios de atención",
+              "type": "builtin",
+              "order": 5
+            },
+            {
+              "description": "Dónde encontrarnos",
+              "type": "builtin",
+              "action": "contact",
+              "active": true,
+              "label": "Ubicación",
+              "id": "m6",
+              "order": 6
+            },
+            {
+              "action": "general",
+              "label": "Sobre Nosotros",
+              "active": true,
+              "id": "m7",
+              "type": "builtin",
+              "description": "Conoce la clínica",
+              "order": 7
+            }
+          ],
+          "greeting": "¡Hola{name}! 👋\n\nBienvenido a *Clínica Dr. David Laguardia*.\n\n¿En qué te podemos ayudar hoy?",
+          "fallbackMessage": "No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones disponibles."
+        }
+      },
+      "flows": [
+        {
+          "id": "19ARGSw5gEx9uo9PAre0",
+          "data": {
+            "menuDescription": "Reserva tu cita médica",
+            "showInMenu": true,
+            "name": "Agendar Cita",
+            "completionMessage": "✅ *Cita confirmada*\n\n👤 *Paciente:* {nombre}\n🩺 *Motivo:* {motivo}\n📅 *Fecha:* {fecha}\n🕐 *Hora:* {hora}\n\nTe esperamos en *Clínica Dr. David Laguardia*.\n\nSi necesitas cancelar tu cita, escribe *hola* y selecciona \"Cancelar mi cita\".",
+            "description": "Reserva una cita médica con el Dr. Laguardia",
+            "menuLabel": "Agendar Cita",
+            "order": 2,
+            "active": true,
+            "saveToCollection": "citas",
+            "steps": [
+              {
+                "detailFields": [],
+                "id": "s1",
+                "prompt": "📅 *Agendar cita con el Dr. Laguardia*\n\nVamos a reservar un espacio para ti.\n\nEscribe tu *nombre completo*:",
+                "optionsSource": "custom",
+                "validation": {
+                  "minLength": 3
+                },
+                "optionsDescField": "",
+                "errorMessage": "Escribe al menos 3 caracteres para continuar.",
+                "optionsTitleField": "",
+                "fieldLabel": "Nombre",
+                "lookupCollection": "",
+                "timeFieldKey": "",
+                "buttonText": "",
+                "authField": "",
+                "type": "text_input",
+                "resultTemplate": "",
+                "customOptions": [],
+                "notFoundMessage": "",
+                "fieldKey": "nombre",
+                "optional": false,
+                "required": true,
+                "displayField": "",
+                "allowedTypes": "image",
+                "maxRetries": 3,
+                "sourceCollection": ""
+              },
+              {
+                "customOptions": [
+                  {
+                    "label": "Consulta general",
+                    "value": "Consulta general",
+                    "description": "Revisión médica o síntomas generales",
+                    "duration": 20
+                  },
+                  {
+                    "duration": 30,
+                    "description": "Hígado, vesícula, páncreas, riñones y bazo",
+                    "label": "Ultra Abdominal",
+                    "value": "Ultra Abdominal"
+                  },
+                  {
+                    "value": "Ultra Renal",
+                    "label": "Ultra Renal",
+                    "description": "Riñones, vejiga y sistema urinario",
+                    "duration": 30
+                  },
+                  {
+                    "duration": 30,
+                    "description": "Control y seguimiento del desarrollo del bebé",
+                    "label": "Ultra Embarazo",
+                    "value": "Ultra Embarazo"
+                  },
+                  {
+                    "duration": 30,
+                    "description": "Vejiga y próstata",
+                    "label": "Ultra Próstata",
+                    "value": "Ultra Próstata"
+                  }
+                ],
+                "notFoundMessage": "",
+                "fieldKey": "motivo",
+                "optional": false,
+                "required": true,
+                "displayField": "",
+                "allowedTypes": "image",
+                "maxRetries": 3,
+                "sourceCollection": "",
+                "detailFields": [],
+                "id": "s2",
+                "prompt": "¿Qué servicio necesitas?\n\nSelecciona una opción:",
+                "optionsSource": "custom",
+                "validation": {},
+                "errorMessage": "",
+                "optionsDescField": "",
+                "optionsTitleField": "",
+                "lookupCollection": "",
+                "fieldLabel": "Servicio",
+                "timeFieldKey": "",
+                "buttonText": "Ver servicios",
+                "type": "select_list",
+                "authField": "",
+                "resultTemplate": ""
+              },
+              {
+                "allowedTypes": "image",
+                "displayField": "",
+                "sourceCollection": "",
+                "maxRetries": 3,
+                "notFoundMessage": "",
+                "fieldKey": "fecha",
+                "customOptions": [
+                  {
+                    "value": "consulta",
+                    "label": "Consulta",
+                    "description": "Consulta médica",
+                    "duration": 30
+                  }
+                ],
+                "required": true,
+                "optional": false,
+                "lookupCollection": "",
+                "fieldLabel": "Fecha",
+                "errorMessage": "",
+                "optionsDescField": "",
+                "optionsTitleField": "",
+                "resultTemplate": "",
+                "timeFieldKey": "hora",
+                "type": "appointment_slot",
+                "buttonText": "Ver días",
+                "authField": "",
+                "detailFields": [],
+                "optionsSource": "custom",
+                "validation": {},
+                "id": "s3",
+                "prompt": "Selecciona el *día* disponible para tu cita:\n\n_(Solo se muestran días con horarios disponibles)_"
+              }
+            ],
+            "type": "appointment"
+          }
+        },
+        {
+          "id": "xIEabMwZeBqsbdehryzI",
+          "data": {
+            "description": "Deja un mensaje o consulta al Dr. Laguardia",
+            "completionMessage": "✅ *Mensaje enviado al Dr. Laguardia*\n\nGracias, *{nombre}*. Tu mensaje ha sido recibido.\n\nEl doctor te contactará a la brevedad posible.\n\n_Clínica Dr. David Laguardia_",
+            "name": "Mensaje al Doctor",
+            "showInMenu": true,
+            "menuDescription": "Deja una consulta al Dr. Laguardia",
+            "type": "registration",
+            "saveToCollection": "mensajes",
+            "steps": [
+              {
+                "type": "text_input",
+                "buttonText": "",
+                "fieldLabel": "Nombre",
+                "errorMessage": "Escribe al menos 3 caracteres para continuar.",
+                "validation": {
+                  "minLength": 3
+                },
+                "optionsSource": "custom",
+                "prompt": "👋 Hola{name}, bienvenido a *Clínica Dr. David Laguardia*.\n\nVoy a ayudarte a dejar un mensaje para el *Dr. Laguardia*.\n\nPor favor escribe tu *nombre completo*:",
+                "id": "s1",
+                "detailFields": [],
+                "sourceCollection": "",
+                "displayField": "",
+                "required": true,
+                "fieldKey": "nombre",
+                "customOptions": []
+              },
+              {
+                "buttonText": "",
+                "type": "text_input",
+                "fieldLabel": "Mensaje",
+                "errorMessage": "Por favor escribe al menos unas palabras para que el doctor pueda ayudarte.",
+                "validation": {
+                  "minLength": 5
+                },
+                "optionsSource": "custom",
+                "prompt": "Perfecto, *{nombre}*.\n\nEscribe tu *mensaje o consulta* para el Dr. Laguardia:\n\n_(Puedes describir tus síntomas, dudas o cualquier consulta que tengas)_",
+                "id": "s2",
+                "detailFields": [],
+                "sourceCollection": "",
+                "displayField": "",
+                "required": true,
+                "fieldKey": "mensaje",
+                "customOptions": []
+              }
+            ],
+            "active": true,
+            "menuLabel": "Mensaje al Doctor",
+            "order": 1
+          }
+        }
+      ],
+      "collections": [
+        {
+          "id": "jumiEuSofqE1ayccNSyp",
+          "data": {
+            "displayField": "nombre",
+            "fields": [
+              {
+                "key": "nombre",
+                "required": true,
+                "type": "text",
+                "label": "Nombre"
+              },
+              {
+                "label": "Teléfono",
+                "type": "text",
+                "key": "phoneNumber",
+                "required": true
+              },
+              {
+                "label": "Motivo de consulta",
+                "type": "text",
+                "key": "motivo",
+                "required": false
+              },
+              {
+                "type": "text",
+                "label": "Fecha",
+                "required": true,
+                "key": "fecha"
+              },
+              {
+                "key": "hora",
+                "required": true,
+                "label": "Hora",
+                "type": "text"
+              },
+              {
+                "key": "_apptDuration",
+                "required": false,
+                "label": "Duración (min)",
+                "type": "number"
+              },
+              {
+                "type": "text",
+                "label": "Servicio",
+                "required": false,
+                "key": "_apptService"
+              }
+            ],
+            "description": "Citas médicas agendadas desde el bot",
+            "name": "Citas",
+            "slug": "citas"
+          }
+        },
+        {
+          "id": "r0u6j9GsWRVlGd1W4QY6",
+          "data": {
+            "fields": [
+              {
+                "label": "Nombre",
+                "type": "text",
+                "required": true,
+                "key": "nombre"
+              },
+              {
+                "label": "Mensaje al Doctor",
+                "type": "text",
+                "key": "mensaje",
+                "required": true
+              },
+              {
+                "label": "Teléfono",
+                "type": "text",
+                "required": true,
+                "key": "phoneNumber"
+              }
+            ],
+            "displayField": "nombre",
+            "slug": "mensajes",
+            "name": "Mensajes al Doctor",
+            "description": "Mensajes y consultas enviados al Dr. Laguardia a través del bot"
+          }
+        }
+      ],
+      "collectionData": {
+        "citas": [
+          {
+            "id": "B40Hos80oyWslufgQ5SI",
+            "data": {
+              "motivoId": "Ultra Abdominal",
+              "fecha": "Miércoles 11 Mar",
+              "_apptFecha": "2026-03-11",
+              "motivo": "Ultra Abdominal",
+              "_apptHora": "09:00",
+              "hora": "09:00",
+              "phoneNumber": "50378395037",
+              "flowId": "19ARGSw5gEx9uo9PAre0",
+              "nombre": "Holysk",
+              "_apptDuration": 30,
+              "flowName": "Agendar Cita",
+              "status": "pending",
+              "organizationId": "dr-david-laguardia"
+            }
+          }
+        ],
+        "mensajes": []
+      },
+      "botMessages": [
+        {
+          "id": "3Tibiylxont453ywbZ1m",
+          "data": {
+            "key": "session_expired",
+            "content": "Tu sesión se cerró por inactividad.\n\nEscribe *hola* para volver al menú.",
+            "description": "Cierre por inactividad",
+            "category": "general",
+            "label": "Sesión expirada"
+          }
+        },
+        {
+          "id": "7Y7tJWLdeJyqKHEORWp9",
+          "data": {
+            "description": "Cuando cancela un proceso",
+            "category": "general",
+            "label": "Cancelación",
+            "key": "cancel",
+            "content": "Proceso cancelado. Escribe *hola* para volver al menú."
+          }
+        },
+        {
+          "id": "7rqowncIxpkFJpwv4AAG",
+          "data": {
+            "content": "¡Hasta pronto! 👋\n\nFue un gusto atenderte. Escribe *hola* cuando quieras volver.",
+            "key": "goodbye",
+            "label": "Despedida",
+            "category": "general",
+            "description": "Cuando el usuario se despide"
+          }
+        },
+        {
+          "id": "8cduFNnCFeQzZfU5SLnH",
+          "data": {
+            "label": "Aviso de cancelación",
+            "category": "flow",
+            "description": "Al iniciar un flujo",
+            "content": "Puedes escribir *cancelar* en cualquier momento para detener este proceso.\n",
+            "key": "flow_cancel_hint"
+          }
+        },
+        {
+          "id": "GDSrIKrEQpx5nhi8AN1M",
+          "data": {
+            "category": "admin",
+            "description": "Cuando admin devuelve el control",
+            "label": "Despedida de admin",
+            "key": "admin_farewell",
+            "content": "La conversación con nuestro equipo ha finalizado.\n\nEscribe *hola* para ver el menú."
+          }
+        },
+        {
+          "id": "RuVdZ61qupCqrHorWMvg",
+          "data": {
+            "label": "Mensaje no reconocido",
+            "category": "fallback",
+            "description": "Cuando el bot no entiende",
+            "content": "No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones disponibles.",
+            "key": "fallback"
+          }
+        },
+        {
+          "id": "VIZQVQxguekpCwkCTMil",
+          "data": {
+            "category": "greeting",
+            "description": "Mensaje de bienvenida",
+            "label": "Saludo principal",
+            "key": "greeting",
+            "content": "¡Hola{name}! 👋\n\nBienvenido a *Clínica Dr. David Laguardia*.\n\n¿En qué te podemos ayudar hoy?"
+          }
+        },
+        {
+          "id": "xAtpUaeE4HCLQAtwR7fW",
+          "data": {
+            "label": "Registro no disponible",
+            "category": "flow",
+            "description": "Sin flujo de registro activo",
+            "content": "El registro no está disponible en este momento.\n\nEscribe *hola* para ver otras opciones.",
+            "key": "no_registration"
+          }
+        }
+      ],
+      "info": {
+        "contact": {
+          "city": "Sonsonate",
+          "phone": "+503 2487-2688",
+          "email": "laguardiaclinica@gmail.com",
+          "showFields": {
+            "city": true,
+            "email": true,
+            "phone": true,
+            "country": true,
+            "address": true
+          },
+          "country": "El Salvador",
+          "address": "Centro Comercial El Sauce 2° Nivel Local 2B Sonzacate"
+        },
+        "schedule": {
+          "businessType": "services",
+          "days": [
+            {
+              "shifts": [
+                {
+                  "to": "12:00",
+                  "from": "08:00"
+                },
+                {
+                  "to": "17:00",
+                  "from": "13:30"
+                }
+              ],
+              "name": "Lunes",
+              "active": true
+            },
+            {
+              "shifts": [
+                {
+                  "to": "12:00",
+                  "from": "08:00"
+                },
+                {
+                  "to": "17:00",
+                  "from": "13:30"
+                }
+              ],
+              "name": "Martes",
+              "active": true
+            },
+            {
+              "active": true,
+              "shifts": [
+                {
+                  "to": "12:00",
+                  "from": "08:00"
+                },
+                {
+                  "to": "17:00",
+                  "from": "13:30"
+                }
+              ],
+              "name": "Miércoles"
+            },
+            {
+              "active": true,
+              "shifts": [
+                {
+                  "to": "12:00",
+                  "from": "08:00"
+                },
+                {
+                  "to": "17:00",
+                  "from": "13:30"
+                }
+              ],
+              "name": "Jueves"
+            },
+            {
+              "shifts": [
+                {
+                  "to": "12:00",
+                  "from": "08:00"
+                },
+                {
+                  "to": "17:00",
+                  "from": "13:30"
+                }
+              ],
+              "name": "Viernes",
+              "active": true
+            },
+            {
+              "name": "Sábado",
+              "shifts": [
+                {
+                  "to": "17:30",
+                  "from": "14:00"
+                }
+              ],
+              "active": true
+            },
+            {
+              "shifts": [
+                {
+                  "to": "17:00",
+                  "from": "08:00"
+                }
+              ],
+              "name": "Domingo",
+              "active": false
+            }
+          ],
+          "offersAppointments": true,
+          "services": [
+            {
+              "capacity": 1,
+              "duration": 20,
+              "name": "Consulta general"
+            },
+            {
+              "name": "Ultra Abdominal",
+              "duration": 30,
+              "description": "Este estudio permite evaluar órganos como hígado, vesícula, páncreas, riñones y bazo. Es un procedimiento seguro y sin dolor que ayuda a detectar inflamaciones, cálculos u otras alteraciones.\nSe recomienda asistir con 6 a 8 horas de ayuno para obtener mejores resultados.",
+              "subtitle": "Evaluación de hígado, vesícula, páncreas y órganos abdominales",
+              "capacity": 1,
+              "title": "Ultra Abdominal"
+            },
+            {
+              "title": "Ultra Renal",
+              "capacity": 1,
+              "subtitle": "Estudio para evaluar riñones y sistema urinario",
+              "description": "Este estudio permite evaluar el estado de los riñones, la vejiga y los uréteres, ayudando a detectar cálculos, quistes, infecciones u otras alteraciones en el sistema urinario. Es un procedimiento rápido, seguro y sin dolor.\nDebe de asistir con la vejiga llena para mejorar la visualización.",
+              "duration": 30,
+              "name": "Ultra Renal"
+            },
+            {
+              "duration": 30,
+              "name": "Ultra Embarazo",
+              "description": "Permite evaluar el desarrollo del bebé, escuchar el latido fetal y verificar el estado general del embarazo.",
+              "subtitle": "Control y seguimiento del desarrollo del bebé",
+              "title": "Ultra Embarazo",
+              "capacity": 1
+            },
+            {
+              "subtitle": "Evaluación del tamaño y estado de la próstata",
+              "capacity": 1,
+              "title": "Ultra Próstata",
+              "name": "Ultra Próstata",
+              "duration": 30,
+              "description": "Este estudio permite evaluar la vejiga y la próstata, ayudando a detectar posibles alteraciones como inflamación, agrandamiento prostático u otras irregularidades en la glándula. Es un procedimiento rápido, seguro y no invasivo."
+            }
+          ],
+          "slotDuration": 30,
+          "blockedDates": []
+        },
+        "general": {
+          "name": "Clínica Dr. David Laguardia",
+          "description": "Atención médica de calidad. Tu salud es nuestra prioridad.",
+          "modality": "Presencial",
+          "focus": [
+            "Consulta general",
+            "Medicina preventiva",
+            "Seguimiento de pacientes"
+          ],
+          "note": "Priorizamos un trato cercano y atención personalizada para cada paciente.",
+          "services": "Consulta médica general, ultrasonido abdominal, renal, de embarazo y prostático."
+        }
+      },
+      "admins": [
+        {
+          "id": "5GUdOf66OLHyIV2r82O7",
+          "data": {
+            "active": true,
+            "uid": "Oi4MU1M6wwUTi1nRKJoNNqDjAus1",
+            "email": "admin@laguardia.com",
+            "role": "owner",
+            "name": "Dr. David La Guardia"
+          }
+        },
+        {
+          "id": "EnI4pabqWiTDHZZurZFP",
+          "data": {
+            "role": "editor",
+            "name": "David Laguardia",
+            "email": "david@laguardia.com",
+            "uid": "yLddX3agN0cMYTepoSY7nLIivGi1",
+            "active": true
+          }
+        }
+      ]
+    }
+  ]
+}
