@@ -165,27 +165,27 @@
         <div class="section-header-row">
           <h3><i class="fas fa-table"></i> Datos de "{{ currentCollection.name }}"</h3>
           <div class="data-actions-header">
-            <button class="btn-add-field" (click)="loadCollectionData()">
-              <i class="fas fa-sync-alt"></i> Recargar
-            </button>
             <button class="btn-add-field btn-add-primary" (click)="openNewItem()">
-              <i class="fas fa-plus"></i> Agregar Registro
+              <i class="fas fa-plus"></i><span class="btn-label"> Agregar</span>
             </button>
-            <button class="btn-import" (click)="showImportPanel = !showImportPanel">
-              <i class="fas fa-file-excel"></i> Importar Excel
-            </button>
-            <button class="btn-template" (click)="downloadTemplate()">
-              <i class="fas fa-download"></i> Plantilla
-            </button>
-            <button class="btn-filter" (click)="showFilterPanel = !showFilterPanel; showColumnPanel = false">
-              <i class="fas fa-filter"></i> Filtros
+            <button class="btn-filter" (click)="showFilterPanel = !showFilterPanel; showColumnPanel = false" title="Filtros">
+              <i class="fas fa-filter"></i><span class="btn-label"> Filtros</span>
               <span class="filter-badge" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
             </button>
-            <button class="btn-columns" (click)="showColumnPanel = !showColumnPanel; showFilterPanel = false">
-              <i class="fas fa-columns"></i> Columnas
+            <button class="btn-columns" (click)="showColumnPanel = !showColumnPanel; showFilterPanel = false" title="Columnas">
+              <i class="fas fa-columns"></i><span class="btn-label"> Columnas</span>
             </button>
-            <button class="btn-download-data" (click)="downloadData()" [disabled]="!filteredData.length">
-              <i class="fas fa-file-download"></i> Descargar
+            <button class="btn-import" (click)="showImportPanel = !showImportPanel" title="Importar Excel">
+              <i class="fas fa-file-excel"></i><span class="btn-label"> Importar</span>
+            </button>
+            <button class="btn-template" (click)="downloadTemplate()" title="Descargar plantilla">
+              <i class="fas fa-download"></i><span class="btn-label"> Plantilla</span>
+            </button>
+            <button class="btn-download-data" (click)="downloadData()" [disabled]="!filteredData.length" title="Exportar datos">
+              <i class="fas fa-file-download"></i><span class="btn-label"> Exportar</span>
+            </button>
+            <button class="btn-reload" (click)="loadCollectionData()" title="Recargar">
+              <i class="fas fa-sync-alt"></i>
             </button>
           </div>
         </div>
