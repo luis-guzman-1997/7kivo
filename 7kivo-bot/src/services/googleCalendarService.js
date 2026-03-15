@@ -48,9 +48,9 @@ const createGoogleCalendarEvent = async (appointmentData) => {
       `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
 
     // Construir descripción con todos los campos del formulario
-    const skipFields = ['_apptFecha', '_apptHora', '_apptDuration', '_apptService', 'status', 'organizationId', 'flowId', 'flowName', 'phoneNumber', 'createdAt', 'updatedAt'];
+    const skipFields = ['_apptFecha', '_apptHora', '_apptDuration', '_apptService', 'status', 'organizationId', 'flowId', 'flowName', 'phoneNumber', 'createdAt', 'updatedAt', 'fecha', 'hora', 'motivo', 'motivoId'];
     const extraLines = Object.entries(appointmentData)
-      .filter(([k]) => !skipFields.includes(k))
+      .filter(([k]) => !skipFields.includes(k) && !k.endsWith('Id'))
       .map(([k, v]) => `${k}: ${v}`)
       .join('\n');
 
