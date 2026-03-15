@@ -81,4 +81,18 @@ const createGoogleCalendarEvent = async (appointmentData) => {
   }
 };
 
-module.exports = { createGoogleCalendarEvent };
+const deleteGoogleCalendarEvent = async (eventId) => {
+  try {
+    const gcConfig = await getGoogleCalendarConfig();
+    if (!gcConfig?.enabled || !gcConfig?.calendarId || !eventId) return;
+
+    const auth = getAuthClient();
+    const calendar = google.calendar({ version: 'v3', auth });
+    await calendar.events.delete({ calendarId: gcConfig.calendarId, eventId });
+    console.log(`[GoogleCalendar] Evento eliminado: ${eventId}`);
+  } catch (err) {
+    console.error('[GoogleCalendar] Error al eliminar evento:', err.message);
+  }
+};
+
+module.exports = { createGoogleCalendarEvent, deleteGoogleCalendarEvent };

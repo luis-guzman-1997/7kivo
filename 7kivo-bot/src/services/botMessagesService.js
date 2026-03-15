@@ -281,13 +281,25 @@ const getUpcomingAppointmentsByPhone = async (phoneNumber) => {
 const cancelAppointment = async (collectionName, docId) => {
   try {
     const { admin } = require('../config/firebase');
-    await getOrgRef().collection(collectionName).doc(docId).update({
+    const docRef = getOrgRef().collection(collectionName).doc(docId);
+    const snap = await docRef.get();
+    const gcEventId = snap.exists ? snap.data()?.gcEventId || null : null;
+    await docRef.update({
       status: 'cancelled',
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
+    return gcEventId;
   } catch (err) {
     console.error('Error cancelling appointment:', err.message);
     throw err;
+  }
+};
+
+const saveGcEventId = async (collectionName, docId, gcEventId) => {
+  try {
+    await getOrgRef().collection(collectionName).doc(docId).update({ gcEventId });
+  } catch (err) {
+    console.error('Error saving gcEventId:', err.message);
   }
 };
 
@@ -363,6 +375,7 @@ module.exports = {
   getAppointmentsByDate,
   getUpcomingAppointmentsByPhone,
   cancelAppointment,
+  saveGcEventId,
   lookupCollectionByField,
   getOrgStatus,
   clearCache

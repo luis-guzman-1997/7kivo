@@ -17,11 +17,12 @@ const {
   getAppointmentsByDate,
   getUpcomingAppointmentsByPhone,
   cancelAppointment,
+  saveGcEventId,
   lookupCollectionByField,
   getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
-const { createGoogleCalendarEvent } = require("../services/googleCalendarService");
+const { createGoogleCalendarEvent, deleteGoogleCalendarEvent } = require("../services/googleCalendarService");
 
 const disabledNotified = {};
 
@@ -562,7 +563,8 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
   // Cancel appointment: confirm/reject
   if (session?.step === "cancel_appt_confirm") {
     if (buttonId === "cancel_appt_yes") {
-      await cancelAppointment(session.pendingCancelCollection, session.pendingCancelId);
+      const gcEventId = await cancelAppointment(session.pendingCancelCollection, session.pendingCancelId);
+      if (gcEventId) deleteGoogleCalendarEvent(gcEventId);
       await sendTextMessage("✅ Tu cita ha sido cancelada.", phoneNumber);
     } else {
       await sendTextMessage("De acuerdo, tu cita se mantiene. 👍", phoneNumber);
@@ -1157,9 +1159,12 @@ const completeFlow = async (phoneNumber, flow) => {
         flowName: flow.name
       };
       if (flowData._apptFecha) submissionData.status = "confirmed";
-      await saveFlowSubmission(flow.saveToCollection, submissionData);
+      const docId = await saveFlowSubmission(flow.saveToCollection, submissionData);
       if (flowData._apptFecha) {
-        createGoogleCalendarEvent({ ...submissionData, phoneNumber });
+        const gcEventId = await createGoogleCalendarEvent({ ...submissionData, phoneNumber });
+        if (gcEventId && docId) {
+          await saveGcEventId(flow.saveToCollection, docId, gcEventId);
+        }
       }
     } catch (error) {
       console.error("Error saving flow submission:", error);
