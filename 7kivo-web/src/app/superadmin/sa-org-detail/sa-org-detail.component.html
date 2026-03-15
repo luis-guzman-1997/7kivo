@@ -514,12 +514,7 @@
               {{ adminInitials(adm) }}
             </div>
             <div class="member-info">
-              <div class="member-name-row">
-                <span class="member-name">{{ adm.name || '(Sin nombre)' }}</span>
-                <span class="role-badge role-badge-inline" [class]="'role-' + (adm.role || 'viewer')">
-                  {{ roleLabel(adm.role || 'viewer') }}
-                </span>
-              </div>
+              <span class="member-name">{{ adm.name || '(Sin nombre)' }}</span>
               <span class="member-email">{{ adm.email }}</span>
             </div>
             <div class="member-role-wrap">

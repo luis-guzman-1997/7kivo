@@ -453,11 +453,8 @@
 .avatar-viewer { background: rgba(100,116,139,0.12); color: #475569; }
 
 .member-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.member-name-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .member-name { font-weight: 600; color: #1e293b; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-email { font-size: 0.78rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* badge inline: visible en móvil (el member-role-wrap se oculta), oculto en desktop */
-.role-badge-inline { display: none; flex-shrink: 0; }
 
 .member-role-wrap { flex-shrink: 0; }
 
@@ -846,13 +843,19 @@
   .webhook-form-row { flex-direction: column; }
   .bot-api-url-row { flex-direction: column; align-items: flex-start; }
 
-  /* Member cards: layout compacto */
-  .member-main { gap: 10px; }
-  .member-role-wrap { display: none; }
-  .role-badge-inline { display: inline-flex; }  /* mostrar badge junto al nombre */
+  /* Member cards: grid de 3 columnas (avatar | info | acciones) */
+  .member-main {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    align-items: center;
+    column-gap: 12px;
+    padding: 12px 14px;
+  }
+  .member-role-wrap { display: none; }          /* ocultar badge de rol separado */
   .member-actions { display: flex; gap: 5px; }
-  .btn-text-label { display: none; }            /* solo íconos en botones de acción */
-  .btn-member-action { padding: 7px 10px; }
+  .btn-text-label { display: none; }            /* solo íconos en los botones */
+  .btn-member-action { padding: 8px 10px; }
+  .btn-member-remove { padding: 8px 9px; }
   .member-panel { padding: 14px; }
   .add-admin-form { padding: 14px; }
 }
