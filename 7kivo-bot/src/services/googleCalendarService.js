@@ -8,35 +8,17 @@ const getGoogleCalendarConfig = async () => {
   return snap.exists ? snap.data() : null;
 };
 
-const readRawEnvValue = (key) => {
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const envPath = path.resolve(__dirname, '../../../.env');
-    const content = fs.readFileSync(envPath, 'utf8');
-    for (const line of content.split('\n')) {
-      if (line.startsWith(key + '=')) {
-        let value = line.slice(key.length + 1).trim();
-        if ((value.startsWith("'") && value.endsWith("'")) ||
-            (value.startsWith('"') && value.endsWith('"'))) {
-          value = value.slice(1, -1);
-        }
-        return value;
-      }
-    }
-  } catch (_) {}
-  return '';
-};
-
 const getAuthClient = () => {
-  // Leer directo del .env para evitar que dotenv corrompa el JSON inline
-  const raw = readRawEnvValue('GOOGLE_SERVICE_ACCOUNT_PATH') || process.env.GOOGLE_SERVICE_ACCOUNT_PATH || '';
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_PATH || '';
   let credentials;
   try {
     credentials = JSON.parse(raw);
   } catch (_) {
+    // Si no es JSON inline, intentar como ruta de archivo (solo local)
     const fs = require('fs');
-    credentials = JSON.parse(fs.readFileSync(raw, 'utf8'));
+    const path = require('path');
+    const filePath = path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), raw);
+    credentials = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   }
   return new google.auth.GoogleAuth({
     credentials,
