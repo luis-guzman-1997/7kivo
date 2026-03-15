@@ -1,0 +1,677 @@
+<div class="org-detail-page" *ngIf="!loadingOrg">
+
+  <!-- Header -->
+  <div class="detail-page-header">
+    <button class="btn-back" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Volver
+    </button>
+    <div class="header-info">
+      <img *ngIf="logoPreview" [src]="logoPreview" class="header-logo" alt="" />
+      <i *ngIf="!logoPreview" class="fas fa-building header-icon"></i>
+      <div>
+        <h1 class="header-org-name">{{ selectedOrg?.orgName }}</h1>
+        <span class="header-org-id">ID: {{ selectedOrg?.id }}</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-action-view" (click)="viewOrgPage(selectedOrg, 'configuracion')" title="Ver panel de configuración">
+        <i class="fas fa-building"></i> Ver Org
+      </button>
+      <button class="btn-action-view" (click)="viewOrgPage(selectedOrg, 'pendientes')" title="Ver checklist de configuración pendiente">
+        <i class="fas fa-tasks"></i> Pendientes
+      </button>
+      <button class="btn-action-export" (click)="exportOrg(selectedOrg)" [disabled]="exportingOrgId === selectedOrg?.id" title="Exportar organización a JSON">
+        <i class="fas fa-spinner fa-spin" *ngIf="exportingOrgId === selectedOrg?.id"></i>
+        <i class="fas fa-download" *ngIf="exportingOrgId !== selectedOrg?.id"></i>
+        {{ exportingOrgId === selectedOrg?.id ? 'Exportando...' : 'Exportar' }}
+      </button>
+      <button class="btn-action-load" (click)="openLoadConfig()" title="Cargar configuración desde archivo JSON">
+        <i class="fas fa-upload"></i> Cargar Config
+      </button>
+      <button class="btn-action-webhook" (click)="openWebhookModal()" title="Configurar webhook de WhatsApp">
+        <i class="fas fa-link"></i> Webhook
+      </button>
+      <button class="btn-action-reset" (click)="openResetBotConfirm(selectedOrg)" title="Restablecer bot a estado inicial">
+        <i class="fas fa-redo-alt"></i> Resetear Bot
+      </button>
+      <button class="btn-action-delete" (click)="openDeleteConfirm(selectedOrg)">
+        <i class="fas fa-trash-alt"></i> Eliminar
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="detail-tabs">
+    <button [class.tab-active]="detailTab === 'info'" (click)="detailTab = 'info'">
+      <i class="fas fa-info-circle"></i> Info
+    </button>
+    <button [class.tab-active]="detailTab === 'config'" (click)="detailTab = 'config'">
+      <i class="fas fa-cog"></i> Configuración
+    </button>
+    <button [class.tab-active]="detailTab === 'whatsapp'" (click)="detailTab = 'whatsapp'">
+      <i class="fab fa-whatsapp"></i> WhatsApp
+    </button>
+    <button [class.tab-active]="detailTab === 'admins'" (click)="detailTab = 'admins'">
+      <i class="fas fa-users"></i> Equipo ({{ orgAdmins.length }})
+    </button>
+  </div>
+
+  <div class="notice-bar" *ngIf="notice">
+    <i class="fas fa-check-circle"></i> {{ notice }}
+  </div>
+
+  <div *ngIf="loadingDetail" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Cargando...
+  </div>
+
+  <div *ngIf="!loadingDetail" class="detail-content">
+
+    <!-- TAB: Info -->
+    <div *ngIf="detailTab === 'info'">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Estado</label>
+          <span class="status-badge" [class.active]="selectedOrg.active !== false">
+            {{ selectedOrg.active !== false ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <label>Conexión Bot</label>
+          <span class="status-badge" [class.active]="selectedOrg.botEnabled !== false">
+            {{ selectedOrg.botEnabled !== false ? 'Habilitada' : 'Deshabilitada' }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <label>Respuesta Bot</label>
+          <div class="bot-block-row">
+            <span class="status-badge" [class.active]="!selectedOrg.botBlocked" [class.blocked-badge]="selectedOrg.botBlocked">
+              {{ selectedOrg.botBlocked ? 'Bloqueado' : 'Activo' }}
+            </span>
+            <button class="btn-block-toggle" (click)="toggleBotBlocked(selectedOrg)"
+              [disabled]="togglingBlock[selectedOrg.id]"
+              [title]="selectedOrg.botBlocked ? 'Desbloquear bot' : 'Bloquear bot'">
+              <i class="fas" [class.fa-lock-open]="selectedOrg.botBlocked" [class.fa-lock]="!selectedOrg.botBlocked"></i>
+              {{ selectedOrg.botBlocked ? 'Desbloquear' : 'Bloquear' }}
+            </button>
+          </div>
+        </div>
+        <div class="detail-item">
+          <label>Industria</label>
+          <span>{{ selectedOrg.industry || 'general' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Creada</label>
+          <span>{{ getCreatedDate(selectedOrg) }}</span>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-header">
+          <h3>Plan y Tarifa</h3>
+          <button *ngIf="!editingPlan" class="btn-edit-sm" (click)="startEditPlan()"><i class="fas fa-pen"></i> Editar</button>
+        </div>
+        <div *ngIf="!editingPlan" class="detail-grid">
+          <div class="detail-item">
+            <label>Plan</label>
+            <span>{{ selectedOrg.plan || 'Sin plan' }}
+              <span class="custom-tag" *ngIf="selectedOrg.customLimits">Personalizado</span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Tarifa Mensual</label>
+            <span>{{ selectedOrg.monthlyRate ? '$' + selectedOrg.monthlyRate.toFixed(2) : '—' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedOrg.customLimits">
+            <label>Flujos</label>
+            <span>{{ selectedOrg.customLimits.flows }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedOrg.customLimits">
+            <label>Bases de Datos</label>
+            <span>{{ selectedOrg.customLimits.collections }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedOrg.customLimits">
+            <label>Usuarios</label>
+            <span>{{ selectedOrg.customLimits.admins }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedOrg.customLimits">
+            <label>Chat en vivo</label>
+            <span class="status-badge" [class.active]="selectedOrg.customLimits.chatLive !== false">
+              {{ selectedOrg.customLimits.chatLive !== false ? 'Habilitado' : 'Solo lectura' }}
+            </span>
+          </div>
+        </div>
+        <div *ngIf="editingPlan" class="edit-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Plan</label>
+              <select [(ngModel)]="editPlan" (ngModelChange)="onPlanSelectChange()">
+                <option value="">— Seleccionar plan —</option>
+                <option *ngFor="let p of platformPlans" [value]="p.name">{{ p.name }} (${{ p.price }})</option>
+                <option value="Personalizado">Personalizado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tarifa Mensual ($)</label>
+              <input type="number" [(ngModel)]="editMonthlyRate" step="0.01" min="0" />
+            </div>
+          </div>
+          <div class="custom-limits-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" [(ngModel)]="useCustomLimits" />
+              Límites personalizados (sobreescribe los del plan estándar)
+            </label>
+          </div>
+          <div *ngIf="useCustomLimits" class="form-row limits-row">
+            <div class="form-group">
+              <label>Flujos</label>
+              <input type="number" [(ngModel)]="editLimits.flows" min="1" />
+            </div>
+            <div class="form-group">
+              <label>Bases de Datos</label>
+              <input type="number" [(ngModel)]="editLimits.collections" min="1" />
+            </div>
+            <div class="form-group">
+              <label>Usuarios Admin</label>
+              <input type="number" [(ngModel)]="editLimits.admins" min="1" />
+            </div>
+          </div>
+          <div *ngIf="useCustomLimits" class="custom-limits-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" [(ngModel)]="editLimits.chatLive" />
+              Chat en vivo (tomar control de conversaciones y enviar mensajes)
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn-save" (click)="savePlan()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+            <button class="btn-cancel" (click)="cancelEditPlan()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Config -->
+    <div *ngIf="detailTab === 'config'">
+      <div class="detail-section-header">
+        <h3>Configuración General</h3>
+        <button *ngIf="!editingGeneral" class="btn-edit-sm" (click)="startEditGeneral()"><i class="fas fa-pen"></i> Editar</button>
+      </div>
+
+      <div *ngIf="!editingGeneral">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Nombre</label>
+            <span>{{ orgDetail?.orgName || '—' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Industria</label>
+            <span>{{ orgDetail?.industry || 'general' }}</span>
+          </div>
+          <div class="detail-item full">
+            <label>Descripción</label>
+            <span>{{ orgDetail?.description || '—' }}</span>
+          </div>
+        </div>
+        <div class="logo-preview-row" *ngIf="logoPreview">
+          <label>Logo</label>
+          <img [src]="logoPreview" alt="Logo" class="config-logo-preview" />
+        </div>
+      </div>
+
+      <div *ngIf="editingGeneral" class="edit-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre de la Organización</label>
+            <input type="text" [(ngModel)]="editGeneral.orgName" />
+          </div>
+          <div class="form-group">
+            <label>Industria</label>
+            <input type="text" [(ngModel)]="editGeneral.industry" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea [(ngModel)]="editGeneral.description" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Logo (max 2 MB)</label>
+          <input type="file" accept="image/*" (change)="onLogoSelected($event)" />
+          <img *ngIf="logoPreview" [src]="logoPreview" class="config-logo-preview mt-8" alt="" />
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" (click)="saveGeneral()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+          <button class="btn-cancel" (click)="cancelEditGeneral()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: WhatsApp -->
+    <div *ngIf="detailTab === 'whatsapp'">
+      <div class="detail-section-header">
+        <h3>Credenciales WhatsApp Cloud API</h3>
+        <button *ngIf="!editingWA" class="btn-edit-sm" (click)="startEditWA()"><i class="fas fa-pen"></i> Editar</button>
+      </div>
+
+      <div *ngIf="!editingWA">
+        <div class="detail-grid">
+          <div class="detail-item full">
+            <label>URL del Bot (API)</label>
+            <div class="bot-api-url-row">
+              <span class="mono">{{ orgDetail?.botApiUrl || 'No configurada' }}</span>
+              <button class="btn-test-api" (click)="testBotApi()" [disabled]="!orgDetail?.botApiUrl || testingApi"
+                title="Probar que la API responde">
+                <i class="fas" [class.fa-spinner]="testingApi" [class.fa-spin]="testingApi" [class.fa-plug]="!testingApi"></i>
+                {{ testingApi ? 'Probando...' : 'Probar API' }}
+              </button>
+            </div>
+            <span class="api-test-result" *ngIf="apiTestResult" [class.success]="apiTestResult.ok" [class.error]="!apiTestResult.ok">
+              <i class="fas" [class.fa-check-circle]="apiTestResult.ok" [class.fa-times-circle]="!apiTestResult.ok"></i>
+              {{ apiTestResult.ok ? 'API responde correctamente' : apiTestResult.error }}
+            </span>
+          </div>
+          <div class="detail-item full">
+            <label>Access Token</label>
+            <span class="mono">{{ maskToken(orgWhatsApp?.token) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Phone Number ID</label>
+            <span class="mono">{{ orgWhatsApp?.phoneNumberId || '—' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Verify Token</label>
+            <span class="mono">{{ orgWhatsApp?.verifyToken || '—' }}</span>
+          </div>
+        </div>
+        <div class="wa-status">
+          <span class="wa-dot" [class.configured]="orgWhatsApp?.token" [class.not-configured]="!orgWhatsApp?.token"></span>
+          {{ orgWhatsApp?.token ? 'Configurado' : 'Sin configurar' }}
+        </div>
+      </div>
+
+      <div *ngIf="editingWA" class="edit-form">
+        <div class="form-group">
+          <label>URL del Bot (API)</label>
+          <input type="text" [(ngModel)]="editWA.botApiUrl" placeholder="https://tu-bot.com" />
+        </div>
+        <div class="form-group">
+          <label>Access Token (WhatsApp Cloud API)</label>
+          <textarea [(ngModel)]="editWA.token" rows="3" placeholder="EAAxxxxxxx..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone Number ID</label>
+            <input type="text" [(ngModel)]="editWA.phoneNumberId" placeholder="1234567890" />
+          </div>
+          <div class="form-group">
+            <label>Verify Token</label>
+            <input type="text" [(ngModel)]="editWA.verifyToken" placeholder="mi_token_verificacion" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" (click)="saveWA()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+          <button class="btn-cancel" (click)="cancelEditWA()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Admins -->
+    <div *ngIf="detailTab === 'admins'">
+      <div class="detail-section-header">
+        <h3>Equipo ({{ orgAdmins.length }})</h3>
+        <button *ngIf="!addingAdmin" class="btn-edit-sm" (click)="startAddAdmin()">
+          <i class="fas fa-user-plus"></i> Agregar usuario
+        </button>
+      </div>
+
+      <div class="add-admin-form" *ngIf="addingAdmin">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" [(ngModel)]="newAdmin.name" placeholder="Nombre completo" />
+          </div>
+          <div class="form-group">
+            <label>Rol</label>
+            <select [(ngModel)]="newAdmin.role">
+              <option value="owner">Propietario</option>
+              <option value="admin">Gerente</option>
+              <option value="editor">Operador</option>
+              <option value="viewer">Agente</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="newAdmin.email" placeholder="usuario@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Contraseña inicial</label>
+            <input type="text" [(ngModel)]="newAdmin.password" placeholder="Mínimo 6 caracteres" />
+          </div>
+        </div>
+        <div class="add-admin-error" *ngIf="addAdminError">
+          <i class="fas fa-exclamation-circle"></i> {{ addAdminError }}
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" (click)="addAdminToOrg()" [disabled]="addAdminSaving">
+            <i class="fas fa-spinner fa-spin" *ngIf="addAdminSaving"></i>
+            <i class="fas fa-user-plus" *ngIf="!addAdminSaving"></i>
+            {{ addAdminSaving ? 'Creando...' : 'Crear usuario' }}
+          </button>
+          <button class="btn-cancel" (click)="cancelAddAdmin()" [disabled]="addAdminSaving">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="add-admin-notice" *ngIf="addAdminNotice">
+        <i class="fas fa-check-circle"></i> {{ addAdminNotice }}
+      </div>
+
+      <div class="admins-list" *ngIf="orgAdmins.length > 0">
+        <div class="admin-row-wrap" *ngFor="let adm of orgAdmins">
+          <div class="admin-row">
+            <i class="fas fa-user-circle"></i>
+            <div class="admin-info">
+              <span class="admin-name">{{ adm.name || adm.email }}</span>
+              <span class="admin-email">{{ adm.email }}</span>
+            </div>
+            <span class="role-badge" [class]="'role-' + (adm.role || 'viewer')">{{ adm.role || 'viewer' }}</span>
+            <button class="btn-pw-sa" (click)="startChangePwSA(adm)" *ngIf="changePwAdm?.uid !== adm.uid" title="Cambiar contraseña">
+              <i class="fas fa-key"></i>
+            </button>
+            <button class="btn-remove-admin" (click)="removeAdminFromOrg(adm)" title="Quitar del equipo">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="sa-pw-form" *ngIf="changePwAdm?.uid === adm.uid">
+            <div class="sa-pw-row">
+              <input type="password" [(ngModel)]="changePwVal" placeholder="Nueva contraseña (mín. 6 caracteres)"
+                     [name]="'sa-pw-' + adm.uid" (keyup.enter)="saveChangePwSA()" />
+              <button class="btn-pw-save" (click)="saveChangePwSA()" [disabled]="changePwSaving">
+                <i class="fas fa-spinner fa-spin" *ngIf="changePwSaving"></i>
+                <i class="fas fa-check" *ngIf="!changePwSaving"></i>
+                {{ changePwSaving ? '' : 'Guardar' }}
+              </button>
+              <button class="btn-pw-cancel" (click)="cancelChangePwSA()" [disabled]="changePwSaving">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <span class="sa-pw-error" *ngIf="changePwError">
+              <i class="fas fa-exclamation-circle"></i> {{ changePwError }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="orgAdmins.length === 0 && !addingAdmin" class="empty-mini">Sin usuarios registrados</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Loading state for whole page -->
+<div *ngIf="loadingOrg" class="loading-state">
+  <i class="fas fa-spinner fa-spin"></i> Cargando organización...
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay delete-overlay" *ngIf="deleteConfirmOrg">
+  <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+
+    <div *ngIf="!deleteResult">
+      <div class="delete-header">
+        <i class="fas fa-exclamation-triangle delete-icon"></i>
+        <h2>Eliminar Organización</h2>
+      </div>
+      <div class="delete-body">
+        <p class="delete-warning">
+          Esta acción es <strong>irreversible</strong>. Se eliminarán permanentemente:
+        </p>
+        <ul class="delete-list">
+          <li><i class="fas fa-database"></i> Todos los datos en Firestore (flujos, bases de datos, conversaciones, configuración, admins)</li>
+          <li><i class="fas fa-image"></i> Archivos en Storage (logos, imágenes)</li>
+          <li><i class="fas fa-users"></i> Vínculos de usuarios con la organización</li>
+          <li><i class="fas fa-file-invoice-dollar"></i> Registros de facturación asociados</li>
+        </ul>
+        <div class="delete-confirm-input">
+          <label>Escribe <strong>{{ deleteConfirmOrg.id }}</strong> para confirmar:</label>
+          <input type="text" [(ngModel)]="deleteConfirmText" [placeholder]="deleteConfirmOrg.id"
+            autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="delete-org-name">
+          <i class="fas fa-building"></i> {{ deleteConfirmOrg.orgName || deleteConfirmOrg.id }}
+        </div>
+      </div>
+      <div class="delete-actions">
+        <button class="btn-delete-confirm" (click)="executeDelete()" [disabled]="!deleteConfirmValid || deleting">
+          <i class="fas fa-spinner fa-spin" *ngIf="deleting"></i>
+          <i class="fas fa-trash-alt" *ngIf="!deleting"></i>
+          {{ deleting ? 'Eliminando...' : 'Eliminar Permanentemente' }}
+        </button>
+        <button class="btn-cancel" (click)="cancelDelete()" [disabled]="deleting">Cancelar</button>
+      </div>
+    </div>
+
+    <div *ngIf="deleteResult">
+      <div class="delete-header success">
+        <i class="fas fa-check-circle delete-icon"></i>
+        <h2>Organización Eliminada</h2>
+      </div>
+      <div class="delete-body">
+        <p>La organización <strong>{{ deleteConfirmOrg?.orgName || deleteConfirmOrg?.id }}</strong> ha sido eliminada completamente.</p>
+        <div *ngIf="deleteResult.deletedUsers.length > 0" class="delete-users-note">
+          <h4><i class="fas fa-user-slash"></i> Usuarios desvinculados ({{ deleteResult.deletedUsers.length }})</h4>
+          <p class="delete-note">Los siguientes usuarios perdieron el vínculo con la organización. Sus cuentas de Firebase Auth siguen activas y deben eliminarse manualmente desde la consola de Firebase:</p>
+          <ul class="deleted-users-list">
+            <li *ngFor="let email of deleteResult.deletedUsers">{{ email }}</li>
+          </ul>
+        </div>
+      </div>
+      <div class="delete-actions">
+        <button class="btn-save" (click)="closeDeleteResult()">Entendido</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Load Config Modal -->
+<div class="modal-overlay delete-overlay" *ngIf="loadConfigOrg" (click)="!loadConfigSaving && cancelLoadConfig()">
+  <div class="modal-content load-config-modal" (click)="$event.stopPropagation()">
+
+    <div *ngIf="!loadConfigDone">
+      <div class="delete-header">
+        <i class="fas fa-upload load-config-icon"></i>
+        <h2>Cargar Configuración</h2>
+      </div>
+      <div class="delete-body">
+        <p class="delete-warning">
+          Esto <strong>sobrescribirá</strong> la configuración del bot de <strong>{{ loadConfigOrg.orgName }}</strong>:
+        </p>
+        <ul class="delete-list load-config-list">
+          <li><i class="fas fa-project-diagram"></i> Flujos</li>
+          <li><i class="fas fa-database"></i> Definiciones de colecciones (datos existentes se borran)</li>
+          <li><i class="fas fa-bars"></i> Menú del bot</li>
+          <li><i class="fas fa-comment-dots"></i> Mensajes del bot</li>
+          <li><i class="fas fa-info-circle"></i> Info: contacto, horarios, Sobre Nosotros</li>
+        </ul>
+        <p class="delete-note">
+          <i class="fas fa-shield-alt"></i> <strong>No se toca:</strong> credenciales WhatsApp, URL del bot, ni usuarios.
+        </p>
+        <div class="load-config-upload">
+          <label class="load-config-label">Subir archivo JSON</label>
+          <input type="file" accept=".json,application/json" (change)="onLoadConfigFileSelected($event)" [disabled]="loadConfigSaving" />
+        </div>
+        <div class="load-config-or">— o pega el JSON directamente —</div>
+        <textarea
+          class="load-config-textarea"
+          placeholder='{ "version": "1", "flows": [...], ... }'
+          [(ngModel)]="loadConfigJson"
+          (ngModelChange)="parseLoadConfig()"
+          [disabled]="loadConfigSaving"
+          rows="6">
+        </textarea>
+        <div class="load-config-preview" *ngIf="loadConfigParsed">
+          <i class="fas fa-check-circle"></i>
+          Config válida &mdash;
+          <strong>{{ loadConfigParsed.flows?.length || 0 }}</strong> flujos,
+          <strong>{{ loadConfigParsed.collections?.length || 0 }}</strong> colecciones,
+          <strong>{{ loadConfigParsed.botMessages?.length || 0 }}</strong> mensajes
+          <span *ngIf="loadConfigParsed.exportedFrom"> &mdash; exportada de <em>{{ loadConfigParsed.exportedFrom }}</em></span>
+        </div>
+        <div class="load-config-error" *ngIf="loadConfigError">
+          <i class="fas fa-exclamation-circle"></i> {{ loadConfigError }}
+        </div>
+      </div>
+      <div class="delete-actions">
+        <button class="btn-cancel" (click)="cancelLoadConfig()" [disabled]="loadConfigSaving">Cancelar</button>
+        <button class="btn-load-config-confirm" (click)="executeLoadConfig()" [disabled]="!loadConfigParsed || loadConfigSaving">
+          <i class="fas fa-spinner fa-spin" *ngIf="loadConfigSaving"></i>
+          <i class="fas fa-upload" *ngIf="!loadConfigSaving"></i>
+          {{ loadConfigSaving ? 'Aplicando...' : 'Aplicar Configuración' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="loadConfigDone" class="delete-result">
+      <i class="fas fa-check-circle" style="color:#7c3aed;font-size:2.5rem;margin-bottom:12px;"></i>
+      <h3>¡Configuración aplicada!</h3>
+      <p>El bot de <strong>{{ loadConfigOrg.orgName }}</strong> fue actualizado correctamente.</p>
+      <div class="delete-actions" style="justify-content:center;padding-top:16px;">
+        <button class="btn-save" (click)="cancelLoadConfig()">Entendido</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Webhook Modal -->
+<div class="modal-overlay delete-overlay" *ngIf="webhookModalOpen" (click)="closeWebhookModal()">
+  <div class="modal-content webhook-modal" (click)="$event.stopPropagation()">
+    <div class="delete-header">
+      <i class="fas fa-link webhook-icon"></i>
+      <h2>Configurar Webhook</h2>
+    </div>
+    <div class="delete-body">
+      <p class="webhook-org-name"><i class="fas fa-building"></i> {{ selectedOrg?.orgName }}</p>
+
+      <div class="webhook-section">
+        <label class="webhook-label">
+          <span class="webhook-step">1</span> Credenciales WhatsApp
+        </label>
+        <div class="form-group">
+          <label class="field-label">URL del Bot (API)</label>
+          <input type="text" class="webhook-input" [(ngModel)]="webhookForm.botApiUrl"
+            placeholder="https://tubot.com" />
+        </div>
+        <div class="webhook-form-row">
+          <div class="form-group">
+            <label class="field-label">Phone Number ID</label>
+            <input type="text" class="webhook-input mono" [(ngModel)]="webhookForm.phoneNumberId"
+              placeholder="1234567890123456" />
+          </div>
+          <div class="form-group">
+            <label class="field-label">Verify Token</label>
+            <div class="webhook-token-row">
+              <input type="text" class="webhook-input mono" [(ngModel)]="webhookForm.verifyToken"
+                placeholder="mi_token_secreto" />
+              <button class="btn-generate-token" (click)="generateWebhookToken()" title="Generar token aleatorio">
+                <i class="fas fa-random"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">Access Token (WhatsApp Cloud API)</label>
+          <textarea class="webhook-input mono" [(ngModel)]="webhookForm.token" rows="2"
+            placeholder="EAAxxxxxxx..."></textarea>
+        </div>
+        <div class="webhook-save-row">
+          <button class="btn-save-token" (click)="saveWebhookConfig()" [disabled]="webhookSaving">
+            <i class="fas fa-spinner fa-spin" *ngIf="webhookSaving"></i>
+            <i class="fas fa-save" *ngIf="!webhookSaving"></i>
+            {{ webhookSaving ? 'Guardando...' : 'Guardar configuración' }}
+          </button>
+          <span class="webhook-token-saved" *ngIf="webhookSaved">
+            <i class="fas fa-check-circle"></i> Guardado
+          </span>
+        </div>
+      </div>
+
+      <div class="webhook-section">
+        <label class="webhook-label">
+          <span class="webhook-step">2</span> URL del Webhook
+        </label>
+        <div *ngIf="webhookUrl" class="webhook-copy-row">
+          <span class="webhook-url mono">{{ webhookUrl }}</span>
+          <button class="btn-copy" (click)="copyToClipboard(webhookUrl, 'url')" title="Copiar URL">
+            <i class="fas" [class.fa-check]="webhookUrlCopied" [class.fa-copy]="!webhookUrlCopied"></i>
+            {{ webhookUrlCopied ? 'Copiado' : 'Copiar' }}
+          </button>
+        </div>
+        <div *ngIf="!webhookUrl" class="webhook-no-url">
+          <i class="fas fa-exclamation-triangle"></i>
+          Ingresa la URL del bot arriba para generar la URL del webhook.
+        </div>
+      </div>
+
+      <div class="webhook-section">
+        <label class="webhook-label">
+          <span class="webhook-step">3</span> Configurar en Meta for Developers
+        </label>
+        <ol class="webhook-steps-list">
+          <li>Ve a <strong>Meta for Developers</strong> → Tu App → <strong>WhatsApp → Configuración</strong></li>
+          <li>En <em>Webhook</em>, haz clic en <strong>Editar</strong></li>
+          <li>En <em>URL de devolución de llamada</em>, pega la URL del paso 2</li>
+          <li>En <em>Token de verificación</em>, pega el Verify Token del paso 1</li>
+          <li>Haz clic en <strong>Verificar y guardar</strong></li>
+          <li>Suscríbete al campo: <code>messages</code></li>
+        </ol>
+      </div>
+    </div>
+    <div class="delete-actions">
+      <button class="btn-save" (click)="closeWebhookModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Bot Confirmation Modal -->
+<div class="modal-overlay delete-overlay" *ngIf="resetBotConfirmOrg" (click)="!resettingBot && cancelResetBot()">
+  <div class="modal-content delete-modal reset-bot-modal" (click)="$event.stopPropagation()">
+
+    <div *ngIf="!resetBotDone">
+      <div class="delete-header">
+        <i class="fas fa-redo-alt reset-bot-icon"></i>
+        <h2>Resetear Bot</h2>
+      </div>
+      <div class="delete-body">
+        <p class="delete-warning">
+          Esto restablecerá el bot de <strong>{{ resetBotConfirmOrg.orgName }}</strong> al estado inicial:
+        </p>
+        <ul class="delete-list">
+          <li><i class="fas fa-project-diagram"></i> Se eliminarán todos los <strong>flujos</strong> creados</li>
+          <li><i class="fas fa-database"></i> Se eliminarán las <strong>bases de datos y sus datos</strong></li>
+          <li><i class="fas fa-bars"></i> El menú volverá a tener solo Horarios, Ubicación y Sobre Nosotros</li>
+        </ul>
+        <p class="delete-note">
+          <i class="fas fa-shield-alt"></i> <strong>No se toca:</strong> configuración de la organización, credenciales de WhatsApp, usuarios, ni mensajes del bot.
+        </p>
+      </div>
+      <div class="delete-actions">
+        <button class="btn-cancel" (click)="cancelResetBot()" [disabled]="resettingBot">Cancelar</button>
+        <button class="btn-reset-bot-confirm" (click)="confirmResetBot()" [disabled]="resettingBot">
+          <i class="fas fa-spinner fa-spin" *ngIf="resettingBot"></i>
+          <i class="fas fa-redo-alt" *ngIf="!resettingBot"></i>
+          {{ resettingBot ? 'Reseteando...' : 'Confirmar Reset' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="resetBotDone" class="delete-result">
+      <i class="fas fa-check-circle" style="color:#10b981;font-size:2.5rem;margin-bottom:12px;"></i>
+      <h3>¡Reset completado!</h3>
+      <p>El bot de <strong>{{ resetBotConfirmOrg.orgName }}</strong> fue restablecido al estado inicial correctamente.</p>
+      <div class="delete-actions">
+        <button class="btn-save" (click)="cancelResetBot()">Entendido</button>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -6,6 +6,9 @@ const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
 
 const localCache = {};
 
+// En multi-tenant, la misma clave de teléfono puede existir en múltiples orgs
+const cacheKey = (phone) => `${getOrgId()}:${phone.replace(/\D/g, "")}`;
+
 const getConvRef = (phone) => {
   return db.collection("organizations").doc(getOrgId())
     .collection("conversations").doc(phone.replace(/\D/g, ""));
@@ -17,14 +20,15 @@ function isExpired(session) {
 }
 
 function setSession(phone, data) {
-  const prev = localCache[phone] || {};
+  const key = cacheKey(phone);
+  const prev = localCache[key] || {};
   const merged = {
     ...prev,
     ...data,
     phone,
     last_message_time: new Date().toISOString()
   };
-  localCache[phone] = merged;
+  localCache[key] = merged;
 
   const sessionForFirestore = { ...merged };
   delete sessionForFirestore.phone;
@@ -34,10 +38,11 @@ function setSession(phone, data) {
 }
 
 function getSession(phone) {
-  const session = localCache[phone];
+  const key = cacheKey(phone);
+  const session = localCache[key];
   if (!session) return null;
   if (isExpired(session)) {
-    delete localCache[phone];
+    delete localCache[key];
     return null;
   }
   return session;
@@ -54,7 +59,7 @@ async function getSessionAsync(phone) {
       const session = { ...doc.data().session, phone };
       // Don't restore sessions that are too old — user gets a fresh greeting
       if (isExpired(session)) return null;
-      localCache[phone] = session;
+      localCache[cacheKey(phone)] = session;
       return session;
     }
   } catch (err) {
@@ -64,7 +69,7 @@ async function getSessionAsync(phone) {
 }
 
 async function clearSession(phone) {
-  delete localCache[phone];
+  delete localCache[cacheKey(phone)];
 
   try {
     await getConvRef(phone).set({

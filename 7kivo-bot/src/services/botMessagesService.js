@@ -6,54 +6,47 @@ const getOrgRef = () => {
 };
 
 // ==================== ORG STATUS ====================
-let orgStatusCache = null;
-let orgStatusCacheTs = 0;
+const orgStatusCacheMap = {}; // { [orgId]: { data, ts } }
 const ORG_STATUS_TTL = 30000;
 
 const getOrgStatus = async () => {
+  const orgId = getOrgId();
   const now = Date.now();
-  if (orgStatusCache && now - orgStatusCacheTs < ORG_STATUS_TTL) return orgStatusCache;
+  const cached = orgStatusCacheMap[orgId];
+  if (cached && now - cached.ts < ORG_STATUS_TTL) return cached.data;
   try {
-    const snap = await db.collection("organizations").doc(getOrgId()).get();
-    orgStatusCache = snap.exists ? snap.data() : {};
-    orgStatusCacheTs = now;
-    return orgStatusCache;
+    const snap = await db.collection("organizations").doc(orgId).get();
+    orgStatusCacheMap[orgId] = { data: snap.exists ? snap.data() : {}, ts: now };
+    return orgStatusCacheMap[orgId].data;
   } catch (err) {
     console.error("Error loading org status:", err.message);
-    return orgStatusCache || {};
+    return cached?.data || {};
   }
 };
 
 // ==================== CACHE ====================
-let messagesCache = {};
-let cacheTimestamp = 0;
+const messagesCacheMap = {}; // { [orgId]: { data, ts } }
+const flowsCacheMap = {};    // { [orgId]: { data, ts } }
+const menuCacheMap = {};     // { [orgId]: { data, ts } }
+const keywordsCacheMap = {}; // { [orgId]: { data, ts } }
 const CACHE_TTL = 60000;
 
-let flowsCache = null;
-let flowsCacheTimestamp = 0;
-
-let menuCache = null;
-let menuCacheTimestamp = 0;
-
-let keywordsCache = null;
-let keywordsCacheTimestamp = 0;
-
-const clearCache = () => {
-  messagesCache = {};
-  cacheTimestamp = 0;
-  flowsCache = null;
-  flowsCacheTimestamp = 0;
-  menuCache = null;
-  menuCacheTimestamp = 0;
-  keywordsCache = null;
-  keywordsCacheTimestamp = 0;
+const clearCache = (orgId) => {
+  const id = orgId || getOrgId();
+  delete messagesCacheMap[id];
+  delete flowsCacheMap[id];
+  delete menuCacheMap[id];
+  delete keywordsCacheMap[id];
+  delete orgStatusCacheMap[id];
 };
 
 // ==================== BOT MESSAGES ====================
 const loadBotMessages = async () => {
+  const orgId = getOrgId();
   const now = Date.now();
-  if (now - cacheTimestamp < CACHE_TTL && Object.keys(messagesCache).length > 0) {
-    return messagesCache;
+  const cached = messagesCacheMap[orgId];
+  if (cached && now - cached.ts < CACHE_TTL && Object.keys(cached.data).length > 0) {
+    return cached.data;
   }
   try {
     const snapshot = await getOrgRef().collection("botMessages").get();
@@ -62,12 +55,11 @@ const loadBotMessages = async () => {
       const data = doc.data();
       messages[data.key] = data.content;
     });
-    messagesCache = messages;
-    cacheTimestamp = now;
+    messagesCacheMap[orgId] = { data: messages, ts: now };
     return messages;
   } catch (error) {
     console.error("Error loading bot messages:", error);
-    return messagesCache;
+    return cached?.data || {};
   }
 };
 
@@ -154,22 +146,21 @@ const getWhatsAppConfig = async () => {
 
 // ==================== FLOWS ====================
 const getFlows = async () => {
+  const orgId = getOrgId();
   const now = Date.now();
-  if (flowsCache && now - flowsCacheTimestamp < CACHE_TTL) {
-    return flowsCache;
-  }
+  const cached = flowsCacheMap[orgId];
+  if (cached && now - cached.ts < CACHE_TTL) return cached.data;
   try {
     const snapshot = await getOrgRef().collection("flows").get();
     const flows = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(f => f.active !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0));
-    flowsCache = flows;
-    flowsCacheTimestamp = now;
+    flowsCacheMap[orgId] = { data: flows, ts: now };
     return flows;
   } catch (error) {
     console.error("Error loading flows:", error);
-    return flowsCache || [];
+    return cached?.data || [];
   }
 };
 
@@ -185,21 +176,20 @@ const getFlow = async (flowId) => {
 
 // ==================== MENU CONFIG ====================
 const getMenuConfig = async () => {
+  const orgId = getOrgId();
   const now = Date.now();
-  if (menuCache && now - menuCacheTimestamp < CACHE_TTL) {
-    return menuCache;
-  }
+  const cached = menuCacheMap[orgId];
+  if (cached && now - cached.ts < CACHE_TTL) return cached.data;
   try {
     const doc = await getOrgRef().collection("config").doc("menu").get();
     if (doc.exists) {
-      menuCache = doc.data();
-      menuCacheTimestamp = now;
-      return menuCache;
+      menuCacheMap[orgId] = { data: doc.data(), ts: now };
+      return menuCacheMap[orgId].data;
     }
     return null;
   } catch (error) {
     console.error("Error loading menu config:", error);
-    return menuCache;
+    return cached?.data || null;
   }
 };
 
@@ -322,18 +312,18 @@ const saveFlowSubmission = async (collectionName, data) => {
 
 // ==================== KEYWORDS ====================
 const getKeywords = async () => {
+  const orgId = getOrgId();
   const now = Date.now();
-  if (keywordsCache && now - keywordsCacheTimestamp < CACHE_TTL) {
-    return keywordsCache;
-  }
+  const cached = keywordsCacheMap[orgId];
+  if (cached && now - cached.ts < CACHE_TTL) return cached.data;
   try {
     const doc = await getOrgRef().collection("config").doc("keywords").get();
-    keywordsCache = doc.exists ? (doc.data().keywords || []) : [];
-    keywordsCacheTimestamp = now;
-    return keywordsCache;
+    const keywords = doc.exists ? (doc.data().keywords || []) : [];
+    keywordsCacheMap[orgId] = { data: keywords, ts: now };
+    return keywords;
   } catch (error) {
     console.error("Error loading keywords:", error);
-    return keywordsCache || [];
+    return cached?.data || [];
   }
 };
 

@@ -1,6 +1,8 @@
 const {
   apiVerification,
   requestMessageFromWhatsapp,
+  apiVerificationMulti,
+  requestMessageMulti,
 } = require("../controllers/messagesController");
 
 const {
@@ -24,9 +26,13 @@ router.get("/test", async (req, res) => {
   return res.send("OK");
 });
 
-// WhatsApp webhook
+// WhatsApp webhook - single-tenant (clientes existentes con ORG_ID en .env)
 router.get("/auth", apiVerification);
 router.post("/auth", requestMessageFromWhatsapp);
+
+// WhatsApp webhook - multi-tenant (un despliegue para múltiples orgs)
+router.get("/auth/:orgId", apiVerificationMulti);
+router.post("/auth/:orgId", requestMessageMulti);
 
 // Chat API (admin messaging)
 router.get("/api/conversations", listConversations);

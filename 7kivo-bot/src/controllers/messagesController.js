@@ -1732,7 +1732,250 @@ const handleUserMessage = async (phoneNumber, message, session) => {
   }
 };
 
+// ==================== MULTI-TENANT HANDLERS ====================
+
+const { runWithOrgId } = require("../config/requestContext");
+const { getWhatsAppConfig } = require("../services/botMessagesService");
+
+const apiVerificationMulti = async (req, res) => {
+  try {
+    const orgId = req.params.orgId;
+    if (!orgId) return res.status(400).send("orgId requerido");
+
+    const {
+      'hub.mode': mode,
+      'hub.verify_token': token,
+      'hub.challenge': challenge
+    } = req.query;
+
+    if (!mode || !token || mode !== 'subscribe') {
+      return res.status(403).send('Forbidden');
+    }
+
+    // Verificar contra token global del .env o token específico del org en Firebase
+    const globalToken = process.env.VERIFY_META_TOKEN;
+    if (globalToken && token === globalToken) {
+      return res.status(200).send(challenge);
+    }
+
+    // Fallback: verificar contra verifyToken guardado en Firebase del org
+    const waConfig = await runWithOrgId(orgId, () => getWhatsAppConfig());
+    if (waConfig?.verifyToken && token === waConfig.verifyToken) {
+      return res.status(200).send(challenge);
+    }
+
+    return res.status(403).send('Forbidden');
+  } catch (error) {
+    return res.status(500).send(error.message);
+  }
+};
+
+const requestMessageMulti = async (req, res) => {
+  const orgId = req.params.orgId;
+  if (!orgId) return res.sendStatus(400);
+
+  try {
+    await runWithOrgId(orgId, async () => {
+      const change = req.body?.entry?.[0]?.changes?.[0];
+      const messageObj = change?.value?.messages?.[0];
+
+      // Deduplicate
+      const waMessageId = messageObj?.id;
+      if (waMessageId) {
+        const dedupKey = `${orgId}:${waMessageId}`;
+        if (processedMessageIds.has(dedupKey)) {
+          return res.sendStatus(200);
+        }
+        processedMessageIds.add(dedupKey);
+      }
+
+      if (change?.value?.statuses) {
+        return res.sendStatus(200);
+      }
+
+      let phoneNumber = messageObj?.from ||
+                       change?.value?.contacts?.[0]?.wa_id ||
+                       change?.value?.metadata?.display_phone_number;
+
+      // Validar que el phoneNumberId del payload coincide con el del org en Firebase
+      const phoneId = change?.value?.metadata?.phone_number_id;
+      if (phoneId) {
+        const waConfig = await getWhatsAppConfig();
+        if (waConfig?.phoneNumberId && phoneId !== waConfig.phoneNumberId) {
+          return res.sendStatus(200);
+        }
+      }
+
+      if (!phoneNumber || !messageObj) {
+        return res.sendStatus(200);
+      }
+
+      const orgStatus = await getOrgStatus();
+      if (orgStatus.active === false || orgStatus.botEnabled === false) {
+        try {
+          await _rawSendText(
+            "Hola, gracias por escribirnos. En este momento no podemos atenderte a través de este canal. Por favor intenta más tarde o contáctanos por otro medio. Disculpa las molestias.",
+            phoneNumber
+          );
+        } catch (e) { /* best effort */ }
+        return res.sendStatus(200);
+      }
+      if (orgStatus.botBlocked === true) {
+        try {
+          await _rawSendText(
+            "Hola, gracias por escribirnos. En este momento nuestro servicio de chat no está disponible. Por favor contáctanos por otro medio.",
+            phoneNumber
+          );
+        } catch (e) { /* best effort */ }
+        return res.sendStatus(200);
+      }
+      if (orgStatus.botPaused === true) {
+        try {
+          await _rawSendText(
+            "Hola, gracias por escribirnos. Estamos realizando ajustes en nuestro servicio. Por favor intenta nuevamente en unos minutos.",
+            phoneNumber
+          );
+        } catch (e) { /* best effort */ }
+        return res.sendStatus(200);
+      }
+
+      const contactName = change?.value?.contacts?.[0]?.profile?.name || null;
+
+      const interactiveResponse = messageObj?.interactive;
+      if (interactiveResponse) {
+        const buttonId = interactiveResponse?.button_reply?.id || interactiveResponse?.list_reply?.id;
+        const buttonTitle = interactiveResponse?.button_reply?.title || interactiveResponse?.list_reply?.title || buttonId;
+        if (buttonId && phoneNumber) {
+          saveMessage(phoneNumber, buttonTitle, "user", { contactName }).catch(err =>
+            console.error("Error saving interactive user message:", err.message)
+          );
+          const mode = await getConversationMode(phoneNumber);
+          if (mode === "admin") return res.sendStatus(200);
+          await handleInteractiveResponse(phoneNumber, buttonId);
+          return res.sendStatus(200);
+        }
+      }
+
+      const userMessage = messageObj?.text?.body?.trim() || "";
+
+      if (!userMessage) {
+        const msgType = messageObj?.type;
+        const MEDIA_LABELS = {
+          image:    { label: "📷 Foto",       save: true },
+          audio:    { label: "🎵 Audio",       save: true },
+          voice:    { label: "🎵 Nota de voz", save: true },
+          video:    { label: "🎥 Video",       save: true },
+          document: { label: "📄 Documento",   save: true },
+          sticker:  { label: "🗒️ Sticker",     save: true },
+          location: { label: "📍 Ubicación",   save: true },
+          contacts: { label: "👤 Contacto",    save: true },
+          reaction: { label: null,             save: false },
+        };
+        const mediaInfo = MEDIA_LABELS[msgType];
+        if (!mediaInfo || !mediaInfo.label) return res.sendStatus(200);
+
+        const mode = await getConversationMode(phoneNumber);
+        if (mode === "admin") {
+          if (msgType === "image") {
+            const imageCaption = messageObj?.image?.caption || "";
+            const mediaId = messageObj?.image?.id || "";
+            const displayText = imageCaption ? `📷 ${imageCaption}` : "📷 Foto";
+            (async () => {
+              try {
+                const { downloadAndUploadMedia } = require("../services/mediaService");
+                const imageUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+                await saveMessage(phoneNumber, displayText, "user", { contactName, type: "image", imageUrl });
+              } catch (err) {
+                saveMessage(phoneNumber, displayText, "user", { contactName, type: "image" })
+                  .catch(e => console.error("Error saving image placeholder:", e.message));
+              }
+            })();
+          } else {
+            saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
+              .catch(err => console.error("Error saving media message:", err.message));
+          }
+        } else {
+          const currentSession = getSession(phoneNumber);
+          if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined &&
+              (msgType === "image" || msgType === "document")) {
+            const flow = await getFlow(currentSession.flowId);
+            const currentStep = flow?.steps?.[currentSession.flowStepIndex];
+            if (currentStep?.type === "image_input") {
+              const mediaId = messageObj?.[msgType]?.id;
+              if (mediaId) {
+                try {
+                  const { downloadAndUploadMedia } = require("../services/mediaService");
+                  const fileUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+                  const fieldKey = currentStep.fieldKey || "archivoUrl";
+                  const flowData = { ...currentSession.flowData, [fieldKey]: fileUrl };
+                  const nextIndex = currentSession.flowStepIndex + 1;
+                  setSession(phoneNumber, { flowData, flowStepIndex: nextIndex, flowStartTime: Date.now() });
+                  await executeFlowStep(phoneNumber, flow, nextIndex);
+                  return res.sendStatus(200);
+                } catch (e) {
+                  console.error("Error processing flow image:", e.message);
+                }
+              } else if (currentStep.optional) {
+                const nextIndex = currentSession.flowStepIndex + 1;
+                setSession(phoneNumber, { flowStepIndex: nextIndex, flowStartTime: Date.now() });
+                await executeFlowStep(phoneNumber, flow, nextIndex);
+                return res.sendStatus(200);
+              }
+            }
+          }
+          try {
+            await sendTextMessage(
+              "Lo sentimos, no podemos procesar archivos multimedia por este canal. Por favor describe tu consulta en texto. 📝",
+              phoneNumber
+            );
+          } catch (e) { /* best effort */ }
+        }
+        return res.sendStatus(200);
+      }
+
+      saveMessage(phoneNumber, userMessage, "user", { contactName }).catch(err =>
+        console.error("Error saving user message:", err.message)
+      );
+
+      const mode = await getConversationMode(phoneNumber);
+      if (mode === "admin") return res.sendStatus(200);
+
+      let session = getSession(phoneNumber);
+      if (!session) session = await getSessionAsync(phoneNumber);
+      if (!session) {
+        setSession(phoneNumber, { step: "initial" });
+        session = getSession(phoneNumber);
+      }
+
+      const config = await getGeneralConfig();
+      const flowTimeout = config?.registrationTimeout || 180000;
+      if (session.step && session.step.startsWith("flow_") && session.flowStartTime) {
+        if (Date.now() - session.flowStartTime > flowTimeout) {
+          const timeoutMsg = await getMessage("flow_timeout", "El tiempo del proceso expiró. Escribe *menu* para volver.");
+          await sendTextMessage(timeoutMsg, phoneNumber);
+          setSession(phoneNumber, { step: "main_menu" });
+          return res.sendStatus(200);
+        }
+      }
+
+      if (session.step === "initial" || !session.hasGreeted) {
+        await sendGreeting(phoneNumber, contactName);
+        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+      } else {
+        await handleUserMessage(phoneNumber, userMessage, session);
+      }
+
+      return res.sendStatus(200);
+    });
+  } catch (error) {
+    console.error(`[multi-tenant:${orgId}] Error al procesar mensaje:`, error.message || error);
+    return res.sendStatus(200);
+  }
+};
+
 module.exports = {
   apiVerification,
-  requestMessageFromWhatsapp
+  requestMessageFromWhatsapp,
+  apiVerificationMulti,
+  requestMessageMulti
 };

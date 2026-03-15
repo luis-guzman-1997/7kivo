@@ -458,6 +458,88 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
   .actions-cell { flex-direction: column; }
 }
 
+/* Webhook button (header action) */
+.btn-webhook {
+  background: rgba(6,182,212,0.08); color: #0e7490; border: 1px solid rgba(6,182,212,0.2);
+  padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-webhook:hover { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.35); }
+
+/* Webhook Modal */
+.webhook-modal { max-width: 560px; }
+.webhook-icon { color: #0e7490; font-size: 2rem; }
+.webhook-org-name { color: #64748b; font-size: 0.9rem; margin: 0 0 20px; }
+.webhook-section { margin-bottom: 20px; }
+.webhook-label {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 0.88rem; color: #1e293b; margin-bottom: 10px;
+}
+.webhook-step {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #0e7490; color: white;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+}
+.webhook-copy-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px;
+}
+.webhook-url { flex: 1; word-break: break-all; font-size: 0.82rem; color: #0f172a; }
+.webhook-no-url {
+  background: #fef9c3; border: 1px solid #fde047; border-radius: 8px;
+  padding: 10px 14px; font-size: 0.85rem; color: #854d0e;
+  display: flex; align-items: center; gap: 8px;
+}
+.webhook-form-row { display: flex; gap: 12px; }
+.webhook-form-row .form-group { flex: 1; }
+.field-label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 5px; }
+.webhook-input {
+  width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: 0.85rem; outline: none; background: #f8fafc; box-sizing: border-box;
+  font-family: inherit; resize: vertical;
+}
+.webhook-input:focus { border-color: #0e7490; background: white; }
+.webhook-save-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.webhook-token-row { display: flex; gap: 6px; align-items: center; }
+.webhook-token-row .webhook-input { flex: 1; }
+.webhook-token-actions {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+}
+.btn-copy {
+  background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+  padding: 7px 12px; border-radius: 8px; font-size: 0.8rem;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  white-space: nowrap; transition: all 0.2s; font-family: inherit;
+}
+.btn-copy:hover:not(:disabled) { background: #e2e8f0; }
+.btn-copy:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-generate-token {
+  background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+  padding: 6px 12px; border-radius: 7px; font-size: 0.8rem;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  font-family: inherit; transition: all 0.2s;
+}
+.btn-generate-token:hover { background: #e2e8f0; }
+.btn-save-token {
+  background: #0e7490; color: white; border: none;
+  padding: 6px 14px; border-radius: 7px; font-size: 0.8rem;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  font-family: inherit; transition: opacity 0.2s;
+}
+.btn-save-token:hover:not(:disabled) { opacity: 0.88; }
+.btn-save-token:disabled { opacity: 0.5; cursor: not-allowed; }
+.webhook-token-saved { color: #059669; font-size: 0.82rem; display: flex; align-items: center; gap: 4px; }
+.webhook-steps-list {
+  margin: 0; padding-left: 20px;
+  color: #475569; font-size: 0.87rem; line-height: 1.9;
+}
+.webhook-steps-list code {
+  background: #f1f5f9; padding: 1px 6px; border-radius: 4px;
+  font-family: monospace; font-size: 0.85em; color: #0e7490;
+}
+
 /* Reset Bot button (header action) */
 .btn-reset-bot {
   background: rgba(245,158,11,0.08); color: #b45309; border: 1px solid rgba(245,158,11,0.2);

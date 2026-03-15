@@ -5,6 +5,7 @@ import { SuperAdminRoutingModule } from './superadmin-routing.module';
 import { SaLayoutComponent } from './sa-layout/sa-layout.component';
 import { SaDashboardComponent } from './sa-dashboard/sa-dashboard.component';
 import { SaOrganizationsComponent } from './sa-organizations/sa-organizations.component';
+import { SaOrgDetailComponent } from './sa-org-detail/sa-org-detail.component';
 import { SaBillingComponent } from './sa-billing/sa-billing.component';
 import { SaPlansComponent } from './sa-plans/sa-plans.component';
 
@@ -13,6 +14,7 @@ import { SaPlansComponent } from './sa-plans/sa-plans.component';
     SaLayoutComponent,
     SaDashboardComponent,
     SaOrganizationsComponent,
+    SaOrgDetailComponent,
     SaBillingComponent,
     SaPlansComponent
   ],

@@ -1,27 +1,27 @@
 const axios = require("axios");
+const { getOrgId } = require("../config/orgConfig");
 
-let cachedWAConfig = null;
-let cacheTimestamp = 0;
+const waConfigCacheMap = {}; // { [orgId]: { data, ts } }
 const CACHE_TTL = 300000; // 5 min
 
 const getWACredentials = async () => {
   // Try Firestore config first, fallback to env vars
   const now = Date.now();
-  if (cachedWAConfig && (now - cacheTimestamp) < CACHE_TTL) {
-    return cachedWAConfig;
-  }
+  const orgId = (() => { try { return getOrgId(); } catch { return "_default"; } })();
+  const cached = waConfigCacheMap[orgId];
+  if (cached && now - cached.ts < CACHE_TTL) return cached.data;
 
   try {
     const { getWhatsAppConfig } = require("../services/botMessagesService");
     const fsConfig = await getWhatsAppConfig();
     if (fsConfig?.phoneNumberId && fsConfig?.token) {
-      cachedWAConfig = {
+      const credentials = {
         version: fsConfig.version || process.env.VERSION_META_WHATSAPP || "v21.0",
         phoneId: fsConfig.phoneNumberId,
         token: fsConfig.token
       };
-      cacheTimestamp = now;
-      return cachedWAConfig;
+      waConfigCacheMap[orgId] = { data: credentials, ts: now };
+      return credentials;
     }
   } catch (e) {
     // Firestore not available, use env vars
