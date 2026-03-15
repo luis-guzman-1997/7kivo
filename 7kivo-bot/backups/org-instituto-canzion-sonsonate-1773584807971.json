@@ -1,0 +1,859 @@
+{
+  "version": "2",
+  "type": "org_export",
+  "exportedAt": "2026-03-15T14:26:47.971Z",
+  "orgs": [
+    {
+      "id": "instituto-canzion-sonsonate",
+      "data": {
+        "setupComplete": true,
+        "botPaused": false,
+        "description": "",
+        "botBlocked": false,
+        "industry": "academy",
+        "monthlyRate": 0,
+        "botEnabled": true,
+        "active": true,
+        "botPausedReason": null,
+        "dailyBulkLimit": 10,
+        "plan": "Enterprise",
+        "name": "Instituto CanZion Sonsonate",
+        "orgId": "instituto-canzion-sonsonate",
+        "customLimits": null
+      },
+      "config": {
+        "general": {
+          "orgLogo": "https://firebasestorage.googleapis.com/v0/b/kivo7-app.firebasestorage.app/o/organizations%2Finstituto-canzion-sonsonate%2Flogo.png?alt=media&token=88a8d003-5bdf-4c81-af92-5a4d1abd65ab",
+          "id": "general",
+          "industry": "academy",
+          "orgName": "Instituto CanZion Sonsonate",
+          "botApiUrl": "https://api.7kivo.com",
+          "inactivityTimeout": 180000,
+          "welcomeMessage": "¡Bienvenido a *Instituto CanZion Sonsonate*! 🎵",
+          "description": "Instituto de música cristiana enfocado en la formación integral de músicos.",
+          "personalWhatsApp": ""
+        },
+        "whatsapp": {
+          "phoneNumberId": "1035855179606485",
+          "verifyToken": "instituto-canzion-sonsonate",
+          "token": "EAAXc0Fp9QP4BQ4iAuei4Uby88Dg4D5aUcZCAP80TgOIrub4AMsVQ4ABWZA3lh52yOQHsTmqf3xZCKuHjUGZCSUrpFQhHxD7pyai2q4qLsRtN1YZA3WaZBsa1OXrmLImNMWcWNjnB0C0XDgjI54MMRTtuzpnCUXSV4ru6MlpbOC1DZCZBZBAeVeI2ungJizl1ZCZCAZDZD"
+        },
+        "menu": {
+          "exitMessage": "🎶 ¡Hasta pronto!\n\nEscribe *hola* cuando necesites ayuda.\n\n_Instituto CanZion Sonsonate_",
+          "fallbackMessage": "🤔 No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones disponibles.",
+          "items": [
+            {
+              "type": "builtin",
+              "active": true,
+              "description": "Qué es el Instituto CanZion",
+              "order": 1,
+              "id": "m1",
+              "label": "Conócenos",
+              "action": "general"
+            },
+            {
+              "active": true,
+              "order": 2,
+              "description": "Conoce nuestra oferta académica",
+              "type": "flow",
+              "flowId": "lVXDaY19moayLlllEeJX",
+              "label": "Nuestros Cursos",
+              "id": "m2"
+            },
+            {
+              "type": "builtin",
+              "active": true,
+              "order": 3,
+              "description": "Días y horas de clases",
+              "id": "m3",
+              "label": "Horarios de Atención",
+              "action": "schedule"
+            },
+            {
+              "label": "Ubícanos",
+              "id": "m6",
+              "action": "contact",
+              "type": "builtin",
+              "description": "Dónde encontrarnos",
+              "order": 4,
+              "active": true
+            },
+            {
+              "flowId": "keMcao88OB6cejRjS9rd",
+              "type": "flow",
+              "active": true,
+              "order": 5,
+              "description": "Envíanos tu mensaje o comentario",
+              "label": "Déjanos un Mensaje",
+              "id": "m5"
+            },
+            {
+              "label": "Gestionar Permisos",
+              "id": "m4",
+              "active": true,
+              "order": 6,
+              "description": "Solicita un permiso o justifica una falta",
+              "flowId": "M1csNVsXI3bEMbpTKYAL",
+              "type": "flow"
+            }
+          ],
+          "menuButtonText": "Ver opciones",
+          "greeting": "👋 ¡Hola {name}!  \nBienvenido a *Instituto CanZion Sonsonate*. Soy *DoReMiBot* 🤖, tu asistente digital.\n\n⚠️ *Importante*\nPuedes cancelar el proceso en cualquier momento digitando la palabra: *CANCELAR*\n\n¿Cómo podemos ayudarte hoy?"
+        }
+      },
+      "flows": [
+        {
+          "id": "M1csNVsXI3bEMbpTKYAL",
+          "data": {
+            "order": 2,
+            "menuDescription": "Solicita un permiso o justifica una falta",
+            "notifyAdmin": true,
+            "steps": [
+              {
+                "maxRetries": 3,
+                "prompt": "*¿Cuál es tu nombre completo?*",
+                "id": "s1",
+                "sourceCollection": "",
+                "fieldKey": "nombre",
+                "allowedTypes": "image",
+                "errorMessage": "Por favor escribe tu nombre completo tal como aparece en tu ficha (mínimo 3 caracteres).",
+                "resultTemplate": "",
+                "type": "text_input",
+                "timeFieldKey": "",
+                "fieldLabel": "Nombre",
+                "displayField": "",
+                "authField": "",
+                "customOptions": [],
+                "optional": false,
+                "optionsTitleField": "",
+                "optionsSource": "custom",
+                "buttonText": "Ver opciones",
+                "required": true,
+                "validation": {
+                  "minLength": 3
+                },
+                "optionsDescField": "",
+                "lookupCollection": "",
+                "detailFields": [],
+                "notFoundMessage": ""
+              },
+              {
+                "required": true,
+                "optionsDescField": "edad",
+                "validation": {},
+                "lookupCollection": "",
+                "notFoundMessage": "",
+                "detailFields": [],
+                "optional": false,
+                "customOptions": [],
+                "optionsSource": "programas",
+                "optionsTitleField": "nombre",
+                "buttonText": "Ver Cursos",
+                "errorMessage": "",
+                "allowedTypes": "image",
+                "sourceCollection": "",
+                "fieldKey": "programa",
+                "fieldLabel": "Programa",
+                "timeFieldKey": "",
+                "resultTemplate": "",
+                "type": "select_list",
+                "displayField": "",
+                "authField": "",
+                "maxRetries": 3,
+                "id": "s2",
+                "prompt": "¿A qué *CURSO* perteneces?"
+              },
+              {
+                "authField": "",
+                "displayField": "",
+                "resultTemplate": "",
+                "type": "select_list",
+                "fieldLabel": "Instrumento",
+                "timeFieldKey": "",
+                "allowedTypes": "image",
+                "fieldKey": "instrumento",
+                "sourceCollection": "",
+                "errorMessage": "",
+                "prompt": "¿Qué *instrumento* estudias?",
+                "id": "s3",
+                "maxRetries": 3,
+                "detailFields": [],
+                "notFoundMessage": "",
+                "lookupCollection": "",
+                "validation": {},
+                "optionsDescField": "",
+                "required": true,
+                "buttonText": "Ver instrumentos",
+                "optionsSource": "instrumentos",
+                "optionsTitleField": "nombre",
+                "customOptions": [],
+                "optional": false
+              },
+              {
+                "displayField": "",
+                "authField": "",
+                "errorMessage": "",
+                "allowedTypes": "image",
+                "sourceCollection": "",
+                "fieldKey": "tipo",
+                "fieldLabel": "Tipo de solicitud",
+                "timeFieldKey": "",
+                "type": "select_list",
+                "resultTemplate": "",
+                "id": "s4",
+                "prompt": "¿Qué tipo de solicitud es?",
+                "maxRetries": 3,
+                "optionsDescField": "",
+                "validation": {},
+                "lookupCollection": "",
+                "detailFields": [],
+                "notFoundMessage": "",
+                "required": true,
+                "buttonText": "Ver opciones",
+                "optional": false,
+                "customOptions": [
+                  {
+                    "value": "Permiso anticipado",
+                    "label": "Permiso anticipado"
+                  },
+                  {
+                    "label": "Falta justificada",
+                    "value": "Falta justificada"
+                  },
+                  {
+                    "value": "Tardanza",
+                    "label": "Tardanza"
+                  }
+                ],
+                "optionsSource": "custom",
+                "optionsTitleField": ""
+              },
+              {
+                "displayField": "",
+                "authField": "",
+                "errorMessage": "Por favor describe el motivo (mínimo 5 caracteres).",
+                "fieldKey": "motivo",
+                "allowedTypes": "image",
+                "sourceCollection": "",
+                "timeFieldKey": "",
+                "fieldLabel": "Motivo",
+                "resultTemplate": "",
+                "type": "text_input",
+                "id": "s5",
+                "prompt": "Por favor describe el *motivo* de tu solicitud:\n\n_Indica la fecha, la razón y cualquier detalle relevante._",
+                "maxRetries": 3,
+                "optionsDescField": "",
+                "validation": {
+                  "minLength": 5
+                },
+                "lookupCollection": "",
+                "detailFields": [],
+                "notFoundMessage": "",
+                "required": true,
+                "buttonText": "Ver opciones",
+                "optional": false,
+                "customOptions": [],
+                "optionsTitleField": "",
+                "optionsSource": "custom"
+              }
+            ],
+            "name": "Permisos",
+            "menuLabel": "Permisos",
+            "showInMenu": true,
+            "description": "Solicitud de permiso o justificación de falta",
+            "type": "registration",
+            "saveToCollection": "permisos",
+            "completionMessage": "✅ *Solicitud recibida*\n\n*Nombre:*      \n{nombre}\n*Curso:*    \n{programa}\n*Instrumento:* \n{instrumento}\n*Tipo:*        \n{tipo}\n*Motivo:*      {motivo}\n\nTu solicitud ha sido enviada al equipo administrativo de *Instituto CanZion Sonsonate*.\nNos pondremos en contacto si necesitamos más información. 🎵",
+            "active": true
+          }
+        },
+        {
+          "id": "keMcao88OB6cejRjS9rd",
+          "data": {
+            "order": 3,
+            "menuDescription": "Envíanos tu mensaje o comentario",
+            "notifyAdmin": true,
+            "steps": [
+              {
+                "errorMessage": "Por favor ingresa un nombre válido (mínimo 3 caracteres).",
+                "fieldKey": "nombre",
+                "sourceCollection": "",
+                "fieldLabel": "Nombre",
+                "timeFieldKey": "",
+                "type": "text_input",
+                "displayField": "",
+                "id": "step_q1",
+                "prompt": "✉️ *Déjanos un Mensaje*\n\n_Instituto CanZion Sonsonate_\n\n_Puedes escribir *cancelar* en cualquier momento para salir._\n\n¿Cuál es tu *nombre completo*?",
+                "required": true,
+                "optionsDescField": "",
+                "validation": {
+                  "minLength": 3
+                },
+                "detailFields": [],
+                "customOptions": [],
+                "optionsSource": "custom",
+                "optionsTitleField": "",
+                "buttonText": "Ver opciones"
+              },
+              {
+                "prompt": "Cuéntanos lo que necesitas 🙏\n\n_Escribe tu mensaje, consulta o comentario:_",
+                "id": "step_q2",
+                "displayField": "",
+                "fieldKey": "descripcion",
+                "sourceCollection": "",
+                "errorMessage": "Por favor escribe tu mensaje (mínimo 10 caracteres).",
+                "type": "text_input",
+                "fieldLabel": "Mensaje",
+                "timeFieldKey": "",
+                "buttonText": "Ver opciones",
+                "customOptions": [],
+                "optionsTitleField": "",
+                "optionsSource": "custom",
+                "validation": {
+                  "minLength": 10
+                },
+                "optionsDescField": "",
+                "detailFields": [],
+                "required": true
+              }
+            ],
+            "name": "Déjanos un Mensaje",
+            "menuLabel": "Déjanos un Mensaje",
+            "description": "Recibe mensajes y comentarios del alumno",
+            "showInMenu": true,
+            "type": "registration",
+            "saveToCollection": "quejas-o-sugerencias",
+            "completionMessage": "✅ *Mensaje recibido*\n\nGracias, *{nombre}* 🎵\n\nHemos recibido tu mensaje y será revisado por nuestro equipo. De ser necesario, un maestro se pondrá en contacto contigo.\n\n_Instituto CanZion Sonsonate_",
+            "active": true
+          }
+        },
+        {
+          "id": "lVXDaY19moayLlllEeJX",
+          "data": {
+            "order": 1,
+            "menuDescription": "Conoce nuestra oferta académica",
+            "notifyAdmin": false,
+            "steps": [
+              {
+                "buttonText": "Ver programas",
+                "optional": false,
+                "customOptions": [],
+                "optionsTitleField": "nombre",
+                "optionsSource": "",
+                "optionsDescField": "edad",
+                "validation": {},
+                "detailFields": [
+                  "nombre",
+                  "edad",
+                  "duracion",
+                  "descripcion"
+                ],
+                "notFoundMessage": "",
+                "lookupCollection": "",
+                "required": false,
+                "id": "s1",
+                "prompt": "🎓 *Nuestros Programas*\n\nEstos son los programas disponibles en ICZ Sonsonate.\n\nSelecciona uno para ver los detalles:",
+                "maxRetries": 3,
+                "displayField": "nombre",
+                "authField": "",
+                "errorMessage": "",
+                "sourceCollection": "programas",
+                "fieldKey": "",
+                "allowedTypes": "image",
+                "fieldLabel": "",
+                "timeFieldKey": "",
+                "resultTemplate": "",
+                "type": "browse_collection"
+              }
+            ],
+            "name": "Nuestros Programas",
+            "menuLabel": "Nuestros Programas",
+            "showInMenu": true,
+            "description": "Conoce los programas de estudio del instituto",
+            "type": "information",
+            "saveToCollection": "",
+            "completionMessage": "¿Te gustaría saber algo más?\n\nEscribe *hola* para volver al menú principal. 🎵",
+            "active": true
+          }
+        }
+      ],
+      "collections": [
+        {
+          "id": "EDdP2taC2dngrheFKLJc",
+          "data": {
+            "fields": [
+              {
+                "label": "Instrumento",
+                "required": true,
+                "key": "nombre",
+                "type": "text"
+              }
+            ],
+            "description": "Instrumentos disponibles en el instituto",
+            "slug": "instrumentos",
+            "name": "Instrumentos",
+            "displayField": "nombre"
+          }
+        },
+        {
+          "id": "Fd1FFCwOae5tDO39esws",
+          "data": {
+            "description": "Solicitudes de permiso y falta enviadas desde el bot",
+            "fields": [
+              {
+                "required": true,
+                "label": "Nombre alumno",
+                "type": "text",
+                "key": "nombre"
+              },
+              {
+                "label": "Programa",
+                "required": true,
+                "key": "programa",
+                "type": "text"
+              },
+              {
+                "label": "Instrumento",
+                "required": true,
+                "key": "instrumento",
+                "type": "text"
+              },
+              {
+                "key": "tipo",
+                "type": "text",
+                "label": "Tipo de solicitud",
+                "required": true
+              },
+              {
+                "type": "text",
+                "key": "motivo",
+                "required": true,
+                "label": "Motivo"
+              },
+              {
+                "type": "text",
+                "key": "notas",
+                "required": false,
+                "label": "Notas"
+              },
+              {
+                "required": false,
+                "type": "text",
+                "protected": true,
+                "key": "phoneNumber",
+                "label": "WhatsApp"
+              }
+            ],
+            "name": "Permisos",
+            "slug": "permisos",
+            "displayField": "nombre"
+          }
+        },
+        {
+          "id": "SIzgwzmlPzPruUMNqaRL",
+          "data": {
+            "fields": [
+              {
+                "type": "text",
+                "key": "codigo_alumno",
+                "required": true,
+                "label": "Código de Alumno"
+              },
+              {
+                "type": "text",
+                "key": "nombre",
+                "required": false,
+                "label": "Nombre"
+              },
+              {
+                "required": false,
+                "label": "Próxima Fecha de Pago",
+                "type": "date",
+                "key": "proxima_fecha_pago"
+              },
+              {
+                "required": false,
+                "label": "Monto a Pagar",
+                "type": "number",
+                "key": "monto_pagar"
+              },
+              {
+                "label": "Formas de Pago",
+                "required": false,
+                "key": "formas_pago",
+                "type": "text"
+              },
+              {
+                "required": false,
+                "label": "Cuotas Pendientes",
+                "type": "number",
+                "key": "cuotas_pendientes"
+              }
+            ],
+            "description": "Registros de pagos por alumno",
+            "displayField": "nombre",
+            "name": "Consulta de Pago",
+            "slug": "consulta-de-pago"
+          }
+        },
+        {
+          "id": "dF5pyUTd2qqzsXkHzmiW",
+          "data": {
+            "description": "Mensajes y comentarios recibidos desde el bot",
+            "fields": [
+              {
+                "required": true,
+                "label": "Nombre",
+                "type": "text",
+                "key": "nombre"
+              },
+              {
+                "type": "text",
+                "key": "descripcion",
+                "required": true,
+                "label": "Mensaje"
+              },
+              {
+                "label": "WhatsApp",
+                "type": "text",
+                "protected": true,
+                "key": "phoneNumber",
+                "required": false
+              }
+            ],
+            "displayField": "nombre",
+            "slug": "quejas-o-sugerencias",
+            "name": "Mensajes"
+          }
+        },
+        {
+          "id": "rlpSas9vECGG3emZnIfF",
+          "data": {
+            "displayField": "nombre",
+            "name": "Programas",
+            "slug": "programas",
+            "fields": [
+              {
+                "type": "text",
+                "key": "nombre",
+                "required": true,
+                "label": "Nombre del Programa"
+              },
+              {
+                "label": "Rango de Edad",
+                "required": true,
+                "key": "edad",
+                "type": "text"
+              },
+              {
+                "key": "duracion",
+                "type": "text",
+                "label": "Duración",
+                "required": false
+              },
+              {
+                "type": "text",
+                "key": "descripcion",
+                "required": false,
+                "label": "Descripción"
+              }
+            ],
+            "description": "Cursos disponibles en ICZ Sonsonate"
+          }
+        }
+      ],
+      "collectionData": {
+        "instrumentos": [
+          {
+            "id": "RA4bf6EVlRpffV78wGlB",
+            "data": {
+              "nombre": "Guitarra",
+              "active": true
+            }
+          },
+          {
+            "id": "UPRpmi0EDbUKxB7OMCrv",
+            "data": {
+              "nombre": "Piano",
+              "active": true
+            }
+          },
+          {
+            "id": "i5yJBvhWjNHUVZqFEWBn",
+            "data": {
+              "nombre": "Canto",
+              "active": true
+            }
+          },
+          {
+            "id": "umllmzIR4s6ai7Hw1MLQ",
+            "data": {
+              "nombre": "Batería",
+              "active": true
+            }
+          },
+          {
+            "id": "zHcaUQqbIGJgYoCQo0rs",
+            "data": {
+              "nombre": "Bajo",
+              "active": true
+            }
+          }
+        ],
+        "permisos": [],
+        "consulta-de-pago": [],
+        "quejas-o-sugerencias": [
+          {
+            "id": "ZuO4Q6hEuvxRecI7M7eX",
+            "data": {
+              "status": "read",
+              "flowId": "keMcao88OB6cejRjS9rd",
+              "organizationId": "instituto-canzion-sonsonate",
+              "flowName": "Déjanos un Mensaje",
+              "nombre": "Andrea Arce",
+              "phoneNumber": "50370811041",
+              "descripcion": "He escrito correo para contactar con un asesor, para que me brinden información sobre las clases en El Salvador, y sobre todo me interesa saber si podemos funcionar como maestros para formar a nuevos músicos, puesto que mi esposo y yo somos licenciados en Música, pero de mi parte me gustaría formarme para componer canciones al señor"
+            }
+          }
+        ],
+        "programas": [
+          {
+            "id": "7PtQxraoEdAB4yoTTIxr",
+            "data": {
+              "descripcion": "Programa de formación musical con enfoque en liderazgo y servicio ministerial. Los estudiantes desarrollan habilidades en su instrumento, ensamble musical y lenguaje musical, aplicando todo en el contexto de la alabanza y adoración.",
+              "edad": "Mayores de 16 años",
+              "order": 1,
+              "duracion": "2 años (4 semestres)",
+              "active": true,
+              "nombre": "Curso Ministerial"
+            }
+          },
+          {
+            "id": "BsCZK541nH5cxfIBnkkp",
+            "data": {
+              "active": true,
+              "nombre": "CanZion Kids",
+              "duracion": "2 años (4 semestres)",
+              "order": 3,
+              "edad": "6 a 10 años",
+              "descripcion": "Espacio de iniciación musical basado en la exploración, orientación de instrumento, juego y enseñanza de principios bíblicos. Los niños aprenden a tocar su instrumento y participan en ensambles junto a otros niños."
+            }
+          },
+          {
+            "id": "KGHeXH7GqGSCci93rXE2",
+            "data": {
+              "nombre": "CanZion Instrumento",
+              "active": true,
+              "duracion": "2 años (4 semestres)",
+              "order": 2,
+              "edad": "Mayores de 10 años",
+              "descripcion": "Programa diseñado para potenciar competencias musicales, actitudinales y cognitivas a través de la práctica musical en conjunto. Los jóvenes aprenden a interpretar su instrumento y participan en ensambles, con énfasis en principios bíblicos."
+            }
+          }
+        ]
+      },
+      "botMessages": [
+        {
+          "id": "AjdUQyNZFqOwlb8wBFG6",
+          "data": {
+            "description": "Sin flujo activo",
+            "key": "no_registration",
+            "content": "Este servicio no está disponible en este momento.\n\nEscribe *hola* para ver otras opciones.",
+            "category": "flow",
+            "label": "Registro no disponible"
+          }
+        },
+        {
+          "id": "GQqUCFexPn8kTkuVOeyV",
+          "data": {
+            "content": "La conversación con nuestro equipo ha finalizado.\n\nEscribe *hola* para ver el menú.",
+            "label": "Despedida de admin",
+            "category": "admin",
+            "description": "Cuando admin devuelve el control",
+            "key": "admin_farewell"
+          }
+        },
+        {
+          "id": "MJv8PrllGd7K2lEvpU0C",
+          "data": {
+            "label": "Mensaje no reconocido",
+            "category": "fallback",
+            "content": "🤔 No logré entender tu mensaje.\n\nEscribe *hola* para ver el menú de opciones.",
+            "key": "fallback",
+            "description": "Cuando el bot no entiende"
+          }
+        },
+        {
+          "id": "NLZzaz2ToWfjfJeR99rR",
+          "data": {
+            "key": "flow_cancelled",
+            "description": "Cuando cancela dentro de un flujo",
+            "label": "Flujo cancelado",
+            "category": "flow",
+            "content": "*La conversación ha finalizado.*\n\n🤖 Esta conversación se cerrará automáticamente. Si necesitas asistencia, no dudes en contactarnos nuevamente.\n\n✨ ¡Te deseamos un excelente día!"
+          }
+        },
+        {
+          "id": "QM1uePFG1luiPOofVAF6",
+          "data": {
+            "category": "greeting",
+            "label": "Saludo principal",
+            "content": "¡Hola{name}! 👋🎵\n\nBienvenido a *Instituto CanZion Sonsonate*.\n\n¿Cómo podemos ayudarte hoy?",
+            "key": "greeting",
+            "description": "Mensaje de bienvenida"
+          }
+        },
+        {
+          "id": "TJ79IHooy91PTEnuw2iP",
+          "data": {
+            "key": "flow_cancel_hint",
+            "description": "Se muestra al iniciar un flujo",
+            "label": "Aviso de cancelación",
+            "category": "flow",
+            "content": "_Puedes escribir *cancelar* en cualquier momento para salir._\n"
+          }
+        },
+        {
+          "id": "TooubJEWuvAlnfVfEC45",
+          "data": {
+            "description": "Cierre por inactividad",
+            "key": "session_expired",
+            "content": "⏱️ *Tu sesión se cerró por inactividad.* \n\n🤖 Esta conversación se cerrará automáticamente. Si necesitas asistencia, no dudes en contactarnos nuevamente.\n\n ¡Te deseamos un excelente día! 🙌",
+            "label": "Sesión expirada",
+            "category": "general"
+          }
+        },
+        {
+          "id": "jdIo3I5h1v3aF2DkBVeN",
+          "data": {
+            "description": "Cuando cancela un proceso",
+            "key": "cancel",
+            "content": "Entendido, proceso cancelado. ✋\n\n🤖 Esta conversación se cerrará automáticamente. Si necesitas asistencia, no dudes en contactarnos nuevamente.\n\n✨ ¡Te deseamos un excelente día!",
+            "category": "general",
+            "label": "Cancelación"
+          }
+        },
+        {
+          "id": "uM8pPiQb9v0VjyXZ6o9H",
+          "data": {
+            "key": "goodbye",
+            "description": "Cuando el usuario se despide",
+            "label": "Despedida",
+            "category": "general",
+            "content": "🎶 ¡Hasta pronto!\n\n_Instituto CanZion Sonsonate_"
+          }
+        }
+      ],
+      "info": {
+        "contact": {
+          "city": "Sonsonate",
+          "email": "sonsonate@institutocanzion.com",
+          "showFields": {
+            "city": true,
+            "email": true,
+            "phone": true,
+            "address": true,
+            "country": true
+          },
+          "maps": "",
+          "phone": "6930-7473",
+          "country": "El Salvador",
+          "address": "8va Av. Norte # 6-3, Colonia Aida"
+        },
+        "schedule": {
+          "offersAppointments": false,
+          "businessType": "services",
+          "services": [],
+          "slotDuration": 30,
+          "days": [
+            {
+              "name": "Lunes",
+              "active": false,
+              "shifts": []
+            },
+            {
+              "name": "Martes",
+              "active": false,
+              "shifts": []
+            },
+            {
+              "name": "Miércoles",
+              "active": false,
+              "shifts": []
+            },
+            {
+              "shifts": [],
+              "active": false,
+              "name": "Jueves"
+            },
+            {
+              "active": false,
+              "shifts": [],
+              "name": "Viernes"
+            },
+            {
+              "name": "Sábado",
+              "shifts": [
+                {
+                  "to": "12:00",
+                  "from": "08:00"
+                }
+              ],
+              "active": true
+            },
+            {
+              "name": "Domingo",
+              "shifts": [],
+              "active": false
+            }
+          ],
+          "blockedDates": []
+        },
+        "general": {
+          "name": "Instituto CanZion Sonsonate",
+          "note": "Abierto a toda persona que desee aprender música con propósito.",
+          "description": "*Instituto CanZion Sonsonate* es una escuela de música cristiana dedicada a la formación integral de músicos al servicio de Dios y la iglesia.\n\nOfrecemos programas para todas las edades: desde niños con *Kids*, jóvenes con *Teens*, hasta adultos con el *Curso Ministerial Musical*.\n\n📍 8va Av. Norte # 6-3, Colonia Aida, Sonsonate, El Salvador",
+          "modality": "Presencial",
+          "focus": [
+            "Formación musical cristiana",
+            "Guitarra, Batería, Bajo, Canto, Piano",
+            "Ensamble y Lenguaje Musical",
+            "Desarrollo de carácter y principios bíblicos"
+          ]
+        }
+      },
+      "admins": [
+        {
+          "id": "CcPXq55ifk9oKZHCPmO9",
+          "data": {
+            "uid": "N6EZMKINqaPPuIXEHdWnDPPBNUo1",
+            "role": "admin",
+            "name": "Abigail",
+            "email": "abi@canzion.com",
+            "active": true
+          }
+        },
+        {
+          "id": "OGxV0IUosJXdwIfsryjA",
+          "data": {
+            "name": "Abel Ayala",
+            "uid": "H88WzFBYlEPFaZPN3LSQY5QpcJh1",
+            "role": "admin",
+            "email": "abel@canzion.com",
+            "active": true
+          }
+        },
+        {
+          "id": "qxtwLnZngKbEbHwF9VqR",
+          "data": {
+            "name": "Root",
+            "uid": "POEGWP9Ve9a3Rj6Mv8wRUfSUed63",
+            "role": "owner",
+            "active": true,
+            "email": "admin@canzion.com"
+          }
+        }
+      ]
+    }
+  ]
+}

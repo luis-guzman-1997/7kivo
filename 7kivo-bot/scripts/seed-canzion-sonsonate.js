@@ -21,7 +21,7 @@
  *   2. Nuestros Programas   → browse de programas (flow)
  *   3. Horarios de Atención → horarios (builtin)
  *   4. Permisos             → flujo 5 pasos (flow)
- *   5. Quejas o Sugerencias → flujo 3 pasos (flow)
+ *   5. Déjanos un Mensaje   → flujo 2 pasos (flow)
  *   6. Ubícanos             → contacto (builtin)
  *   7. Mis Pagos            → "próximamente" (message)
  *
@@ -212,14 +212,13 @@ async function seedCanzion() {
     });
 
     await orgRef.collection("_collections").add({
-      name: "Quejas o Sugerencias", slug: "quejas-o-sugerencias",
-      description: "Mensajes y reclamos recibidos desde el bot",
+      name: "Mensajes", slug: "quejas-o-sugerencias",
+      description: "Mensajes y comentarios recibidos desde el bot",
       displayField: "nombre",
       fields: [
-        { key: "nombre",      label: "Nombre",      type: "text", required: true  },
-        { key: "tipo",        label: "Tipo",         type: "text", required: true  },
-        { key: "descripcion", label: "Descripción",  type: "text", required: true  },
-        { key: "phoneNumber", label: "WhatsApp",     type: "text", required: false, protected: true }
+        { key: "nombre",      label: "Nombre",   type: "text", required: true  },
+        { key: "descripcion", label: "Mensaje",  type: "text", required: true  },
+        { key: "phoneNumber", label: "WhatsApp", type: "text", required: false, protected: true }
       ],
       createdAt: ts(), updatedAt: ts()
     });
@@ -239,7 +238,7 @@ async function seedCanzion() {
       createdAt: ts(), updatedAt: ts()
     });
 
-    console.log("   5 esquemas: programas, instrumentos, permisos, quejas-o-sugerencias, consulta-de-pago.\n");
+    console.log("   5 esquemas: programas, instrumentos, permisos, mensajes, consulta-de-pago.\n");
 
     // ── 3. Datos: programas ───────────────────────────────────────────────
     console.log(`3. Sembrando ${PROGRAMAS.length} programas...`);
@@ -401,18 +400,18 @@ async function seedCanzion() {
     });
     console.log(`   ✓ id: ${permisosFlowRef.id}\n`);
 
-    // ── 7. Flujo: Quejas o Sugerencias ────────────────────────────────────
-    console.log("7. Flujo 'Quejas o Sugerencias'...");
+    // ── 7. Flujo: Déjanos un Mensaje ─────────────────────────────────────
+    console.log("7. Flujo 'Déjanos un Mensaje'...");
     const quejasFlowRef = await orgRef.collection("flows").add({
-      name:             "Quejas o Sugerencias",
-      description:      "Recibe quejas, reclamos o sugerencias del alumno",
+      name:             "Déjanos un Mensaje",
+      description:      "Recibe mensajes y comentarios del alumno",
       type:             "registration",
       active:           true,
       order:            3,
       saveToCollection: "quejas-o-sugerencias",
       notifyAdmin:      true,
-      menuLabel:        "Quejas o Sugerencias",
-      menuDescription:  "Reporta un problema o sugerencia",
+      menuLabel:        "Déjanos un Mensaje",
+      menuDescription:  "Envíanos tu mensaje o comentario",
       showInMenu:       true,
       steps: [
         {
@@ -420,7 +419,7 @@ async function seedCanzion() {
           id:           "step_q1",
           type:         "text_input",
           prompt:
-            "📝 *Quejas o Sugerencias*\n\n_Instituto CanZion Sonsonate_\n\n" +
+            "✉️ *Déjanos un Mensaje*\n\n_Instituto CanZion Sonsonate_\n\n" +
             "_Puedes escribir *cancelar* en cualquier momento para salir._\n\n" +
             "¿Cuál es tu *nombre completo*?",
           fieldKey:     "nombre",
@@ -431,35 +430,22 @@ async function seedCanzion() {
         },
         {
           ...sb,
-          id:            "step_q2",
-          type:          "select_buttons",
-          prompt:        "¿Sobre qué nos contactas?",
-          fieldKey:      "tipo",
-          fieldLabel:    "Tipo",
-          required:      true,
-          optionsSource: "custom",
-          customOptions: [
-            { label: "Reclamo",    value: "Reclamo"    },
-            { label: "Consulta",   value: "Consulta"   },
-            { label: "Sugerencia", value: "Sugerencia" }
-          ]
-        },
-        {
-          ...sb,
-          id:           "step_q3",
+          id:           "step_q2",
           type:         "text_input",
-          prompt:       "Cuéntanos con detalle. ¿Qué sucedió o qué necesitas?",
+          prompt:       "Cuéntanos lo que necesitas 🙏\n\n_Escribe tu mensaje, consulta o comentario:_",
           fieldKey:     "descripcion",
-          fieldLabel:   "Descripción",
+          fieldLabel:   "Mensaje",
           required:     true,
           validation:   { minLength: 10 },
-          errorMessage: "Por favor brinda más detalle."
+          errorMessage: "Por favor escribe tu mensaje (mínimo 10 caracteres)."
         }
       ],
       completionMessage:
-        "✅ *Caso registrado*\n\n" +
-        "*Nombre:* {nombre} | *Tipo:* {tipo}\n\n" +
-        "Nuestro equipo revisará tu caso y te contactará pronto. 🎵",
+        "✅ *Mensaje recibido*\n\n" +
+        "Gracias, *{nombre}* 🎵\n\n" +
+        "Hemos recibido tu mensaje y será revisado por nuestro equipo. " +
+        "De ser necesario, un maestro se pondrá en contacto contigo.\n\n" +
+        `_${ORG_NAME}_`,
       createdAt: ts(), updatedAt: ts()
     });
     console.log(`   ✓ id: ${quejasFlowRef.id}\n`);
@@ -497,7 +483,7 @@ async function seedCanzion() {
         },
         {
           id: "m5", type: "flow", flowId: quejasFlowRef.id,
-          label: "Quejas o Sugerencias", description: "Reporta un problema o sugerencia",
+          label: "Déjanos un Mensaje", description: "Envíanos tu mensaje o comentario",
           order: 5, active: true
         },
         {
@@ -518,7 +504,7 @@ async function seedCanzion() {
       ],
       createdAt: ts()
     });
-    console.log("   Conócenos | Nuestros Programas | Horarios | Permisos | Quejas | Ubícanos | Mis Pagos\n");
+    console.log("   Conócenos | Nuestros Programas | Horarios | Permisos | Déjanos un Mensaje | Ubícanos | Mis Pagos\n");
 
     // ── 9. Bot messages ───────────────────────────────────────────────────
     console.log("9. Mensajes del bot...");
@@ -638,7 +624,7 @@ async function seedCanzion() {
     console.log(`    2. Nuestros Programas  → browse (${PROGRAMAS.length} programas)`);
     console.log(`    3. Horarios de Atención→ Sábados 08:00–12:00`);
     console.log(`    4. Permisos            → flujo 5 pasos → permisos`);
-    console.log(`    5. Quejas o Sugerencias→ flujo 3 pasos → quejas-o-sugerencias`);
+    console.log(`    5. Déjanos un Mensaje   → flujo 2 pasos → quejas-o-sugerencias`);
     console.log(`    6. Ubícanos            → 8va Av. Norte # 6-3, Col. Aida`);
     console.log(`    7. Mis Pagos           → mensaje "próximamente"`);
     console.log();
@@ -648,7 +634,7 @@ async function seedCanzion() {
     console.log(`  Instrumentos: ${INSTRUMENTOS.join(", ")}`);
     console.log();
     console.log("  Colecciones (solo definiciones, sin datos):");
-    console.log("    - permisos, quejas-o-sugerencias, consulta-de-pago");
+    console.log("    - permisos, mensajes (slug: quejas-o-sugerencias), consulta-de-pago");
     console.log();
     console.log(`  BotMessages: ${botMessages.length} (incluye flow_cancel_hint)`);
     console.log();
