@@ -2,62 +2,84 @@ const { getAllSessions, clearSession } = require("../config/sessionData");
 const { sendTextMessage } = require("../models/messageModel");
 const { getGeneralConfig, getMessage } = require("./botMessagesService");
 const { getConversationMode, saveMessage } = require("./conversationService");
+const { runWithOrgId } = require("../config/requestContext");
 
 const CHECK_INTERVAL = 30000; // Check every 30 seconds
 const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutos de cooldown tras enviar aviso
 
 let running = false;
-let cachedConfig = null;
-let configCachedAt = 0;
-const recentlyExpired = new Map(); // phone -> timestamp
+// configCache por org: { [orgId]: { config, cachedAt } }
+const configCacheByOrg = {};
+const recentlyExpired = new Map(); // "orgId:phone" -> timestamp
 
 const checkInactiveSessions = async () => {
   if (running) return;
   running = true;
 
   try {
-    if (!cachedConfig || (Date.now() - configCachedAt) > CONFIG_CACHE_TTL) {
-      cachedConfig = await getGeneralConfig();
-      configCachedAt = Date.now();
-    }
-    const config = cachedConfig;
-    const timeout = config?.inactivityTimeout || 180000;
-    const sessions = getAllSessions();
+    const sessions = getAllSessions(); // claves: "orgId:phone"
     const now = Date.now();
 
     // Limpiar cooldowns vencidos
-    for (const [p, ts] of recentlyExpired.entries()) {
-      if (now - ts > COOLDOWN_MS) recentlyExpired.delete(p);
+    for (const [key, ts] of recentlyExpired.entries()) {
+      if (now - ts > COOLDOWN_MS) recentlyExpired.delete(key);
     }
 
-    for (const [phone, session] of Object.entries(sessions)) {
-      if (!session.hasGreeted) continue;
-      if (recentlyExpired.has(phone)) continue;
+    // Agrupar sesiones por orgId
+    const byOrg = {};
+    for (const [key, session] of Object.entries(sessions)) {
+      const colonIdx = key.indexOf(":");
+      if (colonIdx === -1) continue;
+      const orgId = key.slice(0, colonIdx);
+      const phone = key.slice(colonIdx + 1);
+      if (!byOrg[orgId]) byOrg[orgId] = [];
+      byOrg[orgId].push({ phone, session });
+    }
 
-      const lastTime = session.last_message_time
-        ? new Date(session.last_message_time).getTime()
-        : 0;
+    for (const [orgId, entries] of Object.entries(byOrg)) {
+      await runWithOrgId(orgId, async () => {
+        // Config con cache por org
+        if (!configCacheByOrg[orgId] || (now - configCacheByOrg[orgId].cachedAt) > CONFIG_CACHE_TTL) {
+          try {
+            configCacheByOrg[orgId] = { config: await getGeneralConfig(), cachedAt: now };
+          } catch (err) {
+            console.error(`[inactivity] Error loading config for ${orgId}:`, err.message);
+            return;
+          }
+        }
+        const timeout = configCacheByOrg[orgId].config?.inactivityTimeout || 180000;
 
-      if (lastTime === 0) continue;
-      if ((now - lastTime) <= timeout) continue;
+        for (const { phone, session } of entries) {
+          const cacheKey = `${orgId}:${phone}`;
+          if (!session.hasGreeted) continue;
+          if (recentlyExpired.has(cacheKey)) continue;
 
-      try {
-        const mode = await getConversationMode(phone);
-        if (mode === "admin") continue;
+          const lastTime = session.last_message_time
+            ? new Date(session.last_message_time).getTime()
+            : 0;
 
-        const msg = await getMessage("session_expired",
-          "Tu sesión se cerró por inactividad. ¡Hasta luego! 👋\n\nEscribe *hola* cuando necesites ayuda.");
-        await sendTextMessage(msg, phone);
+          if (lastTime === 0) continue;
+          if ((now - lastTime) <= timeout) continue;
 
-        saveMessage(phone, msg, "bot").catch(() => {});
+          try {
+            const mode = await getConversationMode(phone);
+            if (mode === "admin") continue;
 
-        recentlyExpired.set(phone, now);
-        await clearSession(phone);
-        console.log(`Session expired for ${phone} (inactive ${Math.round((now - lastTime) / 60000)}min)`);
-      } catch (err) {
-        console.error(`Error expiring session ${phone}:`, err.message);
-      }
+            const msg = await getMessage("session_expired",
+              "Tu sesión se cerró por inactividad. ¡Hasta luego! 👋\n\nEscribe *hola* cuando necesites ayuda.");
+            await sendTextMessage(msg, phone);
+
+            saveMessage(phone, msg, "bot").catch(() => {});
+
+            recentlyExpired.set(cacheKey, now);
+            await clearSession(phone);
+            console.log(`Session expired for ${orgId}:${phone} (inactive ${Math.round((now - lastTime) / 60000)}min)`);
+          } catch (err) {
+            console.error(`Error expiring session ${orgId}:${phone}:`, err.message);
+          }
+        }
+      });
     }
   } catch (err) {
     console.error("Error in inactivity check:", err.message);
