@@ -19,6 +19,7 @@ const { setUserPassword, sendCampaign } = require("../controllers/adminControlle
 
 const { getOrgId } = require("../config/orgConfig");
 const { getGeneralConfig, getWhatsAppConfig } = require("../services/botMessagesService");
+const { deleteGoogleCalendarEvent } = require("../services/googleCalendarService");
 
 const router = require("express").Router();
 
@@ -46,6 +47,18 @@ router.post("/api/release-to-bot", releaseToBot);
 // Admin operations
 router.post("/api/admin/set-password", setUserPassword);
 router.post("/api/campaigns/send", sendCampaign);
+
+// Appointments
+router.post("/api/appointments/cancel-gcal", async (req, res) => {
+  try {
+    const { gcEventId } = req.body;
+    if (!gcEventId) return res.status(400).json({ ok: false, error: 'gcEventId requerido' });
+    await deleteGoogleCalendarEvent(gcEventId);
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 // Org info (for web dashboard)
 router.get("/api/org-info", async (req, res) => {

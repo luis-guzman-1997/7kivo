@@ -407,6 +407,20 @@ export class CollectionsComponent implements OnInit {
     if (!confirm(`¿Eliminar "${displayVal}"?`)) return;
     this.saving = true;
     try {
+      // Si tiene evento de Google Calendar, marcarlo como cancelado antes de eliminar
+      if (item.gcEventId) {
+        try {
+          const config = await this.firebaseService.getOrgConfig();
+          const botApiUrl = config?.botApiUrl?.replace(/\/$/, '');
+          if (botApiUrl) {
+            await fetch(`${botApiUrl}/api/appointments/cancel-gcal`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ gcEventId: item.gcEventId })
+            });
+          }
+        } catch (_) {}
+      }
       await this.firebaseService.deleteCollectionItem(this.currentCollection.slug, item.id);
       this.notice = 'Registro eliminado';
       await this.loadCollectionData();
