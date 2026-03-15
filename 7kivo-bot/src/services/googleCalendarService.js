@@ -88,10 +88,25 @@ const deleteGoogleCalendarEvent = async (eventId) => {
 
     const auth = getAuthClient();
     const calendar = google.calendar({ version: 'v3', auth });
-    await calendar.events.delete({ calendarId: gcConfig.calendarId, eventId });
-    console.log(`[GoogleCalendar] Evento eliminado: ${eventId}`);
+
+    // Obtener el evento actual para conservar sus datos
+    const existing = await calendar.events.get({ calendarId: gcConfig.calendarId, eventId });
+    const ev = existing.data;
+
+    // Actualizar: marcar como cancelado en título y descripción
+    await calendar.events.update({
+      calendarId: gcConfig.calendarId,
+      eventId,
+      requestBody: {
+        ...ev,
+        summary: `❌ CANCELADA — ${ev.summary}`,
+        description: `Estado: CANCELADA\n\n${ev.description || ''}`,
+        colorId: '11' // rojo en Google Calendar
+      }
+    });
+    console.log(`[GoogleCalendar] Evento marcado como cancelado: ${eventId}`);
   } catch (err) {
-    console.error('[GoogleCalendar] Error al eliminar evento:', err.message);
+    console.error('[GoogleCalendar] Error al actualizar evento cancelado:', err.message);
   }
 };
 
