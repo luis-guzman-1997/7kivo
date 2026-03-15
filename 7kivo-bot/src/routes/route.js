@@ -22,9 +22,9 @@ const { runWithOrgId } = require("../config/requestContext");
 const { getGeneralConfig, getWhatsAppConfig } = require("../services/botMessagesService");
 const { deleteGoogleCalendarEvent } = require("../services/googleCalendarService");
 
-// Middleware: si el body trae orgId, ejecuta el handler en ese contexto
+// Middleware: orgId puede venir de params URL, body o query
 const withOrgContext = (handler) => async (req, res) => {
-  const orgId = req.body?.orgId || req.query?.orgId || null;
+  const orgId = req.params?.orgId || req.body?.orgId || req.query?.orgId || null;
   if (orgId) {
     return runWithOrgId(orgId, () => handler(req, res));
   }
@@ -45,7 +45,16 @@ router.post("/auth", requestMessageFromWhatsapp);
 router.get("/auth/:orgId", apiVerificationMulti);
 router.post("/auth/:orgId", requestMessageMulti);
 
-// Chat API (admin messaging)
+// Chat API (admin messaging) — orgId en URL para contexto explícito
+router.get("/api/:orgId/conversations", withOrgContext(listConversations));
+router.get("/api/:orgId/conversations/:phone", withOrgContext(getConversationMessages));
+router.get("/api/:orgId/conversations/:phone/window", withOrgContext(checkWindow));
+router.post("/api/:orgId/send-message", withOrgContext(sendAdminMessage));
+router.post("/api/:orgId/send-image", withOrgContext(sendAdminImage));
+router.post("/api/:orgId/take-control", withOrgContext(takeControl));
+router.post("/api/:orgId/release-to-bot", withOrgContext(releaseToBot));
+
+// Rutas legacy sin orgId en URL (backward compat — se pueden remover cuando el frontend esté actualizado)
 router.get("/api/conversations", withOrgContext(listConversations));
 router.get("/api/conversations/:phone", withOrgContext(getConversationMessages));
 router.get("/api/conversations/:phone/window", withOrgContext(checkWindow));

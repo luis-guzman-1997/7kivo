@@ -184,14 +184,13 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.error = '';
     try {
       const user = this.authService.currentUser;
-      const response = await fetch(`${this.botApiUrl}/api/take-control`, {
+      const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/take-control`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: this.selectedConversation.phoneNumber,
           adminEmail: user?.email || '',
-          adminName: user?.displayName || user?.email || 'Admin',
-          orgId: this.orgId
+          adminName: user?.displayName || user?.email || 'Admin'
         })
       });
       if (!response.ok) {
@@ -210,12 +209,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.togglingMode = true;
     this.error = '';
     try {
-      const response = await fetch(`${this.botApiUrl}/api/release-to-bot`, {
+      const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/release-to-bot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: this.selectedConversation.phoneNumber,
-          orgId: this.orgId
+          phone: this.selectedConversation.phoneNumber
         })
       });
       if (!response.ok) {
@@ -243,15 +241,14 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     try {
       const user = this.authService.currentUser;
-      const response = await fetch(`${this.botApiUrl}/api/send-message`, {
+      const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: this.selectedConversation.phoneNumber,
           message: text,
           adminEmail: user?.email || '',
-          adminName: user?.displayName || user?.email || 'Admin',
-          orgId: this.orgId
+          adminName: user?.displayName || user?.email || 'Admin'
         })
       });
 
@@ -329,7 +326,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       const imageUrl = await this.firebaseService.uploadFile(file, path);
 
       const user = this.authService.currentUser;
-      const response = await fetch(`${this.botApiUrl}/api/send-image`, {
+      const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/send-image`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -337,8 +334,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           imageUrl,
           caption: '',
           adminEmail: user?.email || '',
-          adminName: user?.displayName || user?.email || 'Admin',
-          orgId: this.orgId
+          adminName: user?.displayName || user?.email || 'Admin'
         })
       });
 
