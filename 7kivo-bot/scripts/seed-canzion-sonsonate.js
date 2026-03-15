@@ -21,8 +21,8 @@
  *   2. Nuestros Programas   → browse de programas (flow)
  *   3. Horarios de Atención → horarios (builtin)
  *   4. Permisos             → flujo 5 pasos (flow)
- *   3. Prematrícula         → flujo 4 pasos (flow)
- *   5. Déjanos un Mensaje   → flujo 2 pasos (flow)
+ *   3. Prematrícula          → flujo 4 pasos (flow)
+ *   5. Déjanos un Mensaje    → flujo 2 pasos (flow)
  *   6. Ubícanos             → contacto (builtin)
  *   7. Mis Pagos            → "próximamente" (message)
  *
@@ -547,7 +547,7 @@ async function seedCanzion() {
     console.log(`   ✓ id: ${quejasFlowRef.id}\n`);
 
     // ── 9. Menú ───────────────────────────────────────────────────────────
-    console.log("9. Configurando menú (8 ítems)...");
+    console.log("9. Configurando menú (7 ítems)...");
     await orgRef.collection("config").doc("menu").set({
       greeting:
         `¡Hola{name}! 👋🎵\n\n` +
@@ -591,21 +591,11 @@ async function seedCanzion() {
           id: "m6", type: "builtin", action: "contact",
           label: "Ubícanos", description: "Dónde encontrarnos",
           order: 7, active: true
-        },
-        {
-          id: "m7", type: "message",
-          label: "Mis Pagos", description: "Consulta tu información de pagos",
-          messageContent:
-            "💳 *Mis Pagos*\n\n" +
-            "¡Muy pronto podrás consultar tu estado de cuenta directamente aquí! 🎉\n\n" +
-            "Estamos trabajando en esta función y te avisaremos cuando esté disponible. 📢\n\n" +
-            "_Instituto CanZion Sonsonate_",
-          order: 8, active: true
         }
       ],
       createdAt: ts()
     });
-    console.log("   Conócenos | Nuestros Programas | Prematrícula | Horarios | Permisos | Déjanos un Mensaje | Ubícanos | Mis Pagos\n");
+    console.log("   Conócenos | Nuestros Programas | Prematrícula | Horarios | Permisos | Déjanos un Mensaje | Ubícanos\n");
 
     // ── 10. Bot messages ───────────────────────────────────────────────────
     console.log("10. Mensajes del bot...");
@@ -729,7 +719,6 @@ async function seedCanzion() {
     console.log(`    5. Permisos            → flujo 5 pasos → permisos`);
     console.log(`    6. Déjanos un Mensaje  → flujo 2 pasos → quejas-o-sugerencias`);
     console.log(`    7. Ubícanos            → 8va Av. Norte # 6-3, Col. Aida`);
-    console.log(`    8. Mis Pagos           → mensaje "próximamente"`);
     console.log();
     console.log(`  Programas (${PROGRAMAS.length}):`);
     PROGRAMAS.forEach(p => console.log(`    - ${p.nombre} (${p.edad})`));
