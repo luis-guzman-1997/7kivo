@@ -220,6 +220,22 @@ export class FirebaseService {
     if (!data.ok) throw new Error(data.error || 'Error al cambiar contraseña');
   }
 
+  // Triggers immediate campaign send via bot API
+  async triggerCampaign(botApiUrl: string, orgId: string, campaignId: string): Promise<{ sentCount: number; failedCount: number; total: number }> {
+    if (!botApiUrl) throw new Error('URL del bot no configurada');
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error('Sesión no válida');
+    const response = await fetch(`${botApiUrl}/api/campaigns/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify({ orgId, campaignId })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'Error al enviar campaña');
+    return data;
+  }
+
   // ==================== ORG CONFIG ====================
 
   async getOrgConfig(): Promise<any | null> {

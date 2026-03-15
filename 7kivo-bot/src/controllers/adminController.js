@@ -1,4 +1,5 @@
 const { admin, db } = require('../config/firebase');
+const { runCampaign } = require('../services/campaignService');
 
 /**
  * POST /api/admin/set-password
@@ -57,4 +58,36 @@ async function setUserPassword(req, res) {
   }
 }
 
-module.exports = { setUserPassword };
+/**
+ * POST /api/campaigns/send
+ * Body: { orgId, campaignId }
+ * Header: Authorization: Bearer <idToken>
+ *
+ * Dispara el envío inmediato de una campaña.
+ */
+async function sendCampaign(req, res) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!idToken) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    try {
+      await admin.auth().verifyIdToken(idToken);
+    } catch (e) {
+      return res.status(401).json({ ok: false, error: 'Token inválido' });
+    }
+
+    const { orgId, campaignId } = req.body;
+    if (!orgId || !campaignId) {
+      return res.status(400).json({ ok: false, error: 'orgId y campaignId son requeridos' });
+    }
+
+    const result = await runCampaign(orgId, campaignId);
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('Error enviando campaña:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+}
+
+module.exports = { setUserPassword, sendCampaign };

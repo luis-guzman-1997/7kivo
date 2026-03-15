@@ -280,14 +280,32 @@ export class CampaignsComponent implements OnInit {
         this.uploadingImage = false;
       }
       const data = this.buildCampaignData(status);
+      let campaignId: string;
       if (this.editingCampaign) {
-        await this.firebaseService.updateCampaign(this.orgId, this.editingCampaign.id, data);
-        const idx = this.campaigns.findIndex(c => c.id === this.editingCampaign.id);
+        campaignId = this.editingCampaign.id;
+        await this.firebaseService.updateCampaign(this.orgId, campaignId, data);
+        const idx = this.campaigns.findIndex(c => c.id === campaignId);
         if (idx >= 0) this.campaigns[idx] = { ...this.campaigns[idx], ...data };
       } else {
-        const id = await this.firebaseService.createCampaign(this.orgId, data);
-        this.campaigns.unshift({ id, ...data, sentTotal: 0, failedTotal: 0, sentToday: 0, optedOutPhones: [] });
+        campaignId = await this.firebaseService.createCampaign(this.orgId, data);
+        this.campaigns.unshift({ id: campaignId, ...data, sentTotal: 0, failedTotal: 0, sentToday: 0, optedOutPhones: [] });
       }
+
+      // Envío inmediato: llamar al bot para disparar el envío ahora
+      if (status === 'active' && this.form.type === 'immediate') {
+        const botApiUrl = this.authService.botApiUrl;
+        if (botApiUrl) {
+          try {
+            await this.firebaseService.triggerCampaign(botApiUrl, this.orgId, campaignId);
+          } catch (sendErr: any) {
+            // No bloquear el flujo si el trigger falla — el bot puede reintentar
+            console.warn('No se pudo disparar el envío inmediato:', sendErr?.message);
+          }
+          // Recargar para reflejar status completado y contadores
+          await this.loadCampaigns();
+        }
+      }
+
       this.applyFilter();
       this.closeForm();
     } catch (err: any) {
