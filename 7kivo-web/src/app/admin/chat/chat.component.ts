@@ -59,6 +59,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   private msgsUnsub: Unsubscribe | null = null;
   private windowTimer: any = null;
 
+  get orgId(): string { return this.firebaseService.getOrgId(); }
+
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService,
@@ -188,7 +190,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         body: JSON.stringify({
           phone: this.selectedConversation.phoneNumber,
           adminEmail: user?.email || '',
-          adminName: user?.displayName || user?.email || 'Admin'
+          adminName: user?.displayName || user?.email || 'Admin',
+          orgId: this.orgId
         })
       });
       if (!response.ok) {
@@ -211,7 +214,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: this.selectedConversation.phoneNumber
+          phone: this.selectedConversation.phoneNumber,
+          orgId: this.orgId
         })
       });
       if (!response.ok) {
@@ -246,7 +250,8 @@ export class ChatComponent implements OnInit, OnDestroy {
           phone: this.selectedConversation.phoneNumber,
           message: text,
           adminEmail: user?.email || '',
-          adminName: user?.displayName || user?.email || 'Admin'
+          adminName: user?.displayName || user?.email || 'Admin',
+          orgId: this.orgId
         })
       });
 
@@ -332,7 +337,8 @@ export class ChatComponent implements OnInit, OnDestroy {
           imageUrl,
           caption: '',
           adminEmail: user?.email || '',
-          adminName: user?.displayName || user?.email || 'Admin'
+          adminName: user?.displayName || user?.email || 'Admin',
+          orgId: this.orgId
         })
       });
 

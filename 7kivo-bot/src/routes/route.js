@@ -18,8 +18,18 @@ const {
 const { setUserPassword, sendCampaign } = require("../controllers/adminController");
 
 const { getOrgId } = require("../config/orgConfig");
+const { runWithOrgId } = require("../config/requestContext");
 const { getGeneralConfig, getWhatsAppConfig } = require("../services/botMessagesService");
 const { deleteGoogleCalendarEvent } = require("../services/googleCalendarService");
+
+// Middleware: si el body trae orgId, ejecuta el handler en ese contexto
+const withOrgContext = (handler) => async (req, res) => {
+  const orgId = req.body?.orgId || req.query?.orgId || null;
+  if (orgId) {
+    return runWithOrgId(orgId, () => handler(req, res));
+  }
+  return handler(req, res);
+};
 
 const router = require("express").Router();
 
@@ -36,17 +46,17 @@ router.get("/auth/:orgId", apiVerificationMulti);
 router.post("/auth/:orgId", requestMessageMulti);
 
 // Chat API (admin messaging)
-router.get("/api/conversations", listConversations);
-router.get("/api/conversations/:phone", getConversationMessages);
-router.get("/api/conversations/:phone/window", checkWindow);
-router.post("/api/send-message", sendAdminMessage);
-router.post("/api/send-image", sendAdminImage);
-router.post("/api/take-control", takeControl);
-router.post("/api/release-to-bot", releaseToBot);
+router.get("/api/conversations", withOrgContext(listConversations));
+router.get("/api/conversations/:phone", withOrgContext(getConversationMessages));
+router.get("/api/conversations/:phone/window", withOrgContext(checkWindow));
+router.post("/api/send-message", withOrgContext(sendAdminMessage));
+router.post("/api/send-image", withOrgContext(sendAdminImage));
+router.post("/api/take-control", withOrgContext(takeControl));
+router.post("/api/release-to-bot", withOrgContext(releaseToBot));
 
 // Admin operations
 router.post("/api/admin/set-password", setUserPassword);
-router.post("/api/campaigns/send", sendCampaign);
+router.post("/api/campaigns/send", withOrgContext(sendCampaign));
 
 // Appointments
 router.post("/api/appointments/cancel-gcal", async (req, res) => {
