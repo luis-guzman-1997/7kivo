@@ -280,6 +280,22 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  async deleteConversation(conv: Conversation, event: Event): Promise<void> {
+    event.stopPropagation();
+    const name = conv.contactName || this.formatPhone(conv.phoneNumber);
+    if (!confirm(`¿Eliminar la conversación con ${name}? Se borrarán todos los mensajes permanentemente.`)) return;
+    try {
+      await this.firebaseService.deleteConversation(conv.phoneNumber);
+      if (this.selectedConversation?.id === conv.id) {
+        this.selectedConversation = null;
+        this.messages = [];
+        if (this.msgsUnsub) { this.msgsUnsub(); this.msgsUnsub = null; }
+      }
+    } catch (err) {
+      this.error = 'No se pudo eliminar la conversación.';
+    }
+  }
+
   triggerImageUpload(): void {
     this.imageInput?.nativeElement?.click();
   }

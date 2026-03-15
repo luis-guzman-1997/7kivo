@@ -59,6 +59,11 @@
             <span class="conv-badge" *ngIf="(conv.unreadCount || 0) > 0">{{ conv.unreadCount }}</span>
           </div>
         </div>
+        <button class="btn-conv-delete" *ngIf="authService.isSuperAdmin"
+                (click)="deleteConversation(conv, $event)"
+                title="Eliminar conversación">
+          <i class="fas fa-trash-alt"></i>
+        </button>
       </div>
       <div class="empty-convs" *ngIf="filteredConversations.length === 0">
         <i class="fas fa-comments"></i>

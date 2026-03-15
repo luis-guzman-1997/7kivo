@@ -885,6 +885,21 @@ export class FirebaseService {
     await batch.commit();
   }
 
+  async deleteConversation(phoneNumber: string): Promise<void> {
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    // Delete messages subcollection first
+    const msgsRef = collection(this.db, this.orgPath(), 'conversations', cleanPhone, 'messages');
+    const msgsSnap = await getDocs(msgsRef);
+    if (!msgsSnap.empty) {
+      const batch = writeBatch(this.db);
+      msgsSnap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    // Delete conversation doc
+    const convRef = doc(this.db, this.orgPath(), 'conversations', cleanPhone);
+    await deleteDoc(convRef);
+  }
+
   // ==================== PLATFORM (SUPER ADMIN) ====================
 
   async getAllOrganizations(): Promise<any[]> {

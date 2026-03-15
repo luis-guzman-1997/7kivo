@@ -111,6 +111,29 @@
   background: #f5f6f8;
 }
 
+.btn-conv-delete {
+  display: none;
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.conversation-item:hover .btn-conv-delete {
+  display: flex;
+  align-items: center;
+}
+
+.btn-conv-delete:hover {
+  opacity: 1;
+  background: #fee2e2;
+}
+
 .conversation-item.active {
   background: #e8f5e9;
 }
