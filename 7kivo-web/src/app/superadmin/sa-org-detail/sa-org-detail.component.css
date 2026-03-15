@@ -782,20 +782,80 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .detail-page-header { flex-wrap: wrap; }
-  .header-identity { order: 1; flex: 1 0 100%; }
+  /* Header: back + actions on row 1, identity on row 2 */
+  .detail-page-header { flex-wrap: wrap; gap: 10px; padding-bottom: 14px; margin-bottom: 14px; }
   .btn-back { order: 0; }
-  .header-right { order: 2; margin-left: auto; }
-  .status-strip { grid-template-columns: 1fr 1fr; }
+  .header-right { order: 0; margin-left: auto; }
+  .header-identity { order: 1; flex: 1 0 100%; gap: 10px; }
+  .header-org-name { font-size: 1.1rem; }
+  .header-logo { width: 40px; height: 40px; }
+  .header-icon { font-size: 1.8rem; }
+
+  /* Status strip 2 columns */
+  .status-strip { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .scard { padding: 11px 12px; }
+  .scard-value { font-size: 0.85rem; }
+
+  /* Tabs: scrollable, compact */
+  .detail-tabs {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; gap: 0; padding: 0 2px;
+    border-radius: 10px 10px 0 0;
+  }
+  .detail-tabs::-webkit-scrollbar { display: none; }
+  .detail-tabs button { padding: 9px 14px; font-size: 0.8rem; }
+
+  /* Content */
+  .detail-content { padding: 16px 14px; }
   .detail-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
-  .detail-tabs { overflow-x: auto; }
   .member-main { flex-wrap: wrap; gap: 10px; }
   .member-actions { width: 100%; justify-content: flex-end; }
   .pw-fields { grid-template-columns: 1fr; }
   .role-options { grid-template-columns: 1fr; }
+
+  /* Bulk limit row: wrap presets */
+  .bulk-limit-input-row { flex-wrap: wrap; gap: 6px; }
+
+  /* Webhook */
+  .webhook-url-row { flex-wrap: wrap; }
+  .webhook-form-row { flex-direction: column; }
+  .bot-api-url-row { flex-direction: column; align-items: flex-start; }
+
+  /* Add admin form */
+  .add-admin-form { padding: 14px; }
+  .form-row { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
+  /* Status strip: 1 column */
   .status-strip { grid-template-columns: 1fr; }
+
+  /* Tabs: icon only */
+  .tab-label { display: none; }
+  .detail-tabs button { padding: 10px 16px; font-size: 0.95rem; }
+  .detail-tabs button i { font-size: 1rem; }
+
+  /* Header compact */
+  .header-org-name { font-size: 1rem; }
+  .header-org-id { font-size: 0.7rem; }
+  .btn-view-panel { padding: 7px 12px; font-size: 0.8rem; }
+  .btn-view-label { display: none; }
+
+  /* Content padding */
+  .detail-content { padding: 14px 12px; }
+  .member-card { border-radius: 10px; }
+  .member-main { padding: 12px 12px; }
+  .member-panel { padding: 14px 12px; }
+
+  /* Delete / modal */
+  .delete-header { padding: 18px 16px 10px; }
+  .delete-body { padding: 0 16px 14px; }
+  .delete-actions { padding: 0 16px 18px; gap: 6px; flex-direction: column-reverse; }
+  .modal-content { border-radius: 14px; }
+}
+
+@media (max-width: 360px) {
+  .detail-tabs button { padding: 10px 12px; }
+  .scard { padding: 10px 10px; }
 }

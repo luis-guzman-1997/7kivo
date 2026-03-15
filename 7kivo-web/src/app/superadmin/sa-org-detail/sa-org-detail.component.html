@@ -26,7 +26,7 @@
 
     <div class="header-right">
       <button class="btn-view-panel" (click)="viewOrgPage(selectedOrg, 'configuracion')">
-        <i class="fas fa-external-link-alt"></i> Ver Panel
+        <i class="fas fa-external-link-alt"></i><span class="btn-view-label"> Ver Panel</span>
       </button>
       <div class="actions-menu-wrap">
         <button class="btn-more-actions" (click)="actionsMenuOpen = !actionsMenuOpen" title="Más acciones">
@@ -113,20 +113,20 @@
 
   <!-- Tabs -->
   <div class="detail-tabs">
-    <button [class.tab-active]="detailTab === 'info'" (click)="detailTab = 'info'">
-      <i class="fas fa-tag"></i> Plan
+    <button [class.tab-active]="detailTab === 'info'" (click)="detailTab = 'info'" title="Plan">
+      <i class="fas fa-tag"></i><span class="tab-label"> Plan</span>
     </button>
-    <button [class.tab-active]="detailTab === 'config'" (click)="detailTab = 'config'">
-      <i class="fas fa-sliders-h"></i> Configuración
+    <button [class.tab-active]="detailTab === 'config'" (click)="detailTab = 'config'" title="Configuración">
+      <i class="fas fa-sliders-h"></i><span class="tab-label"> Config</span>
     </button>
-    <button [class.tab-active]="detailTab === 'whatsapp'" (click)="detailTab = 'whatsapp'">
-      <i class="fab fa-whatsapp"></i> WhatsApp
+    <button [class.tab-active]="detailTab === 'whatsapp'" (click)="detailTab = 'whatsapp'" title="WhatsApp">
+      <i class="fab fa-whatsapp"></i><span class="tab-label"> WhatsApp</span>
     </button>
-    <button [class.tab-active]="detailTab === 'gcalendar'" (click)="detailTab = 'gcalendar'">
-      <i class="fas fa-calendar-alt"></i> Google Calendar
+    <button [class.tab-active]="detailTab === 'gcalendar'" (click)="detailTab = 'gcalendar'" title="Google Calendar">
+      <i class="fas fa-calendar-alt"></i><span class="tab-label"> Calendar</span>
     </button>
-    <button [class.tab-active]="detailTab === 'admins'" (click)="detailTab = 'admins'">
-      <i class="fas fa-users"></i> Equipo
+    <button [class.tab-active]="detailTab === 'admins'" (click)="detailTab = 'admins'" title="Equipo">
+      <i class="fas fa-users"></i><span class="tab-label"> Equipo</span>
       <span class="tab-count" *ngIf="orgAdmins.length > 0">{{ orgAdmins.length }}</span>
     </button>
   </div>
