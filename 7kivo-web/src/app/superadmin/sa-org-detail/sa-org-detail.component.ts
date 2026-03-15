@@ -32,6 +32,10 @@ export class SaOrgDetailComponent implements OnInit {
   editingWA = false;
   editWA: any = {};
 
+  orgGoogleCalendar: any = {};
+  editingGC = false;
+  editGC: any = {};
+
   testingApi = false;
   apiTestResult: { ok: boolean; error?: string } | null = null;
 
@@ -139,6 +143,7 @@ export class SaOrgDetailComponent implements OnInit {
     this.editingPlan = false;
     this.editingGeneral = false;
     this.editingWA = false;
+    this.editingGC = false;
     this.apiTestResult = null;
     this.addingAdmin = false;
     this.addAdminError = '';
@@ -148,13 +153,15 @@ export class SaOrgDetailComponent implements OnInit {
     this.changePwVal = '';
     this.changePwError = '';
     try {
-      const [detail, wa, admins] = await Promise.all([
+      const [detail, wa, admins, gc] = await Promise.all([
         this.firebaseService.getOrgConfigByOrgId(this.selectedOrg.id),
         this.firebaseService.getWhatsAppConfigByOrgId(this.selectedOrg.id),
-        this.firebaseService.getOrgAdminsByOrgId(this.selectedOrg.id)
+        this.firebaseService.getOrgAdminsByOrgId(this.selectedOrg.id),
+        this.firebaseService.getGoogleCalendarConfigByOrgId(this.selectedOrg.id)
       ]);
       this.orgDetail = detail || {};
       this.orgWhatsApp = wa || {};
+      this.orgGoogleCalendar = gc || {};
       this.orgAdmins = admins;
       this.logoPreview = this.orgDetail.orgLogo || '';
     } catch (err) {
@@ -269,6 +276,35 @@ export class SaOrgDetailComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = (e) => { this.logoPreview = e.target!.result as string; };
     reader.readAsDataURL(file);
+  }
+
+  // ── Google Calendar Config ──
+  startEditGC(): void {
+    this.editGC = {
+      enabled: this.orgGoogleCalendar?.enabled ?? false,
+      calendarId: this.orgGoogleCalendar?.calendarId || ''
+    };
+    this.editingGC = true;
+  }
+
+  cancelEditGC(): void { this.editingGC = false; }
+
+  async saveGC(): Promise<void> {
+    if (!this.selectedOrg) return;
+    this.saving = true;
+    try {
+      await this.firebaseService.saveGoogleCalendarConfigByOrgId(this.selectedOrg.id, {
+        enabled: this.editGC.enabled,
+        calendarId: this.editGC.calendarId.trim()
+      });
+      this.orgGoogleCalendar = { ...this.orgGoogleCalendar, ...this.editGC };
+      this.editingGC = false;
+      this.showNotice('Google Calendar configurado');
+    } catch (err) {
+      console.error('Error saving Google Calendar config:', err);
+    } finally {
+      this.saving = false;
+    }
   }
 
   // ── WhatsApp Config ──

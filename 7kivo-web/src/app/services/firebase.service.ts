@@ -938,6 +938,17 @@ export class FirebaseService {
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 
+  async getGoogleCalendarConfigByOrgId(orgId: string): Promise<any | null> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'googleCalendar');
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async saveGoogleCalendarConfigByOrgId(orgId: string, data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'googleCalendar');
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
   async uploadFileByPath(file: File, path: string): Promise<string> {
     const storageRef = ref(this.storage, path);
     await uploadBytes(storageRef, file);

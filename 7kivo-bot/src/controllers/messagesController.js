@@ -21,6 +21,7 @@ const {
   getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
+const { createGoogleCalendarEvent } = require("../services/googleCalendarService");
 
 const disabledNotified = {};
 
@@ -1157,6 +1158,9 @@ const completeFlow = async (phoneNumber, flow) => {
       };
       if (flowData._apptFecha) submissionData.status = "confirmed";
       await saveFlowSubmission(flow.saveToCollection, submissionData);
+      if (flowData._apptFecha) {
+        createGoogleCalendarEvent({ ...submissionData, phoneNumber });
+      }
     } catch (error) {
       console.error("Error saving flow submission:", error);
     }
