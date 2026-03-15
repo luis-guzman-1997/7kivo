@@ -35,6 +35,7 @@ export class CampaignsComponent implements OnInit {
   deleting = false;
 
   togglingId: string | null = null;
+  isResend = false;
 
   expandedId: string | null = null;
 
@@ -101,6 +102,7 @@ export class CampaignsComponent implements OnInit {
 
   openCreate(): void {
     this.editingCampaign = null;
+    this.isResend = false;
     this.form = {
       name: '',
       message: '',
@@ -125,6 +127,7 @@ export class CampaignsComponent implements OnInit {
 
   openEdit(campaign: any): void {
     this.editingCampaign = campaign;
+    this.isResend = campaign.status === 'completed' || campaign.status === 'cancelled';
     const phones = Array.isArray(campaign.manualPhones) ? campaign.manualPhones.join('\n') : '';
     this.form = {
       name: campaign.name || '',
@@ -151,6 +154,7 @@ export class CampaignsComponent implements OnInit {
   closeForm(): void {
     this.showForm = false;
     this.editingCampaign = null;
+    this.isResend = false;
     this.formImageFile = null;
     this.formImagePreview = '';
     this.formError = '';

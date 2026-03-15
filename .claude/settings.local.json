@@ -13,7 +13,9 @@
       "Bash(npm run:*)",
       "Bash(firebase deploy:*)",
       "WebFetch(domain:sv.institutocanzion.com)",
-      "WebFetch(domain:laguardia-dd0af.web.app)"
+      "WebFetch(domain:laguardia-dd0af.web.app)",
+      "Bash(cd:*)",
+      "Bash(npx ng:*)"
     ]
   }
 }

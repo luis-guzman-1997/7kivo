@@ -92,8 +92,8 @@
                 <i class="fas" [class.fa-pause]="c.status === 'active'" [class.fa-play]="c.status === 'paused'"
                   [class.fa-spinner]="togglingId === c.id" [class.fa-spin]="togglingId === c.id"></i>
               </button>
-              <!-- Edit (only draft) -->
-              <button class="btn-card-icon" *ngIf="c.status === 'draft'" (click)="openEdit(c)" title="Editar">
+              <!-- Edit -->
+              <button class="btn-card-icon" (click)="openEdit(c)" title="Editar">
                 <i class="fas fa-pen"></i>
               </button>
               <!-- Expand -->
@@ -182,10 +182,11 @@
             </div>
           </div>
 
-          <!-- Activate button for drafts -->
-          <div class="card-draft-actions" *ngIf="c.status === 'draft'">
+          <!-- Activate / re-send button -->
+          <div class="card-draft-actions" *ngIf="c.status === 'draft' || c.status === 'completed' || c.status === 'cancelled'">
             <button class="btn-activate" (click)="openEdit(c)">
-              <i class="fas fa-play-circle"></i> Editar y activar
+              <i class="fas fa-play-circle"></i>
+              {{ c.status === 'draft' ? 'Editar y activar' : 'Re-enviar campaña' }}
             </button>
           </div>
 
@@ -385,7 +386,7 @@
           <button class="btn-fp-activate" (click)="activateCampaign()" [disabled]="saving || limitExceeded">
             <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
             <i class="fas fa-play-circle" *ngIf="!saving"></i>
-            {{ saving ? 'Guardando...' : (form.type === 'immediate' ? 'Activar y enviar' : 'Activar campaña') }}
+            {{ saving ? (form.type === 'immediate' ? 'Enviando...' : 'Guardando...') : isResend ? (form.type === 'immediate' ? 'Re-enviar ahora' : 'Re-activar campaña') : (form.type === 'immediate' ? 'Activar y enviar' : 'Activar campaña') }}
           </button>
         </div>
 
