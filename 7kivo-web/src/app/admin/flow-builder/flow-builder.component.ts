@@ -28,6 +28,9 @@ interface FlowStep {
   resultTemplate?: string;
   notFoundMessage?: string;
   maxRetries?: number;
+  // UI-only fields (stripped before saving to Firebase)
+  _originalFieldKey?: string;
+  _fieldKeyChanged?: boolean;
 }
 
 interface Flow {
@@ -64,6 +67,13 @@ export class FlowBuilderComponent implements OnInit {
   currentFlow: Flow = this.emptyFlow();
   expandedStepIndex: number | null = null;
   expandedStepAdvanced: Set<number> = new Set();
+
+  // List view tabs
+  activeTab: 'menu' | 'flows' = 'menu';
+
+  // Drag-and-drop state
+  draggedStepIndex: number | null = null;
+  dragOverIndex: number | null = null;
 
   // Menu config
   menuConfig: any = { greeting: '', menuButtonText: 'Ver opciones', fallbackMessage: '', items: [] };
@@ -322,6 +332,10 @@ export class FlowBuilderComponent implements OnInit {
     this.currentFlow = JSON.parse(JSON.stringify(flow));
     if (!this.currentFlow.steps) this.currentFlow.steps = [];
     this.currentFlow.steps.forEach(s => {
+      // Store original fieldKey to detect dangerous renames
+      if (s.fieldKey) s._originalFieldKey = s.fieldKey;
+    });
+    this.currentFlow.steps.forEach(s => {
       if (!s.validation) s.validation = {};
       if (!s.customOptions) s.customOptions = [];
       if (!s.detailFields) s.detailFields = [];
@@ -365,6 +379,15 @@ export class FlowBuilderComponent implements OnInit {
     try {
       const data: any = { ...this.currentFlow };
       delete data.id;
+      // Strip UI-only internal fields before saving to Firebase
+      if (data.steps) {
+        data.steps = data.steps.map((s: any) => {
+          const clean = { ...s };
+          delete clean._originalFieldKey;
+          delete clean._fieldKeyChanged;
+          return clean;
+        });
+      }
 
       if (this.currentFlow.id) {
         await this.firebaseService.updateFlow(this.currentFlow.id, data);
@@ -449,18 +472,49 @@ export class FlowBuilderComponent implements OnInit {
     this.expandedStepIndex = null;
   }
 
-  moveStepUp(index: number): void {
-    if (index <= 0) return;
-    const steps = this.currentFlow.steps;
-    [steps[index - 1], steps[index]] = [steps[index], steps[index - 1]];
-    this.expandedStepIndex = index - 1;
+  onStepDragStart(index: number): void {
+    this.draggedStepIndex = index;
   }
 
-  moveStepDown(index: number): void {
-    if (index >= this.currentFlow.steps.length - 1) return;
+  onStepDragOver(event: DragEvent, index: number): void {
+    event.preventDefault();
+    if (this.draggedStepIndex !== null && this.draggedStepIndex !== index) {
+      this.dragOverIndex = index;
+    }
+  }
+
+  onStepDragLeave(): void {
+    this.dragOverIndex = null;
+  }
+
+  onStepDrop(index: number): void {
+    if (this.draggedStepIndex === null || this.draggedStepIndex === index) {
+      this.draggedStepIndex = null;
+      this.dragOverIndex = null;
+      return;
+    }
     const steps = this.currentFlow.steps;
-    [steps[index], steps[index + 1]] = [steps[index + 1], steps[index]];
-    this.expandedStepIndex = index + 1;
+    const dragged = steps.splice(this.draggedStepIndex, 1)[0];
+    steps.splice(index, 0, dragged);
+    // Adjust expanded index
+    const from = this.draggedStepIndex;
+    const to = index;
+    if (this.expandedStepIndex === from) {
+      this.expandedStepIndex = to;
+    } else if (this.expandedStepIndex !== null) {
+      if (from < to && this.expandedStepIndex > from && this.expandedStepIndex <= to) {
+        this.expandedStepIndex--;
+      } else if (from > to && this.expandedStepIndex >= to && this.expandedStepIndex < from) {
+        this.expandedStepIndex++;
+      }
+    }
+    this.draggedStepIndex = null;
+    this.dragOverIndex = null;
+  }
+
+  onStepDragEnd(): void {
+    this.draggedStepIndex = null;
+    this.dragOverIndex = null;
   }
 
   toggleStepExpand(index: number): void {
@@ -492,6 +546,10 @@ export class FlowBuilderComponent implements OnInit {
     const expected = this.fieldKeyFromLabel(step.fieldLabel);
     if (!step.fieldKey || step.fieldKey === this.fieldKeyFromLabel(step.fieldLabel.slice(0, -1)) || step.fieldKey === expected) {
       step.fieldKey = expected;
+    }
+    // Warn if the key changed from a non-empty original value
+    if (step._originalFieldKey) {
+      step._fieldKeyChanged = step._originalFieldKey !== step.fieldKey;
     }
   }
 
@@ -909,6 +967,7 @@ export class FlowBuilderComponent implements OnInit {
       this.templateFilter = '';
       this.activeCategoryTab = 'all';
       await this.loadData();
+      this.activeTab = 'flows';
       this.notice = addedToMenu
         ? `Flujo "${title}" creado y agregado al menú`
         : `Flujo "${title}" creado (menú lleno — agrégalo desde el menú manualmente)`;

@@ -263,6 +263,24 @@ const requestMessageFromWhatsapp = async (req, res) => {
       }
     }
 
+    // Check if flow was modified by admin while user was mid-session
+    if (session.step && session.step.startsWith("flow_") && session.flowId && session.flowStartTime) {
+      const activeFlow = await getFlow(session.flowId);
+      if (activeFlow) {
+        const flowUpdatedMs = activeFlow.updatedAt?.toMillis
+          ? activeFlow.updatedAt.toMillis()
+          : (typeof activeFlow.updatedAt === 'number' ? activeFlow.updatedAt : 0);
+        if (flowUpdatedMs > session.flowStartTime) {
+          await sendTextMessage(
+            "⚠️ El formulario fue actualizado. Por favor selecciona una opción del menú para iniciar de nuevo.",
+            phoneNumber
+          );
+          setSession(phoneNumber, { step: "main_menu" });
+          return res.sendStatus(200);
+        }
+      }
+    }
+
     if (session.step === "initial" || !session.hasGreeted) {
       if (phoneNumber) {
         await sendGreeting(phoneNumber, contactName);
@@ -486,6 +504,16 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
 
   // Handle browse_collection selection
   if (session && session.step === "flow_browse") {
+    if (buttonId === "list_pg_next" || buttonId === "list_pg_prev") {
+      const flow = await getFlow(session.flowId);
+      if (!flow) return;
+      const step = flow.steps[session.flowStepIndex];
+      const newPage = buttonId === "list_pg_next"
+        ? (session.browseListPage || 0) + 1
+        : (session.browseListPage || 0) - 1;
+      await sendBrowseCollection(phoneNumber, flow, step, session.flowStepIndex, newPage);
+      return;
+    }
     await handleBrowseSelection(phoneNumber, buttonId, session);
     return;
   }
@@ -766,33 +794,54 @@ const getItemDescription = (item, step) => {
   return "";
 };
 
-const sendSelectList = async (phoneNumber, flow, step, stepIndex) => {
-  let rows = [];
+// ── List pagination helper ─────────────────────────────────────────────────
+// WhatsApp allows max 10 rows per list. When there are more, we paginate using
+// 8 real items per page and 2 navigation rows ("⬅ Anteriores" / "➡ Ver más").
+const WA_LIST_PAGE_SIZE = 8;
+
+const buildListPage = (allRows, page) => {
+  if (allRows.length <= 10) return allRows;
+  const totalPages = Math.ceil(allRows.length / WA_LIST_PAGE_SIZE);
+  const start = page * WA_LIST_PAGE_SIZE;
+  const pageRows = allRows.slice(start, start + WA_LIST_PAGE_SIZE);
+  if (page < totalPages - 1) {
+    pageRows.push({ id: "list_pg_next", title: `➡ Ver más (${page + 2}/${totalPages})`, description: "" });
+  }
+  if (page > 0) {
+    pageRows.push({ id: "list_pg_prev", title: `⬅ Anteriores (${page}/${totalPages})`, description: "" });
+  }
+  return pageRows;
+};
+// ──────────────────────────────────────────────────────────────────────────
+
+const sendSelectList = async (phoneNumber, flow, step, stepIndex, page = 0) => {
+  let allRows = [];
 
   if (step.optionsSource && step.optionsSource !== "custom") {
     const [items, colDef] = await Promise.all([
       getCollectionItems(step.optionsSource),
       getCollectionDef(step.optionsSource)
     ]);
-    rows = items.map(item => ({
+    allRows = items.map(item => ({
       id: `fsel_${item.id}`,
       title: getItemDisplayName(item, step, colDef).substring(0, 24),
       description: getItemDescription(item, step).substring(0, 72)
     }));
   } else if (step.customOptions && step.customOptions.length > 0) {
-    rows = step.customOptions.map(opt => ({
+    allRows = step.customOptions.map(opt => ({
       id: `fsel_${opt.value}`,
       title: (opt.label || opt.value).substring(0, 24),
       description: (opt.description || "").substring(0, 72)
     }));
   }
 
-  if (rows.length === 0) {
+  if (allRows.length === 0) {
     await sendTextMessage("No hay opciones disponibles.", phoneNumber);
     setSession(phoneNumber, { step: "main_menu" });
     return;
   }
 
+  const rows = buildListPage(allRows, page);
   const sections = [{ title: step.fieldLabel || "Opciones", rows }];
   const buttonText = step.buttonText || "Ver opciones";
 
@@ -800,6 +849,7 @@ const sendSelectList = async (phoneNumber, flow, step, stepIndex) => {
     step: "flow_select",
     flowId: flow.id,
     flowStepIndex: stepIndex,
+    listPage: page,
     flowStartTime: Date.now()
   });
 
@@ -842,6 +892,18 @@ const sendSelectButtons = async (phoneNumber, flow, step, stepIndex) => {
 };
 
 const handleFlowSelectResponse = async (phoneNumber, buttonId, session) => {
+  // Handle list pagination
+  if (buttonId === "list_pg_next" || buttonId === "list_pg_prev") {
+    const flow = await getFlow(session.flowId);
+    if (!flow) return;
+    const step = flow.steps[session.flowStepIndex];
+    const newPage = buttonId === "list_pg_next"
+      ? (session.listPage || 0) + 1
+      : (session.listPage || 0) - 1;
+    await sendSelectList(phoneNumber, flow, step, session.flowStepIndex, newPage);
+    return;
+  }
+
   const flow = await getFlow(session.flowId);
   if (!flow) {
     await sendTextMessage("Error en el proceso. Escribe *menu* para volver.", phoneNumber);
@@ -890,7 +952,7 @@ const handleFlowSelectResponse = async (phoneNumber, buttonId, session) => {
 
 // ==================== BROWSE COLLECTION ====================
 
-const sendBrowseCollection = async (phoneNumber, flow, step, stepIndex) => {
+const sendBrowseCollection = async (phoneNumber, flow, step, stepIndex, page = 0) => {
   const collectionSlug = step.sourceCollection;
   if (!collectionSlug) {
     await sendTextMessage("Error: colección no configurada.", phoneNumber);
@@ -907,12 +969,13 @@ const sendBrowseCollection = async (phoneNumber, flow, step, stepIndex) => {
   }
 
   const displayField = step.displayField || "name";
-  const rows = items.map(item => ({
+  const allRows = items.map(item => ({
     id: `brw_${item.id}`,
     title: (item[displayField] || item.name || item.id).substring(0, 24),
     description: ""
   }));
 
+  const rows = buildListPage(allRows, page);
   const prompt = step.prompt || "Selecciona un elemento:";
   const sections = [{ title: "Opciones", rows }];
 
@@ -923,6 +986,7 @@ const sendBrowseCollection = async (phoneNumber, flow, step, stepIndex) => {
     browseCollection: collectionSlug,
     browseDetailFields: step.detailFields || [],
     browseDisplayField: displayField,
+    browseListPage: page,
     flowStartTime: Date.now()
   });
 

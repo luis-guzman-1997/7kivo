@@ -7,42 +7,42 @@
   <div *ngIf="!editMode">
     <div class="page-header">
       <div>
-        <h1 class="page-title"><i class="fas fa-project-diagram"></i> Constructor de Flujos</h1>
+        <h1 class="page-title"><i class="fas fa-sitemap"></i> Flujos del Bot</h1>
         <p class="page-subtitle">Diseña flujos conversacionales dinámicos para el bot de WhatsApp</p>
       </div>
       <div class="header-actions">
-        <button class="btn-tour" (click)="startTour()">
+        <button class="btn-new-flow" *ngIf="activeTab === 'flows'" (click)="openNewFlow()" [disabled]="!canCreateFlow">
+          <i class="fas fa-plus"></i> Nuevo flujo
+        </button>
+        <span *ngIf="activeTab === 'flows' && !canCreateFlow" class="plan-limit-hint">Límite: {{ planLimit }} flujos</span>
+        <button class="btn-tour" *ngIf="activeTab === 'flows'" (click)="startTour()">
           <i class="fas fa-question-circle"></i> Cómo funciona
+        </button>
+        <button class="fe-save-btn bmp-save-btn" *ngIf="activeTab === 'menu'" (click)="saveMenuConfig()" [disabled]="saving">
+          <i class="fas fa-save"></i> Guardar menú
         </button>
       </div>
     </div>
 
-    <!-- Schedule Warning -->
-    <div class="schedule-warning" *ngIf="scheduleWarning">
-      <div class="sw-content">
-        <i class="fas fa-calendar-exclamation"></i>
-        <div>
-          <strong>Horarios no configurados</strong>
-          <p>Tienes un flujo de citas activo pero no has configurado tus horarios de atención. El bot no podrá mostrar fechas disponibles.</p>
-        </div>
-        <a routerLink="/admin/bot" class="sw-action">Configurar Horarios <i class="fas fa-arrow-right"></i></a>
-      </div>
+    <!-- ========== TABS ========== -->
+    <div class="fb-tabs">
+      <button class="fb-tab" [class.fb-tab-active]="activeTab === 'menu'" (click)="activeTab = 'menu'">
+        <i class="fas fa-robot"></i> Menú del Bot
+        <span class="fb-tab-badge">{{ menuConfig.items.length }}/7</span>
+      </button>
+      <button class="fb-tab" [class.fb-tab-active]="activeTab === 'flows'" (click)="activeTab = 'flows'">
+        <i class="fas fa-sitemap"></i> Flujos
+        <span class="fb-tab-badge">{{ flows.length }}</span>
+      </button>
     </div>
 
-    <!-- ========== BOT MENU PANEL (always visible) ========== -->
+    <!-- ========== TAB: MENÚ DEL BOT ========== -->
+    <div *ngIf="activeTab === 'menu'">
+
+    <!-- ========== BOT MENU PANEL ========== -->
     <div class="bot-menu-panel">
-      <div class="bmp-header">
-        <div class="bmp-title">
-          <i class="fas fa-robot"></i>
-          <span>Menú de tu bot</span>
-          <span class="bmp-count">{{ menuConfig.items.length }}/7 opciones</span>
-        </div>
-        <div class="bmp-actions">
-          <button class="fe-save-btn bmp-save-btn" (click)="saveMenuConfig()" [disabled]="saving">
-            <i class="fas fa-save"></i> Guardar menú
-          </button>
-        </div>
-      </div>
+      <div class="bmp-body">
+        <div class="bmp-main-col">
 
       <!-- Bot settings (always visible) -->
       <div class="bmp-settings">
@@ -182,7 +182,11 @@
             <i class="fas fa-comment-alt"></i> Mensaje directo
           </button>
         </div>
-      </div>
+      </div><!-- /add-menu-panel -->
+
+      </div><!-- /bmp-main-col -->
+
+    </div><!-- /bmp-body -->
 
       <!-- Template creation modal -->
       <div class="template-modal-overlay" *ngIf="showTemplateModal">
@@ -207,6 +211,22 @@
         </div>
       </div>
     </div>
+    </div><!-- /tab menu -->
+
+    <!-- ========== TAB: FLUJOS ========== -->
+    <div *ngIf="activeTab === 'flows'">
+
+    <!-- Schedule Warning -->
+    <div class="schedule-warning" *ngIf="scheduleWarning">
+      <div class="sw-content">
+        <i class="fas fa-calendar-exclamation"></i>
+        <div>
+          <strong>Horarios no configurados</strong>
+          <p>Tienes un flujo de citas activo pero no has configurado tus horarios de atención. El bot no podrá mostrar fechas disponibles.</p>
+        </div>
+        <a routerLink="/admin/bot" class="sw-action">Configurar Horarios <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
 
     <!-- ========== LOADING ========== -->
     <div *ngIf="loading" class="loading-state">
@@ -214,9 +234,30 @@
     </div>
 
     <!-- ========== EMPTY STATE ========== -->
-    <div *ngIf="!loading && flows.length === 0" class="empty-state">
-      <i class="fas fa-project-diagram"></i>
-      <p>No hay flujos creados. Crea el primero para configurar las conversaciones del bot.</p>
+    <div *ngIf="!loading && flows.length === 0" class="empty-flows">
+      <div class="ef-how">
+        <div class="ef-step">
+          <div class="ef-icon ef-wa"><i class="fab fa-whatsapp"></i></div>
+          <strong>Cliente escribe</strong>
+          <span>"Quiero una cita"</span>
+        </div>
+        <i class="fas fa-arrow-right ef-arrow"></i>
+        <div class="ef-step">
+          <div class="ef-icon ef-purple"><i class="fas fa-sitemap"></i></div>
+          <strong>Bot guía la conversación</strong>
+          <span>Pregunta nombre, fecha, servicio...</span>
+        </div>
+        <i class="fas fa-arrow-right ef-arrow"></i>
+        <div class="ef-step">
+          <div class="ef-icon ef-green"><i class="fas fa-database"></i></div>
+          <strong>Datos guardados</strong>
+          <span>Los ves en Bases de Datos</span>
+        </div>
+      </div>
+      <p class="ef-cta">Crea tu primer flujo usando una plantilla:</p>
+      <button class="btn-new-flow ef-btn" (click)="showAddMenuPanel = true">
+        <i class="fas fa-magic"></i> Elegir plantilla
+      </button>
     </div>
 
     <!-- ========== FLOW CARDS ========== -->
@@ -238,10 +279,34 @@
           <p class="flow-desc" *ngIf="flow.description">{{ flow.description }}</p>
         </div>
         <div class="flow-card-meta">
-          <span><i class="fas fa-layer-group"></i> {{ flow.steps.length || 0 }} pasos</span>
-          <span><i class="fas fa-tag"></i> {{ flow.menuLabel }}</span>
-          <span><i class="fas fa-database"></i> {{ flow.saveToCollection || 'Sin guardar' }}</span>
+          <span><i class="fas fa-tag"></i> {{ flow.menuLabel || '—' }}</span>
+          <span *ngIf="flow.saveToCollection"><i class="fas fa-database"></i> {{ flow.saveToCollection }}</span>
         </div>
+
+        <!-- Conversation preview (chat bubbles) -->
+        <div class="flow-conv-preview" *ngIf="flow.steps && flow.steps.length > 0">
+          <ng-container *ngFor="let step of flow.steps.slice(0,3); let i = index">
+            <div class="fcp-pair">
+              <div class="fcp-bot" *ngIf="step.prompt">
+                <div class="fcp-avatar"><i class="fas fa-robot"></i></div>
+                <div class="fcp-bot-bubble">{{ step.prompt.substring(0,60) }}{{ step.prompt.length > 60 ? '…' : '' }}</div>
+              </div>
+              <div class="fcp-user" *ngIf="step.type !== 'message'">
+                <div class="fcp-user-bubble" [attr.data-type]="step.type">
+                  <i class="fas" [ngClass]="getStepTypeInfo(step.type).icon"></i>
+                  {{ getStepTypeInfo(step.type).label }}
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          <div class="fcp-more" *ngIf="flow.steps.length > 3">
+            <i class="fas fa-ellipsis-h"></i> {{ flow.steps.length - 3 }} paso{{ flow.steps.length - 3 > 1 ? 's' : '' }} más
+          </div>
+        </div>
+        <div class="fcp-empty" *ngIf="!flow.steps || flow.steps.length === 0">
+          <i class="fas fa-comment-slash"></i> Sin pasos — edita para configurar la conversación
+        </div>
+
         <div class="flow-card-actions">
           <button class="btn-flow btn-flow-edit" (click)="openEditFlow(flow)">
             <i class="fas fa-edit"></i> Editar
@@ -257,6 +322,8 @@
         </div>
       </div>
     </div>
+    </div><!-- /tab flows -->
+
   </div>
 
   <!-- Tour overlay + tooltip: siblings so tooltip z-index isn't trapped inside overlay's stacking context -->
@@ -348,11 +415,8 @@
       </button>
     </div>
 
-    <!-- Split layout -->
-    <div class="fe-split">
-
-      <!-- ── LEFT: Editor ── -->
-      <div class="fe-left">
+    <!-- Editor (full width) -->
+    <div class="fe-editor-col">
 
         <!-- Bloque: Menú -->
         <div class="fe-block">
@@ -393,10 +457,20 @@
           <!-- Lista de pasos -->
           <div class="fe-steps" *ngIf="currentFlow.steps.length > 0">
             <div *ngFor="let step of currentFlow.steps; let i = index"
-                 class="fe-step" [class.fe-step-open]="expandedStepIndex === i">
+                 class="fe-step"
+                 [class.fe-step-open]="expandedStepIndex === i"
+                 [class.fe-step-dragging]="draggedStepIndex === i"
+                 [class.fe-step-drag-over]="dragOverIndex === i && draggedStepIndex !== i"
+                 draggable="true"
+                 (dragstart)="onStepDragStart(i)"
+                 (dragover)="onStepDragOver($event, i)"
+                 (dragleave)="onStepDragLeave()"
+                 (drop)="onStepDrop(i)"
+                 (dragend)="onStepDragEnd()">
 
               <!-- Step header -->
               <div class="fe-step-head" (click)="toggleStepExpand(i)">
+                <i class="fas fa-grip-vertical fe-drag-handle" (mousedown)="$event.stopPropagation()"></i>
                 <span class="fe-step-num">{{ i + 1 }}</span>
                 <div class="fe-step-meta">
                   <span class="fe-step-type-tag" [attr.data-type]="step.type">
@@ -406,8 +480,6 @@
                   <span class="fe-step-preview">{{ step.prompt ? step.prompt.substring(0,60) + (step.prompt.length>60?'…':'') : '(sin mensaje)' }}</span>
                 </div>
                 <div class="fe-step-controls" (click)="$event.stopPropagation()">
-                  <button class="fe-ctrl-btn" (click)="moveStepUp(i)" [disabled]="i===0" title="Subir"><i class="fas fa-chevron-up"></i></button>
-                  <button class="fe-ctrl-btn" (click)="moveStepDown(i)" [disabled]="i===currentFlow.steps.length-1" title="Bajar"><i class="fas fa-chevron-down"></i></button>
                   <button class="fe-ctrl-btn fe-ctrl-del" (click)="removeStep(i)" title="Eliminar"><i class="fas fa-trash"></i></button>
                   <i class="fas fa-chevron-down fe-chevron" [class.fe-chevron-open]="expandedStepIndex===i"></i>
                 </div>
@@ -415,6 +487,15 @@
 
               <!-- Step body -->
               <div class="fe-step-body" *ngIf="expandedStepIndex === i">
+
+                <!-- Advertencia: fieldKey cambió -->
+                <div class="fe-fieldkey-warning" *ngIf="step._fieldKeyChanged">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <div>
+                    <strong>La clave del dato cambió</strong>
+                    <span>De <code>{{ step._originalFieldKey }}</code> a <code>{{ step.fieldKey }}</code>. Los registros existentes en la base de datos <strong>no se migrarán</strong> — el campo anterior quedará vacío en nuevos registros.</span>
+                  </div>
+                </div>
 
                 <!-- Tipo -->
                 <div class="fe-field">
@@ -716,129 +797,6 @@
           </button>
           <button class="fe-cancel-main" (click)="cancelEdit()">Cancelar</button>
         </div>
-
-      </div>
-
-      <!-- ── RIGHT: WhatsApp Preview ── -->
-      <div class="fe-right">
-        <div class="fe-preview-wrap">
-          <div class="fe-preview-label"><i class="fab fa-whatsapp"></i> Vista previa en WhatsApp</div>
-          <div class="wa-phone-frame">
-            <div class="wa-notch"></div>
-            <div class="wa-header-bar">
-              <i class="fas fa-arrow-left wa-hdr-back"></i>
-              <div class="wa-hdr-avatar"><i class="fas fa-robot"></i></div>
-              <div class="wa-hdr-info">
-                <span class="wa-hdr-name">Bot de WhatsApp</span>
-                <span class="wa-hdr-status">en línea</span>
-              </div>
-              <i class="fas fa-ellipsis-v wa-hdr-more"></i>
-            </div>
-            <div class="wa-chat-area">
-
-              <div class="wa-date-pill">hoy</div>
-
-              <!-- El usuario elige la opción del menú -->
-              <div class="wa-row wa-row-out" *ngIf="currentFlow.menuLabel">
-                <div class="wa-bubble-out">{{ currentFlow.menuLabel }}</div>
-              </div>
-
-              <!-- Pasos -->
-              <ng-container *ngFor="let step of currentFlow.steps; let i = index">
-
-                <!-- Bot pregunta -->
-                <div class="wa-row wa-row-in" *ngIf="step.prompt">
-                  <div class="wa-bubble-in">{{ step.prompt }}</div>
-                </div>
-
-                <!-- Respuesta simulada según tipo -->
-                <ng-container [ngSwitch]="step.type">
-
-                  <div class="wa-row wa-row-out" *ngSwitchCase="'text_input'">
-                    <div class="wa-bubble-out wa-bubble-placeholder">{{ step.fieldLabel || 'Texto del usuario…' }}</div>
-                  </div>
-
-                  <div class="wa-row wa-row-out" *ngSwitchCase="'number_input'">
-                    <div class="wa-bubble-out wa-bubble-placeholder">{{ step.fieldLabel || '0' }}</div>
-                  </div>
-
-                  <!-- Botones -->
-                  <div class="wa-interactive" *ngSwitchCase="'select_buttons'">
-                    <ng-container *ngIf="step.customOptions && step.customOptions.length > 0">
-                      <button class="wa-btn" *ngFor="let opt of step.customOptions.slice(0,3)">{{ opt.label || 'Opción' }}</button>
-                    </ng-container>
-                    <ng-container *ngIf="(!step.customOptions || step.customOptions.length === 0) && step.optionsSource && step.optionsSource !== 'custom'">
-                      <button class="wa-btn" *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0,3)">
-                        {{ getPreviewItemField(item, step.optionsTitleField).substring(0,20) }}
-                      </button>
-                    </ng-container>
-                    <button class="wa-btn wa-btn-ph" *ngIf="(!step.customOptions||step.customOptions.length===0) && (!step.optionsSource||step.optionsSource==='custom')">Opción…</button>
-                  </div>
-
-                  <!-- Lista -->
-                  <div class="wa-interactive" *ngSwitchCase="'select_list'">
-                    <button class="wa-list-btn">
-                      <i class="fas fa-list"></i> {{ step.buttonText || 'Ver opciones' }}
-                    </button>
-                    <div class="wa-list-items" *ngIf="(step.customOptions && step.customOptions.length > 0) || (step.optionsSource && step.optionsSource !== 'custom')">
-                      <ng-container *ngIf="step.optionsSource === 'custom'">
-                        <div class="wa-list-item" *ngFor="let opt of step.customOptions.slice(0,3)">{{ opt.label || 'Opción' }}</div>
-                      </ng-container>
-                      <ng-container *ngIf="step.optionsSource && step.optionsSource !== 'custom'">
-                        <div class="wa-list-item" *ngFor="let item of getCollectionPreview(step.optionsSource).slice(0,3)">
-                          {{ getPreviewItemField(item, step.optionsTitleField).substring(0,24) }}
-                        </div>
-                      </ng-container>
-                    </div>
-                  </div>
-
-                  <!-- Catálogo -->
-                  <div class="wa-interactive" *ngSwitchCase="'browse_collection'">
-                    <button class="wa-list-btn"><i class="fas fa-search"></i> Explorar catálogo</button>
-                  </div>
-
-                  <!-- Lista de Servicios -->
-                  <div class="wa-interactive" *ngSwitchCase="'select_services'">
-                    <button class="wa-list-btn"><i class="fas fa-briefcase-medical"></i> {{ step.buttonText || 'Ver servicios' }}</button>
-                  </div>
-
-                  <!-- Cita -->
-                  <div class="wa-interactive wa-appt-preview" *ngSwitchCase="'appointment_slot'">
-                    <div class="wa-appt-line"><i class="fas fa-calendar-day"></i> Lun 10 · Mar 11 · Mié 12…</div>
-                    <div class="wa-appt-line wa-appt-time"><i class="fas fa-clock"></i> 09:00 · 09:30 · 10:00…</div>
-                  </div>
-
-                  <!-- Imagen -->
-                  <div class="wa-row wa-row-out" *ngSwitchCase="'image_input'">
-                    <div class="wa-bubble-out wa-bubble-placeholder">
-                      <i class="fas fa-image"></i> {{ step.optional ? '(opcional) ' : '' }}Foto / Documento
-                    </div>
-                  </div>
-
-                  <!-- Mensaje solo (sin respuesta) -->
-                  <ng-container *ngSwitchCase="'message'"></ng-container>
-
-                </ng-container>
-
-              </ng-container>
-
-              <!-- Mensaje de confirmación -->
-              <div class="wa-row wa-row-in" *ngIf="currentFlow.completionMessage">
-                <div class="wa-bubble-in wa-bubble-done">
-                  {{ currentFlow.completionMessage.substring(0,200) }}{{ currentFlow.completionMessage.length > 200 ? '…' : '' }}
-                </div>
-              </div>
-
-              <!-- Estado vacío -->
-              <div class="wa-empty" *ngIf="currentFlow.steps.length === 0 && !currentFlow.completionMessage">
-                <i class="fas fa-comment-slash"></i>
-                <span>Agrega pasos para ver la conversación</span>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div>
 
     </div>
   </div>
