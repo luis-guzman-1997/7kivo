@@ -16,6 +16,7 @@ import { CollectionsComponent } from './collections/collections.component';
 import { WelcomeComponent } from './welcome/welcome.component';
 import { AdminSetupComponent } from './admin-setup/admin-setup.component';
 import { CampaignsComponent } from './campaigns/campaigns.component';
+import { CitasComponent } from './citas/citas.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -35,7 +36,8 @@ const routes: Routes = [
       { path: 'flujos', component: FlowBuilderComponent, canActivate: [RoleGuard], data: { permission: 'flows' } },
       { path: 'configuracion', component: OrgSettingsComponent, canActivate: [RoleGuard], data: { permission: 'settings' } },
       { path: 'pendientes', component: AdminSetupComponent, canActivate: [AuthGuard] },
-      { path: 'campanas', component: CampaignsComponent, canActivate: [RoleGuard], data: { permission: 'campaigns' } }
+      { path: 'campanas', component: CampaignsComponent, canActivate: [RoleGuard], data: { permission: 'campaigns' } },
+      { path: 'citas', component: CitasComponent, canActivate: [RoleGuard], data: { permission: 'collections' } }
     ]
   }
 ];

@@ -461,6 +461,35 @@ export class FirebaseService {
 
   // ==================== DYNAMIC COLLECTIONS ====================
 
+  async getAppointmentCollections(): Promise<{ slug: string; name: string }[]> {
+    const flows = await this.getFlows();
+    const seen = new Set<string>();
+    const result: { slug: string; name: string }[] = [];
+    for (const flow of flows) {
+      const hasAppt = flow.steps?.some((s: any) => s.type === 'appointment_slot');
+      if (hasAppt && flow.saveToCollection && !seen.has(flow.saveToCollection)) {
+        seen.add(flow.saveToCollection);
+        result.push({ slug: flow.saveToCollection, name: flow.name || flow.saveToCollection });
+      }
+    }
+    return result;
+  }
+
+  async getAppointmentItems(slug: string, from: string, to: string, status: string): Promise<any[]> {
+    const orgId = this.getOrgId();
+    const constraints: QueryConstraint[] = [orderBy('_apptFecha', 'asc'), orderBy('_apptHora', 'asc')];
+    if (from) constraints.push(where('_apptFecha', '>=', from));
+    if (to) constraints.push(where('_apptFecha', '<=', to));
+    if (status && status !== 'all') constraints.push(where('status', '==', status));
+    const colRef = collection(this.db, `organizations/${orgId}/${slug}`);
+    const snap = await getDocs(query(colRef, ...constraints));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async cancelAppointmentItem(slug: string, itemId: string): Promise<void> {
+    await this.updateDocument(slug, itemId, { status: 'cancelled', updatedAt: serverTimestamp() });
+  }
+
   async getCollectionDefs(): Promise<any[]> {
     const items = await this.getCollection('_collections');
     return items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
