@@ -42,7 +42,7 @@ const ORG_NAME  = "Instituto CanZion Sonsonate";
 
 const PROGRAMAS = [
   {
-    nombre:      "Curso Ministerial Musical",
+    nombre:      "Curso Ministerial",
     edad:        "Mayores de 16 años",
     duracion:    "2 años (4 semestres)",
     descripcion:
@@ -54,7 +54,7 @@ const PROGRAMAS = [
   },
   {
     nombre:      "CanZion Instrumento",
-    edad:        "12 a 15 años",
+    edad:        "Mayores de 10 años",
     duracion:    "2 años (4 semestres)",
     descripcion:
       "Programa diseñado para potenciar competencias musicales, actitudinales y cognitivas " +
@@ -64,7 +64,7 @@ const PROGRAMAS = [
     order:  2
   },
   {
-    nombre:      "Kids",
+    nombre:      "CanZion Kids",
     edad:        "6 a 10 años",
     duracion:    "2 años (4 semestres)",
     descripcion:
@@ -336,11 +336,7 @@ async function seedCanzion() {
           ...sb,
           id:           "s1",
           type:         "text_input",
-          prompt:
-            `📋 *Solicitud de Permiso / Falta*\n\n_${ORG_NAME}_\n\n` +
-            "_Puedes escribir *cancelar* en cualquier momento para salir._\n\n" +
-            "¿Cuál es tu *nombre completo*?\n\n" +
-            "_Escríbelo tal como aparece en tu ficha de registro._",
+          prompt:       "*¿Cuál es tu nombre completo?*",
           fieldKey:     "nombre",
           fieldLabel:   "Nombre",
           required:     true,
@@ -351,7 +347,7 @@ async function seedCanzion() {
           ...sb,
           id:                "s2",
           type:              "select_list",
-          prompt:            "¿A qué *programa* perteneces?",
+          prompt:            "¿A qué *CURSO* perteneces?",
           fieldKey:          "programa",
           fieldLabel:        "Programa",
           required:          true,
@@ -376,7 +372,7 @@ async function seedCanzion() {
         {
           ...sb,
           id:            "s4",
-          type:          "select_buttons",
+          type:          "select_list",
           prompt:        "¿Qué tipo de solicitud es?",
           fieldKey:      "tipo",
           fieldLabel:    "Tipo de solicitud",
@@ -404,10 +400,10 @@ async function seedCanzion() {
       ],
       completionMessage:
         "✅ *Solicitud recibida*\n\n" +
-        "*Nombre:*      {nombre}\n" +
-        "*Programa:*    {programa}\n" +
-        "*Instrumento:* {instrumento}\n" +
-        "*Tipo:*        {tipo}\n" +
+        "*Nombre:*      \n{nombre}\n" +
+        "*Curso:*    \n{programa}\n" +
+        "*Instrumento:* \n{instrumento}\n" +
+        "*Tipo:*        \n{tipo}\n" +
         "*Motivo:*      {motivo}\n\n" +
         `Tu solicitud ha sido enviada al equipo administrativo de *${ORG_NAME}*.\n` +
         "Nos pondremos en contacto si necesitamos más información. 🎵",
@@ -620,12 +616,12 @@ async function seedCanzion() {
       {
         key: "session_expired", label: "Sesión expirada",        category: "general",
         description: "Cierre por inactividad",
-        content: "Tu sesión se cerró por inactividad. ⏱️\n\nEscribe *hola* para volver al menú cuando quieras."
+        content: "⏱️ *Tu sesión se cerró por inactividad.* \n\n🤖 Esta conversación se cerrará automáticamente. Si necesitas asistencia, no dudes en contactarnos nuevamente.\n\n ¡Te deseamos un excelente día! 🙌"
       },
       {
         key: "cancel",          label: "Cancelación",            category: "general",
         description: "Cuando cancela un proceso",
-        content: "Entendido, proceso cancelado. ✋\n\nEscribe *hola* para volver al menú principal."
+        content: "Entendido, proceso cancelado. ✋\n\n🤖 Esta conversación se cerrará automáticamente. Si necesitas asistencia, no dudes en contactarnos nuevamente.\n\n✨ ¡Te deseamos un excelente día!"
       },
       {
         key: "flow_cancel_hint", label: "Aviso de cancelación",  category: "flow",
@@ -635,7 +631,7 @@ async function seedCanzion() {
       {
         key: "flow_cancelled",  label: "Flujo cancelado",        category: "flow",
         description: "Cuando cancela dentro de un flujo",
-        content: "Solicitud cancelada. ✋\n\nEscribe *hola* para volver al menú principal."
+        content: "*La conversación ha finalizado.*\n\n🤖 Esta conversación se cerrará automáticamente. Si necesitas asistencia, no dudes en contactarnos nuevamente.\n\n✨ ¡Te deseamos un excelente día!"
       },
       {
         key: "admin_farewell",  label: "Despedida de admin",     category: "admin",
