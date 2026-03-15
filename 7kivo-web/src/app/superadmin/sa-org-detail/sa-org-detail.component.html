@@ -514,7 +514,12 @@
               {{ adminInitials(adm) }}
             </div>
             <div class="member-info">
-              <span class="member-name">{{ adm.name || '(Sin nombre)' }}</span>
+              <div class="member-name-row">
+                <span class="member-name">{{ adm.name || '(Sin nombre)' }}</span>
+                <span class="role-badge role-badge-inline" [class]="'role-' + (adm.role || 'viewer')">
+                  {{ roleLabel(adm.role || 'viewer') }}
+                </span>
+              </div>
               <span class="member-email">{{ adm.email }}</span>
             </div>
             <div class="member-role-wrap">
@@ -528,14 +533,14 @@
                 (click)="changePwAdm?.uid === adm.uid ? cancelChangePwSA() : startChangePwSA(adm)"
                 title="Cambiar contraseña">
                 <i class="fas fa-key"></i>
-                <span>Contraseña</span>
+                <span class="btn-text-label">Contraseña</span>
               </button>
               <button class="btn-member-action"
                 [class.btn-member-active]="editingRoleAdm?.id === adm.id"
                 (click)="editingRoleAdm?.id === adm.id ? cancelEditRole() : startEditRole(adm)"
                 title="Cambiar rol">
                 <i class="fas fa-user-tag"></i>
-                <span>Rol</span>
+                <span class="btn-text-label">Rol</span>
               </button>
               <button class="btn-member-remove" (click)="removeAdminFromOrg(adm)" title="Quitar del equipo">
                 <i class="fas fa-trash-alt"></i>
