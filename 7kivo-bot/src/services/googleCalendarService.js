@@ -8,13 +8,32 @@ const getGoogleCalendarConfig = async () => {
   return snap.exists ? snap.data() : null;
 };
 
+const readRawEnvValue = (key) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const content = fs.readFileSync(path.resolve(process.cwd(), '.env'), 'utf8');
+    for (const line of content.split('\n')) {
+      if (line.startsWith(key + '=')) {
+        let value = line.slice(key.length + 1).trim();
+        if ((value.startsWith("'") && value.endsWith("'")) ||
+            (value.startsWith('"') && value.endsWith('"'))) {
+          value = value.slice(1, -1);
+        }
+        return value;
+      }
+    }
+  } catch (_) {}
+  return '';
+};
+
 const getAuthClient = () => {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_PATH || '';
+  // Leer directo del .env para evitar que dotenv corrompa el JSON inline
+  const raw = readRawEnvValue('GOOGLE_SERVICE_ACCOUNT_PATH') || process.env.GOOGLE_SERVICE_ACCOUNT_PATH || '';
   let credentials;
   try {
     credentials = JSON.parse(raw);
   } catch (_) {
-    // Si no es JSON, asumimos que es una ruta de archivo
     const fs = require('fs');
     credentials = JSON.parse(fs.readFileSync(raw, 'utf8'));
   }
