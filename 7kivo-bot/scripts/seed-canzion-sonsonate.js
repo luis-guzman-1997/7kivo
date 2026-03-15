@@ -550,8 +550,10 @@ async function seedCanzion() {
     console.log("9. Configurando menú (7 ítems)...");
     await orgRef.collection("config").doc("menu").set({
       greeting:
-        `¡Hola{name}! 👋🎵\n\n` +
-        `Bienvenido a *${ORG_NAME}*.\n\n` +
+        `👋 ¡Hola {name}!  \n` +
+        `Bienvenido a *${ORG_NAME}*. Soy *DoReMiBot* 🤖, tu asistente digital.\n\n` +
+        `⚠️ *Importante*\n` +
+        `Puedes cancelar el proceso en cualquier momento digitando la palabra: *CANCELAR*\n\n` +
         `¿Cómo podemos ayudarte hoy?`,
       menuButtonText:  "Ver opciones",
       fallbackMessage: "🤔 No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones disponibles.",
