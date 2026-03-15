@@ -182,12 +182,21 @@ export class FirebaseService {
   async updateOrgAdminByOrgId(orgId: string, adminId: string, data: DocumentData): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId, 'admins', adminId);
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
-    // Si se cambió el rol, sincronizar también en users/{uid}
+    // Si se cambió el rol, sincronizar en users/{uid} (que es lo que lee el login)
     if (data['role']) {
       const adminSnap = await getDoc(docRef);
-      const uid = adminSnap.data()?.['uid'];
+      const adminData = adminSnap.data();
+      const uid = adminData?.['uid'];
       if (uid) {
+        // Camino rápido: uid guardado en el doc
         await setDoc(doc(this.db, 'users', uid), { role: data['role'], updatedAt: serverTimestamp() }, { merge: true });
+      } else if (adminData?.['email']) {
+        // Fallback: buscar por email en la colección users
+        const q = query(collection(this.db, 'users'), where('email', '==', adminData['email']));
+        const snap = await getDocs(q);
+        for (const userDoc of snap.docs) {
+          await setDoc(userDoc.ref, { role: data['role'], updatedAt: serverTimestamp() }, { merge: true });
+        }
       }
     }
   }
