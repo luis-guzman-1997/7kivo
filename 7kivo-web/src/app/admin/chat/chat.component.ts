@@ -125,9 +125,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.msgsUnsub) this.msgsUnsub();
     if (this.windowTimer) clearInterval(this.windowTimer);
 
+    const listenPhone = conv.phoneNumber;
     this.msgsUnsub = this.firebaseService.onConversationMessages(
-      conv.phoneNumber,
+      listenPhone,
       (msgs) => {
+        if (this.selectedConversation?.phoneNumber !== listenPhone) return;
         this.messages = msgs;
         setTimeout(() => this.scrollToBottom(), 100);
       }
