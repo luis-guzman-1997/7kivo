@@ -494,13 +494,18 @@ export class FirebaseService {
 
   async getAppointmentItems(slug: string, from: string, to: string, status: string): Promise<any[]> {
     const orgId = this.getOrgId();
-    const constraints: QueryConstraint[] = [orderBy('_apptFecha', 'asc'), orderBy('_apptHora', 'asc')];
-    if (from) constraints.push(where('_apptFecha', '>=', from));
-    if (to) constraints.push(where('_apptFecha', '<=', to));
-    if (status && status !== 'all') constraints.push(where('status', '==', status));
     const colRef = collection(this.db, `organizations/${orgId}/${slug}`);
-    const snap = await getDocs(query(colRef, ...constraints));
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const snap = await getDocs(query(colRef, orderBy('createdAt', 'desc'), limit(500)));
+    let items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (from) items = items.filter((i: any) => (i._apptFecha || '') >= from);
+    if (to) items = items.filter((i: any) => (i._apptFecha || '') <= to);
+    if (status && status !== 'all') items = items.filter((i: any) => (i.status || 'pending') === status);
+    items.sort((a: any, b: any) => {
+      const da = (a._apptFecha || '') + (a._apptHora || '');
+      const db2 = (b._apptFecha || '') + (b._apptHora || '');
+      return da.localeCompare(db2);
+    });
+    return items;
   }
 
   async cancelAppointmentItem(slug: string, itemId: string): Promise<void> {
