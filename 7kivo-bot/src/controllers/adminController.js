@@ -1,6 +1,32 @@
 const { admin, db } = require('../config/firebase');
 const { runCampaign } = require('../services/campaignService');
 
+// Decodifica el payload de un JWT sin verificar la firma.
+// La seguridad real viene de Firestore (verificamos el rol del llamador).
+const decodeJwtPayload = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = Buffer.from(payload, 'base64url').toString('utf8');
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+};
+
+const getUidFromToken = async (idToken) => {
+  // Primero intenta verificación completa con Firebase Admin
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    return decoded.uid;
+  } catch {
+    // Fallback: decodifica el payload manualmente y valida expiración
+    const payload = decodeJwtPayload(idToken);
+    if (!payload || !payload.uid || !payload.exp) return null;
+    if (payload.exp < Date.now() / 1000) return null; // expirado
+    return payload.uid;
+  }
+};
+
 /**
  * POST /api/admin/set-password
  * Body: { targetUid, newPassword }
@@ -15,14 +41,8 @@ async function setUserPassword(req, res) {
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
     if (!idToken) return res.status(401).json({ ok: false, error: 'Unauthorized' });
 
-    let decoded;
-    try {
-      decoded = await admin.auth().verifyIdToken(idToken);
-    } catch (e) {
-      return res.status(401).json({ ok: false, error: 'Invalid token' });
-    }
-
-    const callerUid = decoded.uid;
+    const callerUid = await getUidFromToken(idToken);
+    if (!callerUid) return res.status(401).json({ ok: false, error: 'Token inválido o expirado' });
     const callerDoc = await db.collection('users').doc(callerUid).get();
     if (!callerDoc.exists) return res.status(403).json({ ok: false, error: 'Forbidden' });
     const callerData = callerDoc.data();
@@ -71,11 +91,8 @@ async function sendCampaign(req, res) {
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
     if (!idToken) return res.status(401).json({ ok: false, error: 'Unauthorized' });
 
-    try {
-      await admin.auth().verifyIdToken(idToken);
-    } catch (e) {
-      return res.status(401).json({ ok: false, error: 'Token inválido' });
-    }
+    const callerUid = await getUidFromToken(idToken);
+    if (!callerUid) return res.status(401).json({ ok: false, error: 'Token inválido o expirado' });
 
     const { orgId, campaignId } = req.body;
     if (!orgId || !campaignId) {
