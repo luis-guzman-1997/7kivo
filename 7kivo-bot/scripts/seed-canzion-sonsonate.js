@@ -21,6 +21,7 @@
  *   2. Nuestros Programas   → browse de programas (flow)
  *   3. Horarios de Atención → horarios (builtin)
  *   4. Permisos             → flujo 5 pasos (flow)
+ *   3. Prematrícula         → flujo 4 pasos (flow)
  *   5. Déjanos un Mensaje   → flujo 2 pasos (flow)
  *   6. Ubícanos             → contacto (builtin)
  *   7. Mis Pagos            → "próximamente" (message)
@@ -162,7 +163,7 @@ async function seedCanzion() {
     console.log("   - info/contact, info/schedule, info/general: eliminados");
 
     // Datos recibidos (limpiar sin eliminar, se re-definen las colecciones)
-    const dataCols = ["programas", "instrumentos", "permisos", "quejas-o-sugerencias", "consulta-de-pago"];
+    const dataCols = ["programas", "instrumentos", "permisos", "quejas-o-sugerencias", "consulta-de-pago", "prematriculas"];
     for (const col of dataCols) {
       const n = await deleteCollection(orgRef.collection(col));
       if (n > 0) console.log(`   - ${col}: ${n} registros eliminados`);
@@ -212,6 +213,20 @@ async function seedCanzion() {
     });
 
     await orgRef.collection("_collections").add({
+      name: "Prematrículas", slug: "prematriculas",
+      description: "Solicitudes de prematrícula recibidas desde el bot",
+      displayField: "nombre",
+      fields: [
+        { key: "nombre",      label: "Nombre completo",  type: "text", required: true  },
+        { key: "edad",        label: "Edad",              type: "text", required: true  },
+        { key: "curso",       label: "Curso de interés",  type: "text", required: true  },
+        { key: "instrumento", label: "Instrumento",       type: "text", required: true  },
+        { key: "phoneNumber", label: "WhatsApp",          type: "text", required: false, protected: true }
+      ],
+      createdAt: ts(), updatedAt: ts()
+    });
+
+    await orgRef.collection("_collections").add({
       name: "Mensajes", slug: "quejas-o-sugerencias",
       description: "Mensajes y comentarios recibidos desde el bot",
       displayField: "nombre",
@@ -238,7 +253,7 @@ async function seedCanzion() {
       createdAt: ts(), updatedAt: ts()
     });
 
-    console.log("   5 esquemas: programas, instrumentos, permisos, mensajes, consulta-de-pago.\n");
+    console.log("   6 esquemas: programas, instrumentos, permisos, prematriculas, mensajes, consulta-de-pago.\n");
 
     // ── 3. Datos: programas ───────────────────────────────────────────────
     console.log(`3. Sembrando ${PROGRAMAS.length} programas...`);
@@ -400,8 +415,89 @@ async function seedCanzion() {
     });
     console.log(`   ✓ id: ${permisosFlowRef.id}\n`);
 
-    // ── 7. Flujo: Déjanos un Mensaje ─────────────────────────────────────
-    console.log("7. Flujo 'Déjanos un Mensaje'...");
+    // ── 7. Flujo: Prematrícula ────────────────────────────────────────────
+    console.log("7. Flujo 'Prematrícula'...");
+    const prematriculaFlowRef = await orgRef.collection("flows").add({
+      name:             "Prematrícula",
+      description:      "Registro de interés para el próximo ciclo",
+      type:             "registration",
+      active:           true,
+      order:            4,
+      saveToCollection: "prematriculas",
+      notifyAdmin:      true,
+      menuLabel:        "Prematrícula",
+      menuDescription:  "Reserva tu lugar para el próximo ciclo",
+      showInMenu:       true,
+      steps: [
+        {
+          ...sb,
+          id:           "s1",
+          type:         "text_input",
+          prompt:
+            `🎵 *Prematrícula — ${ORG_NAME}*\n\n` +
+            "Nos alegra tu interés en aprender música con nosotros 😊\n\n" +
+            "_Puedes escribir *cancelar* en cualquier momento para salir._\n\n" +
+            "¿Cuál es tu *nombre completo*?",
+          fieldKey:     "nombre",
+          fieldLabel:   "Nombre",
+          required:     true,
+          validation:   { minLength: 3 },
+          errorMessage: "Por favor escribe tu nombre completo (mínimo 3 caracteres)."
+        },
+        {
+          ...sb,
+          id:           "s2",
+          type:         "text_input",
+          prompt:       "¿Cuántos años tienes?",
+          fieldKey:     "edad",
+          fieldLabel:   "Edad",
+          required:     true,
+          validation:   { minLength: 1 },
+          errorMessage: "Por favor ingresa tu edad."
+        },
+        {
+          ...sb,
+          id:                "s3",
+          type:              "select_list",
+          prompt:            "¿Qué *programa* te interesa?",
+          fieldKey:          "curso",
+          fieldLabel:        "Curso de interés",
+          required:          true,
+          optionsSource:     "programas",
+          optionsTitleField: "nombre",
+          optionsDescField:  "edad",
+          buttonText:        "Ver programas"
+        },
+        {
+          ...sb,
+          id:                "s4",
+          type:              "select_list",
+          prompt:            "¿Qué *instrumento* te gustaría aprender?",
+          fieldKey:          "instrumento",
+          fieldLabel:        "Instrumento",
+          required:          true,
+          optionsSource:     "instrumentos",
+          optionsTitleField: "nombre",
+          buttonText:        "Ver instrumentos"
+        }
+      ],
+      completionMessage:
+        "✅ *¡Prematrícula registrada!*\n\n" +
+        "Gracias, *{nombre}* 🎵\n\n" +
+        "*Curso de interés:* {curso}\n" +
+        "*Instrumento:* {instrumento}\n\n" +
+        "📢 Nuestras clases del ciclo actual *ya iniciaron*, " +
+        "pero queremos que formes parte de nuestra familia musical.\n\n" +
+        "📅 *Próximo ingreso: Junio 2026*\n\n" +
+        "Te contactaremos por este medio para invitarte a una " +
+        "*clase de prueba gratuita* antes del inicio. ¡No te la pierdas! 🎶\n\n" +
+        `_${ORG_NAME}_`,
+      createdAt: ts(), updatedAt: ts()
+    });
+    console.log(`   ✓ id: ${prematriculaFlowRef.id}\n`);
+
+    // ── 8. Flujo: Déjanos un Mensaje ─────────────────────────────────────
+    console.log("8. Flujo 'Déjanos un Mensaje'...");
     const quejasFlowRef = await orgRef.collection("flows").add({
       name:             "Déjanos un Mensaje",
       description:      "Recibe mensajes y comentarios del alumno",
@@ -450,8 +546,8 @@ async function seedCanzion() {
     });
     console.log(`   ✓ id: ${quejasFlowRef.id}\n`);
 
-    // ── 8. Menú ───────────────────────────────────────────────────────────
-    console.log("8. Configurando menú (7 ítems)...");
+    // ── 9. Menú ───────────────────────────────────────────────────────────
+    console.log("9. Configurando menú (8 ítems)...");
     await orgRef.collection("config").doc("menu").set({
       greeting:
         `¡Hola{name}! 👋🎵\n\n` +
@@ -472,24 +568,29 @@ async function seedCanzion() {
           order: 2, active: true
         },
         {
+          id: "m8", type: "flow", flowId: prematriculaFlowRef.id,
+          label: "Prematrícula", description: "Reserva tu lugar para el próximo ciclo",
+          order: 3, active: true
+        },
+        {
           id: "m3", type: "builtin", action: "schedule",
           label: "Horarios de Atención", description: "Días y horas de clases",
-          order: 3, active: true
+          order: 4, active: true
         },
         {
           id: "m4", type: "flow", flowId: permisosFlowRef.id,
           label: "Permisos", description: "Solicita un permiso o justifica una falta",
-          order: 4, active: true
+          order: 5, active: true
         },
         {
           id: "m5", type: "flow", flowId: quejasFlowRef.id,
           label: "Déjanos un Mensaje", description: "Envíanos tu mensaje o comentario",
-          order: 5, active: true
+          order: 6, active: true
         },
         {
           id: "m6", type: "builtin", action: "contact",
           label: "Ubícanos", description: "Dónde encontrarnos",
-          order: 6, active: true
+          order: 7, active: true
         },
         {
           id: "m7", type: "message",
@@ -499,15 +600,15 @@ async function seedCanzion() {
             "¡Muy pronto podrás consultar tu estado de cuenta directamente aquí! 🎉\n\n" +
             "Estamos trabajando en esta función y te avisaremos cuando esté disponible. 📢\n\n" +
             "_Instituto CanZion Sonsonate_",
-          order: 7, active: true
+          order: 8, active: true
         }
       ],
       createdAt: ts()
     });
-    console.log("   Conócenos | Nuestros Programas | Horarios | Permisos | Déjanos un Mensaje | Ubícanos | Mis Pagos\n");
+    console.log("   Conócenos | Nuestros Programas | Prematrícula | Horarios | Permisos | Déjanos un Mensaje | Ubícanos | Mis Pagos\n");
 
-    // ── 9. Bot messages ───────────────────────────────────────────────────
-    console.log("9. Mensajes del bot...");
+    // ── 10. Bot messages ───────────────────────────────────────────────────
+    console.log("10. Mensajes del bot...");
     const botMessages = [
       {
         key: "greeting",        label: "Saludo principal",       category: "greeting",
@@ -561,7 +662,7 @@ async function seedCanzion() {
     console.log(`   ${botMessages.length} mensajes creados.\n`);
 
     // ── 10. info/contact ──────────────────────────────────────────────────
-    console.log("10. Información del instituto...");
+    console.log("11. Información del instituto...");
     await orgRef.collection("info").doc("contact").set({
       address:    "8va Av. Norte # 6-3, Colonia Aida",
       city:       "Sonsonate",
@@ -623,10 +724,12 @@ async function seedCanzion() {
     console.log(`    1. Conócenos           → info general`);
     console.log(`    2. Nuestros Programas  → browse (${PROGRAMAS.length} programas)`);
     console.log(`    3. Horarios de Atención→ Sábados 08:00–12:00`);
-    console.log(`    4. Permisos            → flujo 5 pasos → permisos`);
-    console.log(`    5. Déjanos un Mensaje   → flujo 2 pasos → quejas-o-sugerencias`);
-    console.log(`    6. Ubícanos            → 8va Av. Norte # 6-3, Col. Aida`);
-    console.log(`    7. Mis Pagos           → mensaje "próximamente"`);
+    console.log(`    3. Prematrícula        → flujo 4 pasos → prematriculas`);
+    console.log(`    4. Horarios de Atención→ Sábados 08:00–12:00`);
+    console.log(`    5. Permisos            → flujo 5 pasos → permisos`);
+    console.log(`    6. Déjanos un Mensaje  → flujo 2 pasos → quejas-o-sugerencias`);
+    console.log(`    7. Ubícanos            → 8va Av. Norte # 6-3, Col. Aida`);
+    console.log(`    8. Mis Pagos           → mensaje "próximamente"`);
     console.log();
     console.log(`  Programas (${PROGRAMAS.length}):`);
     PROGRAMAS.forEach(p => console.log(`    - ${p.nombre} (${p.edad})`));
@@ -634,7 +737,7 @@ async function seedCanzion() {
     console.log(`  Instrumentos: ${INSTRUMENTOS.join(", ")}`);
     console.log();
     console.log("  Colecciones (solo definiciones, sin datos):");
-    console.log("    - permisos, mensajes (slug: quejas-o-sugerencias), consulta-de-pago");
+    console.log("    - permisos, prematriculas, mensajes (slug: quejas-o-sugerencias), consulta-de-pago");
     console.log();
     console.log(`  BotMessages: ${botMessages.length} (incluye flow_cancel_hint)`);
     console.log();

@@ -63,11 +63,20 @@
             {
               "type": "builtin",
               "active": true,
-              "order": 3,
+              "order": 4,
               "description": "Días y horas de clases",
               "id": "m3",
               "label": "Horarios de Atención",
               "action": "schedule"
+            },
+            {
+              "id": "m8",
+              "type": "flow",
+              "flowId": "VLAaCTcSjCeJ4ru9i9cY",
+              "label": "Prematrícula",
+              "description": "Reserva tu lugar para el próximo ciclo",
+              "order": 3,
+              "active": true
             },
             {
               "label": "Ubícanos",
@@ -75,14 +84,14 @@
               "action": "contact",
               "type": "builtin",
               "description": "Dónde encontrarnos",
-              "order": 4,
+              "order": 7,
               "active": true
             },
             {
               "flowId": "keMcao88OB6cejRjS9rd",
               "type": "flow",
               "active": true,
-              "order": 5,
+              "order": 6,
               "description": "Envíanos tu mensaje o comentario",
               "label": "Déjanos un Mensaje",
               "id": "m5"
@@ -91,7 +100,7 @@
               "label": "Gestionar Permisos",
               "id": "m4",
               "active": true,
-              "order": 6,
+              "order": 5,
               "description": "Solicita un permiso o justifica una falta",
               "flowId": "M1csNVsXI3bEMbpTKYAL",
               "type": "flow"
@@ -102,6 +111,60 @@
         }
       },
       "flows": [
+        {
+          "id": "VLAaCTcSjCeJ4ru9i9cY",
+          "data": {
+            "order": 4,
+            "menuDescription": "Reserva tu lugar para el próximo ciclo",
+            "notifyAdmin": true,
+            "steps": [
+              {
+                "id": "s1", "type": "text_input",
+                "prompt": "🎵 *Prematrícula — Instituto CanZion Sonsonate*\n\nNos alegra tu interés en aprender música con nosotros 😊\n\n_Puedes escribir *cancelar* en cualquier momento para salir._\n\n¿Cuál es tu *nombre completo*?",
+                "fieldKey": "nombre", "fieldLabel": "Nombre",
+                "required": true, "validation": { "minLength": 3 },
+                "errorMessage": "Por favor escribe tu nombre completo (mínimo 3 caracteres).",
+                "optionsSource": "custom", "customOptions": [], "optionsTitleField": "", "optionsDescField": "",
+                "buttonText": "Ver opciones", "sourceCollection": "", "displayField": "", "detailFields": [], "timeFieldKey": ""
+              },
+              {
+                "id": "s2", "type": "text_input",
+                "prompt": "¿Cuántos años tienes?",
+                "fieldKey": "edad", "fieldLabel": "Edad",
+                "required": true, "validation": { "minLength": 1 },
+                "errorMessage": "Por favor ingresa tu edad.",
+                "optionsSource": "custom", "customOptions": [], "optionsTitleField": "", "optionsDescField": "",
+                "buttonText": "Ver opciones", "sourceCollection": "", "displayField": "", "detailFields": [], "timeFieldKey": ""
+              },
+              {
+                "id": "s3", "type": "select_list",
+                "prompt": "¿Qué *programa* te interesa?",
+                "fieldKey": "curso", "fieldLabel": "Curso de interés",
+                "required": true, "validation": {},
+                "optionsSource": "programas", "optionsTitleField": "nombre", "optionsDescField": "edad",
+                "buttonText": "Ver programas", "customOptions": [], "errorMessage": "",
+                "sourceCollection": "", "displayField": "", "detailFields": [], "timeFieldKey": ""
+              },
+              {
+                "id": "s4", "type": "select_list",
+                "prompt": "¿Qué *instrumento* te gustaría aprender?",
+                "fieldKey": "instrumento", "fieldLabel": "Instrumento",
+                "required": true, "validation": {},
+                "optionsSource": "instrumentos", "optionsTitleField": "nombre", "optionsDescField": "",
+                "buttonText": "Ver instrumentos", "customOptions": [], "errorMessage": "",
+                "sourceCollection": "", "displayField": "", "detailFields": [], "timeFieldKey": ""
+              }
+            ],
+            "name": "Prematrícula",
+            "menuLabel": "Prematrícula",
+            "description": "Registro de interés para el próximo ciclo",
+            "showInMenu": true,
+            "type": "registration",
+            "saveToCollection": "prematriculas",
+            "completionMessage": "✅ *¡Prematrícula registrada!*\n\nGracias, *{nombre}* 🎵\n\n*Curso de interés:* {curso}\n*Instrumento:* {instrumento}\n\n📢 Nuestras clases del ciclo actual *ya iniciaron*, pero queremos que formes parte de nuestra familia musical.\n\n📅 *Próximo ingreso: Junio 2026*\n\nTe contactaremos por este medio para invitarte a una *clase de prueba gratuita* antes del inicio. ¡No te la pierdas! 🎶\n\n_Instituto CanZion Sonsonate_",
+            "active": true
+          }
+        },
         {
           "id": "M1csNVsXI3bEMbpTKYAL",
           "data": {
@@ -497,6 +560,22 @@
           }
         },
         {
+          {
+            "id": "prematriculas_col_ICZ",
+            "data": {
+              "name": "Prematrículas", "slug": "prematriculas",
+              "description": "Solicitudes de prematrícula recibidas desde el bot",
+              "displayField": "nombre",
+              "fields": [
+                { "key": "nombre",      "label": "Nombre completo",  "type": "text", "required": true  },
+                { "key": "edad",        "label": "Edad",              "type": "text", "required": true  },
+                { "key": "curso",       "label": "Curso de interés",  "type": "text", "required": true  },
+                { "key": "instrumento", "label": "Instrumento",       "type": "text", "required": true  },
+                { "key": "phoneNumber", "label": "WhatsApp",          "type": "text", "required": false, "protected": true }
+              ]
+            }
+          },
+          {
           "id": "dF5pyUTd2qqzsXkHzmiW",
           "data": {
             "description": "Mensajes y comentarios recibidos desde el bot",
@@ -601,6 +680,7 @@
           }
         ],
         "permisos": [],
+        "prematriculas": [],
         "consulta-de-pago": [],
         "quejas-o-sugerencias": [
           {
