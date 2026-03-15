@@ -61,6 +61,20 @@ if (!admin.apps.length) {
         });
         console.log("✅ Firebase inicializado con configuración básica");
       }
+    } else if (process.env.GOOGLE_SERVICE_ACCOUNT_PATH) {
+      try {
+        const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_PATH.trim());
+        if (serviceAccount.type === "service_account" && serviceAccount.private_key) {
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: projectId
+          });
+          console.log("✅ Firebase inicializado con GOOGLE_SERVICE_ACCOUNT_PATH");
+        }
+      } catch (e) {
+        console.error("❌ Error al parsear GOOGLE_SERVICE_ACCOUNT_PATH:", e.message);
+        admin.initializeApp({ projectId });
+      }
     } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
       const credsVal = process.env.GOOGLE_APPLICATION_CREDENTIALS.trim();
       // Si parece JSON (prod: variable con contenido), usar cert(). Si es ruta de archivo, applicationDefault().
