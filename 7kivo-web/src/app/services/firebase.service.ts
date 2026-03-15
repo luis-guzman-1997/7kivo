@@ -3,7 +3,7 @@ import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore, Firestore, collection, doc, getDocs, getDoc, addDoc,
   updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp,
-  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch
+  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp
 } from 'firebase/firestore';
 import {
   getStorage, FirebaseStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll
@@ -177,6 +177,11 @@ export class FirebaseService {
   async deleteAdminByOrgId(orgId: string, adminId: string): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId, 'admins', adminId);
     await deleteDoc(docRef);
+  }
+
+  async updateOrgAdminByOrgId(orgId: string, adminId: string, data: DocumentData): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'admins', adminId);
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 
   // Creates a Firebase Auth user without affecting the current admin session
@@ -1237,5 +1242,40 @@ export class FirebaseService {
     for (const adm of (orgExport.admins || [])) {
       await setDoc(doc(this.db, orgBase, 'admins', adm.id), adm.data);
     }
+  }
+
+  // ── Campaigns ──
+  async getCampaigns(orgId: string): Promise<any[]> {
+    const colRef = collection(this.db, 'organizations', orgId, 'campaigns');
+    const q = query(colRef, orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async createCampaign(orgId: string, data: any): Promise<string> {
+    const colRef = collection(this.db, 'organizations', orgId, 'campaigns');
+    const docRef = await addDoc(colRef, {
+      ...data,
+      sentTotal: 0, failedTotal: 0, sentToday: 0, sentTodayDate: '',
+      optedOutPhones: [],
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+    });
+    return docRef.id;
+  }
+
+  async updateCampaign(orgId: string, campaignId: string, data: any): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'campaigns', campaignId);
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async deleteCampaign(orgId: string, campaignId: string): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'campaigns', campaignId);
+    await deleteDoc(docRef);
+  }
+
+  async getOrgCollectionDefs(orgId: string): Promise<any[]> {
+    const colRef = collection(this.db, 'organizations', orgId, '_collections');
+    const snap = await getDocs(colRef);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 }

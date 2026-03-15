@@ -15,6 +15,7 @@ import { OrgSettingsComponent } from './org-settings/org-settings.component';
 import { CollectionsComponent } from './collections/collections.component';
 import { WelcomeComponent } from './welcome/welcome.component';
 import { AdminSetupComponent } from './admin-setup/admin-setup.component';
+import { CampaignsComponent } from './campaigns/campaigns.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -33,7 +34,8 @@ const routes: Routes = [
       { path: 'bot', component: BotConfigComponent, canActivate: [RoleGuard], data: { permission: 'bot_config' } },
       { path: 'flujos', component: FlowBuilderComponent, canActivate: [RoleGuard], data: { permission: 'flows' } },
       { path: 'configuracion', component: OrgSettingsComponent, canActivate: [RoleGuard], data: { permission: 'settings' } },
-      { path: 'pendientes', component: AdminSetupComponent, canActivate: [AuthGuard] }
+      { path: 'pendientes', component: AdminSetupComponent, canActivate: [AuthGuard] },
+      { path: 'campanas', component: CampaignsComponent, canActivate: [RoleGuard], data: { permission: 'campaigns' } }
     ]
   }
 ];

@@ -20,6 +20,7 @@ export class SaOrgDetailComponent implements OnInit {
   editingPlan = false;
   editPlan = '';
   editMonthlyRate: number | null = null;
+  editDailyBulkLimit = 0;
   useCustomLimits = false;
   editLimits: any = { flows: 1, collections: 1, admins: 1, chatLive: true };
 
@@ -40,7 +41,11 @@ export class SaOrgDetailComponent implements OnInit {
   saving = false;
   notice = '';
 
+  actionsMenuOpen = false;
+
   togglingBlock: { [orgId: string]: boolean } = {};
+  togglingActive: { [orgId: string]: boolean } = {};
+  togglingBot: { [orgId: string]: boolean } = {};
   botToggleError: string | null = null;
 
   addingAdmin = false;
@@ -56,8 +61,14 @@ export class SaOrgDetailComponent implements OnInit {
 
   changePwAdm: any = null;
   changePwVal = '';
+  changePwConfirm = '';
+  changePwVisible = false;
   changePwSaving = false;
   changePwError = '';
+
+  editingRoleAdm: any = null;
+  editRoleVal = '';
+  roleChangeSaving = false;
 
   resetBotConfirmOrg: any = null;
   resettingBot = false;
@@ -161,6 +172,7 @@ export class SaOrgDetailComponent implements OnInit {
   startEditPlan(): void {
     this.editPlan = this.selectedOrg?.plan || '';
     this.editMonthlyRate = this.selectedOrg?.monthlyRate || null;
+    this.editDailyBulkLimit = this.selectedOrg?.dailyBulkLimit ?? 0;
     const cl = this.selectedOrg?.customLimits;
     this.useCustomLimits = !!cl;
     this.editLimits = cl ? { ...cl } : { flows: 1, collections: 1, admins: 1, chatLive: true };
@@ -182,7 +194,8 @@ export class SaOrgDetailComponent implements OnInit {
     try {
       const data: any = {
         plan: this.editPlan,
-        monthlyRate: this.editMonthlyRate || 0
+        monthlyRate: this.editMonthlyRate || 0,
+        dailyBulkLimit: this.editDailyBulkLimit ?? 0
       };
       if (this.useCustomLimits) {
         data.customLimits = {
@@ -197,6 +210,7 @@ export class SaOrgDetailComponent implements OnInit {
       await this.firebaseService.updateOrganization(this.selectedOrg.id, data);
       this.selectedOrg.plan = data.plan;
       this.selectedOrg.monthlyRate = data.monthlyRate;
+      this.selectedOrg.dailyBulkLimit = data.dailyBulkLimit;
       this.selectedOrg.customLimits = data.customLimits;
       this.editingPlan = false;
       this.showNotice('Plan actualizado');
@@ -327,6 +341,52 @@ export class SaOrgDetailComponent implements OnInit {
   }
 
   // ── Toggle states ──
+  async toggleActive(org: any): Promise<void> {
+    if (this.togglingActive[org.id]) return;
+    this.togglingActive[org.id] = true;
+    const newVal = org.active === false;
+    try {
+      await this.firebaseService.updateOrganization(org.id, { active: newVal });
+      org.active = newVal;
+    } catch (err) {
+      console.error('Error toggling org active:', err);
+    } finally {
+      this.togglingActive[org.id] = false;
+    }
+  }
+
+  async toggleBot(org: any): Promise<void> {
+    if (this.togglingBot[org.id]) return;
+    const newVal = org.botEnabled === false;
+    if (newVal) {
+      try {
+        const [config, wa] = await Promise.all([
+          this.firebaseService.getOrgConfigByOrgId(org.id),
+          this.firebaseService.getWhatsAppConfigByOrgId(org.id)
+        ]);
+        const waReady = !!(config?.botApiUrl && wa?.token && wa?.phoneNumberId);
+        if (!waReady) {
+          this.botToggleError = org.id;
+          setTimeout(() => { this.botToggleError = null; }, 4000);
+          return;
+        }
+      } catch (err) {
+        console.error('Error checking WA config:', err);
+        return;
+      }
+    }
+    this.togglingBot[org.id] = true;
+    try {
+      await this.firebaseService.updateOrganization(org.id, { botEnabled: newVal });
+      org.botEnabled = newVal;
+      this.botToggleError = null;
+    } catch (err) {
+      console.error('Error toggling bot:', err);
+    } finally {
+      this.togglingBot[org.id] = false;
+    }
+  }
+
   async toggleBotBlocked(org: any): Promise<void> {
     if (this.togglingBlock[org.id]) return;
     this.togglingBlock[org.id] = true;
@@ -420,12 +480,16 @@ export class SaOrgDetailComponent implements OnInit {
   startChangePwSA(adm: any): void {
     this.changePwAdm = adm;
     this.changePwVal = '';
+    this.changePwConfirm = '';
+    this.changePwVisible = false;
     this.changePwError = '';
+    this.editingRoleAdm = null;
   }
 
   cancelChangePwSA(): void {
     this.changePwAdm = null;
     this.changePwVal = '';
+    this.changePwConfirm = '';
     this.changePwError = '';
   }
 
@@ -435,6 +499,10 @@ export class SaOrgDetailComponent implements OnInit {
       this.changePwError = 'La contraseña debe tener al menos 6 caracteres';
       return;
     }
+    if (this.changePwVal !== this.changePwConfirm) {
+      this.changePwError = 'Las contraseñas no coinciden';
+      return;
+    }
     this.changePwSaving = true;
     this.changePwError = '';
     try {
@@ -442,12 +510,50 @@ export class SaOrgDetailComponent implements OnInit {
       await this.firebaseService.setUserPassword(botUrl, this.changePwAdm.uid, this.changePwVal);
       this.changePwAdm = null;
       this.changePwVal = '';
+      this.changePwConfirm = '';
       this.showNotice('Contraseña actualizada');
     } catch (err: any) {
       this.changePwError = err?.message || 'Error al cambiar contraseña';
     } finally {
       this.changePwSaving = false;
     }
+  }
+
+  // ── Role Change ──
+  startEditRole(adm: any): void {
+    this.editingRoleAdm = adm;
+    this.editRoleVal = adm.role || 'viewer';
+    this.changePwAdm = null;
+  }
+
+  cancelEditRole(): void {
+    this.editingRoleAdm = null;
+  }
+
+  async saveEditRole(): Promise<void> {
+    if (!this.editingRoleAdm || !this.selectedOrg) return;
+    if (this.editRoleVal === this.editingRoleAdm.role) { this.editingRoleAdm = null; return; }
+    this.roleChangeSaving = true;
+    try {
+      await this.firebaseService.updateOrgAdminByOrgId(this.selectedOrg.id, this.editingRoleAdm.id, { role: this.editRoleVal });
+      this.editingRoleAdm.role = this.editRoleVal;
+      this.editingRoleAdm = null;
+      this.showNotice('Rol actualizado');
+    } catch (err) {
+      console.error('Error changing role:', err);
+    } finally {
+      this.roleChangeSaving = false;
+    }
+  }
+
+  roleLabel(role: string): string {
+    const map: any = { owner: 'Propietario', admin: 'Gerente', editor: 'Operador', viewer: 'Agente' };
+    return map[role] || role;
+  }
+
+  adminInitials(adm: any): string {
+    const src = adm.name || adm.email || '?';
+    return src.split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase();
   }
 
   // ── Delete Organization ──

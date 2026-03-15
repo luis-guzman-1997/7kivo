@@ -21,10 +21,9 @@
           <i class="fas fa-tachometer-alt"></i>
           <span>Dashboard</span>
         </a>
-        <!-- <a *ngIf="authService.hasPermission('contacts')" routerLink="/admin/contactos" routerLinkActive="active" class="nav-item-admin">
-          <i class="fas fa-users"></i>
-          <span>Contactos</span>
-        </a> -->
+
+        <!-- Comunicación -->
+        <div class="nav-section-label">Comunicación</div>
         <a *ngIf="authService.hasPermission('chat')" routerLink="/admin/chat" routerLinkActive="active" class="nav-item-admin">
           <i class="fas fa-comments"></i>
           <span>Chat WhatsApp</span>
@@ -33,28 +32,36 @@
           <i class="fas fa-inbox"></i>
           <span>Bandeja de Entrada</span>
         </a>
+        <a *ngIf="authService.hasPermission('campaigns')" routerLink="/admin/campanas" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-bullhorn"></i>
+          <span>Campañas</span>
+        </a>
+
+        <!-- Bot -->
+        <div class="nav-section-label">Bot</div>
+        <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-sitemap"></i>
+          <span>Flujos del Bot</span>
+        </a>
         <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
           <i class="fas fa-database"></i>
           <span>Base de Datos</span>
         </a>
-        <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
-          <i class="fas fa-project-diagram"></i>
-          <span>Flujos del Bot</span>
-        </a>
       </ng-container>
 
-      <!-- Always accessible (setup essentials) -->
+      <!-- Configuración (always accessible) -->
+      <div class="nav-section-label">Configuración</div>
       <a *ngIf="authService.hasPermission('bot_config')" routerLink="/admin/bot" routerLinkActive="active" class="nav-item-admin">
         <i class="fas fa-robot"></i>
         <span>Mensajería Bot</span>
       </a>
-      <a *ngIf="authService.hasPermission('users')" routerLink="/admin/administradores" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-user-shield"></i>
-        <span>Mi Equipo</span>
-      </a>
       <a *ngIf="authService.hasPermission('settings')" routerLink="/admin/configuracion" routerLinkActive="active" class="nav-item-admin">
-        <i class="fas fa-building"></i>
+        <i class="fas fa-sliders-h"></i>
         <span>Mi Organización</span>
+      </a>
+      <a *ngIf="authService.hasPermission('users')" routerLink="/admin/administradores" routerLinkActive="active" class="nav-item-admin">
+        <i class="fas fa-users"></i>
+        <span>Mi Equipo</span>
       </a>
 
       <!-- Setup hint shown while bot is not yet enabled -->

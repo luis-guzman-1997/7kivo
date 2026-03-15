@@ -1,0 +1,413 @@
+<div class="campaigns-page">
+
+  <!-- Page header -->
+  <div class="camp-page-header">
+    <div class="camp-header-left">
+      <h1 class="camp-title"><i class="fas fa-paper-plane"></i> Campañas</h1>
+      <p class="camp-subtitle">Envíos masivos de WhatsApp a tus contactos</p>
+    </div>
+    <div class="camp-header-right">
+      <div class="daily-limit-badge" [class.limit-warn]="limitWarning" [class.limit-exceeded]="limitExceeded">
+        <div class="dlb-row">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Enviados hoy: <strong>{{ totalSentToday }}</strong> / {{ dailyBulkLimit || '∞' }}</span>
+        </div>
+        <div class="dlb-bar" *ngIf="dailyBulkLimit > 0">
+          <div class="dlb-fill" [style.width.%]="limitPercent"></div>
+        </div>
+        <div class="dlb-unlimited" *ngIf="!dailyBulkLimit">Sin límite configurado</div>
+      </div>
+      <button class="btn-new-campaign" (click)="openCreate()" [disabled]="limitExceeded">
+        <i class="fas fa-plus"></i> Nueva Campaña
+      </button>
+    </div>
+  </div>
+
+  <!-- Limit exceeded warning -->
+  <div class="limit-exceeded-banner" *ngIf="limitExceeded">
+    <i class="fas fa-ban"></i>
+    Límite diario alcanzado ({{ dailyBulkLimit }} mensajes). Las campañas activas se reanudarán mañana.
+  </div>
+
+  <div class="camp-body" [class.with-form]="showForm">
+
+    <!-- Left: list panel -->
+    <div class="camp-list-panel">
+
+      <!-- Filter tabs -->
+      <div class="filter-tabs">
+        <button [class.ftab-active]="filterTab==='all'" (click)="setFilter('all')">
+          Todas <span class="ftab-count">{{ filterCounts.all }}</span>
+        </button>
+        <button [class.ftab-active]="filterTab==='active'" (click)="setFilter('active')">
+          Activas <span class="ftab-count ftab-active-count" *ngIf="filterCounts.active > 0">{{ filterCounts.active }}</span>
+        </button>
+        <button [class.ftab-active]="filterTab==='draft'" (click)="setFilter('draft')">
+          Borradores <span class="ftab-count" *ngIf="filterCounts.draft > 0">{{ filterCounts.draft }}</span>
+        </button>
+        <button [class.ftab-active]="filterTab==='paused'" (click)="setFilter('paused')">
+          Pausadas <span class="ftab-count" *ngIf="filterCounts.paused > 0">{{ filterCounts.paused }}</span>
+        </button>
+        <button [class.ftab-active]="filterTab==='completed'" (click)="setFilter('completed')">
+          Historial
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div class="camp-loading" *ngIf="loading">
+        <i class="fas fa-spinner fa-spin"></i> Cargando campañas...
+      </div>
+
+      <!-- Empty -->
+      <div class="camp-empty" *ngIf="!loading && filteredCampaigns.length === 0">
+        <i class="fas fa-paper-plane"></i>
+        <p>{{ filterTab === 'all' ? 'No hay campañas aún. Crea tu primera campaña.' : 'No hay campañas en esta categoría.' }}</p>
+        <button class="btn-new-campaign" (click)="openCreate()" *ngIf="filterTab === 'all'">
+          <i class="fas fa-plus"></i> Nueva Campaña
+        </button>
+      </div>
+
+      <!-- Campaign cards -->
+      <div class="campaign-cards" *ngIf="!loading && filteredCampaigns.length > 0">
+        <div class="camp-card" *ngFor="let c of filteredCampaigns"
+          [class.card-active]="c.status === 'active'"
+          [class.card-paused]="c.status === 'paused'"
+          [class.card-draft]="c.status === 'draft'"
+          [class.card-completed]="c.status === 'completed' || c.status === 'cancelled'"
+          [class.card-scheduled]="c.status === 'scheduled'">
+
+          <!-- Card header -->
+          <div class="card-top">
+            <div class="card-badges">
+              <span class="badge-type" [class]="'btype-' + c.type">
+                <i class="fas" [class]="typeIcon(c.type)"></i> {{ typeLabel(c.type) }}
+              </span>
+              <span class="badge-status" [class]="'bstatus-' + c.status">{{ statusLabel(c.status) }}</span>
+            </div>
+            <div class="card-actions">
+              <!-- Pause/Resume -->
+              <button class="btn-card-icon" *ngIf="c.status === 'active' || c.status === 'paused'"
+                (click)="togglePause(c)" [disabled]="togglingId === c.id"
+                [title]="c.status === 'active' ? 'Pausar' : 'Reanudar'">
+                <i class="fas" [class.fa-pause]="c.status === 'active'" [class.fa-play]="c.status === 'paused'"
+                  [class.fa-spinner]="togglingId === c.id" [class.fa-spin]="togglingId === c.id"></i>
+              </button>
+              <!-- Edit (only draft) -->
+              <button class="btn-card-icon" *ngIf="c.status === 'draft'" (click)="openEdit(c)" title="Editar">
+                <i class="fas fa-pen"></i>
+              </button>
+              <!-- Expand -->
+              <button class="btn-card-icon" (click)="toggleExpand(c.id)" title="Ver detalles">
+                <i class="fas" [class.fa-chevron-down]="expandedId !== c.id" [class.fa-chevron-up]="expandedId === c.id"></i>
+              </button>
+              <!-- Delete -->
+              <button class="btn-card-delete" (click)="openDelete(c)" title="Eliminar">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Campaign name -->
+          <h3 class="card-name">{{ c.name }}</h3>
+
+          <!-- Message preview -->
+          <p class="card-message-preview">{{ c.message }}</p>
+
+          <!-- Image thumb -->
+          <div class="card-img-thumb" *ngIf="c.imageUrl">
+            <img [src]="c.imageUrl" alt="Imagen" />
+            <span><i class="fas fa-image"></i> Con imagen</span>
+          </div>
+
+          <!-- Schedule row -->
+          <div class="card-schedule">
+            <i class="fas fa-clock"></i>
+            <span>{{ scheduleText(c) }}</span>
+            <span class="card-next-run" *ngIf="(c.status === 'active' || c.status === 'scheduled') && nextRunText(c)">
+              · Próximo: {{ nextRunText(c) }}
+            </span>
+          </div>
+
+          <!-- Stats row -->
+          <div class="card-stats">
+            <div class="cstat">
+              <i class="fas fa-paper-plane"></i>
+              <span>{{ c.sentTotal || 0 }}</span>
+              <label>enviados</label>
+            </div>
+            <div class="cstat cstat-fail" *ngIf="c.failedTotal > 0">
+              <i class="fas fa-times-circle"></i>
+              <span>{{ c.failedTotal || 0 }}</span>
+              <label>fallidos</label>
+            </div>
+            <div class="cstat cstat-optout" *ngIf="(c.optedOutPhones || []).length > 0">
+              <i class="fas fa-ban"></i>
+              <span>{{ (c.optedOutPhones || []).length }}</span>
+              <label>opt-outs</label>
+            </div>
+            <div class="cstat cstat-recipients">
+              <i class="fas fa-users"></i>
+              <span>{{ recipientCount(c) || (c.recipientSource === 'collection' ? '~' : 0) }}</span>
+              <label>{{ c.recipientSource === 'collection' ? 'colección' : 'destinatarios' }}</label>
+            </div>
+            <div class="cstat cstat-optout-badge" *ngIf="c.includeOptOut">
+              <i class="fas fa-hand-paper"></i>
+              <label>opt-out activo</label>
+            </div>
+          </div>
+
+          <!-- Expanded detail -->
+          <div class="card-expanded" *ngIf="expandedId === c.id">
+            <div class="expanded-section">
+              <div class="exp-title"><i class="fas fa-info-circle"></i> Detalles</div>
+              <div class="exp-grid">
+                <div class="exp-item"><label>Fuente</label><span>{{ c.recipientSource === 'collection' ? 'Colección: ' + c.collectionId : 'Números manuales (' + (c.manualPhones?.length || 0) + ')' }}</span></div>
+                <div class="exp-item"><label>Opt-out</label><span>{{ c.includeOptOut ? 'Activado' : 'Desactivado' }}</span></div>
+                <div class="exp-item"><label>Enviados hoy</label><span>{{ c.sentToday || 0 }}</span></div>
+                <div class="exp-item" *ngIf="c.lastRunAt"><label>Último envío</label><span>{{ nextRunText({ nextRunAt: c.lastRunAt }) }}</span></div>
+              </div>
+            </div>
+            <div class="expanded-section" *ngIf="(c.optedOutPhones || []).length > 0">
+              <div class="exp-title"><i class="fas fa-ban"></i> Opt-outs ({{ (c.optedOutPhones || []).length }})</div>
+              <div class="optout-phones">
+                <span *ngFor="let p of (c.optedOutPhones || [])">{{ p }}</span>
+              </div>
+            </div>
+            <div class="expanded-section" *ngIf="c.recipientSource === 'manual' && (c.manualPhones || []).length > 0">
+              <div class="exp-title"><i class="fas fa-list"></i> Destinatarios ({{ (c.manualPhones || []).length }})</div>
+              <div class="optout-phones">
+                <span *ngFor="let p of (c.manualPhones || []).slice(0, 20)">{{ p }}</span>
+                <span *ngIf="(c.manualPhones || []).length > 20" class="more-phones">+ {{ (c.manualPhones || []).length - 20 }} más</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activate button for drafts -->
+          <div class="card-draft-actions" *ngIf="c.status === 'draft'">
+            <button class="btn-activate" (click)="openEdit(c)">
+              <i class="fas fa-play-circle"></i> Editar y activar
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: form panel -->
+    <div class="camp-form-panel" *ngIf="showForm">
+      <div class="form-panel-header">
+        <h2><i class="fas" [class.fa-plus-circle]="!editingCampaign" [class.fa-pen]="editingCampaign"></i>
+          {{ editingCampaign ? 'Editar Campaña' : 'Nueva Campaña' }}</h2>
+        <button class="btn-close-form" (click)="closeForm()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="form-panel-body">
+
+        <!-- Name -->
+        <div class="fp-group">
+          <label>Nombre de la campaña <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.name" placeholder="Ej: Promoción de marzo" maxlength="100" />
+        </div>
+
+        <!-- Message -->
+        <div class="fp-group">
+          <label>Mensaje <span class="req">*</span>
+            <span class="char-count" [class.char-warn]="form.message?.length > 3500">
+              {{ form.message?.length || 0 }}/4096
+            </span>
+          </label>
+          <textarea [(ngModel)]="form.message" rows="5"
+            placeholder="Escribe el mensaje que recibirán tus contactos..." maxlength="4096"></textarea>
+          <div class="optout-preview" *ngIf="form.includeOptOut">
+            <i class="fas fa-plus-circle"></i>
+            Se añadirá automáticamente: <em>"¿Deseas recibir más información como esta? Responde <strong>SI</strong> o <strong>NO</strong>"</em>
+          </div>
+        </div>
+
+        <!-- Image -->
+        <div class="fp-group">
+          <label>Imagen (opcional, máx. 5 MB)</label>
+          <div class="img-upload-area" *ngIf="!formImagePreview">
+            <label class="img-upload-label">
+              <input type="file" accept="image/*" (change)="onImageSelected($event)" style="display:none" />
+              <i class="fas fa-image"></i>
+              <span>Seleccionar imagen</span>
+            </label>
+          </div>
+          <div class="img-preview-wrap" *ngIf="formImagePreview">
+            <img [src]="formImagePreview" alt="Preview" class="form-img-preview" />
+            <button class="btn-remove-img" (click)="clearImage()" type="button">
+              <i class="fas fa-times"></i> Quitar
+            </button>
+          </div>
+        </div>
+
+        <!-- Type selector -->
+        <div class="fp-group">
+          <label>Tipo de envío <span class="req">*</span></label>
+          <div class="type-options">
+            <label class="type-opt" [class.type-selected]="form.type === 'immediate'">
+              <input type="radio" [(ngModel)]="form.type" value="immediate" name="campType" />
+              <div class="type-opt-body">
+                <i class="fas fa-bolt"></i>
+                <strong>Enviar ahora</strong>
+                <span>Se envía al activar</span>
+              </div>
+            </label>
+            <label class="type-opt" [class.type-selected]="form.type === 'once'">
+              <input type="radio" [(ngModel)]="form.type" value="once" name="campType" />
+              <div class="type-opt-body">
+                <i class="fas fa-calendar-alt"></i>
+                <strong>Una vez</strong>
+                <span>En fecha y hora específica</span>
+              </div>
+            </label>
+            <label class="type-opt" [class.type-selected]="form.type === 'daily'">
+              <input type="radio" [(ngModel)]="form.type" value="daily" name="campType" />
+              <div class="type-opt-body">
+                <i class="fas fa-sun"></i>
+                <strong>Diaria</strong>
+                <span>Todos los días a la misma hora</span>
+              </div>
+            </label>
+            <label class="type-opt" [class.type-selected]="form.type === 'interval'">
+              <input type="radio" [(ngModel)]="form.type" value="interval" name="campType" />
+              <div class="type-opt-body">
+                <i class="fas fa-redo"></i>
+                <strong>Recurrente</strong>
+                <span>Cada X horas</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Type config -->
+          <div class="type-config" *ngIf="form.type === 'once'">
+            <label class="sub-label">Fecha y hora de envío</label>
+            <input type="datetime-local" [(ngModel)]="form.scheduledDate" class="datetime-input" />
+          </div>
+          <div class="type-config" *ngIf="form.type === 'daily'">
+            <label class="sub-label">Hora de envío diario</label>
+            <div class="time-inputs">
+              <input type="number" [(ngModel)]="form.dailyHour" min="0" max="23" class="time-input" placeholder="HH" />
+              <span class="time-sep">:</span>
+              <input type="number" [(ngModel)]="form.dailyMinute" min="0" max="59" class="time-input" placeholder="MM" />
+            </div>
+          </div>
+          <div class="type-config" *ngIf="form.type === 'interval'">
+            <label class="sub-label">Intervalo (horas)</label>
+            <div class="interval-row">
+              <input type="number" [(ngModel)]="form.intervalHours" min="1" max="720" class="interval-input" />
+              <span class="interval-unit">horas</span>
+              <div class="interval-presets">
+                <button type="button" (click)="form.intervalHours = 1">1h</button>
+                <button type="button" (click)="form.intervalHours = 4">4h</button>
+                <button type="button" (click)="form.intervalHours = 8">8h</button>
+                <button type="button" (click)="form.intervalHours = 12">12h</button>
+                <button type="button" (click)="form.intervalHours = 24">24h</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipients -->
+        <div class="fp-group">
+          <label>Destinatarios <span class="req">*</span></label>
+          <div class="recipient-source-tabs">
+            <button [class.rsource-active]="form.recipientSource === 'manual'"
+              (click)="form.recipientSource = 'manual'" type="button">
+              <i class="fas fa-list"></i> Números manuales
+            </button>
+            <button [class.rsource-active]="form.recipientSource === 'collection'"
+              (click)="form.recipientSource = 'collection'" type="button">
+              <i class="fas fa-database"></i> Desde colección
+            </button>
+          </div>
+
+          <div *ngIf="form.recipientSource === 'manual'" class="recipient-manual">
+            <textarea [(ngModel)]="form.manualPhones" rows="5"
+              placeholder="Un número por línea, con código de país&#10;Ej:&#10;50372345678&#10;50378901234"></textarea>
+            <div class="phone-count" *ngIf="parsePhones().length > 0">
+              <i class="fas fa-check-circle"></i> {{ parsePhones().length }} número(s) detectado(s)
+            </div>
+          </div>
+
+          <div *ngIf="form.recipientSource === 'collection'" class="recipient-collection">
+            <div class="fp-group-inline">
+              <div>
+                <label class="sub-label">Colección</label>
+                <select [(ngModel)]="form.collectionId" (ngModelChange)="onCollectionChange()">
+                  <option value="">— Seleccionar —</option>
+                  <option *ngFor="let col of orgCollections" [value]="col.id">{{ col.name || col.id }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="sub-label">Campo teléfono</label>
+                <select [(ngModel)]="form.phoneField" [disabled]="!form.collectionId">
+                  <option value="">— Campo —</option>
+                  <option *ngFor="let f of selectedCollectionFields" [value]="f.key">{{ f.label || f.key }}</option>
+                </select>
+              </div>
+            </div>
+            <p class="collection-hint" *ngIf="orgCollections.length === 0">
+              <i class="fas fa-info-circle"></i> No hay colecciones creadas aún.
+            </p>
+            <p class="collection-hint" *ngIf="form.collectionId">
+              <i class="fas fa-info-circle"></i> Se enviará a todos los registros de la colección que tengan teléfono.
+            </p>
+          </div>
+        </div>
+
+        <!-- Opt-out toggle -->
+        <div class="fp-group">
+          <label>Opt-out</label>
+          <label class="optout-toggle">
+            <input type="checkbox" [(ngModel)]="form.includeOptOut" />
+            <div class="toggle-pill"></div>
+            <span>Incluir opción de cancelar suscripción</span>
+          </label>
+          <p class="optout-desc" *ngIf="form.includeOptOut">
+            Cada mensaje incluirá: <em>"¿Deseas recibir más información como esta? Responde <strong>SI</strong> o <strong>NO</strong>"</em>. Si el contacto responde <strong>NO</strong>, se excluirá de futuros envíos de esta campaña.
+          </p>
+        </div>
+
+        <!-- Error -->
+        <div class="fp-error" *ngIf="formError">
+          <i class="fas fa-exclamation-circle"></i> {{ formError }}
+        </div>
+
+        <!-- Actions -->
+        <div class="fp-actions">
+          <button class="btn-fp-draft" (click)="saveDraft()" [disabled]="saving">
+            <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+            <i class="fas fa-save" *ngIf="!saving"></i>
+            {{ saving ? 'Guardando...' : 'Guardar borrador' }}
+          </button>
+          <button class="btn-fp-activate" (click)="activateCampaign()" [disabled]="saving || limitExceeded">
+            <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+            <i class="fas fa-play-circle" *ngIf="!saving"></i>
+            {{ saving ? 'Guardando...' : (form.type === 'immediate' ? 'Activar y enviar' : 'Activar campaña') }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="modal-overlay" *ngIf="deletingCampaign" (click)="cancelDelete()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-icon"><i class="fas fa-trash-alt"></i></div>
+    <h3>Eliminar campaña</h3>
+    <p>¿Eliminar <strong>{{ deletingCampaign?.name }}</strong>? Esta acción es irreversible.</p>
+    <div class="modal-actions">
+      <button class="btn-modal-delete" (click)="confirmDelete()" [disabled]="deleting">
+        <i class="fas fa-spinner fa-spin" *ngIf="deleting"></i>
+        <i class="fas fa-trash-alt" *ngIf="!deleting"></i>
+        {{ deleting ? 'Eliminando...' : 'Eliminar' }}
+      </button>
+      <button class="btn-modal-cancel" (click)="cancelDelete()" [disabled]="deleting">Cancelar</button>
+    </div>
+  </div>
+</div>

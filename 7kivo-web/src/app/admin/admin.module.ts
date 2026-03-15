@@ -15,6 +15,7 @@ import { OrgSettingsComponent } from './org-settings/org-settings.component';
 import { CollectionsComponent } from './collections/collections.component';
 import { WelcomeComponent } from './welcome/welcome.component';
 import { AdminSetupComponent } from './admin-setup/admin-setup.component';
+import { CampaignsComponent } from './campaigns/campaigns.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { AdminSetupComponent } from './admin-setup/admin-setup.component';
     OrgSettingsComponent,
     CollectionsComponent,
     WelcomeComponent,
-    AdminSetupComponent
+    AdminSetupComponent,
+    CampaignsComponent
   ],
   imports: [
     CommonModule,

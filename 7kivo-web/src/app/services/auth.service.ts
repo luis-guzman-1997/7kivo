@@ -16,8 +16,8 @@ export const PLAN_LIMITS: Record<string, { flows: number; collections: number; a
 };
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  owner:  ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings'],
-  admin:  ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users'],
+  owner:  ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings', 'campaigns'],
+  admin:  ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'campaigns'],
   editor: ['dashboard', 'contacts', 'chat', 'inbox', 'collections'],
   viewer: ['dashboard', 'inbox', 'chat']
 };
