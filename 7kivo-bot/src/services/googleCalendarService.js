@@ -12,7 +12,8 @@ const readRawEnvValue = (key) => {
   try {
     const fs = require('fs');
     const path = require('path');
-    const content = fs.readFileSync(path.resolve(process.cwd(), '.env'), 'utf8');
+    const envPath = path.resolve(__dirname, '../../../.env');
+    const content = fs.readFileSync(envPath, 'utf8');
     for (const line of content.split('\n')) {
       if (line.startsWith(key + '=')) {
         let value = line.slice(key.length + 1).trim();
