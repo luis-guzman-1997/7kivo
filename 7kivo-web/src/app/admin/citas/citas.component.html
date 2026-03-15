@@ -1,4 +1,6 @@
 <div class="citas-page">
+
+  <!-- Toast -->
   <div class="toast toast-success" *ngIf="notice"><i class="fas fa-check-circle"></i> {{ notice }}</div>
   <div class="toast toast-error" *ngIf="error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
 
@@ -8,165 +10,252 @@
       <h1 class="page-title"><i class="fas fa-calendar-check"></i> Citas</h1>
       <p class="page-subtitle">Gestiona las citas agendadas por el bot</p>
     </div>
-    <div class="header-actions" *ngIf="collections.length > 1">
+    <div *ngIf="collections.length > 1">
       <select [(ngModel)]="selectedSlug" (change)="loadItems()" class="collection-select">
         <option *ngFor="let c of collections" [value]="c.slug">{{ c.name }}</option>
       </select>
     </div>
   </div>
 
-  <!-- Sin colecciones de citas -->
+  <!-- Sin colecciones -->
   <div class="empty-state" *ngIf="collections.length === 0 && !loading">
     <i class="fas fa-calendar-times"></i>
     <p>No hay flujos con agendamiento de citas configurados.</p>
+    <span class="empty-hint">Crea un flujo con paso de "Agendar Cita" desde Flujos del Bot.</span>
   </div>
 
   <ng-container *ngIf="collections.length > 0">
+
     <!-- Filtros -->
-    <div class="filters-bar">
+    <div class="filters-card">
       <div class="quick-filters">
-        <button class="btn-quick" (click)="setQuickFilter('today')">Hoy</button>
-        <button class="btn-quick" (click)="setQuickFilter('week')">7 días</button>
-        <button class="btn-quick" (click)="setQuickFilter('month')">30 días</button>
-        <button class="btn-quick" (click)="setQuickFilter('all')">Todas</button>
+        <button class="btn-quick" (click)="setQuickFilter('today')"><i class="fas fa-sun"></i> Hoy</button>
+        <button class="btn-quick" (click)="setQuickFilter('week')"><i class="fas fa-calendar-week"></i> 7 días</button>
+        <button class="btn-quick" (click)="setQuickFilter('month')"><i class="fas fa-calendar-alt"></i> 30 días</button>
+        <button class="btn-quick" (click)="setQuickFilter('all')"><i class="fas fa-list"></i> Todas</button>
       </div>
-      <div class="date-filters">
-        <label>Desde</label>
-        <input type="date" [(ngModel)]="filterFrom" (change)="loadItems()" />
-        <label>Hasta</label>
-        <input type="date" [(ngModel)]="filterTo" (change)="loadItems()" />
+      <div class="date-range">
+        <div class="date-field">
+          <label><i class="fas fa-arrow-right"></i> Desde</label>
+          <input type="date" [(ngModel)]="filterFrom" (change)="loadItems()" />
+        </div>
+        <div class="date-field">
+          <label><i class="fas fa-arrow-left"></i> Hasta</label>
+          <input type="date" [(ngModel)]="filterTo" (change)="loadItems()" />
+        </div>
       </div>
     </div>
 
     <!-- Status tabs -->
-    <div class="status-tabs">
-      <button [class.active]="filterStatus === 'all'" (click)="filterStatus = 'all'">
-        Todas <span class="tab-count">{{ counts.all }}</span>
-      </button>
-      <button [class.active]="filterStatus === 'confirmed'" (click)="filterStatus = 'confirmed'">
-        Confirmadas <span class="tab-count confirmed">{{ counts.confirmed }}</span>
-      </button>
-      <button [class.active]="filterStatus === 'pending'" (click)="filterStatus = 'pending'">
-        Pendientes <span class="tab-count pending">{{ counts.pending }}</span>
-      </button>
-      <button [class.active]="filterStatus === 'cancelled'" (click)="filterStatus = 'cancelled'">
-        Canceladas <span class="tab-count cancelled">{{ counts.cancelled }}</span>
-      </button>
+    <div class="status-tabs-wrap">
+      <div class="status-tabs">
+        <button [class.stab-active]="filterStatus === 'all'" (click)="filterStatus = 'all'">
+          Todas <span class="stab-count" [class.stab-count-active]="filterStatus === 'all'">{{ counts.all }}</span>
+        </button>
+        <button [class.stab-active]="filterStatus === 'pending'" (click)="filterStatus = 'pending'">
+          Pendientes <span class="stab-count stab-pending" [class.stab-count-active]="filterStatus === 'pending'">{{ counts.pending }}</span>
+        </button>
+        <button [class.stab-active]="filterStatus === 'confirmed'" (click)="filterStatus = 'confirmed'">
+          Confirmadas <span class="stab-count stab-confirmed" [class.stab-count-active]="filterStatus === 'confirmed'">{{ counts.confirmed }}</span>
+        </button>
+        <button [class.stab-active]="filterStatus === 'cancelled'" (click)="filterStatus = 'cancelled'">
+          Canceladas <span class="stab-count stab-cancelled" [class.stab-count-active]="filterStatus === 'cancelled'">{{ counts.cancelled }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->
     <div class="loading-state" *ngIf="loading">
-      <i class="fas fa-spinner fa-spin"></i> Cargando citas...
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando citas...</p>
     </div>
 
-    <!-- Empty -->
+    <!-- Empty filtered -->
     <div class="empty-state" *ngIf="!loading && filteredItems.length === 0">
       <i class="fas fa-calendar-day"></i>
       <p>No hay citas en este período.</p>
     </div>
 
-    <!-- Tabla -->
+    <!-- ── Tabla (desktop) ── -->
     <div class="table-wrapper" *ngIf="!loading && filteredItems.length > 0">
       <table class="citas-table">
         <thead>
           <tr>
-            <th>Fecha</th>
-            <th>Hora</th>
+            <th>Fecha y Hora</th>
             <th>Servicio</th>
-            <th>Teléfono</th>
+            <th>Contacto</th>
             <th>Estado</th>
-            <th>Acciones</th>
+            <th class="th-actions">Acciones</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of filteredItems" [class.row-cancelled]="item.status === 'cancelled'">
-            <td>{{ item._apptFecha || '—' }}</td>
-            <td>{{ item._apptHora || '—' }}</td>
-            <td>{{ item._apptService || '—' }}</td>
+            <td>
+              <div class="cell-date">
+                <span class="date-val">{{ item._apptFecha || '—' }}</span>
+                <span class="time-val"><i class="fas fa-clock"></i> {{ item._apptHora || '—' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="service-name">{{ item._apptService || '—' }}</span>
+              <span class="duration-hint" *ngIf="item._apptDuration">{{ item._apptDuration }} min</span>
+            </td>
             <td>
               <a *ngIf="item.phoneNumber" [href]="'https://wa.me/' + item.phoneNumber" target="_blank" class="wa-link">
                 <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
               </a>
-              <span *ngIf="!item.phoneNumber">—</span>
+              <span *ngIf="!item.phoneNumber" class="empty-val">—</span>
             </td>
-            <td><span class="badge" [ngClass]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
-            <td class="actions-cell">
-              <button class="btn-detail" (click)="openDetail(item)" title="Ver detalle">
+            <td>
+              <span class="badge" [ngClass]="statusClass(item.status)">
+                <i class="fas" [class.fa-check-circle]="item.status === 'confirmed'"
+                               [class.fa-clock]="!item.status || item.status === 'pending'"
+                               [class.fa-ban]="item.status === 'cancelled'"></i>
+                {{ statusLabel(item.status) }}
+              </span>
+            </td>
+            <td class="td-actions">
+              <button class="btn-icon" (click)="openDetail(item)" title="Ver detalle">
                 <i class="fas fa-eye"></i>
               </button>
               <button
                 *ngIf="item.status !== 'cancelled'"
-                class="btn-cancel-item"
+                class="btn-icon btn-icon-danger"
                 (click)="cancelItem(item)"
                 [disabled]="cancellingId === item.id"
                 title="Cancelar cita">
-                <i class="fas" [class.fa-ban]="cancellingId !== item.id" [class.fa-spinner]="cancellingId === item.id" [class.fa-spin]="cancellingId === item.id"></i>
+                <i class="fas" [class.fa-ban]="cancellingId !== item.id"
+                               [class.fa-spinner]="cancellingId === item.id"
+                               [class.fa-spin]="cancellingId === item.id"></i>
               </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- ── Cards (mobile) ── -->
+    <div class="cards-list" *ngIf="!loading && filteredItems.length > 0">
+      <div class="cita-card" *ngFor="let item of filteredItems" [class.card-cancelled]="item.status === 'cancelled'">
+        <div class="ccard-header">
+          <div class="ccard-datetime">
+            <span class="ccard-date"><i class="fas fa-calendar"></i> {{ item._apptFecha || '—' }}</span>
+            <span class="ccard-time"><i class="fas fa-clock"></i> {{ item._apptHora || '—' }}</span>
+          </div>
+          <span class="badge" [ngClass]="statusClass(item.status)">
+            <i class="fas" [class.fa-check-circle]="item.status === 'confirmed'"
+                           [class.fa-clock]="!item.status || item.status === 'pending'"
+                           [class.fa-ban]="item.status === 'cancelled'"></i>
+            {{ statusLabel(item.status) }}
+          </span>
+        </div>
+        <div class="ccard-service">
+          <i class="fas fa-tag"></i>
+          <span>{{ item._apptService || '—' }}</span>
+          <span class="ccard-dur" *ngIf="item._apptDuration">· {{ item._apptDuration }} min</span>
+        </div>
+        <div class="ccard-footer">
+          <a *ngIf="item.phoneNumber" [href]="'https://wa.me/' + item.phoneNumber" target="_blank" class="wa-link">
+            <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
+          </a>
+          <div class="ccard-actions">
+            <button class="btn-icon" (click)="openDetail(item)" title="Ver detalle">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button
+              *ngIf="item.status !== 'cancelled'"
+              class="btn-icon btn-icon-danger"
+              (click)="cancelItem(item)"
+              [disabled]="cancellingId === item.id">
+              <i class="fas" [class.fa-ban]="cancellingId !== item.id"
+                             [class.fa-spinner]="cancellingId === item.id"
+                             [class.fa-spin]="cancellingId === item.id"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </ng-container>
 
   <!-- Modal detalle -->
   <div class="modal-overlay" *ngIf="detailItem" (click)="closeDetail()">
     <div class="modal-box" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3><i class="fas fa-calendar-check"></i> Detalle de Cita</h3>
+        <div class="modal-title">
+          <div class="modal-icon-wrap">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div>
+            <h3>Detalle de Cita</h3>
+            <p>{{ detailItem._apptFecha }} · {{ detailItem._apptHora }}</p>
+          </div>
+        </div>
         <button class="modal-close" (click)="closeDetail()"><i class="fas fa-times"></i></button>
       </div>
+
       <div class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-row">
-            <span class="detail-label">Fecha</span>
-            <span>{{ detailItem._apptFecha || '—' }}</span>
+        <!-- Status badge -->
+        <div class="modal-status-row">
+          <span class="badge badge-lg" [ngClass]="statusClass(detailItem.status)">
+            <i class="fas" [class.fa-check-circle]="detailItem.status === 'confirmed'"
+                           [class.fa-clock]="!detailItem.status || detailItem.status === 'pending'"
+                           [class.fa-ban]="detailItem.status === 'cancelled'"></i>
+            {{ statusLabel(detailItem.status) }}
+          </span>
+          <span class="gc-badge" *ngIf="detailItem.gcEventId">
+            <i class="fas fa-calendar-alt"></i> Sincronizado con Google Calendar
+          </span>
+        </div>
+
+        <!-- Campos cita -->
+        <div class="detail-section">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Servicio</span>
+              <span class="detail-val">{{ detailItem._apptService || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Duración</span>
+              <span class="detail-val">{{ detailItem._apptDuration ? detailItem._apptDuration + ' min' : '—' }}</span>
+            </div>
+            <div class="detail-item detail-item-full">
+              <span class="detail-label">Teléfono</span>
+              <span class="detail-val">
+                <a *ngIf="detailItem.phoneNumber" [href]="'https://wa.me/' + detailItem.phoneNumber" target="_blank" class="wa-link">
+                  <i class="fab fa-whatsapp"></i> {{ detailItem.phoneNumber }}
+                </a>
+                <span *ngIf="!detailItem.phoneNumber">—</span>
+              </span>
+            </div>
           </div>
-          <div class="detail-row">
-            <span class="detail-label">Hora</span>
-            <span>{{ detailItem._apptHora || '—' }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Servicio</span>
-            <span>{{ detailItem._apptService || '—' }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Duración</span>
-            <span>{{ detailItem._apptDuration ? detailItem._apptDuration + ' min' : '—' }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Teléfono</span>
-            <span>
-              <a *ngIf="detailItem.phoneNumber" [href]="'https://wa.me/' + detailItem.phoneNumber" target="_blank" class="wa-link">
-                <i class="fab fa-whatsapp"></i> {{ detailItem.phoneNumber }}
-              </a>
-              <span *ngIf="!detailItem.phoneNumber">—</span>
-            </span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Estado</span>
-            <span class="badge" [ngClass]="statusClass(detailItem.status)">{{ statusLabel(detailItem.status) }}</span>
-          </div>
-          <div class="detail-row" *ngFor="let field of getExtraFields(detailItem)">
-            <span class="detail-label">{{ field.key }}</span>
-            <span>{{ field.value }}</span>
-          </div>
-          <div class="detail-row" *ngIf="detailItem.gcEventId">
-            <span class="detail-label">Google Calendar</span>
-            <span class="gc-badge"><i class="fas fa-calendar-alt"></i> Sincronizado</span>
+        </div>
+
+        <!-- Campos adicionales del flujo -->
+        <div class="detail-section" *ngIf="getExtraFields(detailItem).length > 0">
+          <div class="detail-section-title"><i class="fas fa-list-ul"></i> Información adicional</div>
+          <div class="detail-grid">
+            <div class="detail-item" *ngFor="let field of getExtraFields(detailItem)">
+              <span class="detail-label">{{ field.key }}</span>
+              <span class="detail-val">{{ field.value }}</span>
+            </div>
           </div>
         </div>
       </div>
+
       <div class="modal-footer">
         <button
           *ngIf="detailItem.status !== 'cancelled'"
-          class="btn-cancel-modal"
+          class="btn-danger-action"
           (click)="cancelItem(detailItem); closeDetail()"
           [disabled]="cancellingId === detailItem.id">
           <i class="fas fa-ban"></i> Cancelar cita
         </button>
-        <button class="btn-close-modal" (click)="closeDetail()">Cerrar</button>
+        <button class="btn-secondary-action" (click)="closeDetail()">
+          <i class="fas fa-times"></i> Cerrar
+        </button>
       </div>
     </div>
   </div>
+
 </div>
