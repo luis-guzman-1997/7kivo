@@ -182,6 +182,14 @@ export class FirebaseService {
   async updateOrgAdminByOrgId(orgId: string, adminId: string, data: DocumentData): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId, 'admins', adminId);
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+    // Si se cambió el rol, sincronizar también en users/{uid}
+    if (data['role']) {
+      const adminSnap = await getDoc(docRef);
+      const uid = adminSnap.data()?.['uid'];
+      if (uid) {
+        await setDoc(doc(this.db, 'users', uid), { role: data['role'], updatedAt: serverTimestamp() }, { merge: true });
+      }
+    }
   }
 
   // Creates a Firebase Auth user without affecting the current admin session
