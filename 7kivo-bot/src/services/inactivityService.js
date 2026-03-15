@@ -5,10 +5,12 @@ const { getConversationMode, saveMessage } = require("./conversationService");
 
 const CHECK_INTERVAL = 30000; // Check every 30 seconds
 const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutos de cooldown tras enviar aviso
 
 let running = false;
 let cachedConfig = null;
 let configCachedAt = 0;
+const recentlyExpired = new Map(); // phone -> timestamp
 
 const checkInactiveSessions = async () => {
   if (running) return;
@@ -24,8 +26,14 @@ const checkInactiveSessions = async () => {
     const sessions = getAllSessions();
     const now = Date.now();
 
+    // Limpiar cooldowns vencidos
+    for (const [p, ts] of recentlyExpired.entries()) {
+      if (now - ts > COOLDOWN_MS) recentlyExpired.delete(p);
+    }
+
     for (const [phone, session] of Object.entries(sessions)) {
       if (!session.hasGreeted) continue;
+      if (recentlyExpired.has(phone)) continue;
 
       const lastTime = session.last_message_time
         ? new Date(session.last_message_time).getTime()
@@ -44,6 +52,7 @@ const checkInactiveSessions = async () => {
 
         saveMessage(phone, msg, "bot").catch(() => {});
 
+        recentlyExpired.set(phone, now);
         await clearSession(phone);
         console.log(`Session expired for ${phone} (inactive ${Math.round((now - lastTime) / 60000)}min)`);
       } catch (err) {
