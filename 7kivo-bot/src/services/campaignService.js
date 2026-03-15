@@ -2,7 +2,7 @@ const { admin, db } = require('../config/firebase');
 const { sendTextMessage, sendImageMessage } = require('../models/messageModel');
 const { runWithOrgId } = require('../config/requestContext');
 
-const CAMPAIGN_CHECK_INTERVAL = 60000; // 1 minuto
+const CAMPAIGN_CHECK_INTERVAL = 300000; // 5 minutos
 const SEND_DELAY_MS = 1200; // 1.2 segundos entre mensajes
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -174,7 +174,7 @@ let schedulerIntervalId = null;
 const startCampaignScheduler = () => {
   if (schedulerIntervalId) return;
   schedulerIntervalId = setInterval(processDueCampaigns, CAMPAIGN_CHECK_INTERVAL);
-  console.log(`📣 Scheduler de campañas activo (cada ${CAMPAIGN_CHECK_INTERVAL / 1000}s)`);
+  console.log(`📣 Scheduler de campañas activo (cada ${CAMPAIGN_CHECK_INTERVAL / 60000}min)`);
 };
 
 module.exports = { runCampaign, startCampaignScheduler };

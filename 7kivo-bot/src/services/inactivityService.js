@@ -4,15 +4,22 @@ const { getGeneralConfig, getMessage } = require("./botMessagesService");
 const { getConversationMode, saveMessage } = require("./conversationService");
 
 const CHECK_INTERVAL = 30000; // Check every 30 seconds
+const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 let running = false;
+let cachedConfig = null;
+let configCachedAt = 0;
 
 const checkInactiveSessions = async () => {
   if (running) return;
   running = true;
 
   try {
-    const config = await getGeneralConfig();
+    if (!cachedConfig || (Date.now() - configCachedAt) > CONFIG_CACHE_TTL) {
+      cachedConfig = await getGeneralConfig();
+      configCachedAt = Date.now();
+    }
+    const config = cachedConfig;
     const timeout = config?.inactivityTimeout || 180000;
     const sessions = getAllSessions();
     const now = Date.now();

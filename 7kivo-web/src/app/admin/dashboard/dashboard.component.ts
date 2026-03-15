@@ -86,7 +86,7 @@ export class DashboardComponent implements OnInit {
       // Collections
       const icons = ['fa-layer-group', 'fa-users', 'fa-folder', 'fa-archive', 'fa-clipboard-list', 'fa-tags'];
       const statsPromises = colDefs.map(async (col: any, i: number) => {
-        const items = await this.firebaseService.getCollectionData(col.slug);
+        const items = await this.firebaseService.getCollectionData(col.slug, 200);
         const pending = items.filter((it: any) => it.status === 'pending').length;
         this.pendingTotal += pending;
         this.totalRecords += items.length;

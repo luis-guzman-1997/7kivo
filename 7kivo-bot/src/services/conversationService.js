@@ -22,17 +22,14 @@ const saveMessage = async (phoneNumber, text, from, extra = {}) => {
   if (from === "user") {
     convUpdate.lastUserMessageAt = now;
     convUpdate.lastUserMessageMs = Date.now();
-    await convRef.set(convUpdate, { merge: true });
-    await convRef.update({
-      unreadCount: admin.firestore.FieldValue.increment(1)
-    });
-  } else {
-    await convRef.set(convUpdate, { merge: true });
+    convUpdate.unreadCount = admin.firestore.FieldValue.increment(1);
   }
 
   if (extra.contactName) {
-    await convRef.update({ contactName: extra.contactName });
+    convUpdate.contactName = extra.contactName;
   }
+
+  await convRef.set(convUpdate, { merge: true });
 
   const msgData = {
     from,

@@ -741,13 +741,10 @@ export class FirebaseService {
     }
   }
 
-  async getCollectionData(slug: string): Promise<any[]> {
-    const items = await this.getCollection(slug);
-    return items.sort((a, b) => {
-      const dateA = a.createdAt?.seconds || 0;
-      const dateB = b.createdAt?.seconds || 0;
-      return dateB - dateA;
-    });
+  async getCollectionData(slug: string, limitCount?: number): Promise<any[]> {
+    const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
+    if (limitCount) constraints.push(limit(limitCount));
+    return this.getCollection(slug, constraints);
   }
 
   async addCollectionItem(slug: string, data: DocumentData): Promise<string> {
@@ -853,7 +850,7 @@ export class FirebaseService {
   onConversationMessages(phoneNumber: string, callback: (msgs: any[]) => void): Unsubscribe {
     const cleanPhone = phoneNumber.replace(/\D/g, '');
     const colRef = collection(this.db, this.orgPath(), 'conversations', cleanPhone, 'messages');
-    const q = query(colRef, orderBy('timestamp', 'asc'));
+    const q = query(colRef, orderBy('timestamp', 'asc'), limit(100));
     return onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       callback(msgs);
@@ -862,7 +859,7 @@ export class FirebaseService {
 
   onConversationsChange(callback: (convs: any[]) => void): Unsubscribe {
     const colRef = collection(this.db, this.orgPath(), 'conversations');
-    const q = query(colRef, orderBy('lastMessageAt', 'desc'));
+    const q = query(colRef, orderBy('lastMessageAt', 'desc'), limit(100));
     return onSnapshot(q, (snapshot) => {
       const convs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       callback(convs);
