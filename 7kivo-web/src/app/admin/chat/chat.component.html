@@ -16,8 +16,8 @@
     </div>
   </div>
 
-  <!-- Sidebar: Conversations List -->
-  <div class="chat-sidebar">
+  <!-- Sidebar: Conversations List (oculto en modo delivery) -->
+  <div class="chat-sidebar" *ngIf="!isDeliveryMode">
     <div class="chat-sidebar-header">
       <button class="btn-back-admin" (click)="goBackToAdmin()" title="Volver al panel">
         <i class="fas fa-arrow-left"></i>
@@ -83,7 +83,7 @@
     <div class="chat-header">
       <!-- Fila principal: identidad + acciones rápidas -->
       <div class="chat-header-info">
-        <button class="btn-back" (click)="selectedConversation = null">
+        <button class="btn-back" (click)="goBack()">
           <i class="fas fa-arrow-left"></i>
         </button>
         <div class="header-avatar" [class.avatar-admin]="isAdminMode">
@@ -107,8 +107,23 @@
       <!-- Fila secundaria: control de modo -->
       <div class="chat-header-actions">
 
+        <!-- Delivery mode: solo resolver pedido -->
+        <ng-container *ngIf="isDeliveryMode">
+          <div class="admin-client-info">
+            <span class="admin-client-name">{{ getContactDisplayName(selectedConversation) }}</span>
+            <span class="admin-client-phone">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
+          </div>
+          <button class="btn-mode-toggle btn-delivery-resolve"
+                  (click)="resolveDeliveryCase()"
+                  [disabled]="resolvingCase"
+                  title="Marcar pedido como completado">
+            <i class="fas" [class.fa-check-circle]="!resolvingCase" [class.fa-spinner]="resolvingCase" [class.fa-spin]="resolvingCase"></i>
+            {{ resolvingCase ? 'Resolviendo...' : 'Pedido Completado' }}
+          </button>
+        </ng-container>
+
         <!-- Admin mode: nombre + teléfono del cliente + botones compactos -->
-        <ng-container *ngIf="isAdminMode">
+        <ng-container *ngIf="isAdminMode && !isDeliveryMode">
           <div class="admin-client-info">
             <span class="admin-client-name">{{ getContactDisplayName(selectedConversation) }}</span>
             <span class="admin-client-phone">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
@@ -129,7 +144,7 @@
         </ng-container>
 
         <!-- Bot mode: badge + tomar control + limpiar -->
-        <ng-container *ngIf="isBotMode">
+        <ng-container *ngIf="isBotMode && !isDeliveryMode">
           <div class="mode-badge mode-bot">
             <i class="fas fa-robot"></i> Bot
           </div>
@@ -214,7 +229,7 @@
     </div>
 
     <!-- Input Area -->
-    <div class="chat-input" *ngIf="isWithin24h && authService.userRole !== 'viewer' && chatLiveAllowed">
+    <div class="chat-input" *ngIf="isWithin24h && (isDeliveryMode || (authService.userRole !== 'viewer' && chatLiveAllowed))">
       <div class="input-error" *ngIf="error">
         <i class="fas fa-exclamation-circle"></i> {{ error }}
         <button (click)="error = ''"><i class="fas fa-times"></i></button>
@@ -250,7 +265,12 @@
 
   <ng-template #noSelection>
     <div class="chat-main chat-placeholder">
-      <div class="placeholder-content">
+      <div class="placeholder-content" *ngIf="isDeliveryMode">
+        <i class="fas fa-spinner fa-spin"></i>
+        <h3>Cargando conversación...</h3>
+        <p>Conectando con el cliente del pedido</p>
+      </div>
+      <div class="placeholder-content" *ngIf="!isDeliveryMode">
         <i class="fab fa-whatsapp"></i>
         <h3>Selecciona una conversación</h3>
         <p>Elige un contacto de la lista para ver y responder mensajes</p>

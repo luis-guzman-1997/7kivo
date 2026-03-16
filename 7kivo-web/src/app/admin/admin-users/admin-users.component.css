@@ -258,15 +258,17 @@
 
 .admin-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 0 20px 20px;
 }
 
 .btn-card {
-  flex: 1;
-  padding: 10px;
+  flex: 1 1 auto;
+  min-width: calc(50% - 4px);
+  padding: 9px 10px;
   border-radius: 10px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -275,6 +277,7 @@
   justify-content: center;
   gap: 6px;
   border: 1px solid;
+  white-space: nowrap;
 }
 
 .btn-card i { color: inherit !important; }

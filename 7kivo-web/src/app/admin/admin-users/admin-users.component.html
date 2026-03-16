@@ -69,6 +69,14 @@
           </span>
         </div>
       </div>
+      <div class="form-row" *ngIf="newAdmin.role === 'delivery'">
+        <div class="form-group-admin">
+          <label>Número WhatsApp del Delivery</label>
+          <input type="tel" [(ngModel)]="newAdmin.whatsappPhone" name="whatsappPhone"
+                 placeholder="Ej: 50378901234 (con código de país)" />
+          <span class="role-hint">Este número se mostrará al cliente cuando tome un pedido</span>
+        </div>
+      </div>
 
       <div class="form-message error" *ngIf="formError">
         <i class="fas fa-exclamation-circle"></i> {{ formError }}
@@ -116,6 +124,9 @@
             <i class="fas fa-circle"></i> {{ admin.active ? 'Activo' : 'Inactivo' }}
           </span>
         </div>
+        <div class="admin-meta" *ngIf="admin.role === 'delivery' && admin.whatsappPhone">
+          <span><i class="fab fa-whatsapp" style="color:#25d366"></i> {{ admin.whatsappPhone }}</span>
+        </div>
         <!-- Role change -->
         <div class="role-change" *ngIf="canManage(admin)">
           <label>Cambiar rol:</label>
@@ -130,12 +141,35 @@
           <i class="fas" [class.fa-ban]="admin.active" [class.fa-check]="!admin.active"></i>
           {{ admin.active ? 'Desactivar' : 'Activar' }}
         </button>
-        <button class="btn-card btn-pw" (click)="startChangePassword(admin)" *ngIf="changePwAdmin?.uid !== admin.uid">
+        <button class="btn-card btn-pw" (click)="startChangePassword(admin)"
+                *ngIf="changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id">
           <i class="fas fa-key"></i> Contraseña
+        </button>
+        <button class="btn-card btn-pw" (click)="startChangePhone(admin)"
+                *ngIf="admin.role === 'delivery' && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id">
+          <i class="fas fa-phone"></i> Número WA
         </button>
         <button class="btn-card btn-delete" (click)="deleteAdmin(admin)">
           <i class="fas fa-trash"></i> Eliminar
         </button>
+      </div>
+
+      <!-- Inline phone change form (delivery) -->
+      <div class="change-pw-form" *ngIf="changePhoneAdmin?.id === admin.id">
+        <label><i class="fas fa-phone"></i> Número WhatsApp del Delivery</label>
+        <div class="change-pw-row">
+          <input type="tel" [(ngModel)]="changePhoneValue" placeholder="Ej: 50378901234"
+                 [name]="'phone-' + admin.id" (keyup.enter)="saveChangePhone()" />
+          <button class="btn-card btn-save-pw" (click)="saveChangePhone()" [disabled]="changePhoneSaving">
+            <i class="fas fa-spinner fa-spin" *ngIf="changePhoneSaving"></i>
+            <i class="fas fa-check" *ngIf="!changePhoneSaving"></i>
+            {{ changePhoneSaving ? '' : 'Guardar' }}
+          </button>
+          <button class="btn-card btn-cancel-pw" (click)="cancelChangePhone()" [disabled]="changePhoneSaving">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <span class="pw-error" *ngIf="changePhoneError"><i class="fas fa-exclamation-circle"></i> {{ changePhoneError }}</span>
       </div>
 
       <!-- Inline password change form -->
@@ -162,8 +196,11 @@
     </div>
   </div>
 
-  <!-- Global password change notice -->
+  <!-- Global notices -->
   <div class="pw-global-notice" *ngIf="changePwNotice">
     <i class="fas fa-check-circle"></i> {{ changePwNotice }}
+  </div>
+  <div class="pw-global-notice" *ngIf="changePhoneNotice">
+    <i class="fas fa-check-circle"></i> {{ changePhoneNotice }}
   </div>
 </div>

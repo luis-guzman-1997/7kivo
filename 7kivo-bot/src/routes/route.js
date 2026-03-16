@@ -12,7 +12,9 @@ const {
   sendAdminImage,
   takeControl,
   releaseToBot,
-  checkWindow
+  checkWindow,
+  takeDeliveryCase,
+  resolveDeliveryCase
 } = require("../controllers/chatController");
 
 const { setUserPassword, sendCampaign } = require("../controllers/adminController");
@@ -53,6 +55,8 @@ router.post("/api/:orgId/send-message", withOrgContext(sendAdminMessage));
 router.post("/api/:orgId/send-image", withOrgContext(sendAdminImage));
 router.post("/api/:orgId/take-control", withOrgContext(takeControl));
 router.post("/api/:orgId/release-to-bot", withOrgContext(releaseToBot));
+router.post("/api/:orgId/take-delivery-case", withOrgContext(takeDeliveryCase));
+router.post("/api/:orgId/resolve-delivery-case", withOrgContext(resolveDeliveryCase));
 
 // Rutas legacy sin orgId en URL (backward compat — se pueden remover cuando el frontend esté actualizado)
 router.get("/api/conversations", withOrgContext(listConversations));

@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { FirebaseService } from '../../services/firebase.service';
+import { AuthService } from '../../services/auth.service';
 
 interface FlowTab {
   flowId: string;
@@ -28,7 +30,7 @@ interface CalendarDay {
   templateUrl: './inbox.component.html',
   styleUrls: ['./inbox.component.css']
 })
-export class InboxComponent implements OnInit {
+export class InboxComponent implements OnInit, OnDestroy {
   tabs: FlowTab[] = [];
   activeTabIndex = 0;
   loading = true;
@@ -51,10 +53,54 @@ export class InboxComponent implements OnInit {
   selectedCalendarDay: CalendarDay | null = null;
   weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-  constructor(private firebaseService: FirebaseService) {}
+  private refreshTimer: any = null;
+
+  // ── Delivery state ──
+  currentUserId = '';
+  currentUserName = '';
+  currentUserEmail = '';
+  currentUserWaPhone = '';
+  takingCaseId: string | null = null;
+  takeError = '';
+
+  get isDelivery(): boolean {
+    return this.authService.userRole === 'delivery';
+  }
+
+  constructor(
+    private firebaseService: FirebaseService,
+    public authService: AuthService,
+    private router: Router
+  ) {}
 
   async ngOnInit(): Promise<void> {
+    if (this.isDelivery) {
+      await this.loadCurrentUserInfo();
+    }
     await this.loadFlows();
+    const interval = this.isDelivery ? 20000 : 300000;
+    this.refreshTimer = setInterval(() => this.silentRefresh(), interval);
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
+  }
+
+  private async silentRefresh(): Promise<void> {
+    if (this.takingCaseId) return;
+    await Promise.all(this.tabs.map(tab => this.loadTabSubmissions(tab)));
+  }
+
+  async loadCurrentUserInfo(): Promise<void> {
+    const uid = this.authService.currentUser?.uid;
+    if (!uid) return;
+    this.currentUserId = uid;
+    this.currentUserEmail = this.authService.currentUser?.email || '';
+    try {
+      const userData = await this.firebaseService.getUserOrg(uid);
+      this.currentUserName = userData?.name || this.currentUserEmail;
+      this.currentUserWaPhone = userData?.whatsappPhone || '';
+    } catch { /* silent */ }
   }
 
   async loadFlows(): Promise<void> {
@@ -446,5 +492,108 @@ export class InboxComponent implements OnInit {
   getItemDateKey(item: any): string {
     const raw = item._apptFecha || item._apptfecha || item.date || item.fecha || '';
     return this.normalizeDateKey(raw);
+  }
+
+  // ==================== Delivery ====================
+
+  deliveryAvailableCases(tab: FlowTab): any[] {
+    return tab.submissions.filter(s =>
+      !s.assignedTo && s.status !== 'resolved'
+    );
+  }
+
+  deliveryMyCases(tab: FlowTab): any[] {
+    return tab.submissions.filter(s =>
+      s.assignedTo?.uid === this.currentUserId && s.status !== 'resolved'
+    );
+  }
+
+  deliveryMyHistory(tab: FlowTab): any[] {
+    return tab.submissions.filter(s =>
+      s.assignedTo?.uid === this.currentUserId && s.status === 'resolved'
+    );
+  }
+
+  get deliveryTotalAvailable(): number {
+    return this.tabs.reduce((sum, t) => sum + this.deliveryAvailableCases(t).length, 0);
+  }
+
+  async takeCase(item: any, tab: FlowTab): Promise<void> {
+    if (this.takingCaseId) return;
+
+    // No se permite tomar si ya tiene un caso activo en cualquier tab
+    const hasActive = this.tabs.some(t => this.deliveryMyCases(t).length > 0);
+    if (hasActive) {
+      this.takeError = 'Ya tienes un caso activo. Resuélvelo antes de tomar otro.';
+      setTimeout(() => this.takeError = '', 4000);
+      return;
+    }
+
+    this.takingCaseId = item.id;
+    this.takeError = '';
+
+    try {
+      const agent = {
+        uid: this.currentUserId,
+        name: this.currentUserName,
+        email: this.currentUserEmail,
+        whatsappPhone: this.currentUserWaPhone
+      };
+
+      const result = await this.firebaseService.assignSubmission(tab.collection, item.id, agent);
+
+      if (!result.ok) {
+        this.takeError = `Este caso ya fue tomado por ${result.takenBy || 'otro repartidor'}.`;
+        setTimeout(() => this.takeError = '', 4000);
+        await this.loadTabSubmissions(tab);
+        return;
+      }
+
+      // Enviar mensaje WA al cliente via bot
+      const botApiUrl = this.authService.botApiUrl;
+      const orgId = this.firebaseService.getOrgId();
+      if (botApiUrl && item.phoneNumber) {
+        try {
+          await fetch(`${botApiUrl}/api/${orgId}/take-delivery-case`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: item.phoneNumber,
+              clientName: this.getPersonName(item),
+              deliveryName: this.currentUserName,
+              deliveryPhone: this.currentUserWaPhone
+            })
+          });
+        } catch { /* silent — no bloquea el flujo */ }
+      }
+
+      await this.loadTabSubmissions(tab);
+
+      // Navegar al chat con este cliente
+      if (item.phoneNumber) {
+        this.router.navigate(['/admin/chat'], {
+          queryParams: {
+            phone: item.phoneNumber,
+            submissionId: item.id,
+            collection: tab.collection
+          }
+        });
+      }
+    } catch (err) {
+      this.takeError = 'Error al tomar el caso. Intenta de nuevo.';
+      setTimeout(() => this.takeError = '', 4000);
+    } finally {
+      this.takingCaseId = null;
+    }
+  }
+
+  goToChat(item: any, tab: FlowTab): void {
+    this.router.navigate(['/admin/chat'], {
+      queryParams: {
+        phone: item.phoneNumber,
+        submissionId: item.id,
+        collection: tab.collection
+      }
+    });
   }
 }

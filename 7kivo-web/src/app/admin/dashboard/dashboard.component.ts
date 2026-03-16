@@ -30,6 +30,18 @@ export class DashboardComponent implements OnInit {
   totalSentToday = 0;
   todayLabel = '';
 
+  // Delivery stats
+  deliveryAvailable = 0;
+  deliveryActive = 0;
+  deliveryResolvedToday = 0;
+  deliveryResolvedTotal = 0;
+  deliveryActiveItem: any = null;
+  deliveryActiveTab: string = '';
+
+  get isDelivery(): boolean {
+    return this.authService.userRole === 'delivery';
+  }
+
   // Onboarding
   showOnboarding = false;
   step1Done = false;
@@ -50,6 +62,10 @@ export class DashboardComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    if (this.isDelivery) {
+      await this.loadDeliveryStats();
+      return;
+    }
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -128,6 +144,53 @@ export class DashboardComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  async loadDeliveryStats(): Promise<void> {
+    try {
+      const uid = this.authService.currentUser?.uid;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTs = today.getTime() / 1000;
+
+      const flows = await this.firebaseService.getFlows();
+      const inboxFlows = flows.filter((f: any) =>
+        f.saveToCollection && f.saveToCollection !== 'applicants' && f.saveToCollection !== 'contacts'
+      );
+
+      for (const flow of inboxFlows) {
+        const items = await this.firebaseService.getFlowSubmissions(flow.saveToCollection);
+        for (const item of items) {
+          if (!item.assignedTo && item.status !== 'resolved') {
+            this.deliveryAvailable++;
+          }
+          if (item.assignedTo?.uid === uid) {
+            if (item.status !== 'resolved') {
+              this.deliveryActive++;
+              if (!this.deliveryActiveItem) {
+                this.deliveryActiveItem = item;
+                this.deliveryActiveTab = flow.saveToCollection;
+              }
+            } else {
+              this.deliveryResolvedTotal++;
+              if ((item.updatedAt?.seconds || item.createdAt?.seconds || 0) >= todayTs) {
+                this.deliveryResolvedToday++;
+              }
+            }
+          }
+        }
+      }
+
+      this.totalConversations = this.deliveryResolvedTotal;
+    } catch (err) {
+      console.error('Error loading delivery stats:', err);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  getPersonName(item: any): string {
+    return item?.fullName || item?.name || item?.nombre || 'Sin nombre';
   }
 
   get limitPct(): number {

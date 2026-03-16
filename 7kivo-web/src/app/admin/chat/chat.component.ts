@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
@@ -55,6 +55,13 @@ export class ChatComponent implements OnInit, OnDestroy {
   chatLiveAllowed = true;
   sendingImage = false;
 
+  // ── Delivery mode ──
+  isDeliveryMode = false;
+  deliveryPhone: string | null = null;
+  deliverySubmissionId: string | null = null;
+  deliveryCollection: string | null = null;
+  resolvingCase = false;
+
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
   private windowTimer: any = null;
@@ -65,6 +72,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private firebaseService: FirebaseService,
     public authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -72,14 +80,42 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin']);
   }
 
+  goBack(): void {
+    if (this.isDeliveryMode) {
+      this.router.navigate(['/admin/bandeja']);
+    } else {
+      this.selectedConversation = null;
+    }
+  }
+
   async ngOnInit(): Promise<void> {
     this.chatLiveAllowed = this.authService.getPlanLimits().chatLive;
     await this.loadConfig();
+
+    // Delivery: solo puede entrar desde la bandeja con phone param
+    if (this.authService.userRole === 'delivery') {
+      const params = this.route.snapshot.queryParams;
+      const phone = params['phone'];
+      if (!phone) {
+        this.router.navigate(['/admin/bandeja']);
+        return;
+      }
+      this.isDeliveryMode = true;
+      this.deliveryPhone = phone;
+      this.deliverySubmissionId = params['submissionId'] || null;
+      this.deliveryCollection = params['collection'] || null;
+    }
 
     this.convsUnsub = this.firebaseService.onConversationsChange((convs) => {
       this.conversations = convs;
       this.applyFilter();
       this.loading = false;
+
+      // Auto-seleccionar conversación para delivery
+      if (this.isDeliveryMode && this.deliveryPhone && !this.selectedConversation) {
+        const conv = convs.find(c => c.phoneNumber === this.deliveryPhone || c.id === this.deliveryPhone);
+        if (conv) this.selectConversation(conv);
+      }
 
       if (this.selectedConversation) {
         const updated = convs.find(c => c.id === this.selectedConversation!.id);
@@ -425,6 +461,42 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.sendMessage();
+    }
+  }
+
+  async resolveDeliveryCase(): Promise<void> {
+    if (!this.selectedConversation || this.resolvingCase) return;
+    if (!confirm('¿Marcar este pedido como completado? Se notificará al cliente.')) return;
+
+    this.resolvingCase = true;
+    this.error = '';
+    try {
+      const clientName = this.selectedConversation.contactName || '';
+      const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/resolve-delivery-case`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: this.selectedConversation.phoneNumber, clientName })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        this.error = data.error || 'Error al resolver el caso';
+        return;
+      }
+
+      if (this.deliverySubmissionId && this.deliveryCollection) {
+        await this.firebaseService.updateDocument(
+          this.deliveryCollection,
+          this.deliverySubmissionId,
+          { status: 'resolved' }
+        );
+      }
+
+      this.router.navigate(['/admin/bandeja']);
+    } catch (err) {
+      this.error = 'No se pudo conectar con el bot.';
+    } finally {
+      this.resolvingCase = false;
     }
   }
 

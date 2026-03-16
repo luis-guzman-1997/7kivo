@@ -1,0 +1,404 @@
+{
+  "version": "2",
+  "type": "org_export",
+  "exportedAt": "2026-03-15T20:32:48.460Z",
+  "orgs": [
+    {
+      "id": "caluco-express",
+      "data": {
+        "description": "Lo pedís, lo llevamos.",
+        "active": true,
+        "botEnabled": true,
+        "name": "Caluco Express",
+        "customLimits": null,
+        "plan": "Enterprise",
+        "monthlyRate": 0,
+        "dailyBulkLimit": 0,
+        "industry": "shipping",
+        "setupComplete": true
+      },
+      "config": {
+        "general": {
+          "welcomeMessage": "Bienvenido a Caluco Express",
+          "id": "general",
+          "personalWhatsApp": "",
+          "description": "Lo pedís, lo llevamos.",
+          "botApiUrl": "https://px4gtxt7-3005.use2.devtunnels.ms",
+          "orgName": "Caluco Express",
+          "orgLogo": "https://firebasestorage.googleapis.com/v0/b/kivo7-app.firebasestorage.app/o/organizations%2Fcaluco-express%2Flogo.png?alt=media&token=ef235d80-3865-4db7-9c7b-63be45fb0fd2",
+          "inactivityTimeout": 180000,
+          "industry": "shipping"
+        },
+        "whatsapp": {
+          "token": "EAATXdKmhZCasBQxNRKVL6EXceqoMd4Xx8hijjZByhsl2uPHUhGKqKJLApZAkY4ZAHKaD2WuhL4eZCxtzUwyfxI4ZCczbzJnqMLkU0JccQxsHJbFrnN3MfybOGgq4oUBTtvwdJKpSZBCiybUrcYTXtzT25le8SLqXWjsFZAMlMXUZBwh1BbDtmZAZBZB9KADV6w8kAehx8zx8HnQ5kYNbvweG8mZAz4v1QqfAljvKWJq6ksX1VhjZCO7SayoZBQ7SPg07IsoZAFfxrErpgvhryQnEAe1r5OKiyQZDZD",
+          "verifyToken": "ivavnYqGL55pYoDFOfFTWtbM1YyvUiCZ",
+          "phoneNumberId": "942728842263360"
+        },
+        "menu": {
+          "greeting": "¡Hola{name}! 👋\n\nBienvenido a *Caluco Express* \nSoy *AhoritaBot* 🤖, tu asistente digital., estoy aquí para ayudarte con tus mandados en *Caluco y alrededores*.\n\n_Lo pedís, lo llevamos!_ 🛵 \n\n⚠️ *Importante*\nPuedes *cancelar el proceso* en cualquier momento digitando la palabra: *CANCELAR*\n\n¿En qué te ayudamos hoy?",
+          "fallbackMessage": "No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones disponibles.",
+          "items": [
+            {
+              "order": 1,
+              "id": "m1",
+              "label": "Solicitar Servicio",
+              "active": true,
+              "description": "Pide un mandado o viaje",
+              "type": "flow",
+              "flowId": "619fAFWGSNvihEBdI8tF"
+            },
+            {
+              "order": 2,
+              "action": "schedule",
+              "type": "builtin",
+              "description": "Disponibles las 24 horas, 7 días",
+              "label": "Horarios",
+              "active": true,
+              "id": "m2"
+            }
+          ],
+          "menuButtonText": "Ver servicios",
+          "exitMessage": "¡Hasta pronto! 👋\n\nFue un gusto atenderte. Escribe *hola* cuando nos necesites.\n\n_Caluco Express 🛵_"
+        }
+      },
+      "flows": [
+        {
+          "id": "619fAFWGSNvihEBdI8tF",
+          "data": {
+            "menuLabel": "Solicitar Servicio",
+            "order": 1,
+            "type": "registration",
+            "name": "Solicitar Servicio",
+            "steps": [
+              {
+                "type": "select_buttons",
+                "fieldKey": "tipo_servicio",
+                "errorMessage": "Selecciona una opción para continuar.",
+                "id": "s1",
+                "optionsSource": "custom",
+                "optional": false,
+                "sourceCollection": "",
+                "buttonText": "Ver opciones",
+                "detailFields": [],
+                "fieldLabel": "Tipo de servicio",
+                "validation": {},
+                "customOptions": [
+                  {
+                    "description": "Llevar o traer algo",
+                    "label": "📦 Mandado",
+                    "value": "Mandado"
+                  },
+                  {
+                    "value": "Viaje",
+                    "description": "Transporte de personas",
+                    "label": "🚗 Viaje"
+                  }
+                ],
+                "displayField": "",
+                "required": true,
+                "prompt": "🛵 *Caluco Express* — Delivery 24/7\n\n¿Qué necesitas hoy?"
+              },
+              {
+                "fieldKey": "nombre",
+                "id": "s2",
+                "errorMessage": "Escribe al menos 2 caracteres.",
+                "optional": false,
+                "optionsSource": "custom",
+                "buttonText": "",
+                "sourceCollection": "",
+                "type": "text_input",
+                "validation": {
+                  "minLength": 2
+                },
+                "displayField": "",
+                "customOptions": [],
+                "required": true,
+                "prompt": "¿Cuál es tu *nombre*?",
+                "detailFields": [],
+                "fieldLabel": "Nombre"
+              },
+              {
+                "required": true,
+                "prompt": "Cuéntanos *qué necesitas* 📝\n\n_Incluye: punto de partida, destino y cualquier detalle importante._",
+                "validation": {
+                  "minLength": 5
+                },
+                "customOptions": [],
+                "displayField": "",
+                "fieldLabel": "Detalle",
+                "detailFields": [],
+                "sourceCollection": "",
+                "buttonText": "",
+                "fieldKey": "necesidad",
+                "errorMessage": "Por favor describe mejor lo que necesitas para poder atenderte.",
+                "id": "s3",
+                "optionsSource": "custom",
+                "optional": false,
+                "type": "text_input"
+              }
+            ],
+            "saveToCollection": "solicitudes",
+            "menuDescription": "Pide un mandado o viaje",
+            "active": true,
+            "completionMessage": "✅ *¡Solicitud recibida!*\n\n📋 *Servicio:* {tipo_servicio}\n👤 *Nombre:* {nombre}\n📝 *Detalle:* {necesidad}\n\nNuestro equipo se pondrá en contacto contigo muy pronto para coordinar. 🛵\n\n_Caluco Express — Lo pedís, lo llevamos_",
+            "showInMenu": true,
+            "description": "Solicita un mandado o viaje con Caluco Express"
+          }
+        }
+      ],
+      "collections": [
+        {
+          "id": "FS7YxcEeB5GEXBbOXb9d",
+          "data": {
+            "description": "Solicitudes de mandados y viajes recibidas por el bot",
+            "displayField": "nombre",
+            "fields": [
+              {
+                "label": "Nombre",
+                "required": true,
+                "key": "nombre",
+                "type": "text"
+              },
+              {
+                "key": "tipo_servicio",
+                "required": true,
+                "label": "Tipo de servicio",
+                "type": "text"
+              },
+              {
+                "type": "text",
+                "key": "necesidad",
+                "required": true,
+                "label": "Detalle"
+              },
+              {
+                "label": "WhatsApp",
+                "required": false,
+                "key": "phoneNumber",
+                "type": "text"
+              }
+            ],
+            "name": "Solicitudes de Servicio",
+            "slug": "solicitudes"
+          }
+        }
+      ],
+      "collectionData": {
+        "solicitudes": [
+          {
+            "id": "gimHTcn8AaIAO2T1fY6h",
+            "data": {
+              "status": "pending",
+              "tipo_servicioId": "Mandado",
+              "organizationId": "caluco-express",
+              "phoneNumber": "50377581735",
+              "nombre": "Luis Guzman",
+              "flowName": "Solicitar Servicio",
+              "flowId": "619fAFWGSNvihEBdI8tF",
+              "necesidad": "Quiero un viaje a sonso",
+              "tipo_servicio": "📦 Mandado"
+            }
+          }
+        ]
+      },
+      "botMessages": [
+        {
+          "id": "8bQzZC4qUBvT59RvECut",
+          "data": {
+            "category": "flow",
+            "content": "Puedes escribir *cancelar* en cualquier momento para detener este proceso.\n",
+            "label": "Aviso de cancelación",
+            "key": "flow_cancel_hint",
+            "description": "Al iniciar un flujo"
+          }
+        },
+        {
+          "id": "EyuVN6NMY9zZO2JavvKo",
+          "data": {
+            "description": "Cuando el bot no entiende",
+            "key": "fallback",
+            "label": "Mensaje no reconocido",
+            "content": "No logré entender tu mensaje.\n\nEscribe *hola* para ver las opciones disponibles.",
+            "category": "fallback"
+          }
+        },
+        {
+          "id": "NKJeH0FWXI4fdaFIrA3x",
+          "data": {
+            "key": "session_expired",
+            "description": "Cierre por inactividad",
+            "content": "Tu sesión se cerró por inactividad.\n\nEscribe *hola* para volver al menú.",
+            "label": "Sesión expirada",
+            "category": "general"
+          }
+        },
+        {
+          "id": "WygLlzgFSvk4Edc5DhG5",
+          "data": {
+            "category": "flow",
+            "content": "El servicio no está disponible en este momento.\n\nEscribe *hola* para ver otras opciones.",
+            "label": "Registro no disponible",
+            "key": "no_registration",
+            "description": "Sin flujo de registro activo"
+          }
+        },
+        {
+          "id": "Zce72B7rETFScwnfe96h",
+          "data": {
+            "category": "general",
+            "label": "Despedida",
+            "content": "¡Hasta pronto! 👋\n\nFue un gusto atenderte. Escribe *hola* cuando nos necesites.\n\n_Caluco Express 🛵_",
+            "description": "Cuando el usuario se despide",
+            "key": "goodbye"
+          }
+        },
+        {
+          "id": "bE3sC7feaZ9LRtACFESr",
+          "data": {
+            "label": "Saludo principal",
+            "content": "¡Hola{name}! 👋\n\nBienvenido a *Caluco Express* 🛵\n\n_Lo pedís, lo llevamos — 24/7_\n\n¿En qué te ayudamos hoy?",
+            "description": "Mensaje de bienvenida",
+            "key": "greeting",
+            "category": "greeting"
+          }
+        },
+        {
+          "id": "jNlZlSyDoaJdsjR6HYR3",
+          "data": {
+            "category": "general",
+            "description": "Cuando cancela un proceso",
+            "key": "cancel",
+            "label": "Cancelación",
+            "content": "Proceso cancelado. Escribe *hola* para volver al menú."
+          }
+        },
+        {
+          "id": "jSlIz4cxSYLo5niwE6KU",
+          "data": {
+            "label": "Despedida de admin",
+            "content": "La conversación con nuestro equipo ha finalizado.\n\nEscribe *hola* para ver el menú.",
+            "description": "Cuando admin devuelve el control",
+            "key": "admin_farewell",
+            "category": "admin"
+          }
+        }
+      ],
+      "info": {
+        "contact": {
+          "city": "Caluco",
+          "country": "El Salvador",
+          "email": "",
+          "address": "Caluco, Sonsonate, El Salvador",
+          "phone": "+15551727026",
+          "showFields": {
+            "country": true,
+            "email": false,
+            "city": true,
+            "address": true,
+            "phone": true
+          }
+        },
+        "schedule": {
+          "offersAppointments": false,
+          "days": [
+            {
+              "shifts": [
+                {
+                  "to": "23:59",
+                  "from": "00:00"
+                }
+              ],
+              "active": true,
+              "name": "Lunes"
+            },
+            {
+              "name": "Martes",
+              "shifts": [
+                {
+                  "to": "23:59",
+                  "from": "00:00"
+                }
+              ],
+              "active": true
+            },
+            {
+              "name": "Miércoles",
+              "active": true,
+              "shifts": [
+                {
+                  "from": "00:00",
+                  "to": "23:59"
+                }
+              ]
+            },
+            {
+              "name": "Jueves",
+              "active": true,
+              "shifts": [
+                {
+                  "to": "23:59",
+                  "from": "00:00"
+                }
+              ]
+            },
+            {
+              "name": "Viernes",
+              "shifts": [
+                {
+                  "from": "00:00",
+                  "to": "23:59"
+                }
+              ],
+              "active": true
+            },
+            {
+              "active": true,
+              "shifts": [
+                {
+                  "to": "23:59",
+                  "from": "00:00"
+                }
+              ],
+              "name": "Sábado"
+            },
+            {
+              "active": true,
+              "shifts": [
+                {
+                  "from": "00:00",
+                  "to": "23:59"
+                }
+              ],
+              "name": "Domingo"
+            }
+          ],
+          "blockedDates": [],
+          "slotDuration": 30
+        },
+        "general": {
+          "services": "Mandados, viajes, transporte en moto, cuté o pickup.",
+          "focus": [
+            "Mandados",
+            "Viajes",
+            "Transporte rápido"
+          ],
+          "description": "Lo pedís, lo llevamos.",
+          "modality": "A domicilio",
+          "name": "Caluco Express",
+          "note": "Operamos las 24 horas del día, los 7 días de la semana."
+        }
+      },
+      "admins": [
+        {
+          "id": "shW9ZSG3ME5sMW5S01px",
+          "data": {
+            "active": true,
+            "name": "Luis Guzmán",
+            "role": "owner",
+            "email": "admin@calucoexpress.com"
+          }
+        }
+      ]
+    }
+  ]
+}

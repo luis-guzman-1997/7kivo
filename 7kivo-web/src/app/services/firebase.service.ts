@@ -3,7 +3,7 @@ import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore, Firestore, collection, doc, getDocs, getDoc, addDoc,
   updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp,
-  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp
+  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp, runTransaction
 } from 'firebase/firestore';
 import {
   getStorage, FirebaseStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll
@@ -56,7 +56,7 @@ export class FirebaseService {
     return snap.exists() ? snap.data() : null;
   }
 
-  async setUserOrg(uid: string, data: { organizationId: string; email: string; role: string; name?: string }): Promise<void> {
+  async setUserOrg(uid: string, data: { organizationId: string; email: string; role: string; name?: string; whatsappPhone?: string }): Promise<void> {
     const userDocRef = doc(this.db, 'users', uid);
     await setDoc(userDocRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
@@ -202,7 +202,7 @@ export class FirebaseService {
   }
 
   // Creates a Firebase Auth user without affecting the current admin session
-  async createUserForOrg(orgId: string, email: string, password: string, name: string, role: string): Promise<string> {
+  async createUserForOrg(orgId: string, email: string, password: string, name: string, role: string, whatsappPhone?: string): Promise<string> {
     const secondaryName = 'secondary-user-creation';
     const secondaryApp = getApps().find(a => a.name === secondaryName)
       || initializeApp(getApp().options, secondaryName);
@@ -210,11 +210,12 @@ export class FirebaseService {
     try {
       const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       const uid = credential.user.uid;
+      const extraFields = whatsappPhone ? { whatsappPhone } : {};
       await setDoc(doc(this.db, 'users', uid), {
-        email, organizationId: orgId, role, name, updatedAt: serverTimestamp()
+        email, organizationId: orgId, role, name, ...extraFields, updatedAt: serverTimestamp()
       });
       await addDoc(collection(this.db, `organizations/${orgId}/admins`), {
-        email, name, role, uid, active: true, createdAt: serverTimestamp()
+        email, name, role, uid, active: true, ...extraFields, createdAt: serverTimestamp()
       });
       return uid;
     } finally {
@@ -368,6 +369,33 @@ export class FirebaseService {
 
   async deleteAdmin(adminId: string): Promise<void> {
     await this.deleteDocument('admins', adminId);
+  }
+
+  // Assign a submission to a delivery agent (transactional — prevents double-take)
+  async assignSubmission(
+    collName: string,
+    docId: string,
+    agent: { uid: string; name: string; email: string; whatsappPhone?: string }
+  ): Promise<{ ok: boolean; takenBy?: string }> {
+    const docRef = doc(this.db, this.orgPath(), collName, docId);
+    let takenBy: string | undefined;
+    const ok = await runTransaction(this.db, async (transaction) => {
+      const snap = await transaction.get(docRef);
+      if (!snap.exists()) return false;
+      const data = snap.data();
+      if (data['assignedTo'] != null) {
+        takenBy = data['assignedTo']?.name || 'otro repartidor';
+        return false;
+      }
+      transaction.update(docRef, {
+        assignedTo: { ...agent },
+        assignedAt: serverTimestamp(),
+        status: 'read',
+        updatedAt: serverTimestamp()
+      });
+      return true;
+    });
+    return { ok, takenBy };
   }
 
   async isOrgAdmin(email: string): Promise<boolean> {

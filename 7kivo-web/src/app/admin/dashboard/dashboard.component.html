@@ -6,7 +6,7 @@
       <h1 class="page-title">{{ getGreeting() }}</h1>
       <p class="dash-date">{{ todayLabel }}</p>
     </div>
-    <div class="header-badges">
+    <div class="header-badges" *ngIf="!isDelivery">
       <div class="plan-badge">
         <i class="fas fa-layer-group"></i>
         <span>{{ planName }}</span>
@@ -22,7 +22,83 @@
     <i class="fas fa-spinner fa-spin"></i> Cargando datos...
   </div>
 
-  <div *ngIf="!loading">
+  <!-- ==================== DELIVERY DASHBOARD ==================== -->
+  <div *ngIf="!loading && isDelivery">
+
+    <!-- KPIs delivery -->
+    <div class="kpi-grid delivery-kpi-grid">
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-icon-wrap"><i class="fas fa-clipboard-list"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-num">{{ deliveryAvailable }}</span>
+          <span class="kpi-label">Casos disponibles</span>
+          <span class="kpi-sub">Sin asignar</span>
+        </div>
+      </div>
+      <div class="kpi-card kpi-teal">
+        <div class="kpi-icon-wrap"><i class="fas fa-motorcycle"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-num">{{ deliveryActive }}</span>
+          <span class="kpi-label">Caso activo</span>
+          <span class="kpi-sub">{{ deliveryActive > 0 ? 'En progreso' : 'Sin caso activo' }}</span>
+        </div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon-wrap"><i class="fas fa-check-circle"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-num">{{ deliveryResolvedToday }}</span>
+          <span class="kpi-label">Completados hoy</span>
+          <span class="kpi-sub">{{ deliveryResolvedTotal }} en total</span>
+        </div>
+      </div>
+      <div class="kpi-card kpi-purple">
+        <div class="kpi-icon-wrap"><i class="fas fa-history"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-num">{{ deliveryResolvedTotal }}</span>
+          <span class="kpi-label">Pedidos atendidos</span>
+          <span class="kpi-sub">Historial total</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caso activo -->
+    <div class="panel delivery-active-panel" *ngIf="deliveryActiveItem">
+      <div class="panel-header">
+        <h3><i class="fas fa-motorcycle"></i> Mi Caso Activo</h3>
+        <a [routerLink]="['/admin/chat']"
+           [queryParams]="{ phone: deliveryActiveItem.phoneNumber, submissionId: deliveryActiveItem.id, collection: deliveryActiveTab }"
+           class="btn-view-all">
+          Ir al Chat <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      <div class="panel-body delivery-active-body">
+        <div class="delivery-active-info">
+          <div class="delivery-active-avatar"><i class="fas fa-user"></i></div>
+          <div>
+            <strong>{{ getPersonName(deliveryActiveItem) }}</strong>
+            <span *ngIf="deliveryActiveItem.phoneNumber">
+              <i class="fab fa-whatsapp" style="color:#25d366"></i> {{ deliveryActiveItem.phoneNumber }}
+            </span>
+          </div>
+        </div>
+        <span class="badge badge-read">En progreso</span>
+      </div>
+    </div>
+
+    <!-- Sin caso activo -->
+    <div class="panel" *ngIf="!deliveryActiveItem">
+      <div class="panel-body delivery-empty-panel">
+        <i class="fas fa-inbox"></i>
+        <p>No tienes un caso activo en este momento.</p>
+        <a routerLink="/admin/bandeja" class="btn-delivery-goto">
+          <i class="fas fa-clipboard-list"></i> Ver Bandeja de Entrada
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div *ngIf="!loading && !isDelivery">
 
     <!-- Onboarding -->
     <div class="onboarding" *ngIf="showOnboarding">

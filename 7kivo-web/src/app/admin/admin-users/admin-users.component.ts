@@ -16,9 +16,10 @@ export class AdminUsersComponent implements OnInit {
   formSuccess = '';
 
   availableRoles = [
-    { value: 'admin',  label: 'Gerente',   desc: 'Gestión operativa: mensajería, flujos, bases de datos y usuarios (sin configuración de empresa)' },
-    { value: 'editor', label: 'Operador',  desc: 'Operaciones del día a día: dashboard, contactos, chat, bandeja y bases de datos' },
-    { value: 'viewer', label: 'Agente',    desc: 'Atención al cliente: dashboard, bandeja de entrada y chat (sin acceso a contactos)' }
+    { value: 'admin',    label: 'Gerente',     desc: 'Gestión operativa: mensajería, flujos, bases de datos y usuarios (sin configuración de empresa)' },
+    { value: 'editor',   label: 'Operador',    desc: 'Operaciones del día a día: dashboard, contactos, chat, bandeja y bases de datos' },
+    { value: 'viewer',   label: 'Agente',      desc: 'Atención al cliente: dashboard, bandeja de entrada y chat (sin acceso a contactos)' },
+    { value: 'delivery', label: 'Delivery',  desc: 'Solo bandeja de delivery: puede tomar y resolver pedidos asignados' }
   ];
 
   allPermissions = [
@@ -37,7 +38,8 @@ export class AdminUsersComponent implements OnInit {
     name: '',
     email: '',
     password: '',
-    role: 'editor'
+    role: 'editor',
+    whatsappPhone: ''
   };
 
   changePwAdmin: any = null;
@@ -45,6 +47,12 @@ export class AdminUsersComponent implements OnInit {
   changePwSaving = false;
   changePwError = '';
   changePwNotice = '';
+
+  changePhoneAdmin: any = null;
+  changePhoneValue = '';
+  changePhoneSaving = false;
+  changePhoneError = '';
+  changePhoneNotice = '';
 
   constructor(
     private firebaseService: FirebaseService,
@@ -90,12 +98,17 @@ export class AdminUsersComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.newAdmin = { name: '', email: '', password: '', role: 'editor' };
+    this.newAdmin = { name: '', email: '', password: '', role: 'editor', whatsappPhone: '' };
   }
 
   async createAdmin(): Promise<void> {
     if (!this.newAdmin.name || !this.newAdmin.email || !this.newAdmin.password) {
       this.formError = 'Todos los campos son requeridos';
+      return;
+    }
+
+    if (this.newAdmin.role === 'delivery' && !this.newAdmin.whatsappPhone.trim()) {
+      this.formError = 'El número de WhatsApp del repartidor es requerido';
       return;
     }
 
@@ -114,7 +127,8 @@ export class AdminUsersComponent implements OnInit {
         this.newAdmin.email.trim(),
         this.newAdmin.password,
         this.newAdmin.name.trim(),
-        this.newAdmin.role
+        this.newAdmin.role,
+        this.newAdmin.role === 'delivery' ? this.newAdmin.whatsappPhone.trim() : undefined
       );
 
       this.formSuccess = `Usuario "${this.newAdmin.name}" creado exitosamente`;
@@ -211,6 +225,50 @@ export class AdminUsersComponent implements OnInit {
     }
   }
 
+  startChangePhone(admin: any): void {
+    this.changePhoneAdmin = admin;
+    this.changePhoneValue = admin.whatsappPhone || '';
+    this.changePhoneError = '';
+  }
+
+  cancelChangePhone(): void {
+    this.changePhoneAdmin = null;
+    this.changePhoneValue = '';
+    this.changePhoneError = '';
+  }
+
+  async saveChangePhone(): Promise<void> {
+    if (!this.changePhoneAdmin) return;
+    if (!this.changePhoneValue.trim()) {
+      this.changePhoneError = 'El número no puede estar vacío';
+      return;
+    }
+    this.changePhoneSaving = true;
+    this.changePhoneError = '';
+    try {
+      const phone = this.changePhoneValue.trim();
+      await this.firebaseService.updateAdmin(this.changePhoneAdmin.id, { whatsappPhone: phone });
+      if (this.changePhoneAdmin.uid) {
+        await this.firebaseService.setUserOrg(this.changePhoneAdmin.uid, {
+          organizationId: this.firebaseService.getOrgId(),
+          email: this.changePhoneAdmin.email,
+          role: this.changePhoneAdmin.role,
+          name: this.changePhoneAdmin.name,
+          whatsappPhone: phone
+        });
+      }
+      this.changePhoneAdmin.whatsappPhone = phone;
+      this.changePhoneAdmin = null;
+      this.changePhoneValue = '';
+      this.changePhoneNotice = 'Número actualizado correctamente';
+      setTimeout(() => this.changePhoneNotice = '', 4000);
+    } catch (err: any) {
+      this.changePhoneError = err?.message || 'Error al actualizar número';
+    } finally {
+      this.changePhoneSaving = false;
+    }
+  }
+
   isOwner(admin: any): boolean {
     return admin.role === 'owner';
   }
@@ -235,10 +293,11 @@ export class AdminUsersComponent implements OnInit {
 
   getRoleLabel(role: string): string {
     const labels: Record<string, string> = {
-      owner:  'Propietario',
-      admin:  'Gerente',
-      editor: 'Operador',
-      viewer: 'Agente'
+      owner:    'Propietario',
+      admin:    'Gerente',
+      editor:   'Operador',
+      viewer:   'Agente',
+      delivery: 'Delivery'
     };
     return labels[role] || role;
   }

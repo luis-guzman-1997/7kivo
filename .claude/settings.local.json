@@ -15,7 +15,9 @@
       "WebFetch(domain:sv.institutocanzion.com)",
       "WebFetch(domain:laguardia-dd0af.web.app)",
       "Bash(cd:*)",
-      "Bash(npx ng:*)"
+      "Bash(npx ng:*)",
+      "Bash(grep:*)",
+      "Bash(echo:*)"
     ]
   }
 }

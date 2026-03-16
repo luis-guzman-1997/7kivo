@@ -126,10 +126,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   getRoleLabel(role: string): string {
     const labels: Record<string, string> = {
-      owner:  'Propietario',
-      admin:  'Gerente',
-      editor: 'Operador',
-      viewer: 'Agente'
+      owner:    'Propietario',
+      admin:    'Gerente',
+      editor:   'Operador',
+      viewer:   'Agente',
+      delivery: 'Delivery'
     };
     return labels[role] || role;
   }

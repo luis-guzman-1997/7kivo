@@ -37,7 +37,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="filters-bar" *ngIf="activeTab">
+    <div class="filters-bar" *ngIf="activeTab && !isDelivery">
       <div class="search-box" *ngIf="viewMode === 'list'">
         <i class="fas fa-search"></i>
         <input type="text" [(ngModel)]="searchTerm" (input)="applyFilters()"
@@ -161,57 +161,172 @@
 
       <!-- ==================== LIST VIEW ==================== -->
       <ng-container *ngIf="viewMode === 'list'">
-        <div *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length === 0" class="empty-state">
-          <i class="fas fa-check-circle"></i>
-          <p>No hay mensajes{{ statusFilter !== 'all' ? ' con este filtro' : '' }}</p>
-        </div>
 
-        <div class="messages-list" *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length > 0">
-          <div *ngFor="let item of activeTab.filteredSubmissions"
-               class="message-card" [class.unread]="item.status === 'pending'"
-               (click)="openDetail(item, activeTab)">
-            <div class="message-left">
-              <div class="message-avatar" [class.avatar-unread]="item.status === 'pending'">
-                <i class="fas fa-user"></i>
+        <!-- ── Vista Delivery ── -->
+        <ng-container *ngIf="isDelivery && activeTab">
+
+          <!-- Error global -->
+          <div class="delivery-error" *ngIf="takeError">
+            <i class="fas fa-exclamation-circle"></i> {{ takeError }}
+          </div>
+
+          <!-- Mi caso activo -->
+          <div class="delivery-section" *ngIf="deliveryMyCases(activeTab).length > 0">
+            <h4 class="delivery-section-title"><i class="fas fa-motorcycle"></i> Mi Caso Activo</h4>
+            <div *ngFor="let item of deliveryMyCases(activeTab)"
+                 class="message-card delivery-active-card">
+              <div class="message-left">
+                <div class="message-avatar avatar-delivery-active">
+                  <i class="fas fa-user"></i>
+                </div>
+              </div>
+              <div class="message-body">
+                <div class="message-top">
+                  <strong class="message-name">{{ getPersonName(item) }}</strong>
+                  <span class="message-date">{{ formatDate(item.createdAt) }}</span>
+                </div>
+                <div class="message-preview">
+                  <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
+                    <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 60 ? f.value.substring(0, 60) + '...' : f.value }}
+                  </span>
+                </div>
+                <div class="message-bottom">
+                  <span class="badge badge-read">En progreso</span>
+                  <span *ngIf="item.phoneNumber" class="phone-link">
+                    <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
+                  </span>
+                </div>
+              </div>
+              <div class="message-actions" (click)="$event.stopPropagation()">
+                <button class="btn-icon btn-delivery-go" (click)="goToChat(item, activeTab)" title="Ir al chat">
+                  <i class="fas fa-comments"></i>
+                </button>
               </div>
             </div>
-            <div class="message-body">
-              <div class="message-top">
-                <strong class="message-name">{{ getPersonName(item) }}</strong>
-                <span class="message-date">{{ formatDate(item.createdAt) }}</span>
+          </div>
+
+          <!-- Casos disponibles -->
+          <div class="delivery-section">
+            <h4 class="delivery-section-title"><i class="fas fa-clipboard-list"></i> Casos Disponibles</h4>
+            <div *ngIf="deliveryAvailableCases(activeTab).length === 0" class="empty-state-sm">
+              <i class="fas fa-check-circle"></i> No hay casos pendientes
+            </div>
+            <div *ngFor="let item of deliveryAvailableCases(activeTab)"
+                 class="message-card" [class.unread]="item.status === 'pending'">
+              <div class="message-left">
+                <div class="message-avatar" [class.avatar-unread]="item.status === 'pending'">
+                  <i class="fas fa-user"></i>
+                </div>
               </div>
-              <div class="message-preview">
-                <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
-                  <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 80 ? f.value.substring(0, 80) + '...' : f.value }}
-                </span>
+              <div class="message-body">
+                <div class="message-top">
+                  <strong class="message-name">{{ getPersonName(item) }}</strong>
+                  <span class="message-date">{{ formatDate(item.createdAt) }}</span>
+                </div>
+                <div class="message-preview">
+                  <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
+                    <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 60 ? f.value.substring(0, 60) + '...' : f.value }}
+                  </span>
+                </div>
+                <div class="message-bottom">
+                  <span class="badge badge-pending">Disponible</span>
+                </div>
               </div>
-              <div class="message-bottom">
-                <span class="badge" [ngClass]="'badge-' + item.status">
-                  {{ getStatusLabel(item.status) }}
-                </span>
-                <a *ngIf="item.phoneNumber" [href]="getWhatsAppLink(item.phoneNumber)" target="_blank"
-                   class="phone-link" (click)="$event.stopPropagation()">
-                  <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
+              <div class="message-actions" (click)="$event.stopPropagation()">
+                <button class="btn-delivery-take"
+                        [disabled]="takingCaseId === item.id"
+                        (click)="takeCase(item, activeTab)">
+                  <i class="fas" [class.fa-hand-paper]="takingCaseId !== item.id" [class.fa-spinner]="takingCaseId === item.id" [class.fa-spin]="takingCaseId === item.id"></i>
+                  {{ takingCaseId === item.id ? 'Tomando...' : 'Tomar' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historial -->
+          <div class="delivery-section" *ngIf="deliveryMyHistory(activeTab).length > 0">
+            <h4 class="delivery-section-title"><i class="fas fa-history"></i> Mi Historial</h4>
+            <div *ngFor="let item of deliveryMyHistory(activeTab)"
+                 class="message-card delivery-history-card">
+              <div class="message-left">
+                <div class="message-avatar avatar-resolved">
+                  <i class="fas fa-check"></i>
+                </div>
+              </div>
+              <div class="message-body">
+                <div class="message-top">
+                  <strong class="message-name">{{ getPersonName(item) }}</strong>
+                  <span class="message-date">{{ formatDate(item.createdAt) }}</span>
+                </div>
+                <div class="message-preview">
+                  <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 1)" class="preview-field">
+                    <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 60 ? f.value.substring(0, 60) + '...' : f.value }}
+                  </span>
+                </div>
+                <div class="message-bottom">
+                  <span class="badge badge-resolved">Completado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </ng-container>
+
+        <!-- ── Vista Normal (no delivery) ── -->
+        <ng-container *ngIf="!isDelivery">
+          <div *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length === 0" class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <p>No hay mensajes{{ statusFilter !== 'all' ? ' con este filtro' : '' }}</p>
+          </div>
+
+          <div class="messages-list" *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length > 0">
+            <div *ngFor="let item of activeTab.filteredSubmissions"
+                 class="message-card" [class.unread]="item.status === 'pending'"
+                 (click)="openDetail(item, activeTab)">
+              <div class="message-left">
+                <div class="message-avatar" [class.avatar-unread]="item.status === 'pending'">
+                  <i class="fas fa-user"></i>
+                </div>
+              </div>
+              <div class="message-body">
+                <div class="message-top">
+                  <strong class="message-name">{{ getPersonName(item) }}</strong>
+                  <span class="message-date">{{ formatDate(item.createdAt) }}</span>
+                </div>
+                <div class="message-preview">
+                  <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
+                    <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 80 ? f.value.substring(0, 80) + '...' : f.value }}
+                  </span>
+                </div>
+                <div class="message-bottom">
+                  <span class="badge" [ngClass]="'badge-' + item.status">
+                    {{ getStatusLabel(item.status) }}
+                  </span>
+                  <a *ngIf="item.phoneNumber" [href]="getWhatsAppLink(item.phoneNumber)" target="_blank"
+                     class="phone-link" (click)="$event.stopPropagation()">
+                    <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
+                  </a>
+                </div>
+              </div>
+              <div class="message-actions" (click)="$event.stopPropagation()">
+                <button *ngIf="item.status !== 'resolved'" class="btn-icon btn-resolve"
+                        (click)="markAsResolved(item, activeTab)" title="Marcar como resuelto">
+                  <i class="fas fa-check-circle"></i>
+                </button>
+                <a *ngIf="item.phoneNumber"
+                   [href]="getWhatsAppMessageLink(item.phoneNumber, getPersonName(item))"
+                   target="_blank" class="btn-icon btn-wa" title="Responder por WhatsApp">
+                  <i class="fab fa-whatsapp"></i>
                 </a>
               </div>
             </div>
-            <div class="message-actions" (click)="$event.stopPropagation()">
-              <button *ngIf="item.status !== 'resolved'" class="btn-icon btn-resolve"
-                      (click)="markAsResolved(item, activeTab)" title="Marcar como resuelto">
-                <i class="fas fa-check-circle"></i>
-              </button>
-              <a *ngIf="item.phoneNumber"
-                 [href]="getWhatsAppMessageLink(item.phoneNumber, getPersonName(item))"
-                 target="_blank" class="btn-icon btn-wa" title="Responder por WhatsApp">
-                <i class="fab fa-whatsapp"></i>
-              </a>
-            </div>
           </div>
-        </div>
 
-        <div class="results-count" *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length > 0">
-          {{ activeTab.filteredSubmissions.length }} de {{ activeTab.submissions.length }} mensajes
-        </div>
+          <div class="results-count" *ngIf="!activeTab.loading && activeTab.filteredSubmissions.length > 0">
+            {{ activeTab.filteredSubmissions.length }} de {{ activeTab.submissions.length }} mensajes
+          </div>
+        </ng-container>
+
       </ng-container>
     </div>
   </div>

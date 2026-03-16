@@ -225,6 +225,59 @@ const sendAdminImage = async (req, res) => {
   }
 };
 
+const takeDeliveryCase = async (req, res) => {
+  try {
+    const { phone, clientName, deliveryName, deliveryPhone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ ok: false, error: "phone is required" });
+    }
+
+    let msg = `¡Hola${clientName ? ' ' + clientName : ''}! 🚗 *${deliveryName || 'Un repartidor'}* ha tomado tu pedido`;
+    if (deliveryPhone) {
+      msg += ` y te contactará desde el número *${deliveryPhone}*`;
+    }
+    msg += `. ¡Estamos en camino! 🎉`;
+
+    try {
+      await sendTextMessage(msg, phone);
+      await saveMessage(phone, msg, "bot", {});
+    } catch (msgErr) {
+      console.warn("takeDeliveryCase: no se pudo enviar mensaje:", msgErr.message);
+    }
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error("Error in takeDeliveryCase:", error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
+const resolveDeliveryCase = async (req, res) => {
+  try {
+    const { phone, clientName } = req.body;
+    if (!phone) {
+      return res.status(400).json({ ok: false, error: "phone is required" });
+    }
+
+    const msg = `¡Tu pedido ha sido completado${clientName ? ', ' + clientName : ''}! 🎉 Gracias por confiar en nosotros.\n\nSi tienes alguna duda o comentario, escríbenos y selecciona la opción *Quejas y Sugerencias* del menú.`;
+
+    try {
+      await sendTextMessage(msg, phone);
+      await saveMessage(phone, msg, "bot", {});
+    } catch (msgErr) {
+      console.warn("resolveDeliveryCase: no se pudo enviar mensaje de cierre:", msgErr.message);
+    }
+
+    await clearSession(phone);
+    await setConversationMode(phone, "bot");
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error("Error in resolveDeliveryCase:", error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
 module.exports = {
   listConversations,
   getConversationMessages,
@@ -232,5 +285,7 @@ module.exports = {
   sendAdminImage,
   takeControl,
   releaseToBot,
-  checkWindow
+  checkWindow,
+  takeDeliveryCase,
+  resolveDeliveryCase
 };
