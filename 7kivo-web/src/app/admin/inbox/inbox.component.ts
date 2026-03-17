@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 
 interface FlowTab {
   flowId: string;
@@ -74,7 +75,8 @@ export class InboxComponent implements OnInit, OnDestroy {
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private pushService: PushNotificationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -82,6 +84,9 @@ export class InboxComponent implements OnInit, OnDestroy {
     await this.loadFlows();
     const interval = this.isDelivery ? 20000 : 300000;
     this.refreshTimer = setInterval(() => this.silentRefresh(), interval);
+    if (this.isDelivery && this.currentUserId) {
+      this.pushService.subscribe(this.currentUserId);
+    }
   }
 
   ngOnDestroy(): void {
@@ -90,7 +95,27 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   private async silentRefresh(): Promise<void> {
     if (this.takingCaseId) return;
+    const prevCount = this.isDelivery ? this.deliveryTotalAvailable : 0;
     await Promise.all(this.tabs.map(tab => this.loadTabSubmissions(tab)));
+    if (this.isDelivery && this.deliveryTotalAvailable > prevCount) {
+      this.playNotificationSound();
+    }
+  }
+
+  private playNotificationSound(): void {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } catch { /* silent if browser blocks audio */ }
   }
 
   async loadCurrentUserInfo(): Promise<void> {
@@ -116,9 +141,11 @@ export class InboxComponent implements OnInit, OnDestroy {
       this.collectionDefsMap = {};
       colDefs.forEach((c: any) => { this.collectionDefsMap[c.slug] = c; });
 
-      const inboxFlows = flows.filter((f: any) =>
-        f.saveToCollection && f.saveToCollection !== 'applicants' && f.saveToCollection !== 'contacts'
-      );
+      const inboxFlows = flows.filter((f: any) => {
+        const base = f.saveToCollection && f.saveToCollection !== 'applicants' && f.saveToCollection !== 'contacts';
+        if (this.isDelivery) return base && f.notifyDelivery === true;
+        return base;
+      });
 
       this.tabs = inboxFlows.map((f: any) => ({
         flowId: f.id,

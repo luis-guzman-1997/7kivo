@@ -32,7 +32,7 @@ registerLocaleData(localeEs, 'es');
     BrowserAnimationsModule,
     AppRoutingModule,
     ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: environment.production,
+      enabled: true,
       registrationStrategy: 'registerWhenStable:30000'
     })
   ],

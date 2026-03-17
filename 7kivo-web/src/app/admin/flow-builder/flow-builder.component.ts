@@ -46,6 +46,7 @@ interface Flow {
   completionMessage: string;
   saveToCollection: string;
   notifyAdmin: boolean;
+  notifyDelivery: boolean;
 }
 
 interface TourStep { selector: string; title: string; body: string; position: 'below' | 'above' | 'center'; }
@@ -261,7 +262,7 @@ export class FlowBuilderComponent implements OnInit {
     return {
       name: '', description: '', menuLabel: '', menuDescription: '',
       type: 'registration', active: true, order: this.flows?.length || 0,
-      steps: [], completionMessage: '', saveToCollection: '', notifyAdmin: false
+      steps: [], completionMessage: '', saveToCollection: '', notifyAdmin: false, notifyDelivery: false
     };
   }
 

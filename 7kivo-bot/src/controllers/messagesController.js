@@ -23,6 +23,7 @@ const {
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
 const { createGoogleCalendarEvent, deleteGoogleCalendarEvent } = require("../services/googleCalendarService");
+const { sendPushToDeliveries } = require("../services/pushService");
 
 const disabledNotified = {};
 
@@ -1165,6 +1166,14 @@ const completeFlow = async (phoneNumber, flow) => {
         if (gcEventId && docId) {
           await saveGcEventId(flow.saveToCollection, docId, gcEventId);
         }
+      }
+      if (flow.notifyDelivery) {
+        const clientName = flowData.fullName || flowData.name || flowData.nombre || phoneNumber;
+        sendPushToDeliveries({
+          title: "Nueva solicitud",
+          body: `${flow.name} — ${clientName}`,
+          url: "/admin/inbox"
+        }).catch(() => {});
       }
     } catch (error) {
       console.error("Error saving flow submission:", error);

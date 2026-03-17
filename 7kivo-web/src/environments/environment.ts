@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  vapidPublicKey: 'BD5gEanpLFSMWSNQarRSG-MpWJzHnwPQ9BKvpQ4-uxXoG8dcQ2rk3rx9WpfLOV2MJp8Nruo8KePT75FSWKWWvZo',
   firebase: {
     apiKey: "AIzaSyBfdSNmQjdpXHuBj_HVyqob9lb6Q3ILje0",
     authDomain: "kivo7-app.firebaseapp.com",

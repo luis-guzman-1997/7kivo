@@ -1402,4 +1402,16 @@ export class FirebaseService {
     const snap = await getDocs(colRef);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
+
+  // ==================== PUSH SUBSCRIPTIONS ====================
+
+  async savePushSubscription(userId: string, subscription: any): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'pushSubscriptions', userId);
+    await setDoc(docRef, { userId, subscription, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async deletePushSubscription(userId: string): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'pushSubscriptions', userId);
+    await deleteDoc(docRef);
+  }
 }
