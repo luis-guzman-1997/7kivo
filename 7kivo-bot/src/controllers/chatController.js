@@ -234,9 +234,9 @@ const cancelDeliveryCase = async (req, res) => {
 
     let msg;
     if (cancelCount >= 3) {
-      msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔 En este momento no hay Delivery disponible para atender tu solicitud. Te invitamos a volver a solicitar el servicio cuando estés listo. ¡Estaremos atentos! 🔄`;
+      msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔\n\nEn este momento no tenemos ningún Delivery disponible para atender tu solicitud. 🚗\n\n🔄 *Puedes volver a solicitarlo:* Escribe *hola* en cualquier momento y vuelve a elegir el servicio. Estaremos atentos para atenderte cuando lo solicites de nuevo. 👍\n\n🙏 Gracias por tu comprensión. ¡Te esperamos! 💚`;
     } else {
-      msg = `Tu pedido fue cancelado por el delivery asignado. ¡No te preocupes! Estamos buscando otro delivery para atenderte 🔄`;
+      msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔\n\nEl Delivery asignado canceló tu solicitud. 🚗\n\n¡No te preocupes! 👍 Ya estamos buscando otro que pueda atenderte. 🔍\n\n📢 Te avisaremos en cuanto uno esté disponible. 🔄`;
     }
 
     try {
@@ -263,11 +263,11 @@ const takeDeliveryCase = async (req, res) => {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
-    let msg = `¡Hola${clientName ? ' ' + clientName : ''}! 😊\n\n🚗 *¡Buenas noticias!* Un Delivery ya tomó tu pedido y está listo para atenderte.\n\n📱 Te contactará por WhatsApp en los próximos minutos para coordinar la entrega.\n\n¡Estamos en camino hacia ti! 🎉`;
+    let msg = `¡Hola${clientName ? ' ' + clientName : ''}! 😊\n\n*¡Buenas noticias!* Un Delivery tomó tu solicitud y ya va en camino.\n\nTe escribirá por WhatsApp en los próximos minutos para coordinar tu solicitud. 🎉`;
     if (deliveryCode) {
-      msg += `\n\n🔐 *Por tu seguridad:*\n\n*Tu código de verificación es: ${deliveryCode}*\n\nGuárdalo. Cuando el Delivery te contacte, te dirá este mismo código. Si coinciden, es la persona correcta.\n\n⚠️ Si alguien te escribe *sin decirte este código*, no confíes y avísanos de inmediato.`;
+      msg += `\n\n*Por tu seguridad:* Tu código es *${deliveryCode}*. Guárdalo y compáralo cuando el Delivery te contacte: si coincide, es la persona correcta.\n\n⚠️ Si alguien te escribe sin mostrarte este código, no confíes y avísanos de inmediato.`;
     } else {
-      msg += `\n\n🔐 *Por tu seguridad:* Te presentará un código de identificación. Si no te lo muestra, no confíes y escríbenos.`;
+      msg += `\n\n*Por tu seguridad:* Te presentará un código de identificación. Si no te lo muestra, no confíes y escríbenos.`;
     }
 
     try {
@@ -291,7 +291,7 @@ const resolveDeliveryCase = async (req, res) => {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
-    const msg = `¡Tu pedido ha sido completado${clientName ? ', ' + clientName : ''}! 🎉 Gracias por confiar en nosotros.\n\nSi tienes alguna duda o comentario, escríbenos y selecciona la opción *Quejas y Sugerencias* del menú.`;
+    const msg = `¡Tu pedido ha sido completado${clientName ? ', ' + clientName : ''}! 🎉✅\n\n💚 Gracias por confiar en nosotros.\n\n💬 Si tienes alguna duda o comentario, escríbenos y selecciona la opción *Quejas y Sugerencias* del menú. 👍`;
 
     try {
       await sendTextMessage(msg, phone);
