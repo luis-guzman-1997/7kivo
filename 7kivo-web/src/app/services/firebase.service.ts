@@ -1403,6 +1403,20 @@ export class FirebaseService {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
+  // ==================== PRESENCE ====================
+
+  async updatePresence(uid: string, data: any): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'presence', uid);
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  watchPresence(callback: (list: any[]) => void): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'presence');
+    return onSnapshot(colRef, snap => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  }
+
   // ==================== PUSH SUBSCRIPTIONS ====================
 
   async savePushSubscription(userId: string, subscription: any): Promise<void> {

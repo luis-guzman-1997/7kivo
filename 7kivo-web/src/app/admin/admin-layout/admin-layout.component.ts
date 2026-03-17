@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { FirebaseService } from '../../services/firebase.service';
+import { PresenceService } from '../../services/presence.service';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -26,7 +27,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     private firebaseService: FirebaseService,
-    private router: Router
+    private router: Router,
+    private presenceService: PresenceService
   ) {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       this.sidebarCollapsed = true;
@@ -65,6 +67,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.isOnChatPage = this.router.url.startsWith('/admin/chat');
     await this.checkSetupComplete();
+    this.presenceService.start();
   }
 
   async checkSetupComplete(): Promise<void> {
@@ -118,6 +121,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());
+    this.presenceService.stop();
   }
 
   toggleSidebar(): void {

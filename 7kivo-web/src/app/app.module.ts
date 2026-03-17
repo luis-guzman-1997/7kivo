@@ -31,7 +31,7 @@ registerLocaleData(localeEs, 'es');
     BrowserModule,
     BrowserAnimationsModule,
     AppRoutingModule,
-    ServiceWorkerModule.register('ngsw-worker.js', {
+    ServiceWorkerModule.register('push-sw.js', {
       enabled: true,
       registrationStrategy: 'registerWhenStable:30000'
     })

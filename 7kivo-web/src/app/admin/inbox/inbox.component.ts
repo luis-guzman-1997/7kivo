@@ -64,6 +64,27 @@ export class InboxComponent implements OnInit, OnDestroy {
   takingCaseId: string | null = null;
   takeError = '';
 
+  // ── Push notifications ──
+  pushPermission: NotificationPermission = 'default';
+  showPushInstructions = false;
+
+  get pushEnabled(): boolean { return this.pushPermission === 'granted'; }
+  get pushDenied(): boolean  { return this.pushPermission === 'denied'; }
+
+  get pushInstructionsText(): string {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('android') && ua.includes('chrome')) {
+      return 'En Chrome Android: toca los 3 puntos (⋮) → Configuración → Configuración del sitio → Notificaciones → busca esta página y actívala.';
+    }
+    if (ua.includes('iphone') || ua.includes('ipad')) {
+      return 'En iOS Safari: ve a Ajustes del iPhone → Safari → Notificaciones → activa los permisos para esta página.';
+    }
+    if (ua.includes('firefox')) {
+      return 'En Firefox: haz clic en el candado (🔒) de la barra de direcciones → Permisos → Recibir notificaciones → Permitir.';
+    }
+    return 'Haz clic en el candado (🔒) o el ícono de información en la barra de direcciones → Permisos del sitio → Notificaciones → Permitir.';
+  }
+
   get isDelivery(): boolean {
     return this.authService.userRole === 'delivery';
   }
@@ -76,7 +97,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     private firebaseService: FirebaseService,
     public authService: AuthService,
     private router: Router,
-    private pushService: PushNotificationService
+    public pushService: PushNotificationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -85,7 +106,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     const interval = this.isDelivery ? 20000 : 300000;
     this.refreshTimer = setInterval(() => this.silentRefresh(), interval);
     if (this.isDelivery && this.currentUserId) {
-      this.pushService.subscribe(this.currentUserId);
+      this.checkPushStatus();
     }
   }
 
@@ -99,6 +120,24 @@ export class InboxComponent implements OnInit, OnDestroy {
     await Promise.all(this.tabs.map(tab => this.loadTabSubmissions(tab)));
     if (this.isDelivery && this.deliveryTotalAvailable > prevCount) {
       this.playNotificationSound();
+    }
+  }
+
+  checkPushStatus(): void {
+    if (!this.pushService.isSupported) return;
+    this.pushPermission = (Notification.permission as NotificationPermission);
+    if (this.pushPermission === 'granted') {
+      this.pushService.subscribe(this.currentUserId);
+    }
+  }
+
+  async enablePushNotifications(): Promise<void> {
+    const result = await Notification.requestPermission();
+    this.pushPermission = result;
+    if (result === 'granted') {
+      await this.pushService.subscribe(this.currentUserId);
+    } else {
+      this.showPushInstructions = true;
     }
   }
 

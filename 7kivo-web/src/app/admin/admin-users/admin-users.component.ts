@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService, ROLE_PERMISSIONS } from '../../services/auth.service';
+import { PresenceService } from '../../services/presence.service';
 
 @Component({
   selector: 'app-admin-users',
   templateUrl: './admin-users.component.html',
   styleUrls: ['./admin-users.component.css']
 })
-export class AdminUsersComponent implements OnInit {
+export class AdminUsersComponent implements OnInit, OnDestroy {
   admins: any[] = [];
   loading = true;
   showForm = false;
@@ -42,6 +43,9 @@ export class AdminUsersComponent implements OnInit {
     whatsappPhone: ''
   };
 
+  presenceMap: Record<string, any> = {};
+  private presenceUnsub: (() => void) | null = null;
+
   changePwAdmin: any = null;
   changePwValue = '';
   changePwSaving = false;
@@ -59,6 +63,24 @@ export class AdminUsersComponent implements OnInit {
     public authService: AuthService
   ) {}
 
+  get onlineCount(): number {
+    return Object.values(this.presenceMap).filter(p => PresenceService.isOnline(p)).length;
+  }
+
+  isOnline(uid: string): boolean {
+    return PresenceService.isOnline(this.presenceMap[uid]);
+  }
+
+  lastSeenLabel(uid: string): string {
+    const p = this.presenceMap[uid];
+    if (!p?.lastSeen) return '';
+    const ms = p.lastSeen?.toMillis?.() ?? new Date(p.lastSeen).getTime();
+    const diff = Math.floor((Date.now() - ms) / 1000);
+    if (diff < 60)  return 'hace ' + diff + 's';
+    if (diff < 3600) return 'hace ' + Math.floor(diff / 60) + 'min';
+    return 'hace ' + Math.floor(diff / 3600) + 'h';
+  }
+
   get botReady(): boolean {
     return this.authService.botEnabled;
   }
@@ -74,6 +96,14 @@ export class AdminUsersComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.loadAdmins();
+    this.presenceUnsub = this.firebaseService.watchPresence(list => {
+      this.presenceMap = {};
+      list.forEach(p => { this.presenceMap[p.uid] = p; });
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.presenceUnsub) this.presenceUnsub();
   }
 
   async loadAdmins(): Promise<void> {

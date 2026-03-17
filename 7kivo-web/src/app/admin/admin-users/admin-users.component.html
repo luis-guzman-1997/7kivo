@@ -16,6 +16,10 @@
       <h1 class="page-title">Mi Equipo</h1>
       <p class="page-subtitle">Gestiona los miembros de tu organización y sus niveles de acceso</p>
     </div>
+    <div class="online-summary" *ngIf="onlineCount > 0">
+      <span class="online-dot"></span>
+      {{ onlineCount }} conectado{{ onlineCount !== 1 ? 's' : '' }} ahora
+    </div>
     <button class="btn-add" (click)="toggleForm()" [disabled]="(!showForm && !canAddAdmin) || !botReady">
       <i class="fas" [class.fa-plus]="!showForm" [class.fa-times]="showForm"></i>
       {{ showForm ? 'Cancelar' : 'Nuevo Usuario' }}
@@ -108,10 +112,13 @@
       <div class="admin-card-header">
         <div class="admin-avatar" [class.avatar-owner]="isOwner(admin)">
           <i class="fas" [class.fa-crown]="isOwner(admin)" [class.fa-user]="!isOwner(admin)"></i>
+          <span class="presence-dot" [class.presence-online]="isOnline(admin.uid)" [class.presence-offline]="!isOnline(admin.uid)"></span>
         </div>
         <div class="admin-info">
           <h4>{{ admin.name }}</h4>
           <span class="admin-email">{{ admin.email }}</span>
+          <span class="last-seen" *ngIf="isOnline(admin.uid)">● En línea</span>
+          <span class="last-seen last-seen--off" *ngIf="!isOnline(admin.uid) && lastSeenLabel(admin.uid)">{{ lastSeenLabel(admin.uid) }}</span>
         </div>
         <span class="role-badge" [class]="'role-' + admin.role">
           {{ getRoleLabel(admin.role) }}

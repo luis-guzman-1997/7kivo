@@ -12,6 +12,21 @@
     </button>
   </div>
 
+  <!-- Push notification prompt (delivery only) -->
+  <div *ngIf="isDelivery && pushService.isSupported && !pushEnabled && !pushDenied" class="push-banner">
+    <i class="fas fa-bell"></i>
+    <span>Activa las notificaciones para recibir alertas de nuevas solicitudes.</span>
+    <button (click)="enablePushNotifications()">Activar</button>
+  </div>
+  <div *ngIf="isDelivery && pushDenied" class="push-banner push-banner--denied">
+    <i class="fas fa-bell-slash"></i>
+    <span>Las notificaciones están bloqueadas.</span>
+    <button (click)="enablePushNotifications()">¿Cómo activar?</button>
+    <div class="push-instructions" *ngIf="showPushInstructions">
+      <i class="fas fa-info-circle"></i> {{ pushInstructionsText }}
+    </div>
+  </div>
+
   <!-- Loading -->
   <div *ngIf="loading" class="loading-state">
     <i class="fas fa-spinner fa-spin"></i> Cargando bandeja...
