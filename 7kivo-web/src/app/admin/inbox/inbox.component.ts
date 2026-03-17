@@ -527,6 +527,21 @@ export class InboxComponent implements OnInit, OnDestroy {
     return this.tabs.reduce((sum, t) => sum + this.deliveryAvailableCases(t).length, 0);
   }
 
+  private generateDeliveryCode(): string {
+    return String(Math.floor(10000 + Math.random() * 90000));
+  }
+
+  getDeliveryWhatsAppMessageLink(phone: string, clientName: string, deliveryCode?: string): string {
+    const cleaned = phone?.replace(/[^0-9]/g, '') || '';
+    let msg: string;
+    if (deliveryCode) {
+      msg = `Hola${clientName ? ' ' + clientName : ''}, soy ${this.currentUserName || 'tu Delivery'} y he tomado tu servicio. Mi clave de identificación es *${deliveryCode}*. Por tu seguridad: si alguien te contacta diciendo ser Delivery y NO te presenta esta clave, no confíes en esa persona.`;
+    } else {
+      msg = `Hola${clientName ? ' ' + clientName : ''}, soy ${this.currentUserName || 'tu Delivery'} y he tomado tu servicio.`;
+    }
+    return `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
+  }
+
   async takeCase(item: any, tab: FlowTab): Promise<void> {
     if (this.takingCaseId) return;
 
@@ -541,18 +556,21 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.takingCaseId = item.id;
     this.takeError = '';
 
+    const deliveryCode = this.generateDeliveryCode();
+
     try {
       const agent = {
         uid: this.currentUserId,
         name: this.currentUserName,
         email: this.currentUserEmail,
-        whatsappPhone: this.currentUserWaPhone
+        whatsappPhone: this.currentUserWaPhone,
+        deliveryCode
       };
 
       const result = await this.firebaseService.assignSubmission(tab.collection, item.id, agent);
 
       if (!result.ok) {
-        this.takeError = `Este caso ya fue tomado por ${result.takenBy || 'otro repartidor'}.`;
+        this.takeError = `Este caso ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
         setTimeout(() => this.takeError = '', 4000);
         await this.loadTabSubmissions(tab);
         return;
@@ -569,8 +587,7 @@ export class InboxComponent implements OnInit, OnDestroy {
             body: JSON.stringify({
               phone: item.phoneNumber,
               clientName: this.getPersonName(item),
-              deliveryName: this.currentUserName,
-              deliveryPhone: this.currentUserWaPhone
+              deliveryCode
             })
           });
         } catch { /* silent — no bloquea el flujo */ }
@@ -584,7 +601,8 @@ export class InboxComponent implements OnInit, OnDestroy {
           queryParams: {
             phone: item.phoneNumber,
             submissionId: item.id,
-            collection: tab.collection
+            collection: tab.collection,
+            deliveryCode
           }
         });
       }
@@ -597,11 +615,13 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   goToChat(item: any, tab: FlowTab): void {
+    const code = item.deliveryCode || item.assignedTo?.deliveryCode;
     this.router.navigate(['/admin/chat'], {
       queryParams: {
         phone: item.phoneNumber,
         submissionId: item.id,
-        collection: tab.collection
+        collection: tab.collection,
+        ...(code ? { deliveryCode: code } : {})
       }
     });
   }

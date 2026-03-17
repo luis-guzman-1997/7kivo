@@ -61,6 +61,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   deliverySubmissionId: string | null = null;
   deliveryCollection: string | null = null;
   deliveryUserName = '';
+  deliveryCode = '';
   resolvingCase = false;
   cancellingCase = false;
 
@@ -111,6 +112,11 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.deliveryPhone = phone;
         this.deliverySubmissionId = params['submissionId'] || null;
         this.deliveryCollection = params['collection'] || null;
+        this.deliveryCode = params['deliveryCode'] || '';
+        if (!this.deliveryCode && this.deliverySubmissionId && this.deliveryCollection) {
+          const sub = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
+          this.deliveryCode = sub?.deliveryCode || sub?.assignedTo?.deliveryCode || '';
+        }
       } else {
         // Entró directo al chat — buscar su caso activo
         const activeCase = await this.findMyActiveDeliveryCase();
@@ -119,6 +125,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.deliveryPhone = activeCase.phone;
           this.deliverySubmissionId = activeCase.submissionId;
           this.deliveryCollection = activeCase.collection;
+          this.deliveryCode = activeCase.deliveryCode || '';
         } else {
           this.router.navigate(['/admin/bandeja']);
           return;
@@ -412,6 +419,11 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   getWhatsAppLink(phone: string): string {
+    if (this.isDeliveryMode && this.deliveryCode && phone) {
+      const clientName = this.selectedConversation ? this.getContactDisplayName(this.selectedConversation) : '';
+      const msg = `Hola${clientName ? ' ' + clientName : ''}, soy ${this.deliveryUserName || 'tu Delivery'} y he tomado tu servicio. Mi clave de identificación es *${this.deliveryCode}*. Por tu seguridad: si alguien te contacta diciendo ser Delivery y NO te presenta esta clave, no confíes en esa persona.`;
+      return `https://wa.me/${(phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+    }
     const wpPhone = this.personalWhatsApp || phone;
     return `https://wa.me/${wpPhone}`;
   }
@@ -539,7 +551,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async findMyActiveDeliveryCase(): Promise<{ phone: string; submissionId: string; collection: string } | null> {
+  private async findMyActiveDeliveryCase(): Promise<{ phone: string; submissionId: string; collection: string; deliveryCode?: string } | null> {
     try {
       const uid = this.authService.currentUser?.uid;
       if (!uid) return null;
@@ -551,7 +563,12 @@ export class ChatComponent implements OnInit, OnDestroy {
         const items = await this.firebaseService.getFlowSubmissions(flow.saveToCollection);
         const active = items.find((i: any) => i.assignedTo?.uid === uid && i.status !== 'resolved' && i.phoneNumber);
         if (active) {
-          return { phone: active.phoneNumber, submissionId: active.id, collection: flow.saveToCollection };
+          return {
+            phone: active.phoneNumber,
+            submissionId: active.id,
+            collection: flow.saveToCollection,
+            deliveryCode: active.deliveryCode || active.assignedTo?.deliveryCode
+          };
         }
       }
     } catch { /* silent */ }

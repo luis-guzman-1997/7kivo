@@ -192,15 +192,21 @@
                 </div>
                 <div class="message-bottom">
                   <span class="badge badge-read">En progreso</span>
-                  <span *ngIf="item.phoneNumber" class="phone-link">
-                    <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
-                  </span>
+                  <span *ngIf="item.deliveryCode" class="delivery-code-hint">Clave: {{ item.deliveryCode }}</span>
+                  <a *ngIf="item.phoneNumber" [href]="getDeliveryWhatsAppMessageLink(item.phoneNumber, getPersonName(item), item.deliveryCode || '')" target="_blank"
+                     class="phone-link" (click)="$event.stopPropagation()" title="Contactar por WhatsApp (mensaje con tu clave)">
+                    <i class="fab fa-whatsapp"></i> Contactar
+                  </a>
                 </div>
               </div>
               <div class="message-actions" (click)="$event.stopPropagation()">
                 <button class="btn-icon btn-delivery-go" (click)="goToChat(item, activeTab)" title="Ir al chat">
                   <i class="fas fa-comments"></i>
                 </button>
+                <a *ngIf="item.phoneNumber" [href]="getDeliveryWhatsAppMessageLink(item.phoneNumber, getPersonName(item), item.deliveryCode || item.assignedTo?.deliveryCode || '')" target="_blank"
+                   class="btn-icon btn-wa" title="Contactar por WhatsApp (mensaje con tu clave)">
+                  <i class="fab fa-whatsapp"></i>
+                </a>
               </div>
             </div>
           </div>

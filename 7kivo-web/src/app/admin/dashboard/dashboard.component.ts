@@ -35,6 +35,7 @@ export class DashboardComponent implements OnInit {
   deliveryActive = 0;
   deliveryResolvedToday = 0;
   deliveryResolvedTotal = 0;
+  deliveryCancelledTotal = 0;
   deliveryActiveItem: any = null;
   deliveryActiveTab: string = '';
 
@@ -161,6 +162,7 @@ export class DashboardComponent implements OnInit {
       for (const flow of inboxFlows) {
         const items = await this.firebaseService.getFlowSubmissions(flow.saveToCollection);
         for (const item of items) {
+          const isCancelled = item.status === 'resolved' && item.resolvedBy?.name === 'Sin disponibilidad';
           if (!item.assignedTo && item.status !== 'resolved') {
             this.deliveryAvailable++;
           }
@@ -172,11 +174,17 @@ export class DashboardComponent implements OnInit {
                 this.deliveryActiveTab = flow.saveToCollection;
               }
             } else {
-              this.deliveryResolvedTotal++;
-              if ((item.updatedAt?.seconds || item.createdAt?.seconds || 0) >= todayTs) {
-                this.deliveryResolvedToday++;
+              if (isCancelled) {
+                this.deliveryCancelledTotal++;
+              } else {
+                this.deliveryResolvedTotal++;
+                if ((item.updatedAt?.seconds || item.createdAt?.seconds || 0) >= todayTs) {
+                  this.deliveryResolvedToday++;
+                }
               }
             }
+          } else if (isCancelled) {
+            this.deliveryCancelledTotal++;
           }
         }
       }

@@ -234,7 +234,7 @@ const cancelDeliveryCase = async (req, res) => {
 
     let msg;
     if (cancelCount >= 3) {
-      msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔 En este momento ningún delivery puede atender tu solicitud. Puedes intentarlo más tarde o contactarnos directamente.`;
+      msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔 En este momento no hay Delivery disponible para atender tu solicitud. Te invitamos a volver a solicitar el servicio cuando estés listo. ¡Estaremos atentos! 🔄`;
     } else {
       msg = `Tu pedido fue cancelado por el delivery asignado. ¡No te preocupes! Estamos buscando otro delivery para atenderte 🔄`;
     }
@@ -258,16 +258,17 @@ const cancelDeliveryCase = async (req, res) => {
 
 const takeDeliveryCase = async (req, res) => {
   try {
-    const { phone, clientName, deliveryName, deliveryPhone } = req.body;
+    const { phone, clientName, deliveryCode } = req.body;
     if (!phone) {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
-    let msg = `¡Hola${clientName ? ' ' + clientName : ''}! 🚗 *${deliveryName || 'Un repartidor'}* ha tomado tu pedido`;
-    if (deliveryPhone) {
-      msg += ` y te contactará desde el número *${deliveryPhone}*`;
+    let msg = `¡Hola${clientName ? ' ' + clientName : ''}! 😊\n\n🚗 *¡Buenas noticias!* Un Delivery ya tomó tu pedido y está listo para atenderte.\n\n📱 Te contactará por WhatsApp en los próximos minutos para coordinar la entrega.\n\n¡Estamos en camino hacia ti! 🎉`;
+    if (deliveryCode) {
+      msg += `\n\n🔐 *Por tu seguridad:*\n\n*Tu código de verificación es: ${deliveryCode}*\n\nGuárdalo. Cuando el Delivery te contacte, te dirá este mismo código. Si coinciden, es la persona correcta.\n\n⚠️ Si alguien te escribe *sin decirte este código*, no confíes y avísanos de inmediato.`;
+    } else {
+      msg += `\n\n🔐 *Por tu seguridad:* Te presentará un código de identificación. Si no te lo muestra, no confíes y escríbenos.`;
     }
-    msg += `. ¡Estamos en camino! 🎉`;
 
     try {
       await sendTextMessage(msg, phone);

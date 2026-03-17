@@ -108,7 +108,7 @@ export class AdminUsersComponent implements OnInit {
     }
 
     if (this.newAdmin.role === 'delivery' && !this.newAdmin.whatsappPhone.trim()) {
-      this.formError = 'El número de WhatsApp del repartidor es requerido';
+      this.formError = 'El número de WhatsApp del Delivery es requerido';
       return;
     }
 

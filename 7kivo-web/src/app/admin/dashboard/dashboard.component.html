@@ -56,7 +56,7 @@
         <div class="kpi-body">
           <span class="kpi-num">{{ deliveryResolvedTotal }}</span>
           <span class="kpi-label">Pedidos atendidos</span>
-          <span class="kpi-sub">Historial total</span>
+          <span class="kpi-sub">{{ deliveryCancelledTotal > 0 ? deliveryCancelledTotal + ' cancelados · ' : '' }}Historial total</span>
         </div>
       </div>
     </div>

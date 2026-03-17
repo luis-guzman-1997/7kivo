@@ -375,7 +375,7 @@ export class FirebaseService {
   async assignSubmission(
     collName: string,
     docId: string,
-    agent: { uid: string; name: string; email: string; whatsappPhone?: string }
+    agent: { uid: string; name: string; email: string; whatsappPhone?: string; deliveryCode?: string }
   ): Promise<{ ok: boolean; takenBy?: string }> {
     const docRef = doc(this.db, this.orgPath(), collName, docId);
     let takenBy: string | undefined;
@@ -384,15 +384,21 @@ export class FirebaseService {
       if (!snap.exists()) return false;
       const data = snap.data();
       if (data['assignedTo'] != null) {
-        takenBy = data['assignedTo']?.name || 'otro repartidor';
+        takenBy = data['assignedTo']?.name || 'otro Delivery';
         return false;
       }
-      transaction.update(docRef, {
-        assignedTo: { ...agent },
+      const assignedToData: any = { ...agent };
+      if (agent.deliveryCode) {
+        assignedToData.deliveryCode = agent.deliveryCode;
+      }
+      const updateData: any = {
+        assignedTo: assignedToData,
         assignedAt: serverTimestamp(),
         status: 'read',
-        updatedAt: serverTimestamp()
-      });
+        updatedAt: serverTimestamp(),
+        ...(agent.deliveryCode && { deliveryCode: agent.deliveryCode })
+      };
+      transaction.update(docRef, updateData);
       return true;
     });
     return { ok, takenBy };

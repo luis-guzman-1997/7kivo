@@ -76,6 +76,8 @@
 
 .message-bottom { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
+.delivery-code-hint { font-size: 0.8rem; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+
 .phone-link { font-size: 0.8rem; color: #25d366; text-decoration: none; display: flex; align-items: center; gap: 4px; }
 .phone-link i { color: #25d366 !important; font-size: 0.85rem; }
 .phone-link:hover { color: #128c7e; }

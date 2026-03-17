@@ -100,7 +100,8 @@
           <span *ngIf="!isWithin24h">24h</span>
         </div>
         <a [href]="getWhatsAppLink(selectedConversation.phoneNumber)"
-           target="_blank" class="btn-wa-personal" title="Abrir WhatsApp personal">
+           target="_blank" class="btn-wa-personal"
+           [title]="isDeliveryMode && deliveryCode ? 'Contactar con mensaje que incluye tu clave de identificación' : 'Abrir WhatsApp personal'">
           <i class="fab fa-whatsapp"></i>
         </a>
       </div>
