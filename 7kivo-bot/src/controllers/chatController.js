@@ -225,6 +225,37 @@ const sendAdminImage = async (req, res) => {
   }
 };
 
+const cancelDeliveryCase = async (req, res) => {
+  try {
+    const { phone, clientName, cancelCount } = req.body;
+    if (!phone) {
+      return res.status(400).json({ ok: false, error: "phone is required" });
+    }
+
+    let msg;
+    if (cancelCount >= 3) {
+      msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔 En este momento ningún delivery puede atender tu solicitud. Puedes intentarlo más tarde o contactarnos directamente.`;
+    } else {
+      msg = `Tu pedido fue cancelado por el delivery asignado. ¡No te preocupes! Estamos buscando otro delivery para atenderte 🔄`;
+    }
+
+    try {
+      await sendTextMessage(msg, phone);
+      await saveMessage(phone, msg, "bot", {});
+    } catch (msgErr) {
+      console.warn("cancelDeliveryCase: no se pudo enviar mensaje:", msgErr.message);
+    }
+
+    await clearSession(phone);
+    await setConversationMode(phone, "bot");
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error("Error in cancelDeliveryCase:", error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
 const takeDeliveryCase = async (req, res) => {
   try {
     const { phone, clientName, deliveryName, deliveryPhone } = req.body;
@@ -287,5 +318,6 @@ module.exports = {
   releaseToBot,
   checkWindow,
   takeDeliveryCase,
-  resolveDeliveryCase
+  resolveDeliveryCase,
+  cancelDeliveryCase
 };

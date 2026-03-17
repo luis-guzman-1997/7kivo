@@ -107,18 +107,25 @@
       <!-- Fila secundaria: control de modo -->
       <div class="chat-header-actions">
 
-        <!-- Delivery mode: solo resolver pedido -->
+        <!-- Delivery mode: completar o cancelar pedido -->
         <ng-container *ngIf="isDeliveryMode">
           <div class="admin-client-info">
             <span class="admin-client-name">{{ getContactDisplayName(selectedConversation) }}</span>
             <span class="admin-client-phone">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
           </div>
+          <button class="btn-mode-toggle btn-delivery-cancel"
+                  (click)="cancelDeliveryCase()"
+                  [disabled]="cancellingCase || resolvingCase"
+                  title="Cancelar pedido">
+            <i class="fas" [class.fa-times-circle]="!cancellingCase" [class.fa-spinner]="cancellingCase" [class.fa-spin]="cancellingCase"></i>
+            {{ cancellingCase ? 'Cancelando...' : 'Cancelar Pedido' }}
+          </button>
           <button class="btn-mode-toggle btn-delivery-resolve"
                   (click)="resolveDeliveryCase()"
-                  [disabled]="resolvingCase"
+                  [disabled]="resolvingCase || cancellingCase"
                   title="Marcar pedido como completado">
             <i class="fas" [class.fa-check-circle]="!resolvingCase" [class.fa-spinner]="resolvingCase" [class.fa-spin]="resolvingCase"></i>
-            {{ resolvingCase ? 'Resolviendo...' : 'Pedido Completado' }}
+            {{ resolvingCase ? 'Completando...' : 'Pedido Completado' }}
           </button>
         </ng-container>
 
@@ -228,8 +235,13 @@
       </div>
     </div>
 
+    <!-- Delivery: no puede enviar mensajes -->
+    <div class="chat-input viewer-notice" *ngIf="isDeliveryMode">
+      <i class="fas fa-info-circle"></i> Solo puedes completar o cancelar el pedido desde los botones de arriba.
+    </div>
+
     <!-- Input Area -->
-    <div class="chat-input" *ngIf="isWithin24h && (isDeliveryMode || (authService.userRole !== 'viewer' && chatLiveAllowed))">
+    <div class="chat-input" *ngIf="!isDeliveryMode && isWithin24h && authService.userRole !== 'viewer' && chatLiveAllowed">
       <div class="input-error" *ngIf="error">
         <i class="fas fa-exclamation-circle"></i> {{ error }}
         <button (click)="error = ''"><i class="fas fa-times"></i></button>
@@ -255,10 +267,10 @@
         </button>
       </div>
     </div>
-    <div class="chat-input viewer-notice" *ngIf="authService.userRole === 'viewer'">
+    <div class="chat-input viewer-notice" *ngIf="!isDeliveryMode && authService.userRole === 'viewer'">
       <i class="fas fa-eye"></i> Modo solo lectura — puedes ver las conversaciones pero no enviar mensajes.
     </div>
-    <div class="chat-input viewer-notice" *ngIf="authService.userRole !== 'viewer' && !chatLiveAllowed">
+    <div class="chat-input viewer-notice" *ngIf="!isDeliveryMode && authService.userRole !== 'viewer' && !chatLiveAllowed">
       <i class="fas fa-lock"></i> Chat en vivo no disponible en tu plan actual. Puedes visualizar las conversaciones.
     </div>
   </div>

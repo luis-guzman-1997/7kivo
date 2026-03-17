@@ -60,7 +60,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   deliveryPhone: string | null = null;
   deliverySubmissionId: string | null = null;
   deliveryCollection: string | null = null;
+  deliveryUserName = '';
   resolvingCase = false;
+  cancellingCase = false;
 
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
@@ -92,18 +94,36 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.chatLiveAllowed = this.authService.getPlanLimits().chatLive;
     await this.loadConfig();
 
-    // Delivery: solo puede entrar desde la bandeja con phone param
+    // Delivery: solo puede ver su caso activo
     if (this.authService.userRole === 'delivery') {
       const params = this.route.snapshot.queryParams;
       const phone = params['phone'];
-      if (!phone) {
-        this.router.navigate(['/admin/bandeja']);
-        return;
+      // Cargar nombre del delivery para guardarlo al resolver
+      const uid = this.authService.currentUser?.uid;
+      if (uid) {
+        const userData = await this.firebaseService.getUserOrg(uid);
+        this.deliveryUserName = userData?.name || this.authService.currentUser?.email || '';
       }
-      this.isDeliveryMode = true;
-      this.deliveryPhone = phone;
-      this.deliverySubmissionId = params['submissionId'] || null;
-      this.deliveryCollection = params['collection'] || null;
+
+      if (phone) {
+        // Viene desde la bandeja con caso específico
+        this.isDeliveryMode = true;
+        this.deliveryPhone = phone;
+        this.deliverySubmissionId = params['submissionId'] || null;
+        this.deliveryCollection = params['collection'] || null;
+      } else {
+        // Entró directo al chat — buscar su caso activo
+        const activeCase = await this.findMyActiveDeliveryCase();
+        if (activeCase) {
+          this.isDeliveryMode = true;
+          this.deliveryPhone = activeCase.phone;
+          this.deliverySubmissionId = activeCase.submissionId;
+          this.deliveryCollection = activeCase.collection;
+        } else {
+          this.router.navigate(['/admin/bandeja']);
+          return;
+        }
+      }
     }
 
     this.convsUnsub = this.firebaseService.onConversationsChange((convs) => {
@@ -464,6 +484,80 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  async cancelDeliveryCase(): Promise<void> {
+    if (!this.selectedConversation || this.cancellingCase) return;
+    if (!confirm('¿Cancelar este pedido? Se notificará al cliente y quedará disponible para otro delivery.')) return;
+
+    this.cancellingCase = true;
+    this.error = '';
+    try {
+      // Leer submission para obtener cancelCount actual
+      let cancelCount = 0;
+      if (this.deliverySubmissionId && this.deliveryCollection) {
+        const submission = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
+        cancelCount = (submission?.cancelCount || 0) + 1;
+      }
+
+      const clientName = this.selectedConversation.contactName || '';
+      const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/cancel-delivery-case`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: this.selectedConversation.phoneNumber, clientName, cancelCount })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        this.error = data.error || 'Error al cancelar el caso';
+        return;
+      }
+
+      if (this.deliverySubmissionId && this.deliveryCollection) {
+        const user = this.authService.currentUser;
+        if (cancelCount >= 3) {
+          // Cerrar definitivamente
+          await this.firebaseService.updateDocument(this.deliveryCollection, this.deliverySubmissionId, {
+            status: 'resolved',
+            cancelCount,
+            assignedTo: null,
+            resolvedBy: { uid: 'system', name: 'Sin disponibilidad', email: '' }
+          });
+        } else {
+          // Devolver a disponibles
+          await this.firebaseService.updateDocument(this.deliveryCollection, this.deliverySubmissionId, {
+            status: 'pending',
+            cancelCount,
+            assignedTo: null
+          });
+        }
+      }
+
+      this.router.navigate(['/admin/bandeja']);
+    } catch (err) {
+      this.error = 'No se pudo conectar con el bot.';
+    } finally {
+      this.cancellingCase = false;
+    }
+  }
+
+  private async findMyActiveDeliveryCase(): Promise<{ phone: string; submissionId: string; collection: string } | null> {
+    try {
+      const uid = this.authService.currentUser?.uid;
+      if (!uid) return null;
+      const flows = await this.firebaseService.getFlows();
+      const inboxFlows = flows.filter((f: any) =>
+        f.saveToCollection && f.saveToCollection !== 'applicants' && f.saveToCollection !== 'contacts'
+      );
+      for (const flow of inboxFlows) {
+        const items = await this.firebaseService.getFlowSubmissions(flow.saveToCollection);
+        const active = items.find((i: any) => i.assignedTo?.uid === uid && i.status !== 'resolved' && i.phoneNumber);
+        if (active) {
+          return { phone: active.phoneNumber, submissionId: active.id, collection: flow.saveToCollection };
+        }
+      }
+    } catch { /* silent */ }
+    return null;
+  }
+
   async resolveDeliveryCase(): Promise<void> {
     if (!this.selectedConversation || this.resolvingCase) return;
     if (!confirm('¿Marcar este pedido como completado? Se notificará al cliente.')) return;
@@ -485,10 +579,18 @@ export class ChatComponent implements OnInit, OnDestroy {
       }
 
       if (this.deliverySubmissionId && this.deliveryCollection) {
+        const user = this.authService.currentUser;
         await this.firebaseService.updateDocument(
           this.deliveryCollection,
           this.deliverySubmissionId,
-          { status: 'resolved' }
+          {
+            status: 'resolved',
+            resolvedBy: {
+              uid: user?.uid || '',
+              name: this.deliveryUserName || user?.email || '',
+              email: user?.email || ''
+            }
+          }
         );
       }
 

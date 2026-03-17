@@ -208,6 +208,9 @@
           <!-- Casos disponibles -->
           <div class="delivery-section">
             <h4 class="delivery-section-title"><i class="fas fa-clipboard-list"></i> Casos Disponibles</h4>
+            <div class="delivery-blocked-notice" *ngIf="hasActiveDeliveryCase">
+              <i class="fas fa-lock"></i> Resuelve tu caso activo antes de tomar otro
+            </div>
             <div *ngIf="deliveryAvailableCases(activeTab).length === 0" class="empty-state-sm">
               <i class="fas fa-check-circle"></i> No hay casos pendientes
             </div>
@@ -234,7 +237,8 @@
               </div>
               <div class="message-actions" (click)="$event.stopPropagation()">
                 <button class="btn-delivery-take"
-                        [disabled]="takingCaseId === item.id"
+                        [disabled]="!!takingCaseId || hasActiveDeliveryCase"
+                        [title]="hasActiveDeliveryCase ? 'Debes resolver tu caso activo antes de tomar otro' : ''"
                         (click)="takeCase(item, activeTab)">
                   <i class="fas" [class.fa-hand-paper]="takingCaseId !== item.id" [class.fa-spinner]="takingCaseId === item.id" [class.fa-spin]="takingCaseId === item.id"></i>
                   {{ takingCaseId === item.id ? 'Tomando...' : 'Tomar' }}
@@ -302,6 +306,9 @@
                   <span class="badge" [ngClass]="'badge-' + item.status">
                     {{ getStatusLabel(item.status) }}
                   </span>
+                  <span class="resolved-by-tag" *ngIf="item.status === 'resolved' && item.resolvedBy?.name">
+                    <i class="fas fa-user-check"></i> {{ item.resolvedBy.name }}
+                  </span>
                   <a *ngIf="item.phoneNumber" [href]="getWhatsAppLink(item.phoneNumber)" target="_blank"
                      class="phone-link" (click)="$event.stopPropagation()">
                     <i class="fab fa-whatsapp"></i> {{ item.phoneNumber }}
@@ -361,6 +368,10 @@
           <span class="badge" [ngClass]="'badge-' + selectedItem.status">
             {{ getStatusLabel(selectedItem.status) }}
           </span>
+        </div>
+        <div class="detail-row" *ngIf="selectedItem.status === 'resolved' && selectedItem.resolvedBy?.name">
+          <label>Resuelto por</label>
+          <span><i class="fas fa-user-check" style="color:#10b981;margin-right:5px"></i>{{ selectedItem.resolvedBy.name }}</span>
         </div>
       </div>
       <!-- Reschedule Form -->

@@ -67,6 +67,10 @@ export class InboxComponent implements OnInit, OnDestroy {
     return this.authService.userRole === 'delivery';
   }
 
+  get hasActiveDeliveryCase(): boolean {
+    return this.tabs.some(t => this.deliveryMyCases(t).length > 0);
+  }
+
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService,
@@ -74,9 +78,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    if (this.isDelivery) {
-      await this.loadCurrentUserInfo();
-    }
+    await this.loadCurrentUserInfo();
     await this.loadFlows();
     const interval = this.isDelivery ? 20000 : 300000;
     this.refreshTimer = setInterval(() => this.silentRefresh(), interval);
@@ -213,8 +215,15 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   async markAsResolved(item: any, tab: FlowTab): Promise<void> {
     try {
-      await this.firebaseService.updateDocument(tab.collection, item.id, { status: 'resolved' });
+      const uid = this.authService.currentUser?.uid || '';
+      const email = this.authService.currentUser?.email || '';
+      const name = this.currentUserName || email;
+      await this.firebaseService.updateDocument(tab.collection, item.id, {
+        status: 'resolved',
+        resolvedBy: { uid, name, email }
+      });
       item.status = 'resolved';
+      item.resolvedBy = { uid, name, email };
       tab.unreadCount = tab.submissions.filter(i => i.status === 'pending').length;
       this.applyFilters(tab);
     } catch (err) {
