@@ -549,11 +549,21 @@ export class ChatComponent implements OnInit, OnDestroy {
           });
         } else {
           // Devolver a disponibles
+          const submission = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
           await this.firebaseService.updateDocument(this.deliveryCollection, this.deliverySubmissionId, {
             status: 'pending',
             cancelCount,
             assignedTo: null
           });
+          // Notificar a todos los deliveries que hay un caso disponible
+          fetch(`${this.botApiUrl}/api/${this.orgId}/notify-deliveries`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              flowName: submission?.flowName || '',
+              clientName: this.selectedConversation?.contactName || ''
+            })
+          }).catch(() => {});
         }
       }
 

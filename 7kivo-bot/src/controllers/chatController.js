@@ -1,4 +1,5 @@
 const { sendTextMessage, sendImageMessage } = require("../models/messageModel");
+const { sendPushToDeliveries } = require("../services/pushService");
 const {
   saveMessage,
   getConversations,
@@ -310,6 +311,21 @@ const resolveDeliveryCase = async (req, res) => {
   }
 };
 
+const notifyDeliveries = async (req, res) => {
+  try {
+    const { flowName, clientName } = req.body;
+    await sendPushToDeliveries({
+      title: "Nuevo caso disponible",
+      body: flowName ? `${flowName}${clientName ? ' — ' + clientName : ''}` : "Un caso fue reasignado y está disponible",
+      url: "/admin/bandeja"
+    });
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error("Error in notifyDeliveries:", error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
 module.exports = {
   listConversations,
   getConversationMessages,
@@ -320,5 +336,6 @@ module.exports = {
   checkWindow,
   takeDeliveryCase,
   resolveDeliveryCase,
-  cancelDeliveryCase
+  cancelDeliveryCase,
+  notifyDeliveries
 };

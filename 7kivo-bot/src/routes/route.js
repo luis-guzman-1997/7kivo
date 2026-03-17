@@ -15,7 +15,8 @@ const {
   checkWindow,
   takeDeliveryCase,
   resolveDeliveryCase,
-  cancelDeliveryCase
+  cancelDeliveryCase,
+  notifyDeliveries
 } = require("../controllers/chatController");
 
 const { setUserPassword, sendCampaign } = require("../controllers/adminController");
@@ -59,6 +60,7 @@ router.post("/api/:orgId/release-to-bot", withOrgContext(releaseToBot));
 router.post("/api/:orgId/take-delivery-case", withOrgContext(takeDeliveryCase));
 router.post("/api/:orgId/resolve-delivery-case", withOrgContext(resolveDeliveryCase));
 router.post("/api/:orgId/cancel-delivery-case", withOrgContext(cancelDeliveryCase));
+router.post("/api/:orgId/notify-deliveries", withOrgContext(notifyDeliveries));
 
 // Rutas legacy sin orgId en URL (backward compat — se pueden remover cuando el frontend esté actualizado)
 router.get("/api/conversations", withOrgContext(listConversations));
