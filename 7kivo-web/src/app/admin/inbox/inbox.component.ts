@@ -292,7 +292,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   getItemFields(item: any, tab?: FlowTab | null): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [];
     const skip = ['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
-                   'flowId', 'flowName', 'phoneNumber', 'confirmed'];
+                   'flowId', 'flowName', 'phoneNumber', 'confirmed', 'assignedTo', 'resolvedBy'];
 
     const collection = tab?.collection || this.selectedTab?.collection || '';
     const colDef = this.collectionDefsMap[collection];

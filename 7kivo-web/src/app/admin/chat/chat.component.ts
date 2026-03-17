@@ -64,6 +64,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   deliveryCode = '';
   resolvingCase = false;
   cancellingCase = false;
+  showCancelModal = false;
+  showResolveModal = false;
 
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
@@ -496,9 +498,21 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  openCancelModal(): void {
+    this.showCancelModal = true;
+  }
+
+  closeCancelModal(): void {
+    this.showCancelModal = false;
+  }
+
+  async confirmCancelDeliveryCase(): Promise<void> {
+    this.closeCancelModal();
+    await this.cancelDeliveryCase();
+  }
+
   async cancelDeliveryCase(): Promise<void> {
     if (!this.selectedConversation || this.cancellingCase) return;
-    if (!confirm('¿Cancelar este pedido? Se notificará al cliente y quedará disponible para otro delivery.')) return;
 
     this.cancellingCase = true;
     this.error = '';
@@ -575,9 +589,21 @@ export class ChatComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  openResolveModal(): void {
+    this.showResolveModal = true;
+  }
+
+  closeResolveModal(): void {
+    this.showResolveModal = false;
+  }
+
+  async confirmResolveDeliveryCase(): Promise<void> {
+    this.closeResolveModal();
+    await this.resolveDeliveryCase();
+  }
+
   async resolveDeliveryCase(): Promise<void> {
     if (!this.selectedConversation || this.resolvingCase) return;
-    if (!confirm('¿Marcar este pedido como completado? Se notificará al cliente.')) return;
 
     this.resolvingCase = true;
     this.error = '';
