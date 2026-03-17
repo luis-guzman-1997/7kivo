@@ -406,3 +406,6 @@
 .filter-chips { display:flex; flex-wrap:wrap; gap:6px; }
 .filter-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; background:#ede9fe; color:#7c3aed; border-radius:20px; font-size:0.78rem; font-weight:500; }
 .filter-chip button { background:none; border:none; cursor:pointer; color:#7c3aed; font-size:0.9rem; padding:0; line-height:1; font-weight:700; }
+.btn-clear-data { display:inline-flex; align-items:center; gap:5px; padding:7px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#dc2626; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.btn-clear-data:hover:not(:disabled) { background:#fee2e2; border-color:#f87171; }
+.btn-clear-data:disabled { opacity:0.45; cursor:not-allowed; }

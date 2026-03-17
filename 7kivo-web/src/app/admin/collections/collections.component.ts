@@ -87,6 +87,8 @@ export class CollectionsComponent implements OnInit {
     public authService: AuthService
   ) {}
 
+  clearingData = false;
+
   get canEditSchema(): boolean {
     const role = this.authService.userRole;
     return role === 'owner' || role === 'admin';
@@ -277,6 +279,27 @@ export class CollectionsComponent implements OnInit {
       setTimeout(() => this.error = '', 3000);
     } finally {
       this.saving = false;
+    }
+  }
+
+  async clearAllData(): Promise<void> {
+    if (!this.authService.isSuperAdmin) return;
+    const name = this.currentCollection.name;
+    const slug = this.currentCollection.slug;
+    if (!confirm(`⚠️ SUPERADMIN — Borrar TODOS los datos de "${name}"?\n\nEsta acción es irreversible. El esquema se conserva.`)) return;
+    if (!confirm(`Confirma nuevamente: ¿borrar todos los registros de "${slug}"?`)) return;
+
+    this.clearingData = true;
+    try {
+      const deleted = await this.firebaseService.clearCollectionData(slug);
+      this.notice = `${deleted} registros eliminados de "${name}"`;
+      await this.loadCollectionData();
+      setTimeout(() => this.notice = '', 4000);
+    } catch (err) {
+      this.error = 'Error al borrar los datos';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.clearingData = false;
     }
   }
 

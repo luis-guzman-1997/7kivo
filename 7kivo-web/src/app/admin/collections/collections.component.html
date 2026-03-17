@@ -187,6 +187,11 @@
             <button class="btn-reload" (click)="loadCollectionData()" title="Recargar">
               <i class="fas fa-sync-alt"></i>
             </button>
+            <button class="btn-clear-data" *ngIf="authService.isSuperAdmin"
+                    (click)="clearAllData()" [disabled]="clearingData || !collectionData.length"
+                    title="Borrar todos los datos (solo SuperAdmin)">
+              <i class="fas fa-trash-alt"></i><span class="btn-label"> Vaciar</span>
+            </button>
           </div>
         </div>
 

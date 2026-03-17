@@ -906,6 +906,18 @@ export class FirebaseService {
 
   // ==================== FLOW SUBMISSIONS ====================
 
+  async clearCollectionData(slug: string): Promise<number> {
+    const colRef = collection(this.db, this.orgPath(), slug);
+    const snap = await getDocs(colRef);
+    let deleted = 0;
+    for (let i = 0; i < snap.docs.length; i += 400) {
+      const batch = writeBatch(this.db);
+      snap.docs.slice(i, i + 400).forEach(d => { batch.delete(d.ref); deleted++; });
+      await batch.commit();
+    }
+    return deleted;
+  }
+
   async getFlowSubmissions(collectionName: string): Promise<any[]> {
     const items = await this.getCollection(collectionName);
     return items.sort((a, b) => {
