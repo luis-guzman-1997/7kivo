@@ -263,11 +263,11 @@ const takeDeliveryCase = async (req, res) => {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
-    let msg = `¡Hola${clientName ? ' ' + clientName : ''}! 😊\n\n*¡Buenas noticias!* Un Delivery tomó tu solicitud y ya va en camino.\n\nTe escribirá por WhatsApp en los próximos minutos para coordinar tu solicitud. 🎉`;
+    let msg = `*¡Buenas noticias!*\n\nUn Delivery tomó tu solicitud.\n\nTe escribirá por WhatsApp en los próximos segundos para coordinar. 🎉`;
     if (deliveryCode) {
-      msg += `\n\n*Por tu seguridad:* Tu código es *${deliveryCode}*. Guárdalo y compáralo cuando el Delivery te contacte: si coincide, es la persona correcta.\n\n⚠️ Si alguien te escribe sin mostrarte este código, no confíes y avísanos de inmediato.`;
+      msg += `\n\n*Tu código es: ${deliveryCode}*\n\nGuárdalo. Cuando el Delivery te contacte, compáralo: si coincide, es la persona correcta.\n\n⚠️ Si alguien te escribe sin mostrarte este código, no confíes y avísanos.`;
     } else {
-      msg += `\n\n*Por tu seguridad:* Te presentará un código de identificación. Si no te lo muestra, no confíes y escríbenos.`;
+      msg += `\n\nTe presentará un código de identificación. Si no te lo muestra, no confíes y escríbenos.`;
     }
 
     try {

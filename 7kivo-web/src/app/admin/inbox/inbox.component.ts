@@ -535,9 +535,9 @@ export class InboxComponent implements OnInit, OnDestroy {
     const cleaned = phone?.replace(/[^0-9]/g, '') || '';
     let msg: string;
     if (deliveryCode) {
-      msg = `Hola${clientName ? ' ' + clientName : ''}, soy ${this.currentUserName || 'tu Delivery'} y he tomado tu servicio. Mi clave de identificación es *${deliveryCode}*. Por tu seguridad: si alguien te contacta diciendo ser Delivery y NO te presenta esta clave, no confíes en esa persona.`;
+      msg = `Hola${clientName ? ' ' + clientName : ''}! 😊\n\nSoy *${this.currentUserName || 'tu Delivery'}* y he tomado tu solicitud.\n\nMi clave es *${deliveryCode}*\n\nVoy a coordinar tu solicitud. 🚗`;
     } else {
-      msg = `Hola${clientName ? ' ' + clientName : ''}, soy ${this.currentUserName || 'tu Delivery'} y he tomado tu servicio.`;
+      msg = `Hola${clientName ? ' ' + clientName : ''}! 😊\n\nSoy *${this.currentUserName || 'tu Delivery'}* y he tomado tu solicitud.\n\nVoy a coordinar tu solicitud. 🚗`;
     }
     return `https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`;
   }

@@ -421,7 +421,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   getWhatsAppLink(phone: string): string {
     if (this.isDeliveryMode && this.deliveryCode && phone) {
       const clientName = this.selectedConversation ? this.getContactDisplayName(this.selectedConversation) : '';
-      const msg = `Hola${clientName ? ' ' + clientName : ''}, soy ${this.deliveryUserName || 'tu Delivery'} y he tomado tu servicio. Mi clave de identificación es *${this.deliveryCode}*. Por tu seguridad: si alguien te contacta diciendo ser Delivery y NO te presenta esta clave, no confíes en esa persona.`;
+      const msg = `Hola${clientName ? ' ' + clientName : ''}! 😊\n\nSoy *${this.deliveryUserName || 'tu Delivery'}* y he tomado tu solicitud.\n\nMi clave es *${this.deliveryCode}*\n\nVoy a coordinar tu solicitud. 🚗`;
       return `https://wa.me/${(phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
     }
     const wpPhone = this.personalWhatsApp || phone;
