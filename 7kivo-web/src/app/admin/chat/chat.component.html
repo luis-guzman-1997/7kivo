@@ -204,6 +204,20 @@
       </div>
     </div>
 
+    <!-- Delivery: detalle del pedido -->
+    <div class="delivery-order-panel" *ngIf="isDeliveryMode && deliverySubmission">
+      <div class="delivery-order-header" (click)="showDeliveryDetail = !showDeliveryDetail">
+        <i class="fas fa-clipboard-list"></i> Detalle del Pedido
+        <i class="fas" [class.fa-chevron-down]="!showDeliveryDetail" [class.fa-chevron-up]="showDeliveryDetail"></i>
+      </div>
+      <div class="delivery-order-body" *ngIf="showDeliveryDetail">
+        <div class="delivery-order-field" *ngFor="let f of getDeliverySubmissionFields()">
+          <span class="delivery-order-label">{{ f.label }}:</span>
+          <span class="delivery-order-value">{{ f.value }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Error Banner -->
     <div class="error-banner" *ngIf="error">
       <i class="fas fa-exclamation-circle"></i>

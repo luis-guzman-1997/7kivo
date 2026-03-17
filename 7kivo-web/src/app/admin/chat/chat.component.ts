@@ -66,6 +66,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   cancellingCase = false;
   showCancelModal = false;
   showResolveModal = false;
+  deliverySubmission: any = null;
+  showDeliveryDetail = false;
 
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
@@ -115,9 +117,12 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.deliverySubmissionId = params['submissionId'] || null;
         this.deliveryCollection = params['collection'] || null;
         this.deliveryCode = params['deliveryCode'] || '';
-        if (!this.deliveryCode && this.deliverySubmissionId && this.deliveryCollection) {
+        if (this.deliverySubmissionId && this.deliveryCollection) {
           const sub = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
-          this.deliveryCode = sub?.deliveryCode || sub?.assignedTo?.deliveryCode || '';
+          this.deliverySubmission = sub || null;
+          if (!this.deliveryCode) {
+            this.deliveryCode = sub?.deliveryCode || sub?.assignedTo?.deliveryCode || '';
+          }
         }
       } else {
         // Entró directo al chat — buscar su caso activo
@@ -128,6 +133,9 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.deliverySubmissionId = activeCase.submissionId;
           this.deliveryCollection = activeCase.collection;
           this.deliveryCode = activeCase.deliveryCode || '';
+          try {
+            this.deliverySubmission = await this.firebaseService.getDocument(activeCase.collection, activeCase.submissionId);
+          } catch { /* silent */ }
         } else {
           this.router.navigate(['/admin/bandeja']);
           return;
@@ -653,6 +661,30 @@ export class ChatComponent implements OnInit, OnDestroy {
     } finally {
       this.resolvingCase = false;
     }
+  }
+
+  getDeliverySubmissionFields(): { label: string; value: string }[] {
+    if (!this.deliverySubmission) return [];
+    const skip = ['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
+                   'flowId', 'flowName', 'phoneNumber', 'confirmed', 'assignedTo', 'resolvedBy',
+                   'deliveryCode', 'cancelCount', 'assignedAt'];
+    const labels: Record<string, string> = {
+      fullName: 'Nombre', name: 'Nombre', nombre: 'Nombre',
+      direccion: 'Dirección', address: 'Dirección',
+      productos: 'Productos', items: 'Ítems', detalle: 'Detalle',
+      descripcion: 'Descripción', comment: 'Comentario', motivo: 'Motivo',
+      fecha: 'Fecha', hora: 'Hora', telefono: 'Teléfono',
+    };
+    const fields: { label: string; value: string }[] = [];
+    for (const [key, val] of Object.entries(this.deliverySubmission)) {
+      if (skip.includes(key) || val === null || val === undefined || val === '') continue;
+      if (typeof val === 'object') continue;
+      if (key.startsWith('_')) continue;
+      if (key.endsWith('Id')) continue;
+      const label = labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+      fields.push({ label, value: String(val) });
+    }
+    return fields;
   }
 
   private scrollToBottom(): void {
