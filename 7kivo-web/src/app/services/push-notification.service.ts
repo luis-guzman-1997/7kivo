@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { FirebaseService } from './firebase.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
