@@ -94,6 +94,11 @@ export class SaOrgDetailComponent implements OnInit {
 
   exportingOrgId: string | null = null;
 
+  teamSlugEdit = '';
+  teamSlugSaving = false;
+  teamSlugError = '';
+  teamLoginUrlCopied = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -129,6 +134,7 @@ export class SaOrgDetailComponent implements OnInit {
       org.industry = config?.industry || org.industry || 'general';
       org.orgLogo = config?.orgLogo || '';
       this.selectedOrg = org;
+      this.syncTeamSlugFromOrg();
       await this.loadDetail();
     } catch (err) {
       console.error('Error loading org:', err);
@@ -173,6 +179,113 @@ export class SaOrgDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/superadmin/organizaciones']);
+  }
+
+  private syncTeamSlugFromOrg(): void {
+    if (!this.selectedOrg) return;
+    const raw = this.selectedOrg.loginSlug || this.selectedOrg.id || '';
+    this.teamSlugEdit = String(raw).toLowerCase();
+    this.teamSlugError = '';
+  }
+
+  onTeamSlugInput(): void {
+    this.teamSlugEdit = this.teamSlugEdit.toLowerCase().replace(/\s+/g, '-');
+    this.teamSlugError = '';
+  }
+
+  useOrgIdAsLoginSlug(): void {
+    if (!this.selectedOrg?.id) return;
+    this.teamSlugEdit = String(this.selectedOrg.id)
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-');
+    this.teamSlugError = '';
+  }
+
+  get normalizedTeamSlug(): string {
+    return (this.teamSlugEdit || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  }
+
+  get teamLoginPreviewHref(): string {
+    const slug = this.normalizedTeamSlug;
+    if (!slug) return '';
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return origin ? `${origin}/admin/login/${slug}` : `/admin/login/${slug}`;
+  }
+
+  get hasUnsavedTeamSlug(): boolean {
+    const saved = (this.selectedOrg?.loginSlug ?? '').toString();
+    return this.normalizedTeamSlug !== saved;
+  }
+
+  get teamSlugActive(): boolean {
+    return !!(this.selectedOrg?.loginSlug && String(this.selectedOrg.loginSlug).length);
+  }
+
+  async saveTeamLoginSlug(): Promise<void> {
+    if (!this.selectedOrg || this.teamSlugSaving) return;
+    const slug = this.normalizedTeamSlug;
+    const previousSlug = (this.selectedOrg.loginSlug ?? '').toString().trim() || null;
+    this.teamSlugSaving = true;
+    this.teamSlugError = '';
+    try {
+      if (slug) {
+        const existing = await this.firebaseService.getOrgByLoginSlug(slug);
+        if (existing && existing.id !== this.selectedOrg.id) {
+          this.teamSlugError = 'Este slug ya está en uso por otra organización';
+          return;
+        }
+      }
+      const payload: { loginSlug: string | null } = { loginSlug: slug ? slug : null };
+      await this.firebaseService.updateOrganization(this.selectedOrg.id, payload);
+
+      const verified = await this.firebaseService.getOrganization(this.selectedOrg.id);
+      if (!verified) {
+        this.teamSlugError = 'No se pudo leer la organización tras guardar.';
+        return;
+      }
+      const saved = (verified.loginSlug ?? '').toString();
+      const expect = slug || '';
+      if (saved !== expect) {
+        this.teamSlugError = 'El slug no se guardó en el servidor. Revisa permisos de Firestore para organizations.';
+        return;
+      }
+
+      this.selectedOrg.loginSlug = verified.loginSlug ?? null;
+      this.syncTeamSlugFromOrg();
+
+      const orgName = this.orgDetail?.orgName || this.selectedOrg?.orgName || this.selectedOrg.id;
+      const orgLogo = this.orgDetail?.orgLogo || this.selectedOrg?.orgLogo || '';
+      try {
+        await this.firebaseService.syncPublicOrgLoginSlug({
+          orgId: this.selectedOrg.id,
+          slug: slug || null,
+          previousSlug,
+          orgName,
+          orgLogo: orgLogo || null
+        });
+      } catch (pubErr) {
+        console.error('syncPublicOrgLoginSlug', pubErr);
+        this.teamSlugError =
+          'Slug guardado, pero la URL pública no funcionará hasta añadir reglas para orgPublicSlugs (lectura pública). Ver comentario en firebase.service.ts.';
+        return;
+      }
+
+      this.showNotice(slug ? 'Enlace de login activado' : 'Enlace de login desactivado');
+    } catch (err) {
+      console.error('saveTeamLoginSlug:', err);
+      this.teamSlugError = 'No se pudo guardar. ¿Existe el documento de la organización en Firestore?';
+    } finally {
+      this.teamSlugSaving = false;
+    }
+  }
+
+  copyTeamLoginUrl(): void {
+    const url = this.teamLoginPreviewHref;
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      this.teamLoginUrlCopied = true;
+      setTimeout(() => (this.teamLoginUrlCopied = false), 2000);
+    });
   }
 
   // ── Plan ──

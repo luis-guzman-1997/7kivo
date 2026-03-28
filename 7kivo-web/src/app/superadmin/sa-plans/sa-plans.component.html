@@ -9,6 +9,24 @@
     </button>
   </div>
 
+  <!-- Section texts -->
+  <div class="section-meta-card" *ngIf="!loading">
+    <h3 class="meta-title"><i class="fas fa-heading"></i> Textos de la sección</h3>
+    <div class="form-group">
+      <label>Título</label>
+      <input type="text" [(ngModel)]="sectionTitle" placeholder="Un plan para cada etapa de tu negocio" />
+    </div>
+    <div class="form-group">
+      <label>Descripción</label>
+      <input type="text" [(ngModel)]="sectionDesc" placeholder="Elige el plan que se adapte a tus necesidades." />
+    </div>
+    <button class="btn-save-meta" (click)="saveSectionTexts()" [disabled]="savingSection">
+      <i class="fas fa-spinner fa-spin" *ngIf="savingSection"></i>
+      <i class="fas fa-save" *ngIf="!savingSection"></i>
+      {{ savingSection ? 'Guardando...' : 'Guardar textos' }}
+    </button>
+  </div>
+
   <div *ngIf="loading" class="loading-state">
     <i class="fas fa-spinner fa-spin"></i> Cargando planes...
   </div>
@@ -55,23 +73,41 @@
         <button class="modal-close" (click)="closeForm()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>Nombre del Plan</label>
-          <input type="text" [(ngModel)]="form.name" placeholder="Ej: Básico, Profesional, Enterprise" />
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre del Plan</label>
+            <input type="text" [(ngModel)]="form.name" placeholder="Ej: Básico, Profesional, Enterprise" />
+          </div>
+          <div class="form-group">
+            <label>Slogan</label>
+            <input type="text" [(ngModel)]="form.tagline" placeholder="Para empezar a automatizar" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio Mensual ($)</label>
+            <input type="number" [(ngModel)]="form.price" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Texto del botón</label>
+            <input type="text" [(ngModel)]="form.ctaText" placeholder="Comenzar" />
+          </div>
         </div>
         <div class="form-group">
-          <label>Precio Mensual ($)</label>
-          <input type="number" [(ngModel)]="form.price" step="0.01" min="0" />
+          <label>Características incluidas (una por línea)</label>
+          <textarea [(ngModel)]="form.features" rows="4" placeholder="Bot WhatsApp ilimitado&#10;Hasta 5 flujos&#10;Soporte por email"></textarea>
         </div>
         <div class="form-group">
-          <label>Características (una por línea)</label>
-          <textarea [(ngModel)]="form.features" rows="5" placeholder="Bot WhatsApp ilimitado&#10;Hasta 5 flujos&#10;Soporte por email"></textarea>
+          <label>Características NO incluidas (una por línea)</label>
+          <textarea [(ngModel)]="form.disabledFeatures" rows="3" placeholder="Chat en vivo&#10;Sistema de citas"></textarea>
         </div>
-        <div class="form-group checkbox-group">
-          <label>
-            <input type="checkbox" [(ngModel)]="form.active" />
-            Plan activo (visible para asignar)
-          </label>
+        <div class="form-row">
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" [(ngModel)]="form.popular" /> Mostrar como "Popular"</label>
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" [(ngModel)]="form.active" /> Plan activo</label>
+          </div>
         </div>
         <div class="form-actions">
           <button class="btn-save" (click)="savePlan()" [disabled]="saving">

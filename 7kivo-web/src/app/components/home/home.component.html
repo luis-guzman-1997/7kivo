@@ -189,98 +189,26 @@
   <div class="container">
     <div class="section-header">
       <span class="section-tag">Planes</span>
-      <h2 class="section-title">Un plan para cada etapa de tu negocio</h2>
-      <p class="section-desc">Elige el plan que se adapte a tus necesidades. Actualiza en cualquier momento.</p>
+      <h2 class="section-title">{{ plansSectionTitle }}</h2>
+      <p class="section-desc">{{ plansSectionDesc }}</p>
     </div>
     <div class="row g-4 justify-content-center">
-      <!-- Starter -->
-      <div class="col-lg-3 col-md-6">
-        <div class="plan-card">
+      <div class="col-lg-3 col-md-6" *ngFor="let plan of plans">
+        <div class="plan-card" [class.popular]="plan.popular">
+          <div class="popular-badge" *ngIf="plan.popular">Popular</div>
           <div class="plan-header">
-            <h4>Starter</h4>
-            <p class="plan-tagline">Para empezar a automatizar</p>
+            <h4>{{ plan.name }}</h4>
+            <p class="plan-tagline">{{ plan.tagline }}</p>
           </div>
           <div class="plan-price">
-            <span class="price-amount">$9.99</span>
+            <span class="price-amount">${{ plan.price }}</span>
             <span class="price-period">/mes</span>
           </div>
           <ul class="plan-features">
-            <li><i class="fas fa-check"></i> Bot WhatsApp con menu interactivo</li>
-            <li><i class="fas fa-check"></i> 1 flujo conversacional</li>
-            <li><i class="fas fa-check"></i> 1 coleccion de datos</li>
-            <li><i class="fas fa-check"></i> Bandeja de entrada</li>
-            <li><i class="fas fa-check"></i> Chat WhatsApp (solo lectura)</li>
-            <li class="disabled"><i class="fas fa-times"></i> Sistema de citas</li>
-            <li class="disabled"><i class="fas fa-times"></i> Chat en vivo</li>
+            <li *ngFor="let feat of plan.features"><i class="fas fa-check"></i> {{ feat }}</li>
+            <li class="disabled" *ngFor="let feat of plan.disabledFeatures"><i class="fas fa-times"></i> {{ feat }}</li>
           </ul>
-          <a routerLink="/admin/login" class="btn-plan">Comenzar</a>
-        </div>
-      </div>
-      <!-- Business -->
-      <div class="col-lg-3 col-md-6">
-        <div class="plan-card popular">
-          <div class="popular-badge">Popular</div>
-          <div class="plan-header">
-            <h4>Business</h4>
-            <p class="plan-tagline">Para negocios en crecimiento</p>
-          </div>
-          <div class="plan-price">
-            <span class="price-amount">$19.99</span>
-            <span class="price-period">/mes</span>
-          </div>
-          <ul class="plan-features">
-            <li><i class="fas fa-check"></i> Hasta 3 flujos conversacionales</li>
-            <li><i class="fas fa-check"></i> Hasta 3 colecciones de datos</li>
-            <li><i class="fas fa-check"></i> Sistema de citas y agenda</li>
-            <li><i class="fas fa-check"></i> Chat en vivo con clientes</li>
-            <li><i class="fas fa-check"></i> 3 usuarios administradores</li>
-            <li><i class="fas fa-check"></i> Bandeja de entrada con calendario</li>
-          </ul>
-          <a routerLink="/admin/login" class="btn-plan primary">Comenzar</a>
-        </div>
-      </div>
-      <!-- Premium -->
-      <div class="col-lg-3 col-md-6">
-        <div class="plan-card">
-          <div class="plan-header">
-            <h4>Premium</h4>
-            <p class="plan-tagline">Para equipos profesionales</p>
-          </div>
-          <div class="plan-price">
-            <span class="price-amount">$39.99</span>
-            <span class="price-period">/mes</span>
-          </div>
-          <ul class="plan-features">
-            <li><i class="fas fa-check"></i> Hasta 5 flujos conversacionales</li>
-            <li><i class="fas fa-check"></i> Hasta 10 colecciones de datos</li>
-            <li><i class="fas fa-check"></i> Sistema de citas y agenda</li>
-            <li><i class="fas fa-check"></i> Chat en vivo con clientes</li>
-            <li><i class="fas fa-check"></i> 5 usuarios administradores</li>
-            <li><i class="fas fa-check"></i> Roles y permisos avanzados</li>
-          </ul>
-          <a routerLink="/admin/login" class="btn-plan">Comenzar</a>
-        </div>
-      </div>
-      <!-- Enterprise -->
-      <div class="col-lg-3 col-md-6">
-        <div class="plan-card">
-          <div class="plan-header">
-            <h4>Enterprise</h4>
-            <p class="plan-tagline">Para grandes operaciones</p>
-          </div>
-          <div class="plan-price">
-            <span class="price-amount">$100</span>
-            <span class="price-period">/mes</span>
-          </div>
-          <ul class="plan-features">
-            <li><i class="fas fa-check"></i> Hasta 20 flujos conversacionales</li>
-            <li><i class="fas fa-check"></i> Colecciones ilimitadas</li>
-            <li><i class="fas fa-check"></i> Usuarios ilimitados</li>
-            <li><i class="fas fa-check"></i> Configuracion avanzada del bot</li>
-            <li><i class="fas fa-check"></i> Roles y permisos completos</li>
-            <li><i class="fas fa-check"></i> Plan personalizado</li>
-          </ul>
-          <a routerLink="/admin/login" class="btn-plan">Contactar</a>
+          <a routerLink="/admin/login" class="btn-plan" [class.primary]="plan.popular">{{ plan.ctaText }}</a>
         </div>
       </div>
     </div>

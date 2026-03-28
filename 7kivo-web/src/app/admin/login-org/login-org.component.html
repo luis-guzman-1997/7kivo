@@ -1,0 +1,102 @@
+<div class="login-page">
+
+  <div class="login-card state-card" *ngIf="slugLoading">
+    <i class="fas fa-spinner fa-spin state-icon"></i>
+    <p>Cargando...</p>
+    <div class="login-kivo-brand">
+      <span class="login-kivo-label">Plataforma</span>
+      <img src="assets/7kivo.png" alt="7kivo" class="login-kivo-img" />
+    </div>
+  </div>
+
+  <div class="login-card state-card" *ngIf="!slugLoading && slugInvalid">
+    <i class="fas fa-unlink state-icon error-icon"></i>
+    <h2>Enlace inválido</h2>
+    <p>Este enlace no coincide con ninguna organización o el slug no está guardado.</p>
+    <p class="login-invalid-hint">
+      En <strong>Superadmin</strong> → abre la organización → pestaña <strong>Equipo</strong> → activa el slug y guarda.
+      La URL debe ser <code>/admin/login/</code> más el mismo slug (p. ej. el ID de la org).
+    </p>
+    <div class="login-kivo-brand">
+      <span class="login-kivo-label">Plataforma</span>
+      <img src="assets/7kivo.png" alt="7kivo" class="login-kivo-img" />
+    </div>
+  </div>
+
+  <div class="login-shell" *ngIf="!slugLoading && !slugInvalid">
+    <div class="login-card login-card--branded">
+      <div class="login-brand">
+        <div class="login-logo-wrap" [class.login-logo-wrap--empty]="!org?.orgLogo">
+          <img *ngIf="org?.orgLogo" [src]="org.orgLogo" class="login-logo-img" [alt]="'Logo de ' + (org?.orgName || 'organización')" />
+          <div *ngIf="!org?.orgLogo" class="login-logo-fallback" aria-hidden="true">
+            <i class="fas fa-store"></i>
+          </div>
+        </div>
+        <h1 class="login-brand-name">{{ org?.orgName || org?.name || 'Panel' }}</h1>
+        <p class="login-brand-tagline">Acceso para tu equipo</p>
+      </div>
+
+      <form (ngSubmit)="onLogin()" class="login-form" autocomplete="on">
+        <div class="form-group-login">
+          <label for="email-login-org">
+            <i class="fas fa-envelope"></i> Correo electrónico
+          </label>
+          <input
+            type="email"
+            id="email-login-org"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="tu@correo.com"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group-login">
+          <label for="password-login-org">
+            <i class="fas fa-lock"></i> Contraseña
+          </label>
+          <div class="password-input-wrap">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password-login-org"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Tu contraseña"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="btn-toggle-password"
+              (click)="showPassword = !showPassword"
+              [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              tabindex="-1"
+            >
+              <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="error-message" *ngIf="error">
+          <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+
+        <button type="submit" class="btn-login" [disabled]="loading">
+          <span *ngIf="!loading">
+            <i class="fas fa-sign-in-alt"></i> Entrar al panel
+          </span>
+          <span *ngIf="loading">
+            <i class="fas fa-spinner fa-spin"></i> Ingresando...
+          </span>
+        </button>
+      </form>
+
+      <p class="login-footnote">Inicia sesión con la cuenta que te asignó tu organización.</p>
+
+      <div class="login-kivo-brand">
+        <span class="login-kivo-label">Plataforma</span>
+        <img src="assets/7kivo.png" alt="7kivo" class="login-kivo-img" />
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -34,7 +34,8 @@ export class AuthGuard implements CanActivate {
           }
           return true;
         }
-        this.router.navigate(['/admin/login']);
+        const slug = localStorage.getItem('orgLoginSlug');
+        this.router.navigate(slug ? ['/admin/login', slug] : ['/admin/login']);
         return false;
       })
     );

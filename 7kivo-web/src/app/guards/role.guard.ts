@@ -16,7 +16,8 @@ export class RoleGuard implements CanActivate {
       take(1),
       map(() => {
         if (!this.authService.isAuthenticated) {
-          this.router.navigate(['/admin/login']);
+          const slug = localStorage.getItem('orgLoginSlug');
+          this.router.navigate(slug ? ['/admin/login', slug] : ['/admin/login']);
           return false;
         }
         if (!requiredPermission || this.authService.hasPermission(requiredPermission)) {

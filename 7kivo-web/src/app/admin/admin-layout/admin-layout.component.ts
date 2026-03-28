@@ -145,6 +145,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   async logout(): Promise<void> {
     await this.authService.logout();
-    this.router.navigate(['/admin/login']);
+    const slug = localStorage.getItem('orgLoginSlug');
+    this.router.navigate(slug ? ['/admin/login', slug] : ['/admin/login']);
   }
 }

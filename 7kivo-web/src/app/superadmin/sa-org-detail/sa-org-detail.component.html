@@ -458,6 +458,53 @@
         </button>
       </div>
 
+      <div class="team-login-card" *ngIf="selectedOrg">
+        <div class="team-login-card-head">
+          <div class="team-login-card-title">
+            <i class="fas fa-link"></i> Login del equipo
+            <span class="team-slug-status" *ngIf="teamSlugActive">Activo</span>
+          </div>
+          <p class="team-login-card-desc">
+            Solo visible aquí: define el slug para <code>/admin/login/</code>. Por defecto se sugiere el ID de la organización (<code>{{ selectedOrg.id }}</code>).
+          </p>
+        </div>
+        <div class="team-slug-input-row">
+          <span class="team-slug-prefix">/admin/login/</span>
+          <input
+            type="text"
+            class="team-slug-input"
+            [(ngModel)]="teamSlugEdit"
+            (input)="onTeamSlugInput()"
+            [disabled]="teamSlugSaving"
+            placeholder="slug"
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <button type="button" class="btn-team-slug-id" (click)="useOrgIdAsLoginSlug()" [disabled]="teamSlugSaving" title="Usar ID de la organización como slug">
+            = ID org
+          </button>
+        </div>
+        <div class="team-slug-unsaved" *ngIf="hasUnsavedTeamSlug">
+          <i class="fas fa-info-circle"></i> Cambios sin guardar
+        </div>
+        <div class="team-slug-error" *ngIf="teamSlugError">
+          <i class="fas fa-exclamation-circle"></i> {{ teamSlugError }}
+        </div>
+        <div class="team-login-preview" *ngIf="teamLoginPreviewHref">
+          <a [href]="teamLoginPreviewHref" target="_blank" rel="noopener noreferrer" class="team-login-preview-link">{{ teamLoginPreviewHref }}</a>
+          <button type="button" class="btn-copy-team-login" (click)="copyTeamLoginUrl()" title="Copiar URL">
+            <i class="fas" [class.fa-check]="teamLoginUrlCopied" [class.fa-copy]="!teamLoginUrlCopied"></i>
+          </button>
+        </div>
+        <div class="team-login-actions">
+          <button type="button" class="btn-save-team-slug" (click)="saveTeamLoginSlug()" [disabled]="teamSlugSaving || !hasUnsavedTeamSlug">
+            <i class="fas fa-spinner fa-spin" *ngIf="teamSlugSaving"></i>
+            <i class="fas fa-check" *ngIf="!teamSlugSaving"></i>
+            {{ teamSlugSaving ? 'Guardando...' : (teamSlugActive ? 'Guardar cambios' : 'Activar login') }}
+          </button>
+        </div>
+      </div>
+
       <!-- Add user form -->
       <div class="add-admin-form" *ngIf="addingAdmin">
         <div class="add-admin-form-title"><i class="fas fa-user-plus"></i> Nuevo usuario</div>

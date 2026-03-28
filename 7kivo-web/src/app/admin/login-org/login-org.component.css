@@ -1,0 +1,380 @@
+/* Fondo en :host = cubre siempre toda la ventana (evita franja al final) */
+
+:host {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(148, 163, 184, 0.1), transparent 52%),
+    linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  background-attachment: scroll;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  width: 100%;
+  padding: 24px 20px;
+}
+
+.login-shell {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 36px 36px;
+  width: 100%;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.login-card--branded {
+  padding-top: 36px;
+}
+
+.state-card {
+  text-align: center;
+  padding: 48px 40px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.state-icon {
+  font-size: 2.25rem;
+  color: #0d9488;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.error-icon {
+  color: #dc2626;
+}
+
+.state-card h2 {
+  color: #0f172a;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+}
+
+.state-card p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.login-invalid-hint {
+  margin-top: 14px !important;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.84rem !important;
+  text-align: left !important;
+  color: #475569 !important;
+  line-height: 1.5 !important;
+}
+
+.login-invalid-hint code {
+  font-size: 0.78rem;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #334155;
+}
+
+/* Marca */
+.login-brand {
+  text-align: center;
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Logo sin caja gris: flota sobre el blanco de la tarjeta */
+.login-logo-wrap {
+  margin: 0 auto 18px;
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-logo-wrap--empty {
+  margin-bottom: 14px;
+}
+
+.login-logo-img {
+  max-width: 100%;
+  max-height: 120px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.login-logo-fallback {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(13, 148, 136, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d9488;
+  font-size: 1.6rem;
+}
+
+.login-brand-name {
+  color: #0f172a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.login-brand-tagline {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Formulario */
+.form-group-login {
+  margin-bottom: 18px;
+}
+
+.form-group-login label {
+  display: block;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+.form-group-login label i {
+  color: #0d9488;
+  margin-right: 6px;
+  font-size: 0.85em;
+}
+
+.form-group-login input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fafafa;
+  color: #0f172a;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-group-login input:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.form-group-login input:focus {
+  border-color: #0d9488;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.form-group-login input::placeholder {
+  color: #94a3b8;
+}
+
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap input {
+  padding-right: 48px;
+}
+
+.password-input-wrap .btn-toggle-password {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.password-input-wrap .btn-toggle-password:hover {
+  color: #0d9488;
+  background: rgba(13, 148, 136, 0.1);
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  margin-bottom: 18px;
+  line-height: 1.4;
+}
+
+.error-message i {
+  margin-right: 8px;
+  color: #dc2626;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 15px 16px;
+  margin-top: 4px;
+  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+.btn-login:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
+}
+
+.btn-login:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-login:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-footnote {
+  margin: 22px 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.login-kivo-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.login-kivo-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.login-kivo-img {
+  height: 28px;
+  width: auto;
+  max-width: 120px;
+  object-fit: contain;
+  display: block;
+  opacity: 0.9;
+}
+
+.state-card .login-kivo-brand {
+  margin-top: 28px;
+  padding-top: 20px;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  :host {
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    background-size: 100% 100%;
+  }
+
+  .login-page {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .login-shell {
+    max-width: none;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(env(safe-area-inset-top), 28px) 20px max(env(safe-area-inset-bottom), 28px);
+  }
+
+  .login-card,
+  .login-card--branded {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: 24px 22px;
+  }
+
+  .login-brand {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+  }
+
+  .login-brand-name {
+    font-size: 1.35rem;
+  }
+
+  .login-logo-wrap {
+    max-width: 300px;
+  }
+
+  .form-group-login input {
+    padding: 15px 16px;
+    border-radius: 14px;
+  }
+
+  .password-input-wrap input {
+    padding-right: 48px;
+  }
+
+  .btn-login {
+    padding: 16px;
+    border-radius: 14px;
+  }
+}

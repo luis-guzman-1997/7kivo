@@ -34,6 +34,11 @@ export class SaOrganizationsComponent implements OnInit {
   importDone = false;
   importResults: { id: string; name: string; existed: boolean; success: boolean; error?: string }[] = [];
 
+  slugEditOrg: any = null;
+  slugEditValue = '';
+  slugSaving = false;
+  slugError = '';
+
   constructor(
     private firebaseService: FirebaseService,
     private authService: AuthService,
@@ -222,6 +227,54 @@ export class SaOrganizationsComponent implements OnInit {
     this.deleteConfirmOrg = null;
     this.deleteConfirmText = '';
     this.deleteResult = null;
+  }
+
+  // ── Login Slug ──
+  openSlugEdit(org: any): void {
+    this.slugEditOrg = org;
+    this.slugEditValue = org.loginSlug || '';
+    this.slugError = '';
+    this.slugSaving = false;
+  }
+
+  closeSlugEdit(): void {
+    this.slugEditOrg = null;
+    this.slugError = '';
+  }
+
+  async saveLoginSlug(): Promise<void> {
+    if (!this.slugEditOrg || this.slugSaving) return;
+    const slug = this.slugEditValue.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    this.slugSaving = true;
+    this.slugError = '';
+    try {
+      if (slug) {
+        const existing = await this.firebaseService.getOrgByLoginSlug(slug);
+        if (existing && existing.id !== this.slugEditOrg.id) {
+          this.slugError = 'Este slug ya está en uso por otra organización';
+          return;
+        }
+      }
+      const previousSlug = this.slugEditOrg.loginSlug || null;
+      await this.firebaseService.updateOrganization(this.slugEditOrg.id, { loginSlug: slug || null });
+      await this.firebaseService.syncPublicOrgLoginSlug({
+        orgId: this.slugEditOrg.id,
+        slug: slug || null,
+        previousSlug,
+        orgName: this.slugEditOrg.orgName || this.slugEditOrg.name || this.slugEditOrg.id,
+        orgLogo: this.slugEditOrg.orgLogo || null
+      });
+      this.slugEditOrg.loginSlug = slug || null;
+      this.closeSlugEdit();
+    } catch (err) {
+      this.slugError = 'Error al guardar';
+    } finally {
+      this.slugSaving = false;
+    }
+  }
+
+  getLoginUrl(org: any): string {
+    return org.loginSlug ? `/admin/login/${org.loginSlug}` : '';
   }
 
   // ── Import ──

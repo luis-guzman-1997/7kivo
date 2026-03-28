@@ -17,10 +17,12 @@ import { WelcomeComponent } from './welcome/welcome.component';
 import { AdminSetupComponent } from './admin-setup/admin-setup.component';
 import { CampaignsComponent } from './campaigns/campaigns.component';
 import { CitasComponent } from './citas/citas.component';
+import { LoginOrgComponent } from './login-org/login-org.component';
 
 @NgModule({
   declarations: [
     LoginComponent,
+    LoginOrgComponent,
     AdminLayoutComponent,
     DashboardComponent,
     StudentsComponent,

@@ -11,9 +11,17 @@ export class SaPlansComponent implements OnInit {
   loading = true;
   saving = false;
 
+  sectionTitle = 'Un plan para cada etapa de tu negocio';
+  sectionDesc = 'Elige el plan que se adapte a tus necesidades. Actualiza en cualquier momento.';
+  savingSection = false;
+
   showForm = false;
   editingIndex: number | null = null;
-  form = { name: '', price: 0, features: '', active: true };
+  form = this.emptyForm();
+
+  private emptyForm() {
+    return { name: '', tagline: '', price: 0, popular: false, ctaText: 'Comenzar', features: '', disabledFeatures: '', active: true };
+  }
 
   constructor(private firebaseService: FirebaseService) {}
 
@@ -26,6 +34,8 @@ export class SaPlansComponent implements OnInit {
     try {
       const data = await this.firebaseService.getPlatformPlans();
       this.plans = data?.plans || [];
+      this.sectionTitle = data?.sectionTitle || this.sectionTitle;
+      this.sectionDesc = data?.sectionDesc || this.sectionDesc;
     } catch (err) {
       console.error('Error loading plans:', err);
     } finally {
@@ -33,9 +43,23 @@ export class SaPlansComponent implements OnInit {
     }
   }
 
+  async saveSectionTexts(): Promise<void> {
+    this.savingSection = true;
+    try {
+      await this.firebaseService.savePlatformPlansMeta({
+        sectionTitle: this.sectionTitle,
+        sectionDesc: this.sectionDesc
+      });
+    } catch (err) {
+      console.error('Error saving section texts:', err);
+    } finally {
+      this.savingSection = false;
+    }
+  }
+
   openNewPlan(): void {
     this.editingIndex = null;
-    this.form = { name: '', price: 0, features: '', active: true };
+    this.form = this.emptyForm();
     this.showForm = true;
   }
 
@@ -44,8 +68,12 @@ export class SaPlansComponent implements OnInit {
     this.editingIndex = index;
     this.form = {
       name: plan.name || '',
+      tagline: plan.tagline || '',
       price: plan.price || 0,
+      popular: plan.popular || false,
+      ctaText: plan.ctaText || 'Comenzar',
       features: (plan.features || []).join('\n'),
+      disabledFeatures: (plan.disabledFeatures || []).join('\n'),
       active: plan.active !== false
     };
     this.showForm = true;
@@ -62,8 +90,12 @@ export class SaPlansComponent implements OnInit {
     try {
       const planData = {
         name: this.form.name.trim(),
+        tagline: this.form.tagline.trim(),
         price: this.form.price,
+        popular: this.form.popular,
+        ctaText: this.form.ctaText.trim() || 'Comenzar',
         features: this.form.features.split('\n').map(f => f.trim()).filter(f => f),
+        disabledFeatures: this.form.disabledFeatures.split('\n').map(f => f.trim()).filter(f => f),
         active: this.form.active
       };
 

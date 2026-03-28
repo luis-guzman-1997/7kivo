@@ -1002,9 +1002,109 @@ export class FirebaseService {
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
+  /**
+   * Índice público slug → orgId + nombre/logo (colección `orgPublicSlugs`).
+   * La página /admin/login/:slug se abre sin sesión: las reglas suelen bloquear `organizations`,
+   * pero este documento debe ser legible con `allow read: if true`.
+   *
+   * Añade en Firestore Rules (dentro de `match /databases/{database}/documents`):
+   *   match /orgPublicSlugs/{slug} {
+   *     allow read: if true;
+   *     allow write: if request.auth != null;
+   *   }
+   */
+  private readonly orgPublicSlugsCol = 'orgPublicSlugs';
+
+  /**
+   * Índice público del slug → org (nombre/logo para la pantalla de login sin estar logueado).
+   */
+  async syncPublicOrgLoginSlug(params: {
+    orgId: string;
+    slug: string | null;
+    previousSlug: string | null;
+    orgName: string;
+    orgLogo: string | null;
+  }): Promise<void> {
+    const prev = (params.previousSlug || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-') || null;
+    const next = (params.slug || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-') || null;
+
+    if (prev && prev !== next) {
+      try {
+        await deleteDoc(doc(this.db, this.orgPublicSlugsCol, prev));
+      } catch (e) {
+        console.warn('[syncPublicOrgLoginSlug] delete old', e);
+      }
+    }
+
+    if (!next) {
+      return;
+    }
+
+    await setDoc(
+      doc(this.db, this.orgPublicSlugsCol, next),
+      {
+        orgId: params.orgId,
+        orgName: params.orgName || params.orgId,
+        orgLogo: params.orgLogo || null,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+  }
+
+  /**
+   * Resuelve organización por slug: primero índice público (funciona sin auth), luego organizations.
+   */
+  async getOrgByLoginSlug(slug: string): Promise<any | null> {
+    const normalized = (slug || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    if (!normalized) return null;
+
+    try {
+      const pub = await getDoc(doc(this.db, this.orgPublicSlugsCol, normalized));
+      if (pub.exists()) {
+        const d = pub.data();
+        const orgId = d['orgId'] as string;
+        if (orgId) {
+          return {
+            id: orgId,
+            orgName: d['orgName'] || orgId,
+            orgLogo: d['orgLogo'] || '',
+            loginSlug: normalized
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[getOrgByLoginSlug] public slug doc', e);
+    }
+
+    try {
+      const colRef = collection(this.db, 'organizations');
+      const q = query(colRef, where('loginSlug', '==', normalized));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const d = snapshot.docs[0];
+        return { id: d.id, ...d.data() };
+      }
+    } catch (e) {
+      console.warn('[getOrgByLoginSlug] query', e);
+    }
+
+    try {
+      const byId = await this.getOrganization(normalized);
+      if (byId?.loginSlug === normalized) {
+        return byId;
+      }
+    } catch (e) {
+      console.warn('[getOrgByLoginSlug] get by id', e);
+    }
+
+    return null;
+  }
+
   async updateOrganization(orgId: string, data: DocumentData): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId);
-    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    // merge: true — crea el doc raíz si aún no existe (solo subcolecciones); updateDoc fallaría y no guardaría loginSlug
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
 
   async getOrgConfigByOrgId(orgId: string): Promise<any | null> {
@@ -1084,6 +1184,11 @@ export class FirebaseService {
   async savePlatformPlans(plans: any[]): Promise<void> {
     const docRef = doc(this.db, 'platformConfig', 'plans');
     await setDoc(docRef, { plans, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async savePlatformPlansMeta(meta: { sectionTitle: string; sectionDesc: string }): Promise<void> {
+    const docRef = doc(this.db, 'platformConfig', 'plans');
+    await setDoc(docRef, { ...meta, updatedAt: serverTimestamp() }, { merge: true });
   }
 
   // ==================== STORAGE ====================

@@ -11,6 +11,7 @@ import { FirebaseService } from '../../services/firebase.service';
 export class LoginComponent {
   email = '';
   password = '';
+  showLoginPassword = false;
   error = '';
   success = '';
   loading = false;

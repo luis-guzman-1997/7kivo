@@ -98,6 +98,10 @@
               <i class="fas fa-spinner fa-spin" *ngIf="exportingOrgId === org.id"></i>
               <i class="fas fa-download" *ngIf="exportingOrgId !== org.id"></i>
             </button>
+            <button class="btn-slug-sm" (click)="openSlugEdit(org); $event.stopPropagation()"
+              [title]="org.loginSlug ? 'Login: /admin/login/' + org.loginSlug : 'Configurar link de login'">
+              <i class="fas fa-link" [class.slug-set]="org.loginSlug"></i>
+            </button>
             <button class="btn-delete-sm" (click)="openDeleteConfirm(org); $event.stopPropagation()" title="Eliminar organización">
               <i class="fas fa-trash-alt"></i>
             </button>
@@ -105,6 +109,42 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- Login Slug Modal -->
+  <div class="modal-overlay delete-overlay" *ngIf="slugEditOrg" (click)="!slugSaving && closeSlugEdit()">
+    <div class="modal-content slug-modal" (click)="$event.stopPropagation()">
+      <div class="delete-header">
+        <i class="fas fa-link" style="font-size:1.6rem;color:#10b981;margin-bottom:10px;display:block;"></i>
+        <h2>Link de Login</h2>
+      </div>
+      <div class="delete-body">
+        <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:16px;">
+          Define el slug único para el login personalizado de <strong style="color:#f1f5f9;">{{ slugEditOrg.orgName }}</strong>.
+        </p>
+        <div class="slug-input-group">
+          <span class="slug-prefix">/admin/login/</span>
+          <input type="text" [(ngModel)]="slugEditValue" placeholder="mi-negocio"
+            (input)="slugEditValue = slugEditValue.toLowerCase()"
+            [disabled]="slugSaving" class="slug-input" />
+        </div>
+        <div class="slug-preview" *ngIf="slugEditValue.trim()">
+          <i class="fas fa-external-link-alt"></i>
+          <a [href]="'/admin/login/' + slugEditValue.trim()" target="_blank">/admin/login/{{ slugEditValue.trim() }}</a>
+        </div>
+        <div class="import-error" *ngIf="slugError">
+          <i class="fas fa-exclamation-circle"></i> {{ slugError }}
+        </div>
+      </div>
+      <div class="delete-actions">
+        <button class="btn-cancel" (click)="closeSlugEdit()" [disabled]="slugSaving">Cancelar</button>
+        <button class="btn-save" (click)="saveLoginSlug()" [disabled]="slugSaving">
+          <i class="fas fa-spinner fa-spin" *ngIf="slugSaving"></i>
+          <i class="fas fa-save" *ngIf="!slugSaving"></i>
+          {{ slugSaving ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Delete Confirmation Modal -->

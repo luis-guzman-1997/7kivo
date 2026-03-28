@@ -27,14 +27,25 @@
         <label for="password">
           <i class="fas fa-lock"></i> Contraseña
         </label>
-        <input
-          type="password"
-          id="password"
-          [(ngModel)]="password"
-          name="password"
-          placeholder="••••••••"
-          autocomplete="current-password"
-        />
+        <div class="password-input-wrap">
+          <input
+            [type]="showLoginPassword ? 'text' : 'password'"
+            id="password"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="btn-toggle-password"
+            (click)="showLoginPassword = !showLoginPassword"
+            [attr.aria-label]="showLoginPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            tabindex="-1"
+          >
+            <i class="fas" [class.fa-eye]="!showLoginPassword" [class.fa-eye-slash]="showLoginPassword"></i>
+          </button>
+        </div>
       </div>
 
       <div class="error-message" *ngIf="error">
