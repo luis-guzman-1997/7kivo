@@ -8,21 +8,26 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, reject) => {
   const chunks = [];
   const input = Readable.from(inputBuffer);
-  const cmd = ffmpeg(input)
+
+  // MediaRecorder graba WebM sin SeekHead/Cues correcto → ffmpeg infiere
+  // duración errónea (ej. 5s → 13min). Solución:
+  // 1. +igndts+discardcorrupt: tolerar timestamps rotos en el WebM de entrada.
+  // 2. atrim=0:N + asetpts=PTS-STARTPTS: recortar al tiempo real y resetear
+  //    los PTS a 0, lo que fuerza una duración correcta en el OGG de salida
+  //    sin modificar las flags de input (que pueden romper la decodificación).
+  const audioFilter = durationSeconds && durationSeconds > 0
+    ? `atrim=0:${durationSeconds},asetpts=PTS-STARTPTS`
+    : 'asetpts=PTS-STARTPTS';
+
+  const passthrough = ffmpeg(input)
     .inputFormat("webm")
-    // +genpts regenera timestamps desde cero, evitando la duración inflada que
-    // produce MediaRecorder (WebM sin SeekHead correcto → ffmpeg infiere mal la duración)
-    .inputOptions(["-fflags", "+genpts+discardcorrupt"])
+    .inputOptions(["-fflags", "+igndts+discardcorrupt"])
+    .audioFilters(audioFilter)
     .audioCodec("libopus")
-    .format("ogg");
+    .format("ogg")
+    .on("error", reject)
+    .pipe();
 
-  // Si se conoce la duración real (del timer del grabador), la usamos como
-  // límite hard en la salida para evitar colas de silencio o timestamps inflados.
-  if (durationSeconds && durationSeconds > 0) {
-    cmd.outputOptions(["-t", String(durationSeconds)]);
-  }
-
-  const passthrough = cmd.on("error", reject).pipe();
   passthrough.on("data", (chunk) => chunks.push(chunk));
   passthrough.on("end", () => resolve(Buffer.concat(chunks)));
   passthrough.on("error", reject);
