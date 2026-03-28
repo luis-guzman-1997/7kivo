@@ -90,11 +90,16 @@ export class ChatComponent implements OnInit, OnDestroy {
   resendingCode = false;
   showResendCodeModal = false;
   showCancelModal = false;
+  cancelReason = '';
   showResolveModal = false;
   resolveConfirmCode = '';
   resolveCodeError = '';
   deliverySubmission: any = null;
   showDeliveryDetail = false;
+
+  // ── Promo order mode ──
+  promoOrderId: string | null = null;
+  promoOrderData: any = null;
 
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
@@ -145,6 +150,13 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.deliveryCollection = params['collection'] || null;
         this.deliveryCode = params['deliveryCode'] || '';
         this.deliveryTakenAt = params['takenAt'] ? +params['takenAt'] : null;
+        // ── Promo order ──
+        this.promoOrderId = params['promoOrderId'] || null;
+        if (this.promoOrderId) {
+          try {
+            this.promoOrderData = await this.firebaseService.getPromoOrder(this.promoOrderId);
+          } catch { /* silent */ }
+        }
         if (this.deliverySubmissionId && this.deliveryCollection) {
           const sub = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
           this.deliverySubmission = sub || null;
@@ -663,11 +675,13 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   openCancelModal(): void {
+    this.cancelReason = '';
     this.showCancelModal = true;
   }
 
   closeCancelModal(): void {
     this.showCancelModal = false;
+    this.cancelReason = '';
   }
 
   async confirmCancelDeliveryCase(): Promise<void> {
@@ -677,6 +691,34 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   async cancelDeliveryCase(): Promise<void> {
     if (!this.selectedConversation || this.cancellingCase) return;
+
+    // Promo order cancel
+    if (this.promoOrderId) {
+      this.cancellingCase = true;
+      this.error = '';
+      try {
+        if (this.botApiUrl && this.selectedConversation) {
+          await fetch(`${this.botApiUrl}/api/${this.orgId}/cancel-delivery-case`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: this.selectedConversation.phoneNumber,
+              clientName: '',
+              cancelCount: 1,
+              cancelReason: this.cancelReason.trim(),
+              isPromoOrder: true
+            })
+          }).catch(() => {});
+        }
+        await this.firebaseService.cancelPromoOrder(this.promoOrderId, this.cancelReason.trim());
+        this.router.navigate(['/admin/bandeja']);
+      } catch {
+        this.error = 'No se pudo cancelar el pedido.';
+      } finally {
+        this.cancellingCase = false;
+      }
+      return;
+    }
 
     this.cancellingCase = true;
     this.error = '';
@@ -692,7 +734,12 @@ export class ChatComponent implements OnInit, OnDestroy {
       const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/cancel-delivery-case`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: this.selectedConversation.phoneNumber, clientName, cancelCount })
+        body: JSON.stringify({
+          phone: this.selectedConversation.phoneNumber,
+          clientName,
+          cancelCount,
+          cancelReason: this.cancelReason.trim()
+        })
       });
 
       if (!response.ok) {
@@ -806,6 +853,28 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   async resolveDeliveryCase(): Promise<void> {
     if (!this.selectedConversation || this.resolvingCase) return;
+
+    // Promo order resolve — notificar al cliente igual que flujo normal
+    if (this.promoOrderId) {
+      this.resolvingCase = true;
+      this.error = '';
+      try {
+        if (this.botApiUrl && this.selectedConversation) {
+          await fetch(`${this.botApiUrl}/api/${this.orgId}/resolve-delivery-case`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: this.selectedConversation.phoneNumber, clientName: '' })
+          }).catch(() => {});
+        }
+        await this.firebaseService.resolvePromoOrder(this.promoOrderId);
+        this.router.navigate(['/admin/bandeja']);
+      } catch {
+        this.error = 'No se pudo resolver el pedido.';
+      } finally {
+        this.resolvingCase = false;
+      }
+      return;
+    }
 
     this.resolvingCase = true;
     this.error = '';

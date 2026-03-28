@@ -114,9 +114,17 @@
           <p class="card-message-preview">{{ c.message }}</p>
 
           <!-- Keyword badge -->
-          <div class="card-keyword-badge" *ngIf="c.actionKeywordEnabled && c.actionFlowId">
+          <div class="card-keyword-badge" *ngIf="c.actionKeywordEnabled">
             <i class="fas fa-hand-pointer"></i>
             Botón: <strong>{{ c.actionButtonLabel || 'Pedir' }}</strong>
+          </div>
+
+          <!-- Stock badge -->
+          <div class="card-stock-badge" *ngIf="c.actionKeywordEnabled && c.stock !== null && c.stock !== undefined">
+            <i class="fas fa-boxes"></i>
+            <span [class.stock-empty]="c.stock === 0">
+              {{ c.stock === 0 ? 'Sin existencias' : c.stock + ' disponibles' }}
+            </span>
           </div>
 
           <!-- Image thumb -->
@@ -383,7 +391,7 @@
           <label class="optout-toggle">
             <input type="checkbox" [(ngModel)]="form.actionKeywordEnabled" />
             <div class="toggle-pill"></div>
-            <span>Activar keyword de pedido</span>
+            <span>Activar botón de pedido</span>
           </label>
           <div *ngIf="form.actionKeywordEnabled" class="keyword-action-config">
             <label class="sub-label">Texto del botón <span class="req">*</span></label>
@@ -393,6 +401,38 @@
               <i class="fas fa-hand-pointer"></i>
               El cliente verá un botón <strong>[ {{ form.actionButtonLabel || 'Pedir' }} ]</strong>. Al tapearlo el pedido llega directo a la bandeja delivery.
             </p>
+            <div class="stock-field">
+              <label class="sub-label"><i class="fas fa-boxes"></i> Existencias disponibles</label>
+              <div class="stock-input-row">
+                <input type="number" [(ngModel)]="form.stock" min="0" placeholder="Sin límite"
+                       style="max-width:140px" />
+                <span class="stock-hint">Dejar vacío = sin límite. Cuando llegue a 0 el bot avisará que se agotó.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos del negocio (solo orgs delivery) -->
+        <div class="fp-group" *ngIf="isDeliveryOrg">
+          <label><i class="fas fa-store"></i> Datos del negocio promo</label>
+          <p class="optout-desc">Esta información aparecerá en la bandeja del delivery para que sepa a qué negocio debe ir.</p>
+          <div class="promo-biz-grid">
+            <div class="promo-biz-field">
+              <label class="sub-label">Nombre del negocio</label>
+              <input type="text" [(ngModel)]="form.businessName" placeholder="Ej: Pupusería La Bendición" />
+            </div>
+            <div class="promo-biz-field">
+              <label class="sub-label">Nombre del encargado</label>
+              <input type="text" [(ngModel)]="form.contactName" placeholder="Ej: Ana García" />
+            </div>
+            <div class="promo-biz-field">
+              <label class="sub-label">WhatsApp del encargado</label>
+              <input type="text" [(ngModel)]="form.contactWhatsapp" placeholder="Ej: 50312345678" />
+            </div>
+            <div class="promo-biz-field promo-biz-full">
+              <label class="sub-label">Dirección</label>
+              <input type="text" [(ngModel)]="form.address" placeholder="Ej: Col. Las Flores, 3a Calle Pte #12, Sonsonate" />
+            </div>
           </div>
         </div>
 

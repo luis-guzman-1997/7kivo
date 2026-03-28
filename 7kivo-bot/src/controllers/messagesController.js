@@ -497,14 +497,19 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
     const campaignId = buttonId.replace('campaign_order_', '');
     const campaign = await getCampaignById(campaignId);
     if (campaign) {
-      await createPromoOrder(phoneNumber, campaign);
+      const { orderId, outOfStock } = await createPromoOrder(phoneNumber, campaign);
+      if (outOfStock) {
+        await sendTextMessage('Lo sentimos 😔\n\nLas existencias de esta promo se han agotado. ¡Gracias por tu interés! 💚', phoneNumber);
+        clearSession(phoneNumber);
+        return;
+      }
       sendPushToDeliveries({
         title: '🛵 Nuevo pedido promo',
         body: `${campaign.name} — ${phoneNumber}`,
         url: '/admin/inbox'
       }).catch(() => {});
       await sendTextMessage('¡Pedido recibido! 🛵 En breve un repartidor te contactará.', phoneNumber);
-      clearSession(phoneNumber); // no dejar sesión activa — evita mensaje de inactividad
+      clearSession(phoneNumber);
     } else {
       await sendTextMessage('No pudimos procesar tu pedido. Intenta de nuevo.', phoneNumber);
     }

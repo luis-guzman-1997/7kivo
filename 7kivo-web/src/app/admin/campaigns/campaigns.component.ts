@@ -133,7 +133,12 @@ export class CampaignsComponent implements OnInit {
       imageUrl: '',
       actionKeywordEnabled: false,
       actionButtonLabel: 'Pedir',
-      actionFlowId: ''
+      actionFlowId: '',
+      stock: null,
+      businessName: '',
+      contactName: '',
+      address: '',
+      contactWhatsapp: ''
     };
     this.formImageFile = null;
     this.formImagePreview = '';
@@ -162,7 +167,12 @@ export class CampaignsComponent implements OnInit {
       imageUrl: campaign.imageUrl || '',
       actionKeywordEnabled: campaign.actionKeywordEnabled || false,
       actionButtonLabel: campaign.actionButtonLabel || 'Pedir',
-      actionFlowId: campaign.actionFlowId || ''
+      actionFlowId: campaign.actionFlowId || '',
+      stock: campaign.stock ?? null,
+      businessName: campaign.businessName || '',
+      contactName: campaign.contactName || '',
+      address: campaign.address || '',
+      contactWhatsapp: campaign.contactWhatsapp || ''
     };
     this.formImageFile = null;
     this.formImagePreview = campaign.imageUrl || '';
@@ -244,7 +254,13 @@ export class CampaignsComponent implements OnInit {
       status,
       actionKeywordEnabled: this.isDeliveryOrg ? (this.form.actionKeywordEnabled || false) : false,
       actionButtonLabel: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionButtonLabel || 'Pedir').trim() : '',
-      actionFlowId: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionFlowId || '') : ''
+      actionFlowId: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionFlowId || '') : '',
+      stock: (this.isDeliveryOrg && this.form.actionKeywordEnabled && this.form.stock !== null && this.form.stock !== '')
+        ? Number(this.form.stock) : null,
+      businessName: this.isDeliveryOrg ? (this.form.businessName || '').trim() : '',
+      contactName: this.isDeliveryOrg ? (this.form.contactName || '').trim() : '',
+      address: this.isDeliveryOrg ? (this.form.address || '').trim() : '',
+      contactWhatsapp: this.isDeliveryOrg ? (this.form.contactWhatsapp || '').trim().replace(/[^0-9]/g, '') : ''
     };
     if (this.form.type === 'once') data.scheduledDate = this.form.scheduledDate;
     if (this.form.type === 'daily') {

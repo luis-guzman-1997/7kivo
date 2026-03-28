@@ -18,10 +18,15 @@
   <div class="modal-overlay" *ngIf="showCancelModal" (click)="closeCancelModal()">
     <div class="modal-box modal-confirm" (click)="$event.stopPropagation()">
       <h3><i class="fas fa-times-circle text-danger"></i> Cancelar pedido</h3>
-      <p>¿Cancelar este pedido? Se notificará al cliente y quedará disponible para otro Delivery.</p>
+      <p>Indica el motivo de la cancelación.</p>
+      <div class="form-group" style="margin-top:10px">
+        <textarea [(ngModel)]="cancelReason" rows="3"
+                  placeholder="Ej: Cliente no disponible, dirección incorrecta..."
+                  style="width:100%;resize:none;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:0.88rem;"></textarea>
+      </div>
       <div class="modal-actions">
         <button class="btn btn-secondary" (click)="closeCancelModal()">No, volver</button>
-        <button class="btn btn-danger" (click)="confirmCancelDeliveryCase()" [disabled]="cancellingCase">
+        <button class="btn btn-danger" (click)="confirmCancelDeliveryCase()" [disabled]="cancellingCase || !cancelReason.trim()">
           <i class="fas" [class.fa-spinner]="cancellingCase" [class.fa-spin]="cancellingCase" [class.fa-times]="!cancellingCase"></i>
           {{ cancellingCase ? 'Cancelando...' : 'Sí, cancelar' }}
         </button>
@@ -243,8 +248,29 @@
       </div>
     </div>
 
+    <!-- Promo: contexto del pedido promo -->
+    <div class="promo-order-banner" *ngIf="isDeliveryMode && promoOrderData">
+      <div class="promo-banner-img" *ngIf="promoOrderData.imageUrl">
+        <img [src]="promoOrderData.imageUrl" alt="promo" />
+      </div>
+      <div class="promo-banner-body">
+        <div class="promo-banner-name"><i class="fas fa-tag"></i> {{ promoOrderData.campaignName }}</div>
+        <div class="promo-banner-msg">{{ promoOrderData.promoMessage }}</div>
+        <div class="promo-banner-fields" *ngIf="promoOrderData.address || promoOrderData.businessName">
+          <span *ngIf="promoOrderData.address"><i class="fas fa-map-marker-alt"></i> {{ promoOrderData.address }}</span>
+          <span *ngIf="promoOrderData.businessName"><i class="fas fa-store"></i> {{ promoOrderData.businessName }}</span>
+          <span *ngIf="promoOrderData.contactName"><i class="fas fa-user"></i> {{ promoOrderData.contactName }}</span>
+          <a *ngIf="promoOrderData.contactWhatsapp"
+             [href]="'https://wa.me/' + promoOrderData.contactWhatsapp"
+             target="_blank" class="promo-banner-wa">
+            <i class="fab fa-whatsapp"></i> {{ promoOrderData.contactWhatsapp }}
+          </a>
+        </div>
+      </div>
+    </div>
+
     <!-- Delivery: detalle del pedido -->
-    <div class="delivery-order-panel" *ngIf="isDeliveryMode && deliverySubmission">
+    <div class="delivery-order-panel" *ngIf="isDeliveryMode && deliverySubmission && !promoOrderData">
       <div class="delivery-order-header" (click)="showDeliveryDetail = !showDeliveryDetail">
         <i class="fas fa-clipboard-list"></i> Detalle del Pedido
         <i class="fas" [class.fa-chevron-down]="!showDeliveryDetail" [class.fa-chevron-up]="showDeliveryDetail"></i>

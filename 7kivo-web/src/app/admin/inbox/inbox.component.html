@@ -73,6 +73,15 @@
         <div class="promo-info">
           <div class="promo-name"><i class="fas fa-tag"></i> {{ o.campaignName }}</div>
           <div class="promo-message">{{ o.promoMessage }}</div>
+          <div class="promo-extra" *ngIf="o.businessName || o.address">
+            <span *ngIf="o.businessName"><i class="fas fa-store"></i> {{ o.businessName }}</span>
+            <span *ngIf="o.contactName"><i class="fas fa-user"></i> {{ o.contactName }}</span>
+            <span *ngIf="o.address"><i class="fas fa-map-marker-alt"></i> {{ o.address }}</span>
+            <a *ngIf="o.contactWhatsapp" [href]="'https://wa.me/' + o.contactWhatsapp" target="_blank"
+               (click)="$event.stopPropagation()" class="promo-wa-link">
+              <i class="fab fa-whatsapp"></i> {{ o.contactWhatsapp }}
+            </a>
+          </div>
           <div class="promo-meta">
             <span><i class="fab fa-whatsapp"></i> {{ o.phone }}</span>
             <span class="promo-time">{{ promoTimeAgo(o) }}</span>
@@ -85,7 +94,8 @@
         <div class="promo-actions">
           <ng-container *ngIf="o.status === 'pending'">
             <button class="btn-take-promo"
-              [disabled]="!!takingPromoOrderId"
+              [disabled]="!!takingPromoOrderId || (isDelivery && hasActiveDeliveryCase)"
+              [title]="isDelivery && hasActiveDeliveryCase ? 'Resuelve tu caso activo antes de tomar otro' : ''"
               (click)="takePromoOrder(o)">
               <i class="fas fa-spinner fa-spin" *ngIf="takingPromoOrderId === o.id"></i>
               <i class="fas fa-hand-paper" *ngIf="takingPromoOrderId !== o.id"></i>
@@ -95,10 +105,6 @@
           <ng-container *ngIf="o.status === 'taken'">
             <button class="btn-chat-promo" (click)="openPromoChat(o)">
               <i class="fas fa-comments"></i> Chat
-            </button>
-            <button class="btn-resolve-promo" (click)="resolvePromoOrder(o, $event)"
-              *ngIf="o.assignedTo?.uid === currentUserId || !isDelivery">
-              <i class="fas fa-check"></i> Resolver
             </button>
             <button class="btn-cancel-promo" (click)="cancelPromoOrder(o, $event)"
               *ngIf="o.assignedTo?.uid === currentUserId || !isDelivery">
@@ -121,6 +127,9 @@
           <div class="promo-meta">
             <span class="promo-time">{{ promoTimeAgo(o) }}</span>
             <span *ngIf="o.assignedTo?.name"><i class="fas fa-user"></i> {{ o.assignedTo.name }}</span>
+          </div>
+          <div class="promo-cancel-reason" *ngIf="o.cancelReason">
+            <i class="fas fa-comment-alt"></i> {{ o.cancelReason }}
           </div>
         </div>
         <div class="promo-cancelled-badge"><i class="fas fa-ban"></i> Cancelado</div>

@@ -1045,7 +1045,7 @@ export class FirebaseService {
     });
   }
 
-  async takePromoOrder(orderId: string, agent: { uid: string; name: string; email: string }): Promise<{ ok: boolean; takenBy?: string }> {
+  async takePromoOrder(orderId: string, agent: { uid: string; name: string; email: string; deliveryCode?: string }): Promise<{ ok: boolean; takenBy?: string }> {
     const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
     const snap = await getDoc(ref);
     if (!snap.exists()) return { ok: false };
@@ -1064,9 +1064,17 @@ export class FirebaseService {
     await updateDoc(ref, { status: 'resolved' });
   }
 
-  async cancelPromoOrder(orderId: string): Promise<void> {
+  async getPromoOrder(orderId: string): Promise<any | null> {
     const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
-    await updateDoc(ref, { status: 'cancelled', cancelledAt: serverTimestamp() });
+    const snap = await getDoc(ref);
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  }
+
+  async cancelPromoOrder(orderId: string, reason?: string): Promise<void> {
+    const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
+    const data: any = { status: 'cancelled', cancelledAt: serverTimestamp() };
+    if (reason) data['cancelReason'] = reason;
+    await updateDoc(ref, data);
   }
 
   // ==================== PLATFORM (SUPER ADMIN) ====================

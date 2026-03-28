@@ -353,16 +353,49 @@ const getCampaignById = async (campaignId) => {
 };
 
 const createPromoOrder = async (phone, campaign) => {
-  const ref = await getOrgRef().collection('promo_orders').add({
-    phone,
-    campaignId: campaign.id,
-    campaignName: campaign.name || '',
-    promoMessage: campaign.message || '',
-    imageUrl: campaign.imageUrl || '',
-    status: 'pending',
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  const campaignRef = getOrgRef().collection('campaigns').doc(campaign.id);
+  const ordersCol = getOrgRef().collection('promo_orders');
+
+  let orderId = null;
+  let outOfStock = false;
+
+  await admin.firestore().runTransaction(async (tx) => {
+    const campaignSnap = await tx.get(campaignRef);
+    if (!campaignSnap.exists) { outOfStock = true; return; }
+
+    const data = campaignSnap.data();
+    const stock = data.stock;
+
+    // stock === null/undefined → ilimitado; stock <= 0 → agotado
+    if (stock !== null && stock !== undefined && stock <= 0) {
+      outOfStock = true;
+      return;
+    }
+
+    const orderRef = ordersCol.doc();
+    tx.set(orderRef, {
+      phone,
+      campaignId: campaign.id,
+      campaignName: campaign.name || '',
+      promoMessage: campaign.message || '',
+      imageUrl: campaign.imageUrl || '',
+      businessName: campaign.businessName || '',
+      contactName: campaign.contactName || '',
+      address: campaign.address || '',
+      contactWhatsapp: campaign.contactWhatsapp || '',
+      status: 'pending',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Descontar existencia solo si está definida
+    if (stock !== null && stock !== undefined) {
+      tx.update(campaignRef, { stock: admin.firestore.FieldValue.increment(-1) });
+    }
+
+    orderId = orderRef.id;
   });
-  return ref.id;
+
+  return { orderId, outOfStock };
 };
 
 // ==================== CAMPAIGN KEYWORD TRIGGERS ====================

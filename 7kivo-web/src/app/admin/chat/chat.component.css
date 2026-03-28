@@ -1593,6 +1593,63 @@
   gap: 4px;
 }
 
+/* ── Promo order context banner ── */
+.promo-order-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f0fdf4;
+  border-bottom: 1px solid #86efac;
+  padding: 10px 16px;
+}
+.promo-banner-img img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+.promo-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.promo-banner-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #15803d;
+}
+.promo-banner-msg {
+  font-size: 0.82rem;
+  color: #166534;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+.promo-banner-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid #bbf7d0;
+}
+.promo-banner-fields span,
+.promo-banner-fields a {
+  font-size: 0.8rem;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.promo-banner-wa {
+  font-weight: 600;
+  text-decoration: none;
+  color: #15803d !important;
+}
+.promo-banner-wa:hover { text-decoration: underline; }
+
 /* ── Delivery order detail panel ── */
 .delivery-order-panel {
   background: #fffbeb;

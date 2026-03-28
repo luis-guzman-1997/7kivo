@@ -115,7 +115,9 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   get hasActiveDeliveryCase(): boolean {
-    return this.tabs.some(t => this.deliveryMyCases(t).length > 0);
+    const hasFlowCase = this.tabs.some(t => this.deliveryMyCases(t).length > 0);
+    const hasPromoCase = this.promoOrders.some(o => o.status === 'taken' && o.assignedTo?.uid === this.currentUserId);
+    return hasFlowCase || hasPromoCase;
   }
 
   constructor(
@@ -810,6 +812,11 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   async takePromoOrder(order: any): Promise<void> {
     if (this.takingPromoOrderId) return;
+    if (this.isDelivery && this.hasActiveDeliveryCase) {
+      this.promoOrderError = 'Resuelve tu caso activo antes de tomar otro pedido.';
+      setTimeout(() => this.promoOrderError = '', 5000);
+      return;
+    }
     if (this.isDelivery && !this.locationGranted) {
       this.promoOrderError = 'Debes activar tu ubicación para tomar pedidos.';
       setTimeout(() => this.promoOrderError = '', 5000);
@@ -817,18 +824,41 @@ export class InboxComponent implements OnInit, OnDestroy {
     }
     this.takingPromoOrderId = order.id;
     this.promoOrderError = '';
+    const deliveryCode = this.generateDeliveryCode();
     try {
-      const agent = { uid: this.currentUserId, name: this.currentUserName || this.currentUserEmail, email: this.currentUserEmail };
+      const agent = {
+        uid: this.currentUserId,
+        name: this.currentUserName || this.currentUserEmail,
+        email: this.currentUserEmail,
+        deliveryCode
+      };
       const result = await this.firebaseService.takePromoOrder(order.id, agent);
       if (!result.ok) {
         this.promoOrderError = `Este pedido ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
         setTimeout(() => this.promoOrderError = '', 4000);
         return;
       }
+
+      // Enviar mensaje WA al cliente con código delivery (igual que flujos normales)
+      const botApiUrl = this.authService.botApiUrl;
+      const orgId = this.firebaseService.getOrgId();
+      if (botApiUrl && order.phone) {
+        fetch(`${botApiUrl}/api/${orgId}/take-delivery-case`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: order.phone,
+            clientName: '',
+            deliveryCode,
+            deliveryName: this.currentUserName || '',
+            deliveryWaPhone: this.currentUserWaPhone || ''
+          })
+        }).catch(() => {});
+      }
+
       this.pushLocationToFirebase();
-      // Abrir chat con el cliente (takenAt filtra mensajes anteriores; sin deliveryCode → oculta teléfono)
       this.router.navigate(['/admin/chat'], {
-        queryParams: { phone: order.phone, promoOrderId: order.id, takenAt: Date.now() }
+        queryParams: { phone: order.phone, promoOrderId: order.id, deliveryCode, takenAt: Date.now() }
       });
     } catch {
       this.promoOrderError = 'Error al tomar el pedido.';
