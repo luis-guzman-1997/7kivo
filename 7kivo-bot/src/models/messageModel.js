@@ -1,5 +1,23 @@
 const axios = require("axios");
 const { getOrgId } = require("../config/orgConfig");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegPath = require("ffmpeg-static");
+const { Readable } = require("stream");
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+const convertToOgg = (inputBuffer) => new Promise((resolve, reject) => {
+  const chunks = [];
+  const input = Readable.from(inputBuffer);
+  const passthrough = ffmpeg(input)
+    .inputFormat("webm")
+    .audioCodec("libopus")
+    .format("ogg")
+    .on("error", reject)
+    .pipe();
+  passthrough.on("data", (chunk) => chunks.push(chunk));
+  passthrough.on("end", () => resolve(Buffer.concat(chunks)));
+  passthrough.on("error", reject);
+});
 
 const waConfigCacheMap = {}; // { [orgId]: { data, ts } }
 const CACHE_TTL = 300000; // 5 min
@@ -227,13 +245,20 @@ const sendAudioMessage = async (audioUrl, phoneNumber) => {
 
     // 1. Download audio from Firebase Storage
     const dlRes = await axios.get(audioUrl, { responseType: "arraybuffer" });
-    const buffer = Buffer.from(dlRes.data);
-    const contentType = dlRes.headers["content-type"] || "audio/ogg";
+    let buffer = Buffer.from(dlRes.data);
+    const srcType = dlRes.headers["content-type"] || "audio/ogg";
 
-    // 2. Upload to WhatsApp media API (avoids link format restrictions)
+    // 2. Convert webm → ogg if needed (WhatsApp doesn't accept audio/webm)
+    let uploadType = srcType;
+    if (srcType.includes("webm")) {
+      buffer = await convertToOgg(buffer);
+      uploadType = "audio/ogg";
+    }
+
+    // 3. Upload to WhatsApp media API
     const form = new FormData();
-    form.append("file", new Blob([buffer], { type: contentType }), "audio.ogg");
-    form.append("type", contentType);
+    form.append("file", new Blob([buffer], { type: uploadType }), "audio.ogg");
+    form.append("type", uploadType);
     form.append("messaging_product", "whatsapp");
 
     const uploadRes = await axios.post(
