@@ -93,11 +93,9 @@
             </button>
           </ng-container>
           <ng-container *ngIf="o.status === 'taken'">
-            <a class="btn-chat-promo"
-               [href]="promoWaLink(o.phone)"
-               target="_blank">
-              <i class="fab fa-whatsapp"></i> Chat
-            </a>
+            <button class="btn-chat-promo" (click)="openPromoChat(o)">
+              <i class="fas fa-comments"></i> Chat
+            </button>
             <button class="btn-resolve-promo" (click)="resolvePromoOrder(o, $event)"
               *ngIf="o.assignedTo?.uid === currentUserId || !isDelivery">
               <i class="fas fa-check"></i> Resolver

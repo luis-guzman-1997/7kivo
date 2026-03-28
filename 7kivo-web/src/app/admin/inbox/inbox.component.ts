@@ -822,8 +822,10 @@ export class InboxComponent implements OnInit, OnDestroy {
         return;
       }
       this.pushLocationToFirebase();
-      // Abrir chat con el cliente
-      this.router.navigate(['/admin/chat'], { queryParams: { phone: order.phone, promoOrderId: order.id } });
+      // Abrir chat con el cliente (takenAt filtra mensajes anteriores; sin deliveryCode → oculta teléfono)
+      this.router.navigate(['/admin/chat'], {
+        queryParams: { phone: order.phone, promoOrderId: order.id, takenAt: Date.now() }
+      });
     } catch {
       this.promoOrderError = 'Error al tomar el pedido.';
       setTimeout(() => this.promoOrderError = '', 4000);
@@ -837,6 +839,15 @@ export class InboxComponent implements OnInit, OnDestroy {
     try {
       await this.firebaseService.resolvePromoOrder(order.id);
     } catch { /* silent */ }
+  }
+
+  openPromoChat(order: any): void {
+    const takenAt = order.takenAt?.seconds
+      ? order.takenAt.seconds * 1000
+      : (order.takenAt?.toMillis?.() || Date.now());
+    this.router.navigate(['/admin/chat'], {
+      queryParams: { phone: order.phone, promoOrderId: order.id, takenAt }
+    });
   }
 
   promoWaLink(phone: string): string {

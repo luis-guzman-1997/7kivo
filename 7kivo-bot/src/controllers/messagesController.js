@@ -504,7 +504,7 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
         url: '/admin/inbox'
       }).catch(() => {});
       await sendTextMessage('¡Pedido recibido! 🛵 En breve un repartidor te contactará.', phoneNumber);
-      setSession(phoneNumber, { step: 'main_menu', hasGreeted: true });
+      clearSession(phoneNumber); // no dejar sesión activa — evita mensaje de inactividad
     } else {
       await sendTextMessage('No pudimos procesar tu pedido. Intenta de nuevo.', phoneNumber);
     }

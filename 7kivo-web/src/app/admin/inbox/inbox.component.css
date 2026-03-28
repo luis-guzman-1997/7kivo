@@ -629,8 +629,8 @@
 }
 .btn-take-promo:disabled { opacity: .6; cursor: not-allowed; }
 .btn-chat-promo {
-  background: #22c55e; color: #fff; border-radius: 8px;
-  padding: 7px 12px; font-size: 0.82rem; font-weight: 600; text-decoration: none;
+  background: #22c55e; color: #fff; border: none; border-radius: 8px;
+  padding: 7px 12px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; gap: 6px; white-space: nowrap;
 }
 .btn-resolve-promo {
