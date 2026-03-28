@@ -84,8 +84,7 @@ const runCampaign = async (orgId, campaignId) => {
   let finalMessage = campaign.message;
   if (campaign.actionKeywordEnabled && campaign.actionKeyword) {
     finalMessage += `\n\nResponde *${campaign.actionKeyword.toUpperCase()}* para hacer tu pedido 🛵`;
-  }
-  if (campaign.includeOptOut) {
+  } else if (campaign.includeOptOut) {
     finalMessage += `\n\n_¿Deseas recibir más información como esta? Responde *SI* o *NO*_`;
   }
 
