@@ -56,6 +56,18 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   private refreshTimer: any = null;
 
+  // ── Promo Orders (delivery orgs) ──
+  promoOrders: any[] = [];
+  promoOrdersLoaded = false;
+  takingPromoOrderId: string | null = null;
+  promoOrderError = '';
+  private unsubPromoOrders: (() => void) | null = null;
+
+  get pendingPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending'); }
+  get myPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'taken' && o.assignedTo?.uid === this.currentUserId); }
+
+  get isDeliveryOrg(): boolean { return this.authService.orgIndustry === 'delivery'; }
+
   // ── Delivery state ──
   currentUserId = '';
   currentUserName = '';
@@ -118,6 +130,12 @@ export class InboxComponent implements OnInit, OnDestroy {
       this.checkPushStatus();
       this.startLocationTracking();
     }
+    if (this.isDeliveryOrg) {
+      this.unsubPromoOrders = this.firebaseService.watchPromoOrders((orders) => {
+        this.promoOrders = orders;
+        this.promoOrdersLoaded = true;
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -127,6 +145,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     if (this.isDelivery && this.currentUserId) {
       this.firebaseService.clearDeliveryLocation(this.currentUserId);
     }
+    if (this.unsubPromoOrders) this.unsubPromoOrders();
   }
 
   startLocationTracking(): void {
@@ -783,6 +802,54 @@ export class InboxComponent implements OnInit, OnDestroy {
     } finally {
       this.takingCaseId = null;
     }
+  }
+
+  async takePromoOrder(order: any): Promise<void> {
+    if (this.takingPromoOrderId) return;
+    if (this.isDelivery && !this.locationGranted) {
+      this.promoOrderError = 'Debes activar tu ubicación para tomar pedidos.';
+      setTimeout(() => this.promoOrderError = '', 5000);
+      return;
+    }
+    this.takingPromoOrderId = order.id;
+    this.promoOrderError = '';
+    try {
+      const agent = { uid: this.currentUserId, name: this.currentUserName || this.currentUserEmail, email: this.currentUserEmail };
+      const result = await this.firebaseService.takePromoOrder(order.id, agent);
+      if (!result.ok) {
+        this.promoOrderError = `Este pedido ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
+        setTimeout(() => this.promoOrderError = '', 4000);
+        return;
+      }
+      this.pushLocationToFirebase();
+      // Abrir chat con el cliente
+      this.router.navigate(['/admin/chat'], { queryParams: { phone: order.phone, promoOrderId: order.id } });
+    } catch {
+      this.promoOrderError = 'Error al tomar el pedido.';
+      setTimeout(() => this.promoOrderError = '', 4000);
+    } finally {
+      this.takingPromoOrderId = null;
+    }
+  }
+
+  async resolvePromoOrder(order: any, event: Event): Promise<void> {
+    event.stopPropagation();
+    try {
+      await this.firebaseService.resolvePromoOrder(order.id);
+    } catch { /* silent */ }
+  }
+
+  promoWaLink(phone: string): string {
+    return 'https://wa.me/' + (phone || '').replace(/[^0-9]/g, '');
+  }
+
+  promoTimeAgo(order: any): string {
+    const seconds = order.createdAt?.seconds;
+    if (!seconds) return '';
+    const diff = Math.floor((Date.now() / 1000) - seconds);
+    if (diff < 60) return 'Hace un momento';
+    if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
+    return `Hace ${Math.floor(diff / 3600)} h`;
   }
 
   goToChat(item: any, tab: FlowTab): void {

@@ -1,4 +1,4 @@
-const { db } = require("../config/firebase");
+const { db, admin } = require("../config/firebase");
 const { getOrgId } = require("../config/orgConfig");
 
 const getOrgRef = () => {
@@ -341,6 +341,30 @@ const getKeywords = async () => {
   }
 };
 
+// ==================== PROMO ORDERS ====================
+const getCampaignById = async (campaignId) => {
+  try {
+    const doc = await getOrgRef().collection('campaigns').doc(campaignId).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  } catch (error) {
+    console.error('Error loading campaign:', error);
+    return null;
+  }
+};
+
+const createPromoOrder = async (phone, campaign) => {
+  const ref = await getOrgRef().collection('promo_orders').add({
+    phone,
+    campaignId: campaign.id,
+    campaignName: campaign.name || '',
+    promoMessage: campaign.message || '',
+    imageUrl: campaign.imageUrl || '',
+    status: 'pending',
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+  return ref.id;
+};
+
 // ==================== CAMPAIGN KEYWORD TRIGGERS ====================
 const getCampaignKeywordTriggers = async () => {
   const orgId = getOrgId();
@@ -396,6 +420,8 @@ module.exports = {
   cancelAppointment,
   saveGcEventId,
   lookupCollectionByField,
+  getCampaignById,
+  createPromoOrder,
   getCampaignKeywordTriggers,
   getOrgStatus,
   clearCache

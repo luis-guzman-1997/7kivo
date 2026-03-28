@@ -20,6 +20,8 @@ const {
   saveGcEventId,
   lookupCollectionByField,
   getCampaignKeywordTriggers,
+  getCampaignById,
+  createPromoOrder,
   getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
@@ -492,8 +494,20 @@ const sendMenu = async (phoneNumber) => {
 const handleInteractiveResponse = async (phoneNumber, buttonId) => {
   // Botón de pedido de campaña delivery
   if (buttonId.startsWith('campaign_order_')) {
-    const flowId = buttonId.replace('campaign_order_', '');
-    await startFlow(phoneNumber, flowId);
+    const campaignId = buttonId.replace('campaign_order_', '');
+    const campaign = await getCampaignById(campaignId);
+    if (campaign) {
+      await createPromoOrder(phoneNumber, campaign);
+      sendPushToDeliveries({
+        title: '🛵 Nuevo pedido promo',
+        body: `${campaign.name} — ${phoneNumber}`,
+        url: '/admin/inbox'
+      }).catch(() => {});
+      await sendTextMessage('¡Pedido recibido! 🛵 En breve un repartidor te contactará.', phoneNumber);
+      setSession(phoneNumber, { step: 'main_menu', hasGreeted: true });
+    } else {
+      await sendTextMessage('No pudimos procesar tu pedido. Intenta de nuevo.', phoneNumber);
+    }
     return;
   }
 

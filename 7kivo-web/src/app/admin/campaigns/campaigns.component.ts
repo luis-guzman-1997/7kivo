@@ -320,14 +320,7 @@ export class CampaignsComponent implements OnInit {
 
       // Keyword trigger: registrar/actualizar en Firestore
       if (this.isDeliveryOrg) {
-        if (data.actionKeywordEnabled && data.actionFlowId) {
-          await this.firebaseService.setCampaignKeywordTrigger(
-            this.orgId, campaignId, data.actionButtonLabel || 'Pedir', data.actionFlowId,
-            status === 'active' || status === 'scheduled'
-          );
-        } else {
-          await this.firebaseService.removeCampaignKeywordTrigger(this.orgId, campaignId);
-        }
+        // keyword trigger ya no aplica — los pedidos llegan por botón interactivo
       }
 
       // Envío inmediato: llamar al bot para disparar el envío ahora
@@ -366,11 +359,6 @@ export class CampaignsComponent implements OnInit {
       campaign.status = newStatus;
       if (newStatus === 'active') campaign.nextRunAt = data.nextRunAt;
       // Sync keyword trigger active state
-      if (this.isDeliveryOrg && campaign.actionKeywordEnabled && campaign.actionFlowId) {
-        await this.firebaseService.setCampaignKeywordTrigger(
-          this.orgId, campaign.id, campaign.actionButtonLabel || 'Pedir', campaign.actionFlowId, newStatus === 'active'
-        );
-      }
       this.applyFilter();
     } catch (err) { console.error(err); }
     finally { this.togglingId = null; }

@@ -45,6 +45,70 @@
     </div>
   </div>
 
+  <!-- ── Promo Pedidos (solo orgs delivery) ── -->
+  <div class="promo-orders-section" *ngIf="isDeliveryOrg && promoOrdersLoaded">
+    <div class="promo-orders-header">
+      <h2><i class="fas fa-motorcycle"></i> Promo Pedidos
+        <span class="tab-badge" *ngIf="pendingPromoOrders.length > 0">{{ pendingPromoOrders.length }}</span>
+      </h2>
+    </div>
+
+    <div class="promo-orders-error" *ngIf="promoOrderError">
+      <i class="fas fa-exclamation-circle"></i> {{ promoOrderError }}
+    </div>
+
+    <div class="promo-empty" *ngIf="promoOrders.length === 0">
+      <i class="fas fa-clock"></i> Sin pedidos promo activos.
+    </div>
+
+    <div class="promo-orders-list" *ngIf="promoOrders.length > 0">
+      <div class="promo-order-card" *ngFor="let o of promoOrders"
+           [class.promo-taken]="o.status === 'taken'">
+
+        <!-- Imagen promo -->
+        <div class="promo-img" *ngIf="o.imageUrl">
+          <img [src]="o.imageUrl" alt="promo" />
+        </div>
+
+        <div class="promo-info">
+          <div class="promo-name"><i class="fas fa-tag"></i> {{ o.campaignName }}</div>
+          <div class="promo-message">{{ o.promoMessage }}</div>
+          <div class="promo-meta">
+            <span><i class="fab fa-whatsapp"></i> {{ o.phone }}</span>
+            <span class="promo-time">{{ promoTimeAgo(o) }}</span>
+          </div>
+          <div class="promo-taken-by" *ngIf="o.status === 'taken'">
+            <i class="fas fa-user-check"></i> Tomado por {{ o.assignedTo?.name || 'Delivery' }}
+          </div>
+        </div>
+
+        <div class="promo-actions">
+          <ng-container *ngIf="o.status === 'pending'">
+            <button class="btn-take-promo"
+              [disabled]="!!takingPromoOrderId"
+              (click)="takePromoOrder(o)">
+              <i class="fas fa-spinner fa-spin" *ngIf="takingPromoOrderId === o.id"></i>
+              <i class="fas fa-hand-paper" *ngIf="takingPromoOrderId !== o.id"></i>
+              Tomar
+            </button>
+          </ng-container>
+          <ng-container *ngIf="o.status === 'taken'">
+            <a class="btn-chat-promo"
+               [href]="promoWaLink(o.phone)"
+               target="_blank">
+              <i class="fab fa-whatsapp"></i> Chat
+            </a>
+            <button class="btn-resolve-promo" (click)="resolvePromoOrder(o, $event)"
+              *ngIf="o.assignedTo?.uid === currentUserId || !isDelivery">
+              <i class="fas fa-check"></i> Resolver
+            </button>
+          </ng-container>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Loading -->
   <div *ngIf="loading" class="loading-state">
     <i class="fas fa-spinner fa-spin"></i> Cargando bandeja...

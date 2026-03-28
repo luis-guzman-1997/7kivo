@@ -81,7 +81,7 @@ const runCampaign = async (orgId, campaignId) => {
   let sentCount = 0;
   let failedCount = 0;
 
-  const hasActionButton = campaign.actionKeywordEnabled && campaign.actionFlowId && campaign.actionButtonLabel;
+  const hasActionButton = campaign.actionKeywordEnabled && campaign.actionButtonLabel;
   let finalMessage = campaign.message;
   if (!hasActionButton && campaign.includeOptOut) {
     finalMessage += `\n\n_¿Deseas recibir más información como esta? Responde *SI* o *NO*_`;
@@ -92,7 +92,7 @@ const runCampaign = async (orgId, campaignId) => {
     try {
       await runWithOrgId(orgId, async () => {
         if (hasActionButton) {
-          const buttonId = `campaign_order_${campaign.actionFlowId}`;
+          const buttonId = `campaign_order_${campaignId}`;
           const buttonTitle = (campaign.actionButtonLabel || 'Pedir').substring(0, 20);
           await sendInteractiveImageButton(campaign.imageUrl || null, finalMessage, buttonId, buttonTitle, phone);
         } else if (campaign.imageUrl) {

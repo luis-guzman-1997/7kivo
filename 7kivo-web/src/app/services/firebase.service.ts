@@ -1028,6 +1028,42 @@ export class FirebaseService {
     });
   }
 
+  // ==================== PROMO ORDERS ====================
+
+  watchPromoOrders(callback: (orders: any[]) => void): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'promo_orders');
+    return onSnapshot(colRef, (snap) => {
+      const orders = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter((o: any) => o.status !== 'resolved')
+        .sort((a: any, b: any) => {
+          const ta = a.createdAt?.seconds || 0;
+          const tb = b.createdAt?.seconds || 0;
+          return tb - ta;
+        });
+      callback(orders);
+    });
+  }
+
+  async takePromoOrder(orderId: string, agent: { uid: string; name: string; email: string }): Promise<{ ok: boolean; takenBy?: string }> {
+    const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return { ok: false };
+    const data = snap.data();
+    if (data['status'] === 'taken') return { ok: false, takenBy: data['assignedTo']?.name || 'otro Delivery' };
+    await updateDoc(ref, {
+      status: 'taken',
+      assignedTo: agent,
+      takenAt: serverTimestamp()
+    });
+    return { ok: true };
+  }
+
+  async resolvePromoOrder(orderId: string): Promise<void> {
+    const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
+    await updateDoc(ref, { status: 'resolved' });
+  }
+
   // ==================== PLATFORM (SUPER ADMIN) ====================
 
   async getAllOrganizations(): Promise<any[]> {

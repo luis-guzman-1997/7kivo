@@ -386,27 +386,12 @@
             <span>Activar keyword de pedido</span>
           </label>
           <div *ngIf="form.actionKeywordEnabled" class="keyword-action-config">
-            <div class="fp-group-inline">
-              <div>
-                <label class="sub-label">Texto del botón <span class="req">*</span></label>
-                <input type="text" [(ngModel)]="form.actionButtonLabel"
-                  placeholder="Pedir" maxlength="20" />
-                <p class="collection-hint"><i class="fas fa-info-circle"></i> Máx. 20 caracteres</p>
-              </div>
-              <div>
-                <label class="sub-label">Flujo de pedido <span class="req">*</span></label>
-                <select [(ngModel)]="form.actionFlowId">
-                  <option value="">— Seleccionar flujo —</option>
-                  <option *ngFor="let f of deliveryFlows" [value]="f.id">{{ f.name }}</option>
-                </select>
-                <p class="collection-hint" *ngIf="deliveryFlows.length === 0">
-                  <i class="fas fa-info-circle"></i> No hay flujos de pedido delivery creados aún.
-                </p>
-              </div>
-            </div>
-            <p class="optout-desc">
+            <label class="sub-label">Texto del botón <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="form.actionButtonLabel"
+              placeholder="Pedir" maxlength="20" style="max-width:200px" />
+            <p class="optout-desc" style="margin-top:8px">
               <i class="fas fa-hand-pointer"></i>
-              El cliente verá un botón <strong>[ {{ form.actionButtonLabel || 'Pedir' }} ]</strong> en el mensaje. Al tapearlo inicia el flujo de pedido.
+              El cliente verá un botón <strong>[ {{ form.actionButtonLabel || 'Pedir' }} ]</strong>. Al tapearlo el pedido llega directo a la bandeja delivery.
             </p>
           </div>
         </div>
