@@ -100,23 +100,6 @@
           </div>
           <span class="hint">Se usa cuando expira la ventana de 24h para contactar al usuario</span>
         </div>
-        <div class="form-group">
-          <label>Audios en conversación de Delivery</label>
-          <div class="toggle-appt-row">
-            <label class="toggle-switch">
-              <input type="checkbox" [(ngModel)]="generalConfig.deliveryAudioEnabled" />
-              <span class="toggle-slider"></span>
-            </label>
-            <span style="font-size:0.9rem;color:#555;">{{ generalConfig.deliveryAudioEnabled ? 'Habilitado' : 'Deshabilitado' }}</span>
-          </div>
-          <span class="hint">Permite que el cliente y el agente de delivery intercambien notas de voz</span>
-        </div>
-        <div class="form-group" *ngIf="generalConfig.deliveryAudioEnabled">
-          <label>Duración máxima de audio (segundos)</label>
-          <input type="number" [(ngModel)]="generalConfig.deliveryAudioMaxSeconds"
-                 min="5" max="120" step="5" placeholder="30" style="width:100px;" />
-          <span class="hint">Audios más largos serán rechazados automáticamente por el bot</span>
-        </div>
         <button class="btn-save" (click)="saveGeneral()" [disabled]="saving">
           <i class="fas" [class.fa-save]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
           {{ saving ? 'Guardando...' : 'Guardar' }}

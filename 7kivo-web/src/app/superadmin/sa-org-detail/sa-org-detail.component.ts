@@ -36,6 +36,8 @@ export class SaOrgDetailComponent implements OnInit {
   editingGC = false;
   editGC: any = {};
 
+  editAudio: any = { enabled: false, maxSeconds: 30 };
+
   testingApi = false;
   apiTestResult: { ok: boolean; error?: string } | null = null;
 
@@ -170,6 +172,10 @@ export class SaOrgDetailComponent implements OnInit {
       this.orgGoogleCalendar = gc || {};
       this.orgAdmins = admins;
       this.logoPreview = this.orgDetail.orgLogo || '';
+      this.editAudio = {
+        enabled: this.orgDetail.deliveryAudioEnabled === true,
+        maxSeconds: this.orgDetail.deliveryAudioMaxSeconds || 30
+      };
     } catch (err) {
       console.error('Error loading org detail:', err);
     } finally {
@@ -415,6 +421,25 @@ export class SaOrgDetailComponent implements OnInit {
       this.showNotice('Google Calendar configurado');
     } catch (err) {
       console.error('Error saving Google Calendar config:', err);
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  // ── Audio Delivery Config ──
+  async saveAudioConfig(): Promise<void> {
+    if (!this.selectedOrg) return;
+    this.saving = true;
+    try {
+      const data = {
+        deliveryAudioEnabled: this.editAudio.enabled,
+        deliveryAudioMaxSeconds: Number(this.editAudio.maxSeconds) || 30
+      };
+      await this.firebaseService.saveOrgConfigByOrgId(this.selectedOrg.id, data);
+      this.orgDetail = { ...this.orgDetail, ...data };
+      this.showNotice('Configuración de audio guardada');
+    } catch (err) {
+      console.error('Error saving audio config:', err);
     } finally {
       this.saving = false;
     }

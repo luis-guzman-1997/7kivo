@@ -400,6 +400,41 @@
           Pega esta URL en <strong>Meta for Developers → WhatsApp → Webhook</strong>
         </p>
       </div>
+      <!-- Audios Delivery -->
+      <div class="detail-section-header" style="margin-top:24px;">
+        <h3>Audios en Delivery</h3>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Estado</label>
+          <span [class.badge-active]="orgDetail?.deliveryAudioEnabled" [class.badge-inactive]="!orgDetail?.deliveryAudioEnabled">
+            {{ orgDetail?.deliveryAudioEnabled ? 'Habilitado' : 'Deshabilitado' }}
+          </span>
+        </div>
+        <div class="detail-item" *ngIf="orgDetail?.deliveryAudioEnabled">
+          <label>Duración máxima</label>
+          <span>{{ orgDetail?.deliveryAudioMaxSeconds || 30 }} segundos</span>
+        </div>
+      </div>
+      <div class="edit-form" style="margin-top:12px;">
+        <div class="form-group">
+          <label>Audios en conversación de Delivery</label>
+          <div class="toggle-appt-row">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="editAudio.enabled" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span style="font-size:0.9rem;color:#555;">{{ editAudio.enabled ? 'Habilitado' : 'Deshabilitado' }}</span>
+          </div>
+        </div>
+        <div class="form-group" *ngIf="editAudio.enabled">
+          <label>Duración máxima (segundos)</label>
+          <input type="number" [(ngModel)]="editAudio.maxSeconds" min="5" max="120" step="5" style="width:100px;" />
+        </div>
+        <button class="btn-save" (click)="saveAudioConfig()" [disabled]="saving" style="margin-top:4px;">
+          {{ saving ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
     </div>
 
     <!-- TAB: Google Calendar -->
