@@ -221,6 +221,18 @@ const requestMessageFromWhatsapp = async (req, res) => {
                 .catch(e => console.error("Error saving audio placeholder:", e.message));
             }
           })();
+        } else if (msgType === "location") {
+          // Location in admin mode: save with coordinates for map display
+          const loc = messageObj?.location || {};
+          const parts = [];
+          if (loc.name) parts.push(loc.name);
+          if (loc.address) parts.push(loc.address);
+          const locText = parts.length > 0 ? parts.join(", ") : "📍 Ubicación";
+          saveMessage(phoneNumber, locText, "user", {
+            contactName,
+            type: "location",
+            locationData: { text: locText, lat: loc.latitude, lng: loc.longitude, ...(loc.name ? { name: loc.name } : {}), ...(loc.address ? { address: loc.address } : {}) }
+          }).catch(err => console.error("Error saving location message:", err.message));
         } else {
           // Other media in admin mode: save label so admin sees it in chat
           saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
@@ -254,6 +266,10 @@ const requestMessageFromWhatsapp = async (req, res) => {
             const flowData = { ...currentSession.flowData, [fieldKey]: locationValue };
             const nextIndex = currentSession.flowStepIndex + 1;
             setSession(phoneNumber, { flowData, flowStepIndex: nextIndex, flowStartTime: Date.now() });
+            saveMessage(phoneNumber, locationText, "user", {
+              contactName, type: "location",
+              locationData: locationValue
+            }).catch(() => {});
             await executeFlowStep(phoneNumber, flow, nextIndex);
             return res.sendStatus(200);
           }
@@ -2103,6 +2119,17 @@ const requestMessageMulti = async (req, res) => {
                   .catch(e => console.error("Error saving audio placeholder:", e.message));
               }
             })();
+          } else if (msgType === "location") {
+            const loc = messageObj?.location || {};
+            const parts = [];
+            if (loc.name) parts.push(loc.name);
+            if (loc.address) parts.push(loc.address);
+            const locText = parts.length > 0 ? parts.join(", ") : "📍 Ubicación";
+            saveMessage(phoneNumber, locText, "user", {
+              contactName,
+              type: "location",
+              locationData: { text: locText, lat: loc.latitude, lng: loc.longitude, ...(loc.name ? { name: loc.name } : {}), ...(loc.address ? { address: loc.address } : {}) }
+            }).catch(err => console.error("Error saving location message:", err.message));
           } else {
             saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
               .catch(err => console.error("Error saving media message:", err.message));
@@ -2132,6 +2159,10 @@ const requestMessageMulti = async (req, res) => {
               const flowData = { ...currentSession.flowData, [fieldKey]: locationValue };
               const nextIndex = currentSession.flowStepIndex + 1;
               setSession(phoneNumber, { flowData, flowStepIndex: nextIndex, flowStartTime: Date.now() });
+              saveMessage(phoneNumber, locationText, "user", {
+                contactName, type: "location",
+                locationData: locationValue
+              }).catch(() => {});
               await executeFlowStep(phoneNumber, flow, nextIndex);
               return res.sendStatus(200);
             }

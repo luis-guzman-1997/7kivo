@@ -290,6 +290,15 @@
             <img *ngIf="msg.type === 'image' && msg.imageUrl"
                  [src]="msg.imageUrl" class="message-image"
                  (click)="openImage(msg.imageUrl!)" alt="Imagen">
+            <a *ngIf="msg.type === 'location' && msg.locationData"
+               class="msg-location-card"
+               [href]="'https://www.google.com/maps?q=' + msg.locationData!.lat + ',' + msg.locationData!.lng"
+               target="_blank" rel="noopener">
+              <i class="fas fa-map-marker-alt msg-location-icon"></i>
+              <span class="msg-location-text">{{ msg.locationData!.text }}</span>
+              <i class="fas fa-external-link-alt msg-location-link"></i>
+            </a>
+            <p class="message-text" *ngIf="msg.type === 'location' && !msg.locationData" [innerHTML]="msg.text | waFormat"></p>
             <div *ngIf="msg.type === 'audio' && msg.audioUrl" class="msg-audio-player">
               <button class="msg-audio-play" (click)="toggleAudio(msg.id, msg.audioUrl!)">
                 <i class="fas" [class.fa-play]="!getPlayer(msg.id, msg.audioUrl!).playing"
@@ -308,7 +317,7 @@
                     : (msg.duration || getPlayer(msg.id, msg.audioUrl!).duration)) }}
               </span>
             </div>
-            <p class="message-text" *ngIf="msg.type !== 'image' && msg.type !== 'audio'" [innerHTML]="msg.text | waFormat"></p>
+            <p class="message-text" *ngIf="msg.type !== 'image' && msg.type !== 'audio' && msg.type !== 'location'" [innerHTML]="msg.text | waFormat"></p>
             <p class="message-text" *ngIf="msg.type === 'audio' && !msg.audioUrl" [innerHTML]="msg.text | waFormat"></p>
             <p class="message-caption" *ngIf="msg.type === 'image' && msg.imageUrl && msg.text && msg.text !== '📷 Foto'" [innerHTML]="msg.text | waFormat"></p>
             <span class="message-text msg-image-placeholder" *ngIf="msg.type === 'image' && !msg.imageUrl" [innerHTML]="msg.text | waFormat"></span>

@@ -719,6 +719,44 @@
   color: #888;
 }
 
+.msg-location-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  max-width: 260px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.msg-location-card:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+.msg-location-icon {
+  color: #e53e3e;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.msg-location-text {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  word-break: break-word;
+  color: #222;
+}
+
+.msg-location-link {
+  font-size: 0.7rem;
+  color: #888;
+  flex-shrink: 0;
+}
+
 .msg-audio-player {
   display: flex;
   align-items: center;

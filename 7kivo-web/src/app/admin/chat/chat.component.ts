@@ -25,6 +25,7 @@ interface ChatMessage {
   imageUrl?: string;
   audioUrl?: string;
   duration?: number;
+  locationData?: { text: string; lat: number; lng: number; name?: string; address?: string };
   timestamp?: any;
   createdMs?: number;
   adminName?: string;
