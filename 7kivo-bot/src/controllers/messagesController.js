@@ -192,7 +192,7 @@ const requestMessageFromWhatsapp = async (req, res) => {
           // deliveryAudioEnabled only controls duration rejection.
           (async () => {
             try {
-              const orgConfig = await getGeneralConfig();
+              const orgConfig = await getGeneralConfig().catch(() => ({}));
               const maxSeconds = orgConfig?.deliveryAudioMaxSeconds || 30;
               const rejectOverLimit = orgConfig?.deliveryAudioEnabled === true;
 
@@ -217,7 +217,7 @@ const requestMessageFromWhatsapp = async (req, res) => {
               });
             } catch (err) {
               console.error("Error processing user audio:", err.message);
-              saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
+              saveMessage(phoneNumber, mediaInfo.label, "user", { contactName, type: "audio" })
                 .catch(e => console.error("Error saving audio placeholder:", e.message));
             }
           })();

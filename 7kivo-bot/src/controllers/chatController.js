@@ -328,6 +328,10 @@ const takeDeliveryCase = async (req, res) => {
       msg += `\n\nTe pedirá un código de confirmación al momento de la entrega.`;
     }
 
+    // Switch to admin mode so client media (audio/images) gets forwarded to delivery
+    await clearSession(phone);
+    await setConversationMode(phone, "admin", {});
+
     try {
       await sendTextMessage(msg, phone);
       await saveMessage(phone, msg, "bot", {});
