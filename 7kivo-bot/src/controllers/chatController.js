@@ -265,7 +265,7 @@ const sendAdminAudio = async (req, res) => {
       await setConversationMode(phone, "admin", { adminEmail, adminName });
     }
 
-    await sendAudioMessage(audioUrl, phone);
+    await sendAudioMessage(audioUrl, phone, duration || null);
     await saveMessage(phone, "🎵 Audio", "admin", {
       adminEmail,
       adminName,

@@ -5,16 +5,24 @@ const ffmpegPath = require("ffmpeg-static");
 const { Readable } = require("stream");
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-const convertToOgg = (inputBuffer) => new Promise((resolve, reject) => {
+const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, reject) => {
   const chunks = [];
   const input = Readable.from(inputBuffer);
-  const passthrough = ffmpeg(input)
+  const cmd = ffmpeg(input)
     .inputFormat("webm")
-    .inputOptions(["-fflags", "+igndts+discardcorrupt"]) // ignore bad timestamps in webm
+    // +genpts regenera timestamps desde cero, evitando la duración inflada que
+    // produce MediaRecorder (WebM sin SeekHead correcto → ffmpeg infiere mal la duración)
+    .inputOptions(["-fflags", "+genpts+discardcorrupt"])
     .audioCodec("libopus")
-    .format("ogg")
-    .on("error", reject)
-    .pipe();
+    .format("ogg");
+
+  // Si se conoce la duración real (del timer del grabador), la usamos como
+  // límite hard en la salida para evitar colas de silencio o timestamps inflados.
+  if (durationSeconds && durationSeconds > 0) {
+    cmd.outputOptions(["-t", String(durationSeconds)]);
+  }
+
+  const passthrough = cmd.on("error", reject).pipe();
   passthrough.on("data", (chunk) => chunks.push(chunk));
   passthrough.on("end", () => resolve(Buffer.concat(chunks)));
   passthrough.on("error", reject);
@@ -274,7 +282,7 @@ const sendImageMessage = async (imageUrl, caption, phoneNumber) => {
   }
 };
 
-const sendAudioMessage = async (audioUrl, phoneNumber) => {
+const sendAudioMessage = async (audioUrl, phoneNumber, durationSeconds) => {
   try {
     if (!phoneNumber) {
       throw new Error("phoneNumber es requerido para enviar audio");
@@ -290,7 +298,7 @@ const sendAudioMessage = async (audioUrl, phoneNumber) => {
     // 2. Convert webm → ogg if needed (WhatsApp doesn't accept audio/webm)
     let uploadType = srcType;
     if (srcType.includes("webm")) {
-      buffer = await convertToOgg(buffer);
+      buffer = await convertToOgg(buffer, durationSeconds);
       uploadType = "audio/ogg";
     }
 
