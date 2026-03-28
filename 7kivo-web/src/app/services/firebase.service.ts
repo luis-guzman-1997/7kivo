@@ -1207,6 +1207,12 @@ export class FirebaseService {
     return getDownloadURL(storageRef);
   }
 
+  async uploadBlob(blob: Blob, path: string, contentType: string): Promise<string> {
+    const storageRef = ref(this.storage, path);
+    await uploadBytes(storageRef, blob, { contentType });
+    return getDownloadURL(storageRef);
+  }
+
   async uploadOrgLogo(file: File): Promise<string> {
     const ext = file.name.split('.').pop() || 'png';
     const path = `organizations/${this.getOrgId()}/logo.${ext}`;

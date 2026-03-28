@@ -533,9 +533,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     try {
       const phone = this.selectedConversation.phoneNumber;
-      const ext = 'webm';
-      const path = `chat-audios/${phone}/${Date.now()}.${ext}`;
-      const audioUrl = await this.firebaseService.uploadFile(this.audioBlob as File, path);
+      const path = `chat-audios/${phone}/${Date.now()}.webm`;
+      const audioUrl = await this.firebaseService.uploadBlob(this.audioBlob!, path, 'audio/webm');
 
       const user = this.authService.currentUser;
       const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/send-audio`, {
