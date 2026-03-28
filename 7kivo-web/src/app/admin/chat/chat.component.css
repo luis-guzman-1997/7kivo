@@ -721,33 +721,38 @@
 
 .message-audio {
   display: block;
-  max-width: 240px;
-  width: 100%;
-  height: 36px;
-  border-radius: 18px;
+  width: min(240px, 100%);
+  max-width: 100%;
+  height: 40px;
+  border-radius: 20px;
   outline: none;
+  box-sizing: border-box;
+  margin-bottom: 4px;
 }
 
 .audio-preview-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background: #f0f7ff;
   border-radius: 12px;
   margin: 4px 0;
+  min-width: 0;
 }
 
 .audio-preview-player {
   flex: 1;
   height: 36px;
   min-width: 0;
+  width: 100%;
   border-radius: 18px;
 }
 
 .btn-audio-cancel {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 50%;
   border: none;
   background: #fee2e2;
@@ -760,8 +765,9 @@
 }
 
 .btn-audio-send {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 50%;
   border: none;
   background: #25d366;
@@ -782,15 +788,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   background: #fff0f0;
   border-radius: 12px;
   margin: 4px 0;
+  min-width: 0;
 }
 
 .recording-dot {
   width: 10px;
   height: 10px;
+  min-width: 10px;
   border-radius: 50%;
   background: #ef4444;
   animation: blink 1s step-start infinite;
@@ -808,11 +816,13 @@
   color: #ef4444;
   flex: 1;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .btn-stop-recording {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 50%;
   border: none;
   background: #ef4444;
@@ -1368,6 +1378,12 @@
   .btn-send { width: 44px; height: 44px; min-width: 44px; font-size: 1.1rem; }
   .btn-attach { width: 40px; height: 40px; min-width: 40px; font-size: 1.05rem; }
   .message-image { max-width: min(220px, 85vw); max-height: 180px; }
+  .message-audio { width: 100%; max-width: 100%; height: 40px; }
+  .audio-preview-row { padding: 6px 8px; gap: 6px; }
+  .audio-preview-player { height: 32px; }
+  .btn-audio-cancel, .btn-audio-send, .btn-stop-recording { width: 40px; height: 40px; min-width: 40px; font-size: 1rem; }
+  .recording-row { padding: 6px 10px; gap: 8px; }
+  .recording-timer { font-size: 0.8rem; }
 
   /* ── Notices ── */
   .viewer-notice {
