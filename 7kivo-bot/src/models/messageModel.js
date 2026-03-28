@@ -198,6 +198,44 @@ const sendInteractiveList = async (text, buttonText, sections, phoneNumber) => {
   }
 };
 
+const sendInteractiveImageButton = async (imageUrl, text, buttonId, buttonTitle, phoneNumber) => {
+  try {
+    if (!phoneNumber) throw new Error("phoneNumber es requerido");
+    const { version, phoneId, token } = await getWACredentials();
+    const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
+    const interactive = {
+      type: "button",
+      body: { text: text.substring(0, 1024) },
+      action: {
+        buttons: [{
+          type: "reply",
+          reply: {
+            id: buttonId.substring(0, 256),
+            title: buttonTitle.substring(0, 20)
+          }
+        }]
+      }
+    };
+    if (imageUrl) {
+      interactive.header = { type: "image", image: { link: imageUrl } };
+    }
+    const body = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "interactive",
+      interactive
+    };
+    const config = { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } };
+    return await axios.post(url, body, config);
+  } catch (error) {
+    const errData = error?.response?.data;
+    console.log("Error al enviar botón interactivo:", errData);
+    const errMsg = errData?.error?.message || error?.message || "Failed to send interactive button";
+    throw new Error(errMsg);
+  }
+};
+
 const sendImageMessage = async (imageUrl, caption, phoneNumber) => {
   try {
     if (!phoneNumber) {
@@ -296,6 +334,7 @@ module.exports = {
   sendTextMessage,
   sendInteractiveButtons,
   sendInteractiveList,
+  sendInteractiveImageButton,
   sendImageMessage,
   sendAudioMessage,
 };

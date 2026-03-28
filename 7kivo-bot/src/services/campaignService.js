@@ -1,5 +1,5 @@
 const { admin, db } = require('../config/firebase');
-const { sendTextMessage, sendImageMessage } = require('../models/messageModel');
+const { sendTextMessage, sendImageMessage, sendInteractiveImageButton } = require('../models/messageModel');
 const { runWithOrgId } = require('../config/requestContext');
 
 const CAMPAIGN_CHECK_INTERVAL = 300000; // 5 minutos
@@ -81,10 +81,9 @@ const runCampaign = async (orgId, campaignId) => {
   let sentCount = 0;
   let failedCount = 0;
 
+  const hasActionButton = campaign.actionKeywordEnabled && campaign.actionFlowId && campaign.actionButtonLabel;
   let finalMessage = campaign.message;
-  if (campaign.actionKeywordEnabled && campaign.actionKeyword) {
-    finalMessage += `\n\nResponde *${campaign.actionKeyword.toUpperCase()}* para hacer tu pedido 🛵`;
-  } else if (campaign.includeOptOut) {
+  if (!hasActionButton && campaign.includeOptOut) {
     finalMessage += `\n\n_¿Deseas recibir más información como esta? Responde *SI* o *NO*_`;
   }
 
@@ -92,7 +91,11 @@ const runCampaign = async (orgId, campaignId) => {
     const phone = toSend[i];
     try {
       await runWithOrgId(orgId, async () => {
-        if (campaign.imageUrl) {
+        if (hasActionButton) {
+          const buttonId = `campaign_order_${campaign.actionFlowId}`;
+          const buttonTitle = (campaign.actionButtonLabel || 'Pedir').substring(0, 20);
+          await sendInteractiveImageButton(campaign.imageUrl || null, finalMessage, buttonId, buttonTitle, phone);
+        } else if (campaign.imageUrl) {
           await sendImageMessage(campaign.imageUrl, finalMessage, phone);
         } else {
           await sendTextMessage(finalMessage, phone);

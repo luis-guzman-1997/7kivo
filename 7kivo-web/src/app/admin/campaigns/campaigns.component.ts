@@ -132,7 +132,7 @@ export class CampaignsComponent implements OnInit {
       includeOptOut: true,
       imageUrl: '',
       actionKeywordEnabled: false,
-      actionKeyword: '',
+      actionButtonLabel: 'Pedir',
       actionFlowId: ''
     };
     this.formImageFile = null;
@@ -161,7 +161,7 @@ export class CampaignsComponent implements OnInit {
       includeOptOut: campaign.includeOptOut !== false,
       imageUrl: campaign.imageUrl || '',
       actionKeywordEnabled: campaign.actionKeywordEnabled || false,
-      actionKeyword: campaign.actionKeyword || '',
+      actionButtonLabel: campaign.actionButtonLabel || 'Pedir',
       actionFlowId: campaign.actionFlowId || ''
     };
     this.formImageFile = null;
@@ -243,7 +243,7 @@ export class CampaignsComponent implements OnInit {
       imageUrl: this.form.imageUrl || '',
       status,
       actionKeywordEnabled: this.isDeliveryOrg ? (this.form.actionKeywordEnabled || false) : false,
-      actionKeyword: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionKeyword || '').toUpperCase().trim() : '',
+      actionButtonLabel: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionButtonLabel || 'Pedir').trim() : '',
       actionFlowId: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionFlowId || '') : ''
     };
     if (this.form.type === 'once') data.scheduledDate = this.form.scheduledDate;
@@ -320,9 +320,9 @@ export class CampaignsComponent implements OnInit {
 
       // Keyword trigger: registrar/actualizar en Firestore
       if (this.isDeliveryOrg) {
-        if (data.actionKeywordEnabled && data.actionKeyword && data.actionFlowId) {
+        if (data.actionKeywordEnabled && data.actionFlowId) {
           await this.firebaseService.setCampaignKeywordTrigger(
-            this.orgId, campaignId, data.actionKeyword, data.actionFlowId,
+            this.orgId, campaignId, data.actionButtonLabel || 'Pedir', data.actionFlowId,
             status === 'active' || status === 'scheduled'
           );
         } else {
@@ -366,9 +366,9 @@ export class CampaignsComponent implements OnInit {
       campaign.status = newStatus;
       if (newStatus === 'active') campaign.nextRunAt = data.nextRunAt;
       // Sync keyword trigger active state
-      if (this.isDeliveryOrg && campaign.actionKeywordEnabled && campaign.actionKeyword && campaign.actionFlowId) {
+      if (this.isDeliveryOrg && campaign.actionKeywordEnabled && campaign.actionFlowId) {
         await this.firebaseService.setCampaignKeywordTrigger(
-          this.orgId, campaign.id, campaign.actionKeyword, campaign.actionFlowId, newStatus === 'active'
+          this.orgId, campaign.id, campaign.actionButtonLabel || 'Pedir', campaign.actionFlowId, newStatus === 'active'
         );
       }
       this.applyFilter();

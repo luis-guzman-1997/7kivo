@@ -490,6 +490,13 @@ const sendMenu = async (phoneNumber) => {
 // ==================== INTERACTIVE RESPONSE HANDLER ====================
 
 const handleInteractiveResponse = async (phoneNumber, buttonId) => {
+  // Botón de pedido de campaña delivery
+  if (buttonId.startsWith('campaign_order_')) {
+    const flowId = buttonId.replace('campaign_order_', '');
+    await startFlow(phoneNumber, flowId);
+    return;
+  }
+
   const session = getSession(phoneNumber);
 
   // Handle service info selection

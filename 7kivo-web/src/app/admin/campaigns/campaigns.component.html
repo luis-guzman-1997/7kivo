@@ -114,9 +114,9 @@
           <p class="card-message-preview">{{ c.message }}</p>
 
           <!-- Keyword badge -->
-          <div class="card-keyword-badge" *ngIf="c.actionKeywordEnabled && c.actionKeyword">
-            <i class="fas fa-motorcycle"></i>
-            Pedido: responde <strong>{{ c.actionKeyword }}</strong>
+          <div class="card-keyword-badge" *ngIf="c.actionKeywordEnabled && c.actionFlowId">
+            <i class="fas fa-hand-pointer"></i>
+            Botón: <strong>{{ c.actionButtonLabel || 'Pedir' }}</strong>
           </div>
 
           <!-- Image thumb -->
@@ -388,10 +388,10 @@
           <div *ngIf="form.actionKeywordEnabled" class="keyword-action-config">
             <div class="fp-group-inline">
               <div>
-                <label class="sub-label">Palabra clave <span class="req">*</span></label>
-                <input type="text" [(ngModel)]="form.actionKeyword"
-                  placeholder="Ej: DONAS" maxlength="30"
-                  style="text-transform:uppercase" />
+                <label class="sub-label">Texto del botón <span class="req">*</span></label>
+                <input type="text" [(ngModel)]="form.actionButtonLabel"
+                  placeholder="Pedir" maxlength="20" />
+                <p class="collection-hint"><i class="fas fa-info-circle"></i> Máx. 20 caracteres</p>
               </div>
               <div>
                 <label class="sub-label">Flujo de pedido <span class="req">*</span></label>
@@ -405,8 +405,8 @@
               </div>
             </div>
             <p class="optout-desc">
-              <i class="fas fa-info-circle"></i>
-              Se añadirá al mensaje: <em>"Responde <strong>{{ form.actionKeyword || 'KEYWORD' }}</strong> para hacer tu pedido 🛵"</em>
+              <i class="fas fa-hand-pointer"></i>
+              El cliente verá un botón <strong>[ {{ form.actionButtonLabel || 'Pedir' }} ]</strong> en el mensaje. Al tapearlo inicia el flujo de pedido.
             </p>
           </div>
         </div>
