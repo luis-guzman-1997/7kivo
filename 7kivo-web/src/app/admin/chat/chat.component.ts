@@ -73,6 +73,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   // ── Audio player custom ──
   audioPlayers: Map<string, { el: HTMLAudioElement; playing: boolean; current: number; duration: number }> = new Map();
 
+  // ── Notification sound ──
+  private lastMsgCount = -1;
+
   // ── Delivery mode ──
   isDeliveryMode = false;
   deliveryPhone: string | null = null;
@@ -245,10 +248,16 @@ export class ChatComponent implements OnInit, OnDestroy {
     const sinceMs = (this.isDeliveryMode && this.deliveryTakenAt)
       ? this.deliveryTakenAt - 1000
       : undefined;
+    this.lastMsgCount = -1;
     this.msgsUnsub = this.firebaseService.onConversationMessages(
       listenPhone,
       (msgs) => {
         if (this.selectedConversation?.phoneNumber !== listenPhone) return;
+        const prev = this.lastMsgCount;
+        const hasNew = prev >= 0 && msgs.length > prev;
+        const lastIsUser = msgs.length > 0 && msgs[msgs.length - 1].from === 'user';
+        if (hasNew && lastIsUser) this.playNotificationSound();
+        this.lastMsgCount = msgs.length;
         this.messages = msgs;
         setTimeout(() => this.scrollToBottom(), 100);
       },
@@ -859,6 +868,25 @@ export class ChatComponent implements OnInit, OnDestroy {
       fields.push({ label, value: String(val) });
     }
     return fields;
+  }
+
+  // ── Notification sound ──
+  private playNotificationSound(): void {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+      osc.onended = () => ctx.close();
+    } catch (e) {}
   }
 
   // ── Custom audio player methods ──
