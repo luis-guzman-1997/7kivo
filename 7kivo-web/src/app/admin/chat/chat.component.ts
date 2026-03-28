@@ -484,7 +484,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         stream.getTracks().forEach(t => t.stop());
         this.cdr.detectChanges();
       };
-      this.mediaRecorder.start();
+      this.mediaRecorder.start(100); // timeslice 100ms → proper timestamps in webm
       this.isRecording = true;
       this.recordingSeconds = 0;
       this.recordingTimer = setInterval(() => {

@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { admin } = require("../config/firebase");
 const { getWACredentials } = require("../models/messageModel");
+const crypto = require("crypto");
 
 const BUCKET = process.env.FIREBASE_STORAGE_BUCKET || "kivo7-app.firebasestorage.app";
 
@@ -44,13 +45,19 @@ const downloadAndUploadMedia = async (mediaId, phoneNumber) => {
   const folder = isAudioMime(mimeType) ? "chat-audios" : "chat-images";
   const path = `${folder}/${phoneNumber}/${Date.now()}.${ext}`;
 
+  const downloadToken = crypto.randomUUID();
   const bucket = admin.storage().bucket(BUCKET);
   const file = bucket.file(path);
-  await file.save(buffer, { metadata: { contentType: baseMime } });
+  await file.save(buffer, {
+    metadata: {
+      contentType: baseMime,
+      metadata: { firebaseStorageDownloadTokens: downloadToken }
+    }
+  });
 
-  // 4. Public URL
+  // 4. URL with download token (works in browser without CORS issues)
   const encodedPath = encodeURIComponent(path);
-  return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodedPath}?alt=media`;
+  return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodedPath}?alt=media&token=${downloadToken}`;
 };
 
 module.exports = { downloadAndUploadMedia };
