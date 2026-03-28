@@ -9,8 +9,11 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ── Obtiene los teléfonos destinatarios de una campaña ──
 const getRecipients = async (orgId, campaign) => {
+  const optedOut = new Set(campaign.optedOutPhones || []);
+
   if (campaign.recipientSource === 'manual') {
-    return (campaign.manualPhones || []).filter(p => p && String(p).length >= 8);
+    return (campaign.manualPhones || [])
+      .filter(p => p && String(p).length >= 8 && !optedOut.has(String(p)));
   }
 
   if (campaign.recipientSource === 'collection') {
@@ -28,7 +31,7 @@ const getRecipients = async (orgId, campaign) => {
 
     return dataSnap.docs
       .map(d => d.data()[campaign.phoneField])
-      .filter(p => p && String(p).length >= 8)
+      .filter(p => p && String(p).length >= 8 && !optedOut.has(String(p)))
       .map(p => String(p));
   }
 
@@ -78,9 +81,13 @@ const runCampaign = async (orgId, campaignId) => {
   let sentCount = 0;
   let failedCount = 0;
 
-  const finalMessage = campaign.actionKeywordEnabled && campaign.actionKeyword
-    ? `${campaign.message}\n\nResponde *${campaign.actionKeyword.toUpperCase()}* para hacer tu pedido 🛵`
-    : campaign.message;
+  let finalMessage = campaign.message;
+  if (campaign.actionKeywordEnabled && campaign.actionKeyword) {
+    finalMessage += `\n\nResponde *${campaign.actionKeyword.toUpperCase()}* para hacer tu pedido 🛵`;
+  }
+  if (campaign.includeOptOut) {
+    finalMessage += `\n\n_¿Deseas recibir más información como esta? Responde *SI* o *NO*_`;
+  }
 
   for (let i = 0; i < toSend.length; i++) {
     const phone = toSend[i];
@@ -181,4 +188,38 @@ const startCampaignScheduler = () => {
   console.log(`📣 Scheduler de campañas activo (cada ${CAMPAIGN_CHECK_INTERVAL / 60000}min)`);
 };
 
-module.exports = { runCampaign, startCampaignScheduler };
+// ── Registra opt-out de un número en todas las campañas activas con includeOptOut ──
+const registerCampaignOptOut = async (orgId, phoneNumber) => {
+  try {
+    const snap = await db
+      .collection('organizations').doc(orgId)
+      .collection('campaigns')
+      .where('includeOptOut', '==', true)
+      .get();
+
+    const batch = db.batch();
+    let count = 0;
+    snap.docs.forEach(doc => {
+      const data = doc.data();
+      const phones = data.manualPhones || [];
+      // Solo aplica si el número está en la lista o si es colección (opt-out global)
+      if (data.recipientSource === 'collection' || phones.includes(phoneNumber)) {
+        const optedOut = data.optedOutPhones || [];
+        if (!optedOut.includes(phoneNumber)) {
+          batch.update(doc.ref, {
+            optedOutPhones: [...optedOut, phoneNumber]
+          });
+          count++;
+        }
+      }
+    });
+
+    if (count > 0) await batch.commit();
+    return count;
+  } catch (err) {
+    console.error('Error registrando opt-out de campaña:', err.message);
+    return 0;
+  }
+};
+
+module.exports = { runCampaign, startCampaignScheduler, registerCampaignOptOut };

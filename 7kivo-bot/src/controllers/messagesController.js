@@ -23,6 +23,7 @@ const {
   getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
+const { registerCampaignOptOut } = require("../services/campaignService");
 const { createGoogleCalendarEvent, deleteGoogleCalendarEvent } = require("../services/googleCalendarService");
 const { sendPushToDeliveries } = require("../services/pushService");
 
@@ -1884,6 +1885,16 @@ const handleUserMessage = async (phoneNumber, message, session) => {
   for (const trigger of activeCampaignTriggers) {
     if (lowerMessage === trigger.keyword.toLowerCase().trim()) {
       await startFlow(phoneNumber, trigger.flowId);
+      return;
+    }
+  }
+
+  // Opt-out de campaña: respuesta "NO" (solo fuera de flujo activo)
+  if (lowerMessage === 'no' && (!session.step || session.step === 'main_menu')) {
+    const { getOrgId } = require('../config/orgConfig');
+    const count = await registerCampaignOptOut(getOrgId(), phoneNumber);
+    if (count > 0) {
+      await sendTextMessage('De acuerdo, no te enviaremos más mensajes de este tipo. 👍', phoneNumber);
       return;
     }
   }
