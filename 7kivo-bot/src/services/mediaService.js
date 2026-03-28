@@ -18,9 +18,7 @@ const EXT_MAP = {
   "audio/webm": "webm",
 };
 
-const AUDIO_MIME_TYPES = new Set([
-  "audio/ogg", "audio/mpeg", "audio/mp4", "audio/aac", "audio/opus", "audio/webm"
-]);
+const isAudioMime = (mimeType) => (mimeType || "").split(";")[0].trim().startsWith("audio/");
 
 const downloadAndUploadMedia = async (mediaId, phoneNumber) => {
   const { version, token } = await getWACredentials();
@@ -32,6 +30,7 @@ const downloadAndUploadMedia = async (mediaId, phoneNumber) => {
   );
   const mediaUrl = metaRes.data.url;
   const mimeType = metaRes.data.mime_type || "image/jpeg";
+  const baseMime = mimeType.split(";")[0].trim(); // strip codecs params
 
   // 2. Download binary
   const imgRes = await axios.get(mediaUrl, {
@@ -41,13 +40,13 @@ const downloadAndUploadMedia = async (mediaId, phoneNumber) => {
   const buffer = Buffer.from(imgRes.data);
 
   // 3. Upload to Firebase Storage
-  const ext = EXT_MAP[mimeType] || (AUDIO_MIME_TYPES.has(mimeType) ? "ogg" : "jpg");
-  const folder = AUDIO_MIME_TYPES.has(mimeType) ? "chat-audios" : "chat-images";
+  const ext = EXT_MAP[baseMime] || (isAudioMime(mimeType) ? "ogg" : "jpg");
+  const folder = isAudioMime(mimeType) ? "chat-audios" : "chat-images";
   const path = `${folder}/${phoneNumber}/${Date.now()}.${ext}`;
 
   const bucket = admin.storage().bucket(BUCKET);
   const file = bucket.file(path);
-  await file.save(buffer, { metadata: { contentType: mimeType } });
+  await file.save(buffer, { metadata: { contentType: baseMime } });
 
   // 4. Public URL
   const encodedPath = encodeURIComponent(path);
