@@ -289,7 +289,10 @@
             <img *ngIf="msg.type === 'image' && msg.imageUrl"
                  [src]="msg.imageUrl" class="message-image"
                  (click)="openImage(msg.imageUrl!)" alt="Imagen">
-            <p class="message-text" *ngIf="msg.type !== 'image' || !msg.imageUrl" [innerHTML]="msg.text | waFormat"></p>
+            <audio *ngIf="msg.type === 'audio' && msg.audioUrl"
+                   controls [src]="msg.audioUrl" class="message-audio" preload="none"></audio>
+            <p class="message-text" *ngIf="msg.type !== 'image' && msg.type !== 'audio'" [innerHTML]="msg.text | waFormat"></p>
+            <p class="message-text" *ngIf="msg.type === 'audio' && !msg.audioUrl" [innerHTML]="msg.text | waFormat"></p>
             <p class="message-caption" *ngIf="msg.type === 'image' && msg.imageUrl && msg.text && msg.text !== '📷 Foto'" [innerHTML]="msg.text | waFormat"></p>
             <span class="message-text msg-image-placeholder" *ngIf="msg.type === 'image' && !msg.imageUrl" [innerHTML]="msg.text | waFormat"></span>
             <span class="message-time">{{ formatMessageTime(msg.timestamp) }}</span>
@@ -325,7 +328,25 @@
         <i class="fas fa-exclamation-circle"></i> {{ error }}
         <button (click)="error = ''"><i class="fas fa-times"></i></button>
       </div>
-      <div class="input-row">
+      <!-- Audio recording preview -->
+      <div class="audio-preview-row" *ngIf="audioBlob && !isRecording">
+        <audio #audioPreviewEl controls [src]="audioPreviewUrl!" class="audio-preview-player" preload="auto"></audio>
+        <button class="btn-audio-cancel" (click)="cancelAudio()" title="Descartar">
+          <i class="fas fa-trash"></i>
+        </button>
+        <button class="btn-audio-send" (click)="sendAudio()" [disabled]="sendingAudio" title="Enviar audio">
+          <i class="fas" [class.fa-paper-plane]="!sendingAudio" [class.fa-spinner]="sendingAudio" [class.fa-spin]="sendingAudio"></i>
+        </button>
+      </div>
+      <!-- Recording indicator -->
+      <div class="recording-row" *ngIf="isRecording">
+        <span class="recording-dot"></span>
+        <span class="recording-timer">{{ formatRecordingTime(recordingSeconds) }} / {{ formatRecordingTime(deliveryAudioMaxSeconds) }}</span>
+        <button class="btn-stop-recording" (click)="stopRecording()" title="Detener grabación">
+          <i class="fas fa-stop"></i>
+        </button>
+      </div>
+      <div class="input-row" *ngIf="!audioBlob && !isRecording">
         <input type="file" accept="image/*" #imageInput style="display:none"
                (change)="onImageSelected($event)">
         <button class="btn-attach" *ngIf="isAdminMode"
@@ -333,6 +354,12 @@
                 [disabled]="sending || sendingImage"
                 title="Enviar imagen">
           <i class="fas" [class.fa-image]="!sendingImage" [class.fa-spinner]="sendingImage" [class.fa-spin]="sendingImage"></i>
+        </button>
+        <button class="btn-attach" *ngIf="isAdminMode && deliveryAudioEnabled"
+                (click)="startRecording()"
+                [disabled]="sending || sendingImage"
+                title="Grabar audio">
+          <i class="fas fa-microphone"></i>
         </button>
         <textarea
           [(ngModel)]="newMessage"

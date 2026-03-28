@@ -10,7 +10,17 @@ const EXT_MAP = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+  "audio/ogg": "ogg",
+  "audio/mpeg": "mp3",
+  "audio/mp4": "m4a",
+  "audio/aac": "aac",
+  "audio/opus": "opus",
+  "audio/webm": "webm",
 };
+
+const AUDIO_MIME_TYPES = new Set([
+  "audio/ogg", "audio/mpeg", "audio/mp4", "audio/aac", "audio/opus", "audio/webm"
+]);
 
 const downloadAndUploadMedia = async (mediaId, phoneNumber) => {
   const { version, token } = await getWACredentials();
@@ -31,14 +41,15 @@ const downloadAndUploadMedia = async (mediaId, phoneNumber) => {
   const buffer = Buffer.from(imgRes.data);
 
   // 3. Upload to Firebase Storage
-  const ext = EXT_MAP[mimeType] || "jpg";
-  const path = `chat-images/${phoneNumber}/${Date.now()}.${ext}`;
+  const ext = EXT_MAP[mimeType] || (AUDIO_MIME_TYPES.has(mimeType) ? "ogg" : "jpg");
+  const folder = AUDIO_MIME_TYPES.has(mimeType) ? "chat-audios" : "chat-images";
+  const path = `${folder}/${phoneNumber}/${Date.now()}.${ext}`;
 
   const bucket = admin.storage().bucket(BUCKET);
   const file = bucket.file(path);
   await file.save(buffer, { metadata: { contentType: mimeType } });
 
-  // 4. Public URL (works with Storage rules: allow read: if true for chat-images)
+  // 4. Public URL
   const encodedPath = encodeURIComponent(path);
   return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodedPath}?alt=media`;
 };

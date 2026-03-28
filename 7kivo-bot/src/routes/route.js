@@ -10,6 +10,7 @@ const {
   getConversationMessages,
   sendAdminMessage,
   sendAdminImage,
+  sendAdminAudio,
   takeControl,
   releaseToBot,
   checkWindow,
@@ -55,6 +56,7 @@ router.get("/api/:orgId/conversations/:phone", withOrgContext(getConversationMes
 router.get("/api/:orgId/conversations/:phone/window", withOrgContext(checkWindow));
 router.post("/api/:orgId/send-message", withOrgContext(sendAdminMessage));
 router.post("/api/:orgId/send-image", withOrgContext(sendAdminImage));
+router.post("/api/:orgId/send-audio", withOrgContext(sendAdminAudio));
 router.post("/api/:orgId/take-control", withOrgContext(takeControl));
 router.post("/api/:orgId/release-to-bot", withOrgContext(releaseToBot));
 router.post("/api/:orgId/take-delivery-case", withOrgContext(takeDeliveryCase));

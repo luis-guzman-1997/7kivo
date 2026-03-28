@@ -217,10 +217,46 @@ const sendImageMessage = async (imageUrl, caption, phoneNumber) => {
   }
 };
 
+const sendAudioMessage = async (audioUrl, phoneNumber) => {
+  try {
+    if (!phoneNumber) {
+      throw new Error("phoneNumber es requerido para enviar audio");
+    }
+
+    const { version, phoneId, token } = await getWACredentials();
+
+    const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
+    const body = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "audio",
+      audio: { link: audioUrl }
+    };
+
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    const result = await axios.post(url, body, config);
+    return result;
+
+  } catch (error) {
+    const errData = error?.response?.data;
+    console.log("Error al enviar audio:", errData);
+    const errMsg = errData?.error?.message || (typeof errData === 'string' ? errData : null) || error?.message || "Failed to send audio";
+    throw new Error(errMsg);
+  }
+};
+
 module.exports = {
   getWACredentials,
   sendTextMessage,
   sendInteractiveButtons,
   sendInteractiveList,
   sendImageMessage,
+  sendAudioMessage,
 };

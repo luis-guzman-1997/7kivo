@@ -1,4 +1,5 @@
-const { sendTextMessage, sendImageMessage } = require("../models/messageModel");
+const { sendTextMessage, sendImageMessage, sendAudioMessage } = require("../models/messageModel");
+const { getGeneralConfig } = require("../services/botMessagesService");
 const { sendPushToDeliveries } = require("../services/pushService");
 const {
   saveMessage,
@@ -226,6 +227,60 @@ const sendAdminImage = async (req, res) => {
   }
 };
 
+const sendAdminAudio = async (req, res) => {
+  try {
+    const { phone, audioUrl, duration, adminEmail, adminName } = req.body;
+
+    if (!phone || !audioUrl) {
+      return res.status(400).json({ ok: false, error: "phone and audioUrl are required" });
+    }
+
+    // Validate duration against org config
+    const orgConfig = await getGeneralConfig().catch(() => ({}));
+    const maxSeconds = orgConfig?.deliveryAudioMaxSeconds || 30;
+    if (duration && duration > maxSeconds) {
+      return res.status(400).json({ ok: false, error: "audio_too_long", maxSeconds });
+    }
+
+    const conversation = await getConversation(phone);
+    let withinWindow = false;
+    if (conversation?.lastUserMessageMs) {
+      withinWindow = (Date.now() - conversation.lastUserMessageMs) < WINDOW_24H_MS;
+    }
+
+    if (!withinWindow) {
+      return res.status(403).json({
+        ok: false,
+        error: "24h_window_expired",
+        message: "La ventana de 24 horas expiró.",
+        windowExpiredAt: conversation?.lastUserMessageMs
+          ? new Date(conversation.lastUserMessageMs + WINDOW_24H_MS).toISOString()
+          : null
+      });
+    }
+
+    const currentMode = await getConversationMode(phone);
+    if (currentMode !== "admin") {
+      await clearSession(phone);
+      await setConversationMode(phone, "admin", { adminEmail, adminName });
+    }
+
+    await sendAudioMessage(audioUrl, phone);
+    await saveMessage(phone, "🎵 Audio", "admin", {
+      adminEmail,
+      adminName,
+      type: "audio",
+      audioUrl,
+      duration: duration || null,
+    });
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error("Error sending admin audio:", error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+};
+
 const cancelDeliveryCase = async (req, res) => {
   try {
     const { phone, clientName, cancelCount } = req.body;
@@ -333,6 +388,7 @@ module.exports = {
   getConversationMessages,
   sendAdminMessage,
   sendAdminImage,
+  sendAdminAudio,
   takeControl,
   releaseToBot,
   checkWindow,

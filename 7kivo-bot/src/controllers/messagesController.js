@@ -187,6 +187,46 @@ const requestMessageFromWhatsapp = async (req, res) => {
                 .catch(e => console.error("Error saving image placeholder:", e.message));
             }
           })();
+        } else if (msgType === "audio" || msgType === "voice") {
+          // Audio/voice in admin mode: validate duration, download if OK
+          (async () => {
+            try {
+              const orgConfig = await getGeneralConfig();
+              const audioEnabled = orgConfig?.deliveryAudioEnabled === true;
+              const maxSeconds = orgConfig?.deliveryAudioMaxSeconds || 30;
+
+              const msgData = messageObj?.[msgType] || {};
+              const duration = msgData.duration ?? null; // seconds, provided by WhatsApp
+              const mediaId = msgData.id || "";
+
+              if (!audioEnabled) {
+                // Feature disabled: save label only
+                saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
+                  .catch(e => console.error("Error saving audio label:", e.message));
+                return;
+              }
+
+              if (duration !== null && duration > maxSeconds) {
+                // Reject: notify client
+                await sendTextMessage(
+                  `❌ Tu audio supera el límite de ${maxSeconds} segundos. Por favor envía uno más corto.`,
+                  phoneNumber
+                );
+                return;
+              }
+
+              // Download and save with audioUrl
+              const { downloadAndUploadMedia } = require("../services/mediaService");
+              const audioUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+              await saveMessage(phoneNumber, mediaInfo.label, "user", {
+                contactName, type: "audio", audioUrl, duration,
+              });
+            } catch (err) {
+              console.error("Error processing user audio:", err.message);
+              saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
+                .catch(e => console.error("Error saving audio placeholder:", e.message));
+            }
+          })();
         } else {
           // Other media in admin mode: save label so admin sees it in chat
           saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })

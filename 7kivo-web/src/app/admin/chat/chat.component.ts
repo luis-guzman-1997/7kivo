@@ -23,6 +23,8 @@ interface ChatMessage {
   text: string;
   type?: string;
   imageUrl?: string;
+  audioUrl?: string;
+  duration?: number;
   timestamp?: any;
   createdMs?: number;
   adminName?: string;
@@ -37,6 +39,7 @@ interface ChatMessage {
 export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   @ViewChild('imageInput') imageInput!: ElementRef;
+  @ViewChild('audioPreviewEl') audioPreviewEl!: ElementRef;
 
   conversations: Conversation[] = [];
   filteredConversations: Conversation[] = [];
@@ -54,6 +57,18 @@ export class ChatComponent implements OnInit, OnDestroy {
   settingsPhone = '';
   chatLiveAllowed = true;
   sendingImage = false;
+
+  // ── Audio recording ──
+  deliveryAudioEnabled = false;
+  deliveryAudioMaxSeconds = 30;
+  isRecording = false;
+  recordingSeconds = 0;
+  sendingAudio = false;
+  audioBlob: Blob | null = null;
+  audioPreviewUrl: string | null = null;
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: BlobPart[] = [];
+  private recordingTimer: any = null;
 
   // ── Delivery mode ──
   isDeliveryMode = false;
@@ -185,6 +200,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.convsUnsub) this.convsUnsub();
     if (this.msgsUnsub) this.msgsUnsub();
     if (this.windowTimer) clearInterval(this.windowTimer);
+    this.stopRecordingCleanup();
   }
 
   async loadConfig(): Promise<void> {
@@ -193,6 +209,8 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.personalWhatsApp = config?.personalWhatsApp || '';
       this.settingsPhone = this.personalWhatsApp;
       this.botApiUrl = config?.botApiUrl || this.authService.botApiUrl || (environment as any).defaultBotApiUrl || '';
+      this.deliveryAudioEnabled = config?.deliveryAudioEnabled === true;
+      this.deliveryAudioMaxSeconds = config?.deliveryAudioMaxSeconds || 30;
     } catch (err) {
       console.error('Error loading config:', err);
     }
@@ -450,6 +468,108 @@ export class ChatComponent implements OnInit, OnDestroy {
       if (this.imageInput) this.imageInput.nativeElement.value = '';
       this.cdr.detectChanges();
     }
+  }
+
+  async startRecording(): Promise<void> {
+    if (this.isRecording || !navigator.mediaDevices) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(stream);
+      this.mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) this.audioChunks.push(e.data); };
+      this.mediaRecorder.onstop = () => {
+        this.audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        if (this.audioPreviewUrl) URL.revokeObjectURL(this.audioPreviewUrl);
+        this.audioPreviewUrl = URL.createObjectURL(this.audioBlob);
+        stream.getTracks().forEach(t => t.stop());
+        this.cdr.detectChanges();
+      };
+      this.mediaRecorder.start();
+      this.isRecording = true;
+      this.recordingSeconds = 0;
+      this.recordingTimer = setInterval(() => {
+        this.recordingSeconds++;
+        this.cdr.detectChanges();
+        if (this.recordingSeconds >= this.deliveryAudioMaxSeconds) {
+          this.stopRecording();
+        }
+      }, 1000);
+    } catch {
+      this.error = 'No se pudo acceder al micrófono. Verifique los permisos.';
+    }
+  }
+
+  stopRecording(): void {
+    if (this.recordingTimer) { clearInterval(this.recordingTimer); this.recordingTimer = null; }
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+    this.isRecording = false;
+  }
+
+  cancelAudio(): void {
+    this.stopRecordingCleanup();
+    this.audioBlob = null;
+    if (this.audioPreviewUrl) { URL.revokeObjectURL(this.audioPreviewUrl); this.audioPreviewUrl = null; }
+  }
+
+  private stopRecordingCleanup(): void {
+    if (this.recordingTimer) { clearInterval(this.recordingTimer); this.recordingTimer = null; }
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+    this.isRecording = false;
+  }
+
+  async sendAudio(): Promise<void> {
+    if (!this.audioBlob || !this.selectedConversation || this.sendingAudio) return;
+    if (!this.isWithin24h) {
+      this.error = 'La ventana de 24h expiró.';
+      return;
+    }
+
+    this.sendingAudio = true;
+    this.error = '';
+
+    try {
+      const phone = this.selectedConversation.phoneNumber;
+      const ext = 'webm';
+      const path = `chat-audios/${phone}/${Date.now()}.${ext}`;
+      const audioUrl = await this.firebaseService.uploadFile(this.audioBlob as File, path);
+
+      const user = this.authService.currentUser;
+      const response = await fetch(`${this.botApiUrl}/api/${this.orgId}/send-audio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          audioUrl,
+          duration: this.recordingSeconds,
+          adminEmail: user?.email || '',
+          adminName: user?.displayName || user?.email || 'Admin'
+        })
+      });
+
+      const data = await response.json().catch(() => ({ ok: false, error: `Error HTTP ${response.status}` }));
+      if (!data.ok) {
+        this.error = data.error === '24h_window_expired'
+          ? 'La ventana de 24h expiró.'
+          : data.error || 'Error al enviar audio.';
+      } else {
+        this.cancelAudio();
+      }
+    } catch {
+      this.error = 'No se pudo enviar el audio.';
+    } finally {
+      this.sendingAudio = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  formatRecordingTime(seconds: number): string {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   }
 
   getWhatsAppLink(phone: string): string {

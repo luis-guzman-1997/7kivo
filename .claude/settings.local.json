@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(node -e \"const webpush = require\\(''web-push''\\); const keys = webpush.generateVAPIDKeys\\(\\); console.log\\(''PUBLIC:'', keys.publicKey\\); console.log\\(''PRIVATE:'', keys.privateKey\\);\")"
+      "Bash(node -e \"const webpush = require\\(''web-push''\\); const keys = webpush.generateVAPIDKeys\\(\\); console.log\\(''PUBLIC:'', keys.publicKey\\); console.log\\(''PRIVATE:'', keys.privateKey\\);\")",
+      "Bash(echo \":*)",
+      "Bash(\"C:/Users/PC/Desktop/7kivo/7kivo-web/src/app/superadmin/sa-plans/sa-plans.component.css\")"
     ]
   }
 }
