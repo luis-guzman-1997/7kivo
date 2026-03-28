@@ -1035,7 +1035,7 @@ export class FirebaseService {
     return onSnapshot(colRef, (snap) => {
       const orders = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter((o: any) => o.status !== 'resolved')
+        .filter((o: any) => o.status !== 'resolved'  /* resolved = oculto; cancelled = histórico */)
         .sort((a: any, b: any) => {
           const ta = a.createdAt?.seconds || 0;
           const tb = b.createdAt?.seconds || 0;
@@ -1062,6 +1062,11 @@ export class FirebaseService {
   async resolvePromoOrder(orderId: string): Promise<void> {
     const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
     await updateDoc(ref, { status: 'resolved' });
+  }
+
+  async cancelPromoOrder(orderId: string): Promise<void> {
+    const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
+    await updateDoc(ref, { status: 'cancelled', cancelledAt: serverTimestamp() });
   }
 
   // ==================== PLATFORM (SUPER ADMIN) ====================

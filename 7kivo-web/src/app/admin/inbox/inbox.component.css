@@ -639,3 +639,13 @@
   display: flex; align-items: center; gap: 5px;
 }
 .btn-resolve-promo:hover { background: #f1f5f9; }
+.btn-cancel-promo {
+  background: transparent; color: #ef4444; border: 1px solid #fca5a5; border-radius: 8px;
+  padding: 6px 12px; font-size: 0.78rem; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+}
+.btn-cancel-promo:hover { background: #fef2f2; }
+.promo-history { margin-top: 14px; border-top: 1px dashed #e2e8f0; padding-top: 10px; }
+.promo-history-title { font-size: 0.78rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.promo-order-card.promo-cancelled { opacity: .65; background: #f8fafc; border-color: #e2e8f0; }
+.promo-cancelled-badge { font-size: 0.75rem; color: #ef4444; font-weight: 600; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }

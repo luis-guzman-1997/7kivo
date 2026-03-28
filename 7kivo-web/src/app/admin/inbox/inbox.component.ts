@@ -64,7 +64,11 @@ export class InboxComponent implements OnInit, OnDestroy {
   private unsubPromoOrders: (() => void) | null = null;
 
   get pendingPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending'); }
-  get myPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'taken' && o.assignedTo?.uid === this.currentUserId); }
+  get activePromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending' || o.status === 'taken'); }
+  get cancelledPromoOrders(): any[] {
+    return this.promoOrders.filter(o => o.status === 'cancelled' &&
+      (!this.isDelivery || o.assignedTo?.uid === this.currentUserId));
+  }
 
   get isDeliveryOrg(): boolean { return this.authService.orgIndustry === 'delivery'; }
 
@@ -838,6 +842,13 @@ export class InboxComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     try {
       await this.firebaseService.resolvePromoOrder(order.id);
+    } catch { /* silent */ }
+  }
+
+  async cancelPromoOrder(order: any, event: Event): Promise<void> {
+    event.stopPropagation();
+    try {
+      await this.firebaseService.cancelPromoOrder(order.id);
     } catch { /* silent */ }
   }
 

@@ -57,12 +57,12 @@
       <i class="fas fa-exclamation-circle"></i> {{ promoOrderError }}
     </div>
 
-    <div class="promo-empty" *ngIf="promoOrders.length === 0">
+    <div class="promo-empty" *ngIf="activePromoOrders.length === 0 && cancelledPromoOrders.length === 0">
       <i class="fas fa-clock"></i> Sin pedidos promo activos.
     </div>
 
-    <div class="promo-orders-list" *ngIf="promoOrders.length > 0">
-      <div class="promo-order-card" *ngFor="let o of promoOrders"
+    <div class="promo-orders-list" *ngIf="activePromoOrders.length > 0">
+      <div class="promo-order-card" *ngFor="let o of activePromoOrders"
            [class.promo-taken]="o.status === 'taken'">
 
         <!-- Imagen promo -->
@@ -100,11 +100,33 @@
               *ngIf="o.assignedTo?.uid === currentUserId || !isDelivery">
               <i class="fas fa-check"></i> Resolver
             </button>
+            <button class="btn-cancel-promo" (click)="cancelPromoOrder(o, $event)"
+              *ngIf="o.assignedTo?.uid === currentUserId || !isDelivery">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
           </ng-container>
         </div>
 
       </div>
     </div>
+
+    <!-- Historial de cancelados -->
+    <div class="promo-history" *ngIf="cancelledPromoOrders.length > 0">
+      <div class="promo-history-title"><i class="fas fa-ban"></i> Cancelados</div>
+      <div class="promo-order-card promo-cancelled" *ngFor="let o of cancelledPromoOrders">
+        <div class="promo-img" *ngIf="o.imageUrl"><img [src]="o.imageUrl" alt="promo" /></div>
+        <div class="promo-info">
+          <div class="promo-name"><i class="fas fa-tag"></i> {{ o.campaignName }}</div>
+          <div class="promo-message">{{ o.promoMessage }}</div>
+          <div class="promo-meta">
+            <span class="promo-time">{{ promoTimeAgo(o) }}</span>
+            <span *ngIf="o.assignedTo?.name"><i class="fas fa-user"></i> {{ o.assignedTo.name }}</span>
+          </div>
+        </div>
+        <div class="promo-cancelled-badge"><i class="fas fa-ban"></i> Cancelado</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Loading -->
