@@ -228,7 +228,8 @@ const requestMessageFromWhatsapp = async (req, res) => {
         }
       } else {
         // Bot mode: check if user is in a flow_image or flow_location step
-        const currentSession = getSession(phoneNumber);
+        let currentSession = getSession(phoneNumber);
+        if (!currentSession) currentSession = await getSessionAsync(phoneNumber);
         if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined) {
           const flow = await getFlow(currentSession.flowId);
           const currentStep = flow?.steps?.[currentSession.flowStepIndex];
@@ -2107,7 +2108,8 @@ const requestMessageMulti = async (req, res) => {
               .catch(err => console.error("Error saving media message:", err.message));
           }
         } else {
-          const currentSession = getSession(phoneNumber);
+          let currentSession = getSession(phoneNumber);
+          if (!currentSession) currentSession = await getSessionAsync(phoneNumber);
           if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined) {
             const flow = await getFlow(currentSession.flowId);
             const currentStep = flow?.steps?.[currentSession.flowStepIndex];
