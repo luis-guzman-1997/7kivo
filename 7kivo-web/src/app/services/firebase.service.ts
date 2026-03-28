@@ -1002,6 +1002,32 @@ export class FirebaseService {
     await deleteDoc(convRef);
   }
 
+  // ==================== DELIVERY LOCATIONS ====================
+
+  async updateDeliveryLocation(userId: string, data: {
+    userId: string; userName: string; lat: number; lng: number;
+    status: 'available' | 'active';
+    activeCaseId: string | null; activeCollection: string | null; activePhone: string | null;
+  }): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'delivery_locations', userId);
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async clearDeliveryLocation(userId: string): Promise<void> {
+    try {
+      const docRef = doc(this.db, this.orgPath(), 'delivery_locations', userId);
+      await deleteDoc(docRef);
+    } catch { /* silent */ }
+  }
+
+  watchDeliveryLocations(callback: (users: any[]) => void): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'delivery_locations');
+    return onSnapshot(colRef, (snap) => {
+      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      callback(users);
+    });
+  }
+
   // ==================== PLATFORM (SUPER ADMIN) ====================
 
   async getAllOrganizations(): Promise<any[]> {
@@ -1526,6 +1552,32 @@ export class FirebaseService {
   async deleteCampaign(orgId: string, campaignId: string): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId, 'campaigns', campaignId);
     await deleteDoc(docRef);
+  }
+
+  async setCampaignKeywordTrigger(orgId: string, campaignId: string, keyword: string, flowId: string, active: boolean): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'campaign_keywords');
+    const snap = await getDoc(docRef);
+    const triggers: any[] = snap.exists() ? (snap.data()['triggers'] || []) : [];
+    const idx = triggers.findIndex((t: any) => t.campaignId === campaignId);
+    const entry = { campaignId, keyword: keyword.toUpperCase().trim(), flowId, active };
+    if (idx >= 0) triggers[idx] = entry; else triggers.push(entry);
+    await setDoc(docRef, { triggers }, { merge: true });
+  }
+
+  async removeCampaignKeywordTrigger(orgId: string, campaignId: string): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'config', 'campaign_keywords');
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return;
+    const triggers = (snap.data()['triggers'] || []).filter((t: any) => t.campaignId !== campaignId);
+    await setDoc(docRef, { triggers }, { merge: true });
+  }
+
+  async getDeliveryFlowsForOrg(orgId: string): Promise<any[]> {
+    const colRef = collection(this.db, 'organizations', orgId, 'flows');
+    const snap = await getDocs(colRef);
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter((f: any) => f.notifyDelivery === true && f.active !== false);
   }
 
   async getOrgCollectionDefs(orgId: string): Promise<any[]> {

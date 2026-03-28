@@ -32,9 +32,11 @@
             ],
             "serviceWorker": true,
             "ngswConfigPath": "ngsw-config.json",
+            "allowedCommonJsDependencies": ["leaflet"],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/leaflet/dist/leaflet.css",
               "src/styles.css"
             ],
             "scripts": [

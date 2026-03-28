@@ -34,7 +34,7 @@
   <div class="roles-reference">
     <h4><i class="fas fa-shield-alt"></i> Roles disponibles</h4>
     <div class="roles-grid">
-      <div class="role-card-ref" *ngFor="let r of availableRoles">
+      <div class="role-card-ref" *ngFor="let r of rolesForSelector">
         <span class="role-badge" [class]="'role-' + r.value">{{ r.label }}</span>
         <span class="role-desc">{{ r.desc }}</span>
         <div class="role-perms">
@@ -66,7 +66,7 @@
         <div class="form-group-admin">
           <label>Rol</label>
           <select [(ngModel)]="newAdmin.role" name="role">
-            <option *ngFor="let r of availableRoles" [value]="r.value">{{ r.label }}</option>
+            <option *ngFor="let r of rolesForSelector" [value]="r.value">{{ r.label }}</option>
           </select>
           <span class="role-hint" *ngIf="newAdmin.role">
             {{ getRoleDesc(newAdmin.role) }}
@@ -138,7 +138,7 @@
         <div class="role-change" *ngIf="canManage(admin)">
           <label>Cambiar rol:</label>
           <select [ngModel]="admin.role" (ngModelChange)="changeRole(admin, $event)">
-            <option *ngFor="let r of availableRoles" [value]="r.value">{{ r.label }}</option>
+            <option *ngFor="let r of rolesForSelector" [value]="r.value">{{ r.label }}</option>
           </select>
         </div>
       </div>

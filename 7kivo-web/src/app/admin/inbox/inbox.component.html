@@ -12,6 +12,24 @@
     </button>
   </div>
 
+  <!-- Location prompt (delivery only) -->
+  <div *ngIf="isDelivery && !locationGranted && !locationDenied && !locationError" class="push-banner location-banner">
+    <i class="fas fa-map-marker-alt"></i>
+    <span>Activa tu ubicación para poder tomar pedidos.</span>
+    <button (click)="startLocationTracking()">Activar</button>
+  </div>
+  <!-- Error recuperable (timeout / GPS frío) — muestra reintentar -->
+  <div *ngIf="isDelivery && !locationGranted && !locationDenied && locationError" class="push-banner push-banner--denied">
+    <i class="fas fa-map-marker-alt"></i>
+    <span>{{ locationError }}</span>
+    <button (click)="startLocationTracking()">Reintentar</button>
+  </div>
+  <!-- Permiso denegado explícitamente en el navegador -->
+  <div *ngIf="isDelivery && locationDenied" class="push-banner push-banner--denied">
+    <i class="fas fa-map-marker-alt"></i>
+    <span>Permiso de ubicación bloqueado en el navegador. En Chrome: toca el candado 🔒 en la barra de dirección → Permisos del sitio → Ubicación → Permitir. Luego recarga la página.</span>
+  </div>
+
   <!-- Push notification prompt (delivery only) -->
   <div *ngIf="isDelivery && pushService.isSupported && !pushEnabled && !pushDenied" class="push-banner">
     <i class="fas fa-bell"></i>
@@ -250,8 +268,8 @@
               </div>
               <div class="message-actions" (click)="$event.stopPropagation()">
                 <button class="btn-delivery-take"
-                        [disabled]="!!takingCaseId || hasActiveDeliveryCase"
-                        [title]="hasActiveDeliveryCase ? 'Debes resolver tu caso activo antes de tomar otro' : ''"
+                        [disabled]="!!takingCaseId || hasActiveDeliveryCase || !locationGranted"
+                        [title]="!locationGranted ? 'Activa tu ubicación para tomar pedidos' : hasActiveDeliveryCase ? 'Debes resolver tu caso activo antes de tomar otro' : ''"
                         (click)="takeCase(item, activeTab)">
                   <i class="fas" [class.fa-hand-paper]="takingCaseId !== item.id" [class.fa-spinner]="takingCaseId === item.id" [class.fa-spin]="takingCaseId === item.id"></i>
                   {{ takingCaseId === item.id ? 'Tomando...' : 'Tomar' }}

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
-import { AuthService } from '../../services/auth.service';  // used for hasPermission in template
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-campaigns',
@@ -12,6 +12,8 @@ export class CampaignsComponent implements OnInit {
   filteredCampaigns: any[] = [];
   loading = true;
   filterTab: string = 'all';
+
+  deliveryFlows: any[] = [];
 
   dailyBulkLimit = 0;
   totalSentToday = 0;
@@ -46,7 +48,9 @@ export class CampaignsComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.orgId = this.firebaseService.getOrgId() || '';
-    await Promise.all([this.loadCampaigns(), this.loadOrgInfo(), this.loadCollections()]);
+    const tasks: Promise<any>[] = [this.loadCampaigns(), this.loadOrgInfo(), this.loadCollections()];
+    if (this.isDeliveryOrg) tasks.push(this.loadDeliveryFlows());
+    await Promise.all(tasks);
   }
 
   async loadCampaigns(): Promise<void> {
@@ -73,6 +77,16 @@ export class CampaignsComponent implements OnInit {
     try {
       this.orgCollections = await this.firebaseService.getOrgCollectionDefs(this.orgId);
     } catch (err) { console.error(err); }
+  }
+
+  async loadDeliveryFlows(): Promise<void> {
+    try {
+      this.deliveryFlows = await this.firebaseService.getDeliveryFlowsForOrg(this.orgId);
+    } catch (err) { console.error(err); }
+  }
+
+  get isDeliveryOrg(): boolean {
+    return this.authService.orgIndustry === 'delivery';
   }
 
   computeTotals(): void {
@@ -116,7 +130,10 @@ export class CampaignsComponent implements OnInit {
       collectionId: '',
       phoneField: '',
       includeOptOut: true,
-      imageUrl: ''
+      imageUrl: '',
+      actionKeywordEnabled: false,
+      actionKeyword: '',
+      actionFlowId: ''
     };
     this.formImageFile = null;
     this.formImagePreview = '';
@@ -142,7 +159,10 @@ export class CampaignsComponent implements OnInit {
       collectionId: campaign.collectionId || '',
       phoneField: campaign.phoneField || '',
       includeOptOut: campaign.includeOptOut !== false,
-      imageUrl: campaign.imageUrl || ''
+      imageUrl: campaign.imageUrl || '',
+      actionKeywordEnabled: campaign.actionKeywordEnabled || false,
+      actionKeyword: campaign.actionKeyword || '',
+      actionFlowId: campaign.actionFlowId || ''
     };
     this.formImageFile = null;
     this.formImagePreview = campaign.imageUrl || '';
@@ -221,7 +241,10 @@ export class CampaignsComponent implements OnInit {
       recipientSource: this.form.recipientSource,
       includeOptOut: this.form.includeOptOut,
       imageUrl: this.form.imageUrl || '',
-      status
+      status,
+      actionKeywordEnabled: this.isDeliveryOrg ? (this.form.actionKeywordEnabled || false) : false,
+      actionKeyword: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionKeyword || '').toUpperCase().trim() : '',
+      actionFlowId: this.isDeliveryOrg && this.form.actionKeywordEnabled ? (this.form.actionFlowId || '') : ''
     };
     if (this.form.type === 'once') data.scheduledDate = this.form.scheduledDate;
     if (this.form.type === 'daily') {
@@ -295,6 +318,18 @@ export class CampaignsComponent implements OnInit {
         this.campaigns.unshift({ id: campaignId, ...data, sentTotal: 0, failedTotal: 0, sentToday: 0, optedOutPhones: [] });
       }
 
+      // Keyword trigger: registrar/actualizar en Firestore
+      if (this.isDeliveryOrg) {
+        if (data.actionKeywordEnabled && data.actionKeyword && data.actionFlowId) {
+          await this.firebaseService.setCampaignKeywordTrigger(
+            this.orgId, campaignId, data.actionKeyword, data.actionFlowId,
+            status === 'active' || status === 'scheduled'
+          );
+        } else {
+          await this.firebaseService.removeCampaignKeywordTrigger(this.orgId, campaignId);
+        }
+      }
+
       // Envío inmediato: llamar al bot para disparar el envío ahora
       if (status === 'active' && this.form.type === 'immediate') {
         const botApiUrl = this.authService.botApiUrl;
@@ -330,6 +365,12 @@ export class CampaignsComponent implements OnInit {
       await this.firebaseService.updateCampaign(this.orgId, campaign.id, data);
       campaign.status = newStatus;
       if (newStatus === 'active') campaign.nextRunAt = data.nextRunAt;
+      // Sync keyword trigger active state
+      if (this.isDeliveryOrg && campaign.actionKeywordEnabled && campaign.actionKeyword && campaign.actionFlowId) {
+        await this.firebaseService.setCampaignKeywordTrigger(
+          this.orgId, campaign.id, campaign.actionKeyword, campaign.actionFlowId, newStatus === 'active'
+        );
+      }
       this.applyFilter();
     } catch (err) { console.error(err); }
     finally { this.togglingId = null; }
@@ -361,6 +402,9 @@ export class CampaignsComponent implements OnInit {
     if (!this.deletingCampaign) return;
     this.deleting = true;
     try {
+      if (this.isDeliveryOrg) {
+        await this.firebaseService.removeCampaignKeywordTrigger(this.orgId, this.deletingCampaign.id);
+      }
       await this.firebaseService.deleteCampaign(this.orgId, this.deletingCampaign.id);
       this.campaigns = this.campaigns.filter(c => c.id !== this.deletingCampaign.id);
       this.applyFilter();

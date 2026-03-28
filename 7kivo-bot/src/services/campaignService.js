@@ -78,14 +78,18 @@ const runCampaign = async (orgId, campaignId) => {
   let sentCount = 0;
   let failedCount = 0;
 
+  const finalMessage = campaign.actionKeywordEnabled && campaign.actionKeyword
+    ? `${campaign.message}\n\nResponde *${campaign.actionKeyword.toUpperCase()}* para hacer tu pedido 🛵`
+    : campaign.message;
+
   for (let i = 0; i < toSend.length; i++) {
     const phone = toSend[i];
     try {
       await runWithOrgId(orgId, async () => {
         if (campaign.imageUrl) {
-          await sendImageMessage(campaign.imageUrl, campaign.message, phone);
+          await sendImageMessage(campaign.imageUrl, finalMessage, phone);
         } else {
-          await sendTextMessage(campaign.message, phone);
+          await sendTextMessage(finalMessage, phone);
         }
       });
       sentCount++;

@@ -29,6 +29,7 @@ const messagesCacheMap = {}; // { [orgId]: { data, ts } }
 const flowsCacheMap = {};    // { [orgId]: { data, ts } }
 const menuCacheMap = {};     // { [orgId]: { data, ts } }
 const keywordsCacheMap = {}; // { [orgId]: { data, ts } }
+const campaignKeywordsCacheMap = {}; // { [orgId]: { data, ts } }
 const CACHE_TTL = 60000;
 
 const clearCache = (orgId) => {
@@ -37,6 +38,7 @@ const clearCache = (orgId) => {
   delete flowsCacheMap[id];
   delete menuCacheMap[id];
   delete keywordsCacheMap[id];
+  delete campaignKeywordsCacheMap[id];
   delete orgStatusCacheMap[id];
 };
 
@@ -339,6 +341,23 @@ const getKeywords = async () => {
   }
 };
 
+// ==================== CAMPAIGN KEYWORD TRIGGERS ====================
+const getCampaignKeywordTriggers = async () => {
+  const orgId = getOrgId();
+  const now = Date.now();
+  const cached = campaignKeywordsCacheMap[orgId];
+  if (cached && now - cached.ts < CACHE_TTL) return cached.data;
+  try {
+    const doc = await getOrgRef().collection('config').doc('campaign_keywords').get();
+    const triggers = doc.exists ? (doc.data().triggers || []) : [];
+    campaignKeywordsCacheMap[orgId] = { data: triggers, ts: now };
+    return triggers;
+  } catch (error) {
+    console.error('Error loading campaign keyword triggers:', error);
+    return cached?.data || [];
+  }
+};
+
 const lookupCollectionByField = async (collectionName, fieldKey, value) => {
   try {
     const snapshot = await getOrgRef().collection(collectionName)
@@ -377,6 +396,7 @@ module.exports = {
   cancelAppointment,
   saveGcEventId,
   lookupCollectionByField,
+  getCampaignKeywordTriggers,
   getOrgStatus,
   clearCache
 };

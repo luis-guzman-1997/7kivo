@@ -1,0 +1,122 @@
+<div class="dmap-page">
+
+  <!-- Header compacto -->
+  <div class="dmap-header">
+    <h1 class="dmap-title"><i class="fas fa-map-marked-alt"></i> Mapa de Deliveries</h1>
+    <div class="dmap-legend">
+      <span class="legend-item">
+        <span class="legend-dot legend-available"></span>
+        Disponible ({{ deliveryUsers.length - activeCount }})
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot legend-active"></span>
+        Con pedido ({{ activeCount }})
+      </span>
+    </div>
+  </div>
+
+  <!-- Cuerpo: mapa full + paneles flotantes -->
+  <div class="dmap-body">
+
+    <!-- Mapa Leaflet -->
+    <div id="delivery-map-el" class="dmap-map"></div>
+
+    <!-- Panel flotante izquierdo: lista de deliveries -->
+    <div class="dmap-floating-list">
+      <div class="dmap-list-header">
+        <i class="fas fa-motorcycle"></i> Deliveries en línea
+      </div>
+      <div class="dmap-list-body">
+        <div *ngIf="deliveryUsers.length === 0" class="dmap-empty">
+          <i class="fas fa-motorcycle"></i>
+          <span>Ningún delivery ha activado su ubicación.</span>
+        </div>
+        <div *ngFor="let u of deliveryUsers"
+             class="dmap-user-row"
+             [class.selected]="selectedUser?.userId === u.userId"
+             (click)="selectUserFromList(u)">
+          <div class="dmap-avatar" [class.active]="u.status === 'active'">
+            <i class="fas fa-motorcycle"></i>
+          </div>
+          <div class="dmap-user-info">
+            <div class="dmap-user-name">{{ u.userName }}</div>
+            <div class="dmap-user-status" [class.active]="u.status === 'active'">
+              {{ getStatusLabel(u.status) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel flotante derecho: detalle al seleccionar un delivery -->
+    <div class="dmap-detail-panel" *ngIf="selectedUser">
+
+      <div class="dmap-detail-header">
+        <div class="dmap-detail-name">
+          <div class="dmap-detail-avatar" [class.active]="selectedUser.status === 'active'">
+            <i class="fas fa-motorcycle"></i>
+          </div>
+          <div>
+            <strong>{{ selectedUser.userName }}</strong>
+            <span class="dmap-detail-badge" [class.active]="selectedUser.status === 'active'">
+              {{ getStatusLabel(selectedUser.status) }}
+            </span>
+          </div>
+        </div>
+        <button class="dmap-close-btn" (click)="closePanel()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Info del pedido -->
+      <div *ngIf="selectedUser.status === 'active'" class="dmap-order-info">
+        <div class="dmap-section-label"><i class="fas fa-clipboard-list"></i> Pedido activo</div>
+        <div class="dmap-order-row" *ngIf="selectedUser.activePhone">
+          <i class="fab fa-whatsapp" style="color:#25d366"></i>
+          <span>{{ selectedUser.activePhone }}</span>
+        </div>
+      </div>
+
+      <!-- Preview conversación -->
+      <div class="dmap-conv-wrap">
+        <div class="dmap-section-label"><i class="fas fa-comments"></i> Conversación</div>
+
+        <div *ngIf="loadingPreview" class="dmap-loading">
+          <i class="fas fa-spinner fa-spin"></i> Cargando...
+        </div>
+
+        <div *ngIf="!loadingPreview && selectedUser.status !== 'active'" class="dmap-no-conv">
+          Sin pedido activo en este momento.
+        </div>
+
+        <div *ngIf="!loadingPreview && selectedUser.status === 'active' && selectedMessages.length === 0" class="dmap-no-conv">
+          Sin mensajes recientes.
+        </div>
+
+        <div class="dmap-messages" *ngIf="!loadingPreview && selectedMessages.length > 0">
+          <div *ngFor="let msg of selectedMessages"
+               class="dmap-msg"
+               [class.dmap-msg--out]="isOutgoing(msg)"
+               [class.dmap-msg--in]="!isOutgoing(msg)">
+            <div class="dmap-msg-bubble">
+              <span *ngIf="msg.mediaType === 'image' || msg.type === 'image'" class="dmap-msg-media">
+                <i class="fas fa-image"></i> Imagen
+              </span>
+              <span *ngIf="msg.mediaType === 'audio' || msg.type === 'audio'" class="dmap-msg-media">
+                <i class="fas fa-microphone"></i> Audio
+              </span>
+              <span *ngIf="msg.mediaType === 'document' || msg.type === 'document'" class="dmap-msg-media">
+                <i class="fas fa-file"></i> Documento
+              </span>
+              <span *ngIf="!msg.mediaType && msg.type !== 'image' && msg.type !== 'audio' && msg.type !== 'document'">
+                {{ msg.text || msg.body || msg.content || '(sin texto)' }}
+              </span>
+            </div>
+            <span class="dmap-msg-time">{{ msgTime(msg.timestamp || msg.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

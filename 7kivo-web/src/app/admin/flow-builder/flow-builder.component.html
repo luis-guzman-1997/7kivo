@@ -442,7 +442,7 @@
             <input type="checkbox" [(ngModel)]="currentFlow.notifyAdmin" />
             Recibir notificación al completarse
           </label>
-          <label class="fe-check">
+          <label class="fe-check" *ngIf="authService.orgIndustry === 'delivery'">
             <input type="checkbox" [(ngModel)]="currentFlow.notifyDelivery" />
             Visible para Deliveries
           </label>

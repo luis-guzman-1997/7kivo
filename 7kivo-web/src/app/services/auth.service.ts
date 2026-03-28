@@ -16,8 +16,8 @@ export const PLAN_LIMITS: Record<string, { flows: number; collections: number; a
 };
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  owner:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings', 'campaigns'],
-  admin:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'campaigns'],
+  owner:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings', 'campaigns', 'delivery_map'],
+  admin:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'campaigns', 'delivery_map'],
   editor:   ['dashboard', 'contacts', 'chat', 'inbox', 'collections'],
   viewer:   ['dashboard', 'inbox', 'chat'],
   delivery: ['dashboard', 'inbox', 'chat']
@@ -41,6 +41,7 @@ export class AuthService {
   private botPausedSubject = new BehaviorSubject<boolean>(false);
   private botBlockedSubject = new BehaviorSubject<boolean>(false);
   private botPausedReasonSubject = new BehaviorSubject<string | null>(null);
+  private orgIndustrySubject = new BehaviorSubject<string>('general');
 
   currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
   isAdmin$: Observable<boolean> = this.isAdminSubject.asObservable();
@@ -104,6 +105,7 @@ export class AuthService {
         this.botPausedSubject.next(orgDoc?.botPaused === true);
         this.botBlockedSubject.next(orgDoc?.botBlocked === true);
         this.botPausedReasonSubject.next(orgDoc?.botPausedReason || null);
+        this.orgIndustrySubject.next(orgConfig?.industry || orgDoc?.industry || 'general');
         this.isAdminSubject.next(true);
       } else {
         this.isAdminSubject.next(false);
@@ -211,6 +213,10 @@ export class AuthService {
     return this.setupCompleteSubject.value;
   }
 
+  get orgIndustry(): string {
+    return this.orgIndustrySubject.value;
+  }
+
   markSetupComplete(): void {
     this.setupCompleteSubject.next(true);
   }
@@ -249,6 +255,7 @@ export class AuthService {
       this.botPausedSubject.next(orgDoc?.botPaused === true);
       this.botBlockedSubject.next(orgDoc?.botBlocked === true);
       this.botPausedReasonSubject.next(orgDoc?.botPausedReason || null);
+      this.orgIndustrySubject.next(orgConfig?.industry || orgDoc?.industry || 'general');
     } catch (err) {
       console.error('Error setting SA org context:', err);
     }

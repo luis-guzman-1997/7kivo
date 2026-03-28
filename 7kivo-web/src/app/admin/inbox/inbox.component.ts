@@ -64,6 +64,15 @@ export class InboxComponent implements OnInit, OnDestroy {
   takingCaseId: string | null = null;
   takeError = '';
 
+  // ── Location tracking ──
+  locationGranted = false;
+  locationDenied = false;   // solo true si el permiso fue explícitamente rechazado
+  locationError = '';       // mensaje descriptivo del error
+  private watchId: number | null = null;
+  private locationInterval: any = null;
+  private currentLat: number | null = null;
+  private currentLng: number | null = null;
+
   // ── Push notifications ──
   pushPermission: NotificationPermission = 'default';
   showPushInstructions = false;
@@ -107,11 +116,93 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.refreshTimer = setInterval(() => this.silentRefresh(), interval);
     if (this.isDelivery && this.currentUserId) {
       this.checkPushStatus();
+      this.startLocationTracking();
     }
   }
 
   ngOnDestroy(): void {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
+    if (this.locationInterval) clearInterval(this.locationInterval);
+    if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
+    if (this.isDelivery && this.currentUserId) {
+      this.firebaseService.clearDeliveryLocation(this.currentUserId);
+    }
+  }
+
+  startLocationTracking(): void {
+    if (!navigator.geolocation) {
+      this.locationDenied = true;
+      this.locationError = 'Tu navegador no soporta geolocalización.';
+      return;
+    }
+    this.locationError = '';
+    this.locationDenied = false;
+
+    const onSuccess = (pos: GeolocationPosition) => {
+      this.locationGranted = true;
+      this.locationError = '';
+      this.currentLat = pos.coords.latitude;
+      this.currentLng = pos.coords.longitude;
+      this.pushLocationToFirebase();
+      if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = navigator.geolocation.watchPosition(
+        (p) => { this.currentLat = p.coords.latitude; this.currentLng = p.coords.longitude; },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+      );
+      if (!this.locationInterval) {
+        this.locationInterval = setInterval(() => this.pushLocationToFirebase(), 15000);
+      }
+    };
+
+    const onError = (err: GeolocationPositionError) => {
+      if (err.code === 1) {
+        // PERMISSION_DENIED — el usuario rechazó en el navegador
+        this.locationDenied = true;
+        this.locationError = 'Permiso denegado en el navegador.';
+      } else {
+        // POSITION_UNAVAILABLE (2) o TIMEOUT (3) — reintenta sin alta precisión
+        this.locationError = 'No se pudo obtener la ubicación. Reintentando...';
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          () => {
+            this.locationError = 'No se pudo obtener tu ubicación. Verifica que el GPS esté activo y toca "Reintentar".';
+          },
+          { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+        );
+      }
+    };
+
+    // Primer intento con alta precisión y timeout generoso para GPS frío
+    navigator.geolocation.getCurrentPosition(onSuccess, onError,
+      { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 }
+    );
+  }
+
+  private async pushLocationToFirebase(): Promise<void> {
+    if (!this.currentUserId || this.currentLat === null || this.currentLng === null) return;
+    let activeCaseId: string | null = null;
+    let activeCollection: string | null = null;
+    let activePhone: string | null = null;
+    const status: 'available' | 'active' = this.hasActiveDeliveryCase ? 'active' : 'available';
+    if (status === 'active') {
+      for (const t of this.tabs) {
+        const c = this.deliveryMyCases(t)[0];
+        if (c) { activeCaseId = c.id; activeCollection = t.collection; activePhone = c.phoneNumber || null; break; }
+      }
+    }
+    try {
+      await this.firebaseService.updateDeliveryLocation(this.currentUserId, {
+        userId: this.currentUserId,
+        userName: this.currentUserName || this.currentUserEmail,
+        lat: this.currentLat,
+        lng: this.currentLng,
+        status,
+        activeCaseId,
+        activeCollection,
+        activePhone
+      });
+    } catch { /* silent */ }
   }
 
   private async silentRefresh(): Promise<void> {
@@ -612,6 +703,13 @@ export class InboxComponent implements OnInit, OnDestroy {
   async takeCase(item: any, tab: FlowTab): Promise<void> {
     if (this.takingCaseId) return;
 
+    // Requiere ubicación activa
+    if (!this.locationGranted) {
+      this.takeError = 'Debes activar tu ubicación para tomar pedidos.';
+      setTimeout(() => this.takeError = '', 5000);
+      return;
+    }
+
     // No se permite tomar si ya tiene un caso activo en cualquier tab
     const hasActive = this.tabs.some(t => this.deliveryMyCases(t).length > 0);
     if (hasActive) {
@@ -663,6 +761,9 @@ export class InboxComponent implements OnInit, OnDestroy {
       }
 
       await this.loadTabSubmissions(tab);
+
+      // Actualizar estado de ubicación a 'active'
+      this.pushLocationToFirebase();
 
       // Navegar al chat con este cliente
       if (item.phoneNumber) {

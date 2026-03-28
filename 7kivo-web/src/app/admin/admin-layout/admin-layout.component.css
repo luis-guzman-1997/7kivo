@@ -413,6 +413,22 @@
   display: block;
 }
 
+/* Mapa delivery: sin padding, ocupa todo el alto disponible */
+.on-map-page .admin-content {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 65px);
+}
+.on-map-page .admin-content app-delivery-map {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   :host, .admin-wrapper {

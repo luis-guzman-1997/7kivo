@@ -113,6 +113,12 @@
           <!-- Message preview -->
           <p class="card-message-preview">{{ c.message }}</p>
 
+          <!-- Keyword badge -->
+          <div class="card-keyword-badge" *ngIf="c.actionKeywordEnabled && c.actionKeyword">
+            <i class="fas fa-motorcycle"></i>
+            Pedido: responde <strong>{{ c.actionKeyword }}</strong>
+          </div>
+
           <!-- Image thumb -->
           <div class="card-img-thumb" *ngIf="c.imageUrl">
             <img [src]="c.imageUrl" alt="Imagen" />
@@ -369,6 +375,40 @@
           <p class="optout-desc" *ngIf="form.includeOptOut">
             Cada mensaje incluirá: <em>"¿Deseas recibir más información como esta? Responde <strong>SI</strong> o <strong>NO</strong>"</em>. Si el contacto responde <strong>NO</strong>, se excluirá de futuros envíos de esta campaña.
           </p>
+        </div>
+
+        <!-- Acción de pedido (solo orgs delivery) -->
+        <div class="fp-group" *ngIf="isDeliveryOrg">
+          <label><i class="fas fa-motorcycle"></i> Acción de pedido delivery</label>
+          <label class="optout-toggle">
+            <input type="checkbox" [(ngModel)]="form.actionKeywordEnabled" />
+            <div class="toggle-pill"></div>
+            <span>Activar keyword de pedido</span>
+          </label>
+          <div *ngIf="form.actionKeywordEnabled" class="keyword-action-config">
+            <div class="fp-group-inline">
+              <div>
+                <label class="sub-label">Palabra clave <span class="req">*</span></label>
+                <input type="text" [(ngModel)]="form.actionKeyword"
+                  placeholder="Ej: DONAS" maxlength="30"
+                  style="text-transform:uppercase" />
+              </div>
+              <div>
+                <label class="sub-label">Flujo de pedido <span class="req">*</span></label>
+                <select [(ngModel)]="form.actionFlowId">
+                  <option value="">— Seleccionar flujo —</option>
+                  <option *ngFor="let f of deliveryFlows" [value]="f.id">{{ f.name }}</option>
+                </select>
+                <p class="collection-hint" *ngIf="deliveryFlows.length === 0">
+                  <i class="fas fa-info-circle"></i> No hay flujos de pedido delivery creados aún.
+                </p>
+              </div>
+            </div>
+            <p class="optout-desc">
+              <i class="fas fa-info-circle"></i>
+              Se añadirá al mensaje: <em>"Responde <strong>{{ form.actionKeyword || 'KEYWORD' }}</strong> para hacer tu pedido 🛵"</em>
+            </p>
+          </div>
         </div>
 
         <!-- Error -->

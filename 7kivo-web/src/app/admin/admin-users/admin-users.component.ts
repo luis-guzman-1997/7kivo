@@ -94,6 +94,16 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     return this.authService.getPlanLimits().admins;
   }
 
+  get isDeliveryOrg(): boolean {
+    return this.authService.orgIndustry === 'delivery';
+  }
+
+  get rolesForSelector() {
+    return this.isDeliveryOrg
+      ? this.availableRoles
+      : this.availableRoles.filter(r => r.value !== 'delivery');
+  }
+
   async ngOnInit(): Promise<void> {
     await this.loadAdmins();
     this.presenceUnsub = this.firebaseService.watchPresence(list => {

@@ -19,6 +19,7 @@ const {
   cancelAppointment,
   saveGcEventId,
   lookupCollectionByField,
+  getCampaignKeywordTriggers,
   getOrgStatus
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
@@ -1873,6 +1874,16 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     if (matched) {
       await sendTextMessage(kw.response, phoneNumber);
       setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+      return;
+    }
+  }
+
+  // Campaign keyword triggers (delivery orgs — exact match, case-insensitive)
+  const campaignTriggers = await getCampaignKeywordTriggers();
+  const activeCampaignTriggers = campaignTriggers.filter(t => t.active !== false && t.keyword && t.flowId);
+  for (const trigger of activeCampaignTriggers) {
+    if (lowerMessage === trigger.keyword.toLowerCase().trim()) {
+      await startFlow(phoneNumber, trigger.flowId);
       return;
     }
   }

@@ -1,4 +1,4 @@
-<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed" [class.on-chat-page]="isOnChatPage">
+<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed" [class.on-chat-page]="isOnChatPage" [class.on-map-page]="isOnMapPage">
   <!-- Backdrop (mobile) -->
   <div class="sidebar-backdrop" *ngIf="!sidebarCollapsed" (click)="toggleSidebar()" aria-hidden="true"></div>
   <!-- Sidebar -->
@@ -35,6 +35,10 @@
         <a *ngIf="authService.hasPermission('campaigns')" routerLink="/admin/campanas" routerLinkActive="active" class="nav-item-admin">
           <i class="fas fa-bullhorn"></i>
           <span>Campañas</span>
+        </a>
+        <a *ngIf="authService.orgIndustry === 'delivery' && authService.hasPermission('delivery_map')" routerLink="/admin/mapa-delivery" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-map-marked-alt"></i>
+          <span>Mapa Delivery</span>
         </a>
 
         <!-- Bot -->

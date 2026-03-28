@@ -18,6 +18,7 @@ import { AdminSetupComponent } from './admin-setup/admin-setup.component';
 import { CampaignsComponent } from './campaigns/campaigns.component';
 import { CitasComponent } from './citas/citas.component';
 import { LoginOrgComponent } from './login-org/login-org.component';
+import { DeliveryMapComponent } from './delivery-map/delivery-map.component';
 import { WaFormatPipe } from './pipes/wa-format.pipe';
 
 @NgModule({
@@ -38,7 +39,8 @@ import { WaFormatPipe } from './pipes/wa-format.pipe';
     WelcomeComponent,
     AdminSetupComponent,
     CampaignsComponent,
-    CitasComponent
+    CitasComponent,
+    DeliveryMapComponent
   ],
   imports: [
     CommonModule,
