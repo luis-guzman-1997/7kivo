@@ -21,21 +21,24 @@ const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, rej
 
   fs.writeFileSync(tmpIn, inputBuffer);
 
-  // +igndts+discardcorrupt: tolera timestamps rotos del WebM de MediaRecorder.
-  // -t N (output): limita la salida a N segundos reales de audio codificado,
-  //   sin depender de los timestamps del input (que pueden estar inflados).
-  //   Requiere escribir a archivo (no pipe) para que ffmpeg finalice el OGG
-  //   correctamente con el granule position real en la última página.
+  // Problema: MediaRecorder produce WebM con PTS inflados (ej. 5s real → 13min).
+  // +igndts solo corrige DTS, los PTS siguen inflados → granule position erróneo.
+  //
+  // Solución: forzar -ar 48000 hace que ffmpeg pase el audio por el resampleador,
+  // que regenera TODOS los timestamps desde cero basándose en el conteo de muestras
+  // (frame_index * frame_samples / 48000), ignorando completamente los PTS del input.
+  // El granule position resultante en el OGG refleja la duración real del audio.
+  //
+  // -t durationSeconds+2: límite de seguridad para evitar padding si el resampleador
+  // aún produjera algo. El +2 cubre el gap del timer entero vs duración real.
   const cmd = ffmpeg(tmpIn)
-    .inputOptions(["-fflags", "+igndts+discardcorrupt"])
+    .inputOptions(["-fflags", "+discardcorrupt"])
+    .audioFrequency(48000)   // fuerza resampleo → regenera timestamps desde muestra 0
+    .audioChannels(1)
     .audioCodec("libopus")
     .format("ogg");
 
   if (durationSeconds && durationSeconds > 0) {
-    // recordingSeconds es entero (setInterval cada 1s), el audio real puede ser
-    // hasta ~1s más largo. Se añaden 2s de buffer para no cortar el final.
-    // ffmpeg para al agotar el audio real, no añade silencio, así que el
-    // buffer extra no afecta la duración final del OGG.
     cmd.outputOptions(["-t", String(durationSeconds + 2)]);
   }
 
