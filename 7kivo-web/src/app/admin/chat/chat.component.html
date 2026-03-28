@@ -190,6 +190,7 @@
             <span>{{ cancellingCase ? 'Cancelando...' : 'Cancelar' }}</span>
           </button>
           <button class="btn-mode-toggle btn-delivery-resolve"
+                  *ngIf="authService.userRole !== 'viewer'"
                   (click)="openResolveModal()"
                   [disabled]="resolvingCase || cancellingCase"
                   title="Marcar pedido como completado">
