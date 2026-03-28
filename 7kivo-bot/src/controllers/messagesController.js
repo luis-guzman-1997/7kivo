@@ -2006,6 +2006,33 @@ const requestMessageMulti = async (req, res) => {
                   .catch(e => console.error("Error saving image placeholder:", e.message));
               }
             })();
+          } else if (msgType === "audio" || msgType === "voice") {
+            (async () => {
+              try {
+                const orgConfig = await getGeneralConfig().catch(() => ({}));
+                const maxSeconds = orgConfig?.deliveryAudioMaxSeconds || 30;
+                const rejectOverLimit = orgConfig?.deliveryAudioEnabled === true;
+                const msgData = messageObj?.[msgType] || {};
+                const duration = msgData.duration ?? null;
+                const mediaId = msgData.id || "";
+                if (rejectOverLimit && duration !== null && duration > maxSeconds) {
+                  await sendTextMessage(
+                    `❌ Tu audio supera el límite de ${maxSeconds} segundos. Por favor envía uno más corto.`,
+                    phoneNumber
+                  );
+                  return;
+                }
+                const { downloadAndUploadMedia } = require("../services/mediaService");
+                const audioUrl = await downloadAndUploadMedia(mediaId, phoneNumber);
+                await saveMessage(phoneNumber, mediaInfo.label, "user", {
+                  contactName, type: "audio", audioUrl, duration,
+                });
+              } catch (err) {
+                console.error("Error processing user audio (2):", err.message);
+                saveMessage(phoneNumber, `🎵 Audio [ERR: ${err.message}]`, "user", { contactName, type: "audio" })
+                  .catch(e => console.error("Error saving audio placeholder:", e.message));
+              }
+            })();
           } else {
             saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
               .catch(err => console.error("Error saving media message:", err.message));
