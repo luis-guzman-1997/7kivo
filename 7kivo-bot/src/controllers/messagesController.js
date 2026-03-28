@@ -227,13 +227,38 @@ const requestMessageFromWhatsapp = async (req, res) => {
             .catch(err => console.error("Error saving media message:", err.message));
         }
       } else {
-        // Bot mode: check if user is in a flow_image step first
+        // Bot mode: check if user is in a flow_image or flow_location step
         const currentSession = getSession(phoneNumber);
-        if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined &&
-            (msgType === "image" || msgType === "document")) {
+        if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined) {
           const flow = await getFlow(currentSession.flowId);
           const currentStep = flow?.steps?.[currentSession.flowStepIndex];
-          if (currentStep?.type === "image_input") {
+
+          // Handle location_input step with WhatsApp location message
+          if (currentStep?.type === "location_input" && msgType === "location") {
+            const loc = messageObj?.location || {};
+            const fieldKey = currentStep.fieldKey || "direccion";
+            const parts = [];
+            if (loc.name) parts.push(loc.name);
+            if (loc.address) parts.push(loc.address);
+            const locationText = parts.length > 0
+              ? parts.join(", ")
+              : `${loc.latitude}, ${loc.longitude}`;
+            const locationValue = {
+              text: locationText,
+              lat: loc.latitude,
+              lng: loc.longitude,
+              ...(loc.name ? { name: loc.name } : {}),
+              ...(loc.address ? { address: loc.address } : {})
+            };
+            const flowData = { ...currentSession.flowData, [fieldKey]: locationValue };
+            const nextIndex = currentSession.flowStepIndex + 1;
+            setSession(phoneNumber, { flowData, flowStepIndex: nextIndex, flowStartTime: Date.now() });
+            await executeFlowStep(phoneNumber, flow, nextIndex);
+            return res.sendStatus(200);
+          }
+
+          // Handle image_input step
+          if (currentStep?.type === "image_input" && (msgType === "image" || msgType === "document")) {
             const mediaId = messageObj?.[msgType]?.id;
             if (mediaId) {
               try {
@@ -808,6 +833,22 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
       });
       break;
 
+    case "location_input": {
+      const locPrompt = step.prompt || "📍 Por favor comparte tu ubicación o escribe tu dirección.";
+      await sendTextMessage(locPrompt, phoneNumber);
+      await sendTextMessage("Puedes usar el botón 📎 → *Ubicación* de WhatsApp, o escribir tu dirección como texto.", phoneNumber);
+      if (step.optional) {
+        await sendTextMessage("_(Puedes escribir *omitir* si no deseas indicar dirección)_", phoneNumber);
+      }
+      setSession(phoneNumber, {
+        step: "flow_location",
+        flowId: flow.id,
+        flowStepIndex: stepIndex,
+        flowStartTime: Date.now()
+      });
+      break;
+    }
+
     default:
       await sendTextMessage(step.prompt || "Continuando...", phoneNumber);
       setSession(phoneNumber, { flowStepIndex: stepIndex + 1 });
@@ -1220,7 +1261,11 @@ const completeFlow = async (phoneNumber, flow) => {
   for (const [key, value] of Object.entries(flowData)) {
     if (key.startsWith("_")) continue;
     const regex = new RegExp(`\\{${key}\\}`, "g");
-    const displayValue = typeof value === "string" ? value.toUpperCase() : String(value);
+    const displayValue = typeof value === "string"
+      ? value.toUpperCase()
+      : (value && typeof value === "object" && value.text)
+        ? value.text.toUpperCase()
+        : String(value);
     completionMsg = completionMsg.replace(regex, displayValue);
   }
 
@@ -1767,6 +1812,30 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
+  // Handle location_input step when user writes address as text
+  if (session.step === "flow_location") {
+    const flow = await getFlow(session.flowId);
+    const step = flow?.steps?.[session.flowStepIndex];
+    if (step) {
+      if (step.optional && ["omitir", "skip", "no"].includes(lowerMessage)) {
+        const nextIndex = session.flowStepIndex + 1;
+        setSession(phoneNumber, { flowStepIndex: nextIndex, flowStartTime: Date.now() });
+        await executeFlowStep(phoneNumber, flow, nextIndex);
+        return;
+      }
+      if (!message || message.trim().length < 5) {
+        await sendTextMessage("Por favor escribe una dirección válida o comparte tu ubicación con el botón 📎 → *Ubicación*.", phoneNumber);
+        return;
+      }
+      const fieldKey = step.fieldKey || "direccion";
+      const flowData = { ...session.flowData, [fieldKey]: { text: message.trim() } };
+      const nextIndex = session.flowStepIndex + 1;
+      setSession(phoneNumber, { flowData, flowStepIndex: nextIndex, flowStartTime: Date.now() });
+      await executeFlowStep(phoneNumber, flow, nextIndex);
+      return;
+    }
+  }
+
   // Waiting for select/browse/appointment but user typed text
   if (session.step === "flow_select" || session.step === "flow_browse" || session.step === "flow_browse_detail"
       || session.step === "svc_info_select"
@@ -2039,11 +2108,34 @@ const requestMessageMulti = async (req, res) => {
           }
         } else {
           const currentSession = getSession(phoneNumber);
-          if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined &&
-              (msgType === "image" || msgType === "document")) {
+          if (currentSession?.flowId && currentSession?.flowStepIndex !== undefined) {
             const flow = await getFlow(currentSession.flowId);
             const currentStep = flow?.steps?.[currentSession.flowStepIndex];
-            if (currentStep?.type === "image_input") {
+
+            // location_input: handle WhatsApp location message
+            if (currentStep?.type === "location_input" && msgType === "location") {
+              const loc = messageObj?.location || {};
+              const fieldKey = currentStep.fieldKey || "direccion";
+              const parts = [];
+              if (loc.name) parts.push(loc.name);
+              if (loc.address) parts.push(loc.address);
+              const locationText = parts.length > 0 ? parts.join(", ") : `${loc.latitude}, ${loc.longitude}`;
+              const locationValue = {
+                text: locationText,
+                lat: loc.latitude,
+                lng: loc.longitude,
+                ...(loc.name ? { name: loc.name } : {}),
+                ...(loc.address ? { address: loc.address } : {})
+              };
+              const flowData = { ...currentSession.flowData, [fieldKey]: locationValue };
+              const nextIndex = currentSession.flowStepIndex + 1;
+              setSession(phoneNumber, { flowData, flowStepIndex: nextIndex, flowStartTime: Date.now() });
+              await executeFlowStep(phoneNumber, flow, nextIndex);
+              return res.sendStatus(200);
+            }
+
+            // image_input: handle image/document
+            if (currentStep?.type === "image_input" && (msgType === "image" || msgType === "document")) {
               const mediaId = messageObj?.[msgType]?.id;
               if (mediaId) {
                 try {

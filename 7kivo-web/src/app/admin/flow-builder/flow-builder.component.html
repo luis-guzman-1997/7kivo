@@ -693,6 +693,18 @@
                   </div>
                 </ng-container>
 
+                <!-- ── DIRECCIÓN ── -->
+                <ng-container *ngIf="step.type === 'location_input'">
+                  <label class="fe-check fe-field-inline">
+                    <input type="checkbox" [(ngModel)]="step.optional" />
+                    Campo opcional (el usuario puede escribir <em>omitir</em>)
+                  </label>
+                  <div class="fe-appt-info-row" style="margin-top:8px">
+                    <i class="fas fa-info-circle"></i>
+                    <span>El usuario puede compartir su ubicación con el botón 📎 → <strong>Ubicación</strong> de WhatsApp, o escribir la dirección como texto.</span>
+                  </div>
+                </ng-container>
+
                 <!-- ── AUTH LOOKUP ── -->
                 <ng-container *ngIf="step.type === 'auth_lookup'">
                   <div class="fe-field">
