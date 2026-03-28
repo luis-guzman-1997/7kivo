@@ -217,7 +217,7 @@ const requestMessageFromWhatsapp = async (req, res) => {
               });
             } catch (err) {
               console.error("Error processing user audio:", err.message);
-              saveMessage(phoneNumber, mediaInfo.label, "user", { contactName, type: "audio" })
+              saveMessage(phoneNumber, `🎵 Audio [ERR: ${err.message}]`, "user", { contactName, type: "audio" })
                 .catch(e => console.error("Error saving audio placeholder:", e.message));
             }
           })();
