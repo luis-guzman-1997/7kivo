@@ -10,6 +10,7 @@ const convertToOgg = (inputBuffer) => new Promise((resolve, reject) => {
   const input = Readable.from(inputBuffer);
   const passthrough = ffmpeg(input)
     .inputFormat("webm")
+    .inputOptions(["-fflags", "+igndts+discardcorrupt"]) // ignore bad timestamps in webm
     .audioCodec("libopus")
     .format("ogg")
     .on("error", reject)
