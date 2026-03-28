@@ -2,35 +2,43 @@ const axios = require("axios");
 const { getOrgId } = require("../config/orgConfig");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("ffmpeg-static");
-const { Readable } = require("stream");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
 ffmpeg.setFfmpegPath(ffmpegPath);
 
+// OGG/Opus requiere seek en la salida para escribir el granule position final
+// (que es lo que WhatsApp usa para mostrar la duración). Con pipes ffmpeg no
+// puede hacer seek → WhatsApp siempre muestra 1s. Solución: archivos temp.
 const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, reject) => {
-  const chunks = [];
-  const input = Readable.from(inputBuffer);
+  const tmpIn  = path.join(os.tmpdir(), `wa_audio_in_${Date.now()}.webm`);
+  const tmpOut = path.join(os.tmpdir(), `wa_audio_out_${Date.now()}.ogg`);
 
-  // MediaRecorder graba WebM sin SeekHead/Cues correcto → ffmpeg infiere
-  // duración errónea (ej. 5s → 13min). Solución:
-  // 1. +igndts+discardcorrupt: tolerar timestamps rotos en el WebM de entrada.
-  // 2. atrim=0:N + asetpts=PTS-STARTPTS: recortar al tiempo real y resetear
-  //    los PTS a 0, lo que fuerza una duración correcta en el OGG de salida
-  //    sin modificar las flags de input (que pueden romper la decodificación).
+  const cleanup = () => {
+    try { fs.unlinkSync(tmpIn);  } catch {}
+    try { fs.unlinkSync(tmpOut); } catch {}
+  };
+
+  fs.writeFileSync(tmpIn, inputBuffer);
+
   const audioFilter = durationSeconds && durationSeconds > 0
     ? `atrim=0:${durationSeconds},asetpts=PTS-STARTPTS`
     : 'asetpts=PTS-STARTPTS';
 
-  const passthrough = ffmpeg(input)
-    .inputFormat("webm")
+  ffmpeg(tmpIn)
     .inputOptions(["-fflags", "+igndts+discardcorrupt"])
     .audioFilters(audioFilter)
     .audioCodec("libopus")
     .format("ogg")
-    .on("error", reject)
-    .pipe();
-
-  passthrough.on("data", (chunk) => chunks.push(chunk));
-  passthrough.on("end", () => resolve(Buffer.concat(chunks)));
-  passthrough.on("error", reject);
+    .on("error", (err) => { cleanup(); reject(err); })
+    .on("end", () => {
+      try {
+        const buf = fs.readFileSync(tmpOut);
+        cleanup();
+        resolve(buf);
+      } catch (e) { cleanup(); reject(e); }
+    })
+    .save(tmpOut);
 });
 
 const waConfigCacheMap = {}; // { [orgId]: { data, ts } }
