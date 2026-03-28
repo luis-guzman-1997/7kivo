@@ -225,23 +225,36 @@ const sendAudioMessage = async (audioUrl, phoneNumber) => {
 
     const { version, phoneId, token } = await getWACredentials();
 
-    const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
-    const body = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phoneNumber,
-      type: "audio",
-      audio: { link: audioUrl }
-    };
+    // 1. Download audio from Firebase Storage
+    const dlRes = await axios.get(audioUrl, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(dlRes.data);
+    const contentType = dlRes.headers["content-type"] || "audio/ogg";
 
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    // 2. Upload to WhatsApp media API (avoids link format restrictions)
+    const form = new FormData();
+    form.append("file", new Blob([buffer], { type: contentType }), "audio.ogg");
+    form.append("type", contentType);
+    form.append("messaging_product", "whatsapp");
+
+    const uploadRes = await axios.post(
+      `https://graph.facebook.com/${version}/${phoneId}/media`,
+      form,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const mediaId = uploadRes.data.id;
+
+    // 3. Send via media ID
+    const result = await axios.post(
+      `https://graph.facebook.com/${version}/${phoneId}/messages`,
+      {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: phoneNumber,
+        type: "audio",
+        audio: { id: mediaId }
       },
-    };
-
-    const result = await axios.post(url, body, config);
+      { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+    );
     return result;
 
   } catch (error) {
