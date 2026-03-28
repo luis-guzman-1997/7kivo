@@ -188,25 +188,19 @@ const requestMessageFromWhatsapp = async (req, res) => {
             }
           })();
         } else if (msgType === "audio" || msgType === "voice") {
-          // Audio/voice in admin mode: validate duration, download if OK
+          // Audio/voice in admin mode: always download for display.
+          // deliveryAudioEnabled only controls duration rejection.
           (async () => {
             try {
               const orgConfig = await getGeneralConfig();
-              const audioEnabled = orgConfig?.deliveryAudioEnabled === true;
               const maxSeconds = orgConfig?.deliveryAudioMaxSeconds || 30;
+              const rejectOverLimit = orgConfig?.deliveryAudioEnabled === true;
 
               const msgData = messageObj?.[msgType] || {};
               const duration = msgData.duration ?? null; // seconds, provided by WhatsApp
               const mediaId = msgData.id || "";
 
-              if (!audioEnabled) {
-                // Feature disabled: save label only
-                saveMessage(phoneNumber, mediaInfo.label, "user", { contactName })
-                  .catch(e => console.error("Error saving audio label:", e.message));
-                return;
-              }
-
-              if (duration !== null && duration > maxSeconds) {
+              if (rejectOverLimit && duration !== null && duration > maxSeconds) {
                 // Reject: notify client
                 await sendTextMessage(
                   `❌ Tu audio supera el límite de ${maxSeconds} segundos. Por favor envía uno más corto.`,
