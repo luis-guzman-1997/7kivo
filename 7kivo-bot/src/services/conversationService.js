@@ -43,6 +43,8 @@ const saveMessage = async (phoneNumber, text, from, extra = {}) => {
   if (extra.type) msgData.type = extra.type;
   if (extra.mediaId) msgData.mediaId = extra.mediaId;
   if (extra.imageUrl) msgData.imageUrl = extra.imageUrl;
+  if (extra.audioUrl) msgData.audioUrl = extra.audioUrl;
+  if (extra.duration != null) msgData.duration = extra.duration;
 
   await convRef.collection("messages").add(msgData);
 };
