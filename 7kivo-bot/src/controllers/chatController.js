@@ -259,16 +259,18 @@ const cancelDeliveryCase = async (req, res) => {
 
 const takeDeliveryCase = async (req, res) => {
   try {
-    const { phone, clientName, deliveryCode } = req.body;
+    const { phone, clientName, deliveryCode, deliveryName } = req.body;
     if (!phone) {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
-    let msg = `*¡Buenas noticias!*\n\nUn Delivery tomó tu solicitud.\n\nTe escribirá por WhatsApp en los próximos segundos para coordinar. 🎉`;
+    const greeting = clientName ? `Hola *${clientName}*! ` : "";
+    const agentLine = deliveryName ? `*${deliveryName}* tomó tu solicitud` : `Un Delivery tomó tu solicitud`;
+    let msg = `*¡Buenas noticias!* 🎉\n\n${greeting}${agentLine} y se pondrá en contacto contigo por este chat.`;
     if (deliveryCode) {
-      msg += `\n\n*Tu código es: ${deliveryCode}*\n\nGuárdalo. Cuando el Delivery te contacte, compáralo: si coincide, es la persona correcta.\n\n⚠️ Si alguien te escribe sin mostrarte este código, no confíes y avísanos.`;
+      msg += `\n\n*Tu código de confirmación es: ${deliveryCode}*\n\nGuárdalo. Cuando el Delivery llegue, te pedirá este código para confirmar la entrega. ✅\n\n⚠️ Si alguien te contacta sin pedirte este código, no confíes y avísanos.`;
     } else {
-      msg += `\n\nTe presentará un código de identificación. Si no te lo muestra, no confíes y escríbenos.`;
+      msg += `\n\nTe pedirá un código de confirmación al momento de la entrega.`;
     }
 
     try {

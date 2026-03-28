@@ -208,7 +208,7 @@
             <li *ngFor="let feat of plan.features"><i class="fas fa-check"></i> {{ feat }}</li>
             <li class="disabled" *ngFor="let feat of plan.disabledFeatures"><i class="fas fa-times"></i> {{ feat }}</li>
           </ul>
-          <a routerLink="/admin/login" class="btn-plan" [class.primary]="plan.popular">{{ plan.ctaText }}</a>
+          <a routerLink="/admin/login" class="btn-plan" [class.primary]="plan.popular">{{ plan.ctaText || 'Comenzar' }}</a>
         </div>
       </div>
     </div>

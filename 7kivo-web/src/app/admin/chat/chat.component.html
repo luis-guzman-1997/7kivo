@@ -1,4 +1,19 @@
 <div class="chat-wrapper" [class.chat-has-selection]="selectedConversation">
+  <!-- Modal: Reenviar código -->
+  <div class="modal-overlay" *ngIf="showResendCodeModal" (click)="showResendCodeModal = false">
+    <div class="modal-box modal-confirm" (click)="$event.stopPropagation()">
+      <h3><i class="fas fa-paper-plane"></i> Reenviar código</h3>
+      <p>¿Enviar el código <strong>{{ deliveryCode }}</strong> al cliente?</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showResendCodeModal = false">No, cancelar</button>
+        <button class="btn btn-primary" (click)="resendDeliveryCode()" [disabled]="resendingCode">
+          <i class="fas" [class.fa-paper-plane]="!resendingCode" [class.fa-spinner]="resendingCode" [class.fa-spin]="resendingCode"></i>
+          {{ resendingCode ? 'Enviando...' : 'Sí, enviar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Cancelar pedido -->
   <div class="modal-overlay" *ngIf="showCancelModal" (click)="closeCancelModal()">
     <div class="modal-box modal-confirm" (click)="$event.stopPropagation()">
@@ -17,13 +32,23 @@
   <!-- Modal: Pedido completado -->
   <div class="modal-overlay" *ngIf="showResolveModal" (click)="closeResolveModal()">
     <div class="modal-box modal-confirm" (click)="$event.stopPropagation()">
-      <h3><i class="fas fa-check-circle text-success"></i> Pedido completado</h3>
-      <p>¿Marcar este pedido como completado? Se notificará al cliente.</p>
+      <h3><i class="fas fa-check-circle text-success"></i> Confirmar entrega</h3>
+      <p>Pide al cliente su código de confirmación e ingrésalo para completar el pedido.</p>
+      <div class="resolve-code-input">
+        <label>Código del cliente</label>
+        <input type="text" [(ngModel)]="resolveConfirmCode"
+               placeholder="Ej: 24810"
+               (keyup.enter)="confirmResolveDeliveryCase()"
+               autocomplete="off">
+        <span class="resolve-code-error" *ngIf="resolveCodeError">
+          <i class="fas fa-exclamation-circle"></i> {{ resolveCodeError }}
+        </span>
+      </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="closeResolveModal()">No, volver</button>
-        <button class="btn btn-success" (click)="confirmResolveDeliveryCase()" [disabled]="resolvingCase">
+        <button class="btn btn-secondary" (click)="closeResolveModal()">Cancelar</button>
+        <button class="btn btn-success" (click)="confirmResolveDeliveryCase()" [disabled]="resolvingCase || !resolveConfirmCode.trim()">
           <i class="fas" [class.fa-spinner]="resolvingCase" [class.fa-spin]="resolvingCase" [class.fa-check]="!resolvingCase"></i>
-          {{ resolvingCase ? 'Completando...' : 'Sí, completado' }}
+          {{ resolvingCase ? 'Completando...' : 'Confirmar entrega' }}
         </button>
       </div>
     </div>
@@ -85,7 +110,7 @@
           <div class="conv-bottom">
             <span class="conv-mode-tag" *ngIf="conv.mode === 'admin'">Admin</span>
             <span class="conv-mode-tag bot-tag" *ngIf="conv.mode !== 'admin'">Bot</span>
-            <span class="conv-phone">{{ formatPhone(conv.phoneNumber) }}</span>
+            <span class="conv-phone">{{ isDeliveryMode ? deliveryCode : formatPhone(conv.phoneNumber) }}</span>
             <span class="conv-badge" *ngIf="(conv.unreadCount || 0) > 0">{{ conv.unreadCount }}</span>
           </div>
         </div>
@@ -120,18 +145,21 @@
           <i class="fas" [class.fa-user]="!isAdminMode" [class.fa-headset]="isAdminMode"></i>
         </div>
         <!-- Name/phone only in top row when in bot mode; in admin mode shown in the actions bar -->
-        <div class="header-details" *ngIf="!isAdminMode">
+        <div class="header-details" *ngIf="!isAdminMode || isDeliveryMode">
           <span class="header-name">{{ getContactDisplayName(selectedConversation) }}</span>
-          <span class="header-phone">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
+          <span class="header-phone" *ngIf="!isDeliveryMode">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
+          <span class="header-phone" *ngIf="isDeliveryMode && deliveryCode">
+            <i class="fas fa-key" style="font-size:0.7em;margin-right:3px;"></i>{{ deliveryCode }}
+          </span>
         </div>
         <div class="window-indicator" [class.active]="isWithin24h" [class.expired]="!isWithin24h">
           <i class="fas" [class.fa-clock]="isWithin24h" [class.fa-exclamation-triangle]="!isWithin24h"></i>
           <span *ngIf="isWithin24h">{{ windowTimeLeft }}</span>
           <span *ngIf="!isWithin24h">24h</span>
         </div>
-        <a [href]="getWhatsAppLink(selectedConversation.phoneNumber)"
-           target="_blank" class="btn-wa-personal"
-           [title]="isDeliveryMode && deliveryCode ? 'Contactar con mensaje que incluye tu clave de identificación' : 'Abrir WhatsApp personal'">
+        <a *ngIf="!isDeliveryMode"
+           [href]="getWhatsAppLink(selectedConversation.phoneNumber)"
+           target="_blank" class="btn-wa-personal" title="Abrir WhatsApp personal">
           <i class="fab fa-whatsapp"></i>
         </a>
       </div>
@@ -142,21 +170,31 @@
         <ng-container *ngIf="isDeliveryMode">
           <div class="admin-client-info">
             <span class="admin-client-name">{{ getContactDisplayName(selectedConversation) }}</span>
-            <span class="admin-client-phone">{{ formatPhone(selectedConversation.phoneNumber) }}</span>
+            <span class="delivery-code-badge" *ngIf="deliveryCode">
+              <i class="fas fa-key"></i> {{ deliveryCode }}
+            </span>
           </div>
+          <button class="btn-resend-code"
+                  *ngIf="deliveryCode"
+                  (click)="showResendCodeModal = true"
+                  [disabled]="resendingCode"
+                  title="Reenviar código al cliente">
+            <i class="fas" [class.fa-paper-plane]="!resendingCode" [class.fa-spinner]="resendingCode" [class.fa-spin]="resendingCode"></i>
+            <span>{{ resendingCode ? 'Enviando...' : 'Código' }}</span>
+          </button>
           <button class="btn-mode-toggle btn-delivery-cancel"
                   (click)="openCancelModal()"
                   [disabled]="cancellingCase || resolvingCase"
                   title="Cancelar pedido">
             <i class="fas" [class.fa-times-circle]="!cancellingCase" [class.fa-spinner]="cancellingCase" [class.fa-spin]="cancellingCase"></i>
-            {{ cancellingCase ? 'Cancelando...' : 'Cancelar Pedido' }}
+            <span>{{ cancellingCase ? 'Cancelando...' : 'Cancelar' }}</span>
           </button>
           <button class="btn-mode-toggle btn-delivery-resolve"
                   (click)="openResolveModal()"
                   [disabled]="resolvingCase || cancellingCase"
                   title="Marcar pedido como completado">
             <i class="fas" [class.fa-check-circle]="!resolvingCase" [class.fa-spinner]="resolvingCase" [class.fa-spin]="resolvingCase"></i>
-            {{ resolvingCase ? 'Completando...' : 'Pedido Completado' }}
+            <span>{{ resolvingCase ? 'Completando...' : 'Completar' }}</span>
           </button>
         </ng-container>
 
@@ -251,9 +289,9 @@
             <img *ngIf="msg.type === 'image' && msg.imageUrl"
                  [src]="msg.imageUrl" class="message-image"
                  (click)="openImage(msg.imageUrl!)" alt="Imagen">
-            <p class="message-text" *ngIf="msg.type !== 'image' || !msg.imageUrl">{{ msg.text }}</p>
-            <p class="message-caption" *ngIf="msg.type === 'image' && msg.imageUrl && msg.text && msg.text !== '📷 Foto'">{{ msg.text }}</p>
-            <span class="message-text msg-image-placeholder" *ngIf="msg.type === 'image' && !msg.imageUrl">{{ msg.text }}</span>
+            <p class="message-text" *ngIf="msg.type !== 'image' || !msg.imageUrl" [innerHTML]="msg.text | waFormat"></p>
+            <p class="message-caption" *ngIf="msg.type === 'image' && msg.imageUrl && msg.text && msg.text !== '📷 Foto'" [innerHTML]="msg.text | waFormat"></p>
+            <span class="message-text msg-image-placeholder" *ngIf="msg.type === 'image' && !msg.imageUrl" [innerHTML]="msg.text | waFormat"></span>
             <span class="message-time">{{ formatMessageTime(msg.timestamp) }}</span>
           </div>
         </div>
@@ -273,20 +311,16 @@
           <strong>Ventana de 24h expirada</strong>
           <p>Ya no puedes enviar mensajes por el bot. Contacta desde WhatsApp personal.</p>
         </div>
-        <a [href]="getWhatsAppLink(selectedConversation.phoneNumber)"
+        <a *ngIf="!isDeliveryMode"
+           [href]="getWhatsAppLink(selectedConversation.phoneNumber)"
            target="_blank" class="btn-wa-redirect">
           <i class="fab fa-whatsapp"></i> Abrir WhatsApp
         </a>
       </div>
     </div>
 
-    <!-- Delivery: no puede enviar mensajes -->
-    <div class="chat-input viewer-notice" *ngIf="isDeliveryMode">
-      <i class="fas fa-info-circle"></i> Solo puedes completar o cancelar el pedido desde los botones de arriba.
-    </div>
-
-    <!-- Input Area -->
-    <div class="chat-input" *ngIf="!isDeliveryMode && isWithin24h && authService.userRole !== 'viewer' && chatLiveAllowed">
+    <!-- Input Area (delivery + admin) -->
+    <div class="chat-input" *ngIf="(isDeliveryMode || (!isDeliveryMode && authService.userRole !== 'viewer' && chatLiveAllowed)) && isWithin24h">
       <div class="input-error" *ngIf="error">
         <i class="fas fa-exclamation-circle"></i> {{ error }}
         <button (click)="error = ''"><i class="fas fa-times"></i></button>
@@ -317,6 +351,9 @@
     </div>
     <div class="chat-input viewer-notice" *ngIf="!isDeliveryMode && authService.userRole !== 'viewer' && !chatLiveAllowed">
       <i class="fas fa-lock"></i> Chat en vivo no disponible en tu plan actual. Puedes visualizar las conversaciones.
+    </div>
+    <div class="chat-input viewer-notice" *ngIf="(isDeliveryMode || (!isDeliveryMode && authService.userRole !== 'viewer' && chatLiveAllowed)) && !isWithin24h">
+      <i class="fas fa-exclamation-triangle"></i> La ventana de 24h expiró. El cliente debe escribir primero para reactivar el chat.
     </div>
   </div>
 

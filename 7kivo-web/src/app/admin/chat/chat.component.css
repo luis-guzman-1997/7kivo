@@ -354,6 +354,21 @@
   min-width: 0;
 }
 
+.delivery-code-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16,185,129,0.12);
+  color: #059669;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 2px;
+  letter-spacing: 0.03em;
+}
+.delivery-code-badge i { font-size: 0.7rem; }
+
 .admin-client-name {
   font-weight: 600;
   font-size: 0.88rem;
@@ -1163,15 +1178,23 @@
     display: none;
   }
 
-  /* Delivery: botones en fila, touch-friendly */
+  /* Delivery: 3 botones iguales, compactos pero legibles */
+  .chat-header-actions .btn-resend-code,
   .chat-header-actions .btn-delivery-cancel,
   .chat-header-actions .btn-delivery-resolve {
     flex: 1;
-    min-width: 120px;
+    min-width: 0;
     justify-content: center;
-    padding: 10px 12px;
-    font-size: 0.8rem;
+    padding: 6px 4px;
+    font-size: 0.65rem;
+    gap: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+  .chat-header-actions .btn-resend-code i,
+  .chat-header-actions .btn-delivery-cancel i,
+  .chat-header-actions .btn-delivery-resolve i { font-size: 0.85rem; }
 
   .mode-control { width: 100%; justify-content: space-between; gap: 8px; }
 
@@ -1274,6 +1297,23 @@
   background: #f8fafc; border-top: 1px solid #e2e8f0;
 }
 
+.btn-resend-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.btn-resend-code:hover:not(:disabled) { background: #e0f2fe; }
+.btn-resend-code:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .btn-delivery-resolve {
   display: inline-flex;
   align-items: center;
@@ -1290,6 +1330,55 @@
 }
 .btn-delivery-resolve:hover:not(:disabled) { background: #15803d; }
 .btn-delivery-resolve:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-delivery-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-delivery-cancel:hover:not(:disabled) { background: #b91c1c; }
+.btn-delivery-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Modal: confirmar entrega con código ── */
+.resolve-code-input {
+  margin: 12px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.resolve-code-input label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+.resolve-code-input input {
+  padding: 10px 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.resolve-code-input input:focus { border-color: #16a34a; }
+.resolve-code-error {
+  font-size: 0.8rem;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 /* ── Delivery order detail panel ── */
 .delivery-order-panel {

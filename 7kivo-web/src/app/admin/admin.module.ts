@@ -18,11 +18,13 @@ import { AdminSetupComponent } from './admin-setup/admin-setup.component';
 import { CampaignsComponent } from './campaigns/campaigns.component';
 import { CitasComponent } from './citas/citas.component';
 import { LoginOrgComponent } from './login-org/login-org.component';
+import { WaFormatPipe } from './pipes/wa-format.pipe';
 
 @NgModule({
   declarations: [
     LoginComponent,
     LoginOrgComponent,
+    WaFormatPipe,
     AdminLayoutComponent,
     DashboardComponent,
     StudentsComponent,

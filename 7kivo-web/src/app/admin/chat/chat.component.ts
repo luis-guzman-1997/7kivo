@@ -62,10 +62,15 @@ export class ChatComponent implements OnInit, OnDestroy {
   deliveryCollection: string | null = null;
   deliveryUserName = '';
   deliveryCode = '';
+  deliveryTakenAt: number | null = null;
   resolvingCase = false;
   cancellingCase = false;
+  resendingCode = false;
+  showResendCodeModal = false;
   showCancelModal = false;
   showResolveModal = false;
+  resolveConfirmCode = '';
+  resolveCodeError = '';
   deliverySubmission: any = null;
   showDeliveryDetail = false;
 
@@ -117,11 +122,19 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.deliverySubmissionId = params['submissionId'] || null;
         this.deliveryCollection = params['collection'] || null;
         this.deliveryCode = params['deliveryCode'] || '';
+        this.deliveryTakenAt = params['takenAt'] ? +params['takenAt'] : null;
         if (this.deliverySubmissionId && this.deliveryCollection) {
           const sub = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
           this.deliverySubmission = sub || null;
           if (!this.deliveryCode) {
             this.deliveryCode = sub?.deliveryCode || sub?.assignedTo?.deliveryCode || '';
+          }
+          // Siempre preferir assignedAt del servidor (mismo reloj que los timestamps de mensajes)
+          // para evitar desfase entre el reloj del cliente (Date.now()) y el servidor de Firestore
+          if (sub?.assignedAt) {
+            const assignedMs = sub.assignedAt?.toMillis?.()
+              ?? (sub.assignedAt?.seconds ? sub.assignedAt.seconds * 1000 : null);
+            if (assignedMs) this.deliveryTakenAt = assignedMs;
           }
         }
       } else {
@@ -134,7 +147,12 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.deliveryCollection = activeCase.collection;
           this.deliveryCode = activeCase.deliveryCode || '';
           try {
-            this.deliverySubmission = await this.firebaseService.getDocument(activeCase.collection, activeCase.submissionId);
+            const sub = await this.firebaseService.getDocument(activeCase.collection, activeCase.submissionId);
+            this.deliverySubmission = sub;
+            if (sub?.assignedAt) {
+              this.deliveryTakenAt = sub.assignedAt?.toMillis?.()
+                ?? (sub.assignedAt?.seconds ? sub.assignedAt.seconds * 1000 : null);
+            }
           } catch { /* silent */ }
         } else {
           this.router.navigate(['/admin/bandeja']);
@@ -201,13 +219,19 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.windowTimer) clearInterval(this.windowTimer);
 
     const listenPhone = conv.phoneNumber;
+    // En modo delivery, filtrar por createdMs directo en Firestore para evitar el límite
+    // de 100 mensajes históricos y asegurar que los mensajes nuevos siempre se capturen
+    const sinceMs = (this.isDeliveryMode && this.deliveryTakenAt)
+      ? this.deliveryTakenAt - 1000
+      : undefined;
     this.msgsUnsub = this.firebaseService.onConversationMessages(
       listenPhone,
       (msgs) => {
         if (this.selectedConversation?.phoneNumber !== listenPhone) return;
         this.messages = msgs;
         setTimeout(() => this.scrollToBottom(), 100);
-      }
+      },
+      sinceMs
     );
 
     this.firebaseService.markConversationRead(conv.phoneNumber).catch(() => {});
@@ -303,7 +327,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   async sendMessage(): Promise<void> {
     if (!this.newMessage.trim() || !this.selectedConversation || this.sending) return;
     if (!this.isWithin24h) {
-      this.error = 'La ventana de 24h expiró. Use WhatsApp personal.';
+      this.error = 'La ventana de 24h expiró. El cliente debe escribir primero para reactivar el chat.';
       return;
     }
 
@@ -608,16 +632,44 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   openResolveModal(): void {
+    this.resolveConfirmCode = '';
+    this.resolveCodeError = '';
     this.showResolveModal = true;
   }
 
   closeResolveModal(): void {
     this.showResolveModal = false;
+    this.resolveConfirmCode = '';
+    this.resolveCodeError = '';
   }
 
   async confirmResolveDeliveryCase(): Promise<void> {
+    if (this.resolveConfirmCode.trim() !== this.deliveryCode.trim()) {
+      this.resolveCodeError = 'Código incorrecto. Pide al cliente su código de confirmación.';
+      return;
+    }
     this.closeResolveModal();
     await this.resolveDeliveryCase();
+  }
+
+  async resendDeliveryCode(): Promise<void> {
+    if (!this.selectedConversation || this.resendingCode || !this.deliveryCode) return;
+    this.showResendCodeModal = false;
+    this.resendingCode = true;
+    const msg = `🔑 Tu código de confirmación es: *${this.deliveryCode}*\n\nCuando el Delivery llegue, dile este código para confirmar la entrega. ✅`;
+    try {
+      await fetch(`${this.botApiUrl}/api/${this.orgId}/send-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: this.selectedConversation.phoneNumber,
+          message: msg,
+          adminName: this.deliveryUserName || 'Delivery',
+          adminEmail: this.authService.currentUser?.email || ''
+        })
+      });
+    } catch { /* silent */ }
+    this.resendingCode = false;
   }
 
   async resolveDeliveryCase(): Promise<void> {

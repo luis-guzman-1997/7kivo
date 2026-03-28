@@ -207,20 +207,12 @@
                 </div>
                 <div class="message-bottom">
                   <span class="badge badge-read">En progreso</span>
-                  <a *ngIf="item.phoneNumber" [href]="getDeliveryWhatsAppMessageLink(item.phoneNumber, getPersonName(item), item.deliveryCode || item.assignedTo?.deliveryCode || '')" target="_blank"
-                     class="phone-link" (click)="$event.stopPropagation()" title="Contactar por WhatsApp (mensaje con tu clave)">
-                    <i class="fab fa-whatsapp"></i> Contactar
-                  </a>
                 </div>
               </div>
               <div class="message-actions" (click)="$event.stopPropagation()">
                 <button class="btn-icon btn-delivery-go" (click)="goToChat(item, activeTab)" title="Ir al chat">
                   <i class="fas fa-comments"></i>
                 </button>
-                <a *ngIf="item.phoneNumber" [href]="getDeliveryWhatsAppMessageLink(item.phoneNumber, getPersonName(item), item.deliveryCode || item.assignedTo?.deliveryCode || '')" target="_blank"
-                   class="btn-icon btn-wa" title="Contactar por WhatsApp (mensaje con tu clave)">
-                  <i class="fab fa-whatsapp"></i>
-                </a>
               </div>
             </div>
           </div>
@@ -374,7 +366,7 @@
           <label>{{ field.label }}</label>
           <span [class.detail-long]="field.value.length > 60">{{ field.value }}</span>
         </div>
-        <div class="detail-row" *ngIf="selectedItem.phoneNumber">
+        <div class="detail-row" *ngIf="selectedItem.phoneNumber && !isDelivery">
           <label>Teléfono</label>
           <a [href]="getWhatsAppLink(selectedItem.phoneNumber)" target="_blank" class="whatsapp-link">
             <i class="fab fa-whatsapp"></i> {{ selectedItem.phoneNumber }}
@@ -426,10 +418,10 @@
                 (click)="openReschedule()">
           <i class="fas fa-calendar-alt"></i> Reagendar
         </button>
-        <a *ngIf="selectedItem.phoneNumber"
-           [href]="isDelivery ? getDeliveryWhatsAppMessageLink(selectedItem.phoneNumber, getPersonName(selectedItem), selectedItem.deliveryCode || selectedItem.assignedTo?.deliveryCode || '') : getWhatsAppMessageLink(selectedItem.phoneNumber, getPersonName(selectedItem))"
+        <a *ngIf="selectedItem.phoneNumber && !isDelivery"
+           [href]="getWhatsAppMessageLink(selectedItem.phoneNumber, getPersonName(selectedItem))"
            target="_blank" class="btn-modal btn-wa-full">
-          <i class="fab fa-whatsapp"></i> {{ isDelivery ? 'Contactar por WhatsApp' : 'Responder por WhatsApp' }}
+          <i class="fab fa-whatsapp"></i> Responder por WhatsApp
         </a>
         <button *ngIf="selectedItem.status !== 'resolved' && selectedTab"
                 class="btn-modal btn-resolve-full"

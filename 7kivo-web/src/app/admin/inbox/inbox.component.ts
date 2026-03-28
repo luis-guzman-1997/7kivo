@@ -654,7 +654,9 @@ export class InboxComponent implements OnInit, OnDestroy {
             body: JSON.stringify({
               phone: item.phoneNumber,
               clientName: this.getPersonName(item),
-              deliveryCode
+              deliveryCode,
+              deliveryName: this.currentUserName || '',
+              deliveryWaPhone: this.currentUserWaPhone || ''
             })
           });
         } catch { /* silent — no bloquea el flujo */ }
@@ -669,7 +671,8 @@ export class InboxComponent implements OnInit, OnDestroy {
             phone: item.phoneNumber,
             submissionId: item.id,
             collection: tab.collection,
-            deliveryCode
+            deliveryCode,
+            takenAt: Date.now()
           }
         });
       }
@@ -683,12 +686,16 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   goToChat(item: any, tab: FlowTab): void {
     const code = item.deliveryCode || item.assignedTo?.deliveryCode;
+    const takenAt = item.assignedAt?.seconds
+      ? item.assignedAt.seconds * 1000
+      : item.assignedAt?.toMillis?.() || null;
     this.router.navigate(['/admin/chat'], {
       queryParams: {
         phone: item.phoneNumber,
         submissionId: item.id,
         collection: tab.collection,
-        ...(code ? { deliveryCode: code } : {})
+        ...(code ? { deliveryCode: code } : {}),
+        ...(takenAt ? { takenAt } : {})
       }
     });
   }

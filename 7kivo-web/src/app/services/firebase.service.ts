@@ -944,10 +944,18 @@ export class FirebaseService {
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
-  onConversationMessages(phoneNumber: string, callback: (msgs: any[]) => void): Unsubscribe {
+  onConversationMessages(
+    phoneNumber: string,
+    callback: (msgs: any[]) => void,
+    sinceMs?: number
+  ): Unsubscribe {
     const cleanPhone = phoneNumber.replace(/\D/g, '');
     const colRef = collection(this.db, this.orgPath(), 'conversations', cleanPhone, 'messages');
-    const q = query(colRef, orderBy('timestamp', 'asc'), limit(100));
+    // Para modo delivery: filtrar por createdMs en Firestore para que onSnapshot
+    // capture siempre los mensajes nuevos sin importar cuántos mensajes históricos haya
+    const q = sinceMs
+      ? query(colRef, where('createdMs', '>=', sinceMs), orderBy('createdMs', 'asc'))
+      : query(colRef, orderBy('timestamp', 'asc'), limit(100));
     return onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       callback(msgs);
