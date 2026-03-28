@@ -21,19 +21,19 @@ const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, rej
 
   fs.writeFileSync(tmpIn, inputBuffer);
 
-  // Problema: MediaRecorder produce WebM con PTS inflados (ej. 5s real → 13min).
-  // +igndts solo corrige DTS, los PTS siguen inflados → granule position erróneo.
+  // Problema: MediaRecorder produce WebM con PTS inflados (ej. 5s real → 13min PTS).
+  // Con -ar 48000 como no-op (fuente ya es 48kHz), los PTS inflados se propagan al encoder.
+  // Cuando llega -t N, ffmpeg ve el 2do frame con PTS=13min > N → detiene tras 1 frame
+  // → OGG tiene granule position de ~1 frame → WhatsApp muestra 1 segundo.
   //
-  // Solución: forzar -ar 48000 hace que ffmpeg pase el audio por el resampleador,
-  // que regenera TODOS los timestamps desde cero basándose en el conteo de muestras
-  // (frame_index * frame_samples / 48000), ignorando completamente los PTS del input.
-  // El granule position resultante en el OGG refleja la duración real del audio.
-  //
-  // -t durationSeconds+2: límite de seguridad para evitar padding si el resampleador
-  // aún produjera algo. El +2 cubre el gap del timer entero vs duración real.
+  // Solución: asetpts=NB_CONSUMED_SAMPLES/SR/TB regenera el PTS de cada frame a partir
+  // del conteo acumulado de muestras reales, ignorando completamente los PTS del input.
+  // Frame 1: PTS=0, Frame 2: PTS=960/48000=0.02s, ..., garantizando PTS correctos y
+  // secuenciales para que -t N y el granule position del OGG sean precisos.
   const cmd = ffmpeg(tmpIn)
     .inputOptions(["-fflags", "+discardcorrupt"])
-    .audioFrequency(48000)   // fuerza resampleo → regenera timestamps desde muestra 0
+    .audioFilters("asetpts=NB_CONSUMED_SAMPLES/SR/TB")  // regenera PTS desde muestras reales
+    .audioFrequency(48000)
     .audioChannels(1)
     .audioCodec("libopus")
     .format("ogg");
