@@ -164,7 +164,7 @@
               </div>
               <div class="cal-appt-actions" (click)="$event.stopPropagation()">
                 <span class="badge" [ngClass]="'badge-' + appt.status">{{ getStatusLabel(appt.status) }}</span>
-                <button *ngIf="appt.status !== 'resolved'" class="btn-mini-resolve"
+                <button *ngIf="appt.status !== 'resolved' && !isDelivery" class="btn-mini-resolve"
                         (click)="markAsResolved(appt, activeTab)" title="Marcar resuelto">
                   <i class="fas fa-check"></i>
                 </button>
@@ -329,7 +329,7 @@
                 </div>
               </div>
               <div class="message-actions" (click)="$event.stopPropagation()">
-                <button *ngIf="item.status !== 'resolved'" class="btn-icon btn-resolve"
+                <button *ngIf="item.status !== 'resolved' && !isDelivery" class="btn-icon btn-resolve"
                         (click)="markAsResolved(item, activeTab)" title="Marcar como resuelto">
                   <i class="fas fa-check-circle"></i>
                 </button>
@@ -423,7 +423,7 @@
            target="_blank" class="btn-modal btn-wa-full">
           <i class="fab fa-whatsapp"></i> Responder por WhatsApp
         </a>
-        <button *ngIf="selectedItem.status !== 'resolved' && selectedTab"
+        <button *ngIf="selectedItem.status !== 'resolved' && selectedTab && !isDelivery"
                 class="btn-modal btn-resolve-full"
                 (click)="markAsResolved(selectedItem, selectedTab); closeDetail()">
           <i class="fas fa-check-circle"></i> Marcar como Resuelto
