@@ -21,15 +21,21 @@ const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, rej
 
   fs.writeFileSync(tmpIn, inputBuffer);
 
-  const audioFilter = durationSeconds && durationSeconds > 0
-    ? `atrim=0:${durationSeconds},asetpts=PTS-STARTPTS`
-    : 'asetpts=PTS-STARTPTS';
-
-  ffmpeg(tmpIn)
+  // +igndts+discardcorrupt: tolera timestamps rotos del WebM de MediaRecorder.
+  // -t N (output): limita la salida a N segundos reales de audio codificado,
+  //   sin depender de los timestamps del input (que pueden estar inflados).
+  //   Requiere escribir a archivo (no pipe) para que ffmpeg finalice el OGG
+  //   correctamente con el granule position real en la última página.
+  const cmd = ffmpeg(tmpIn)
     .inputOptions(["-fflags", "+igndts+discardcorrupt"])
-    .audioFilters(audioFilter)
     .audioCodec("libopus")
-    .format("ogg")
+    .format("ogg");
+
+  if (durationSeconds && durationSeconds > 0) {
+    cmd.outputOptions(["-t", String(durationSeconds)]);
+  }
+
+  cmd
     .on("error", (err) => { cleanup(); reject(err); })
     .on("end", () => {
       try {
