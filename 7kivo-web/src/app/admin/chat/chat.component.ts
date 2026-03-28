@@ -70,6 +70,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   private audioChunks: BlobPart[] = [];
   private recordingTimer: any = null;
 
+  // ── Audio player custom ──
+  audioPlayers: Map<string, { el: HTMLAudioElement; playing: boolean; current: number; duration: number }> = new Map();
+
   // ── Delivery mode ──
   isDeliveryMode = false;
   deliveryPhone: string | null = null;
@@ -856,6 +859,39 @@ export class ChatComponent implements OnInit, OnDestroy {
       fields.push({ label, value: String(val) });
     }
     return fields;
+  }
+
+  // ── Custom audio player methods ──
+  getPlayer(msgId: string, audioUrl: string) {
+    if (!this.audioPlayers.has(msgId)) {
+      const el = new Audio(audioUrl);
+      const state = { el, playing: false, current: 0, duration: 0 };
+      el.addEventListener('loadedmetadata', () => { state.duration = el.duration || 0; this.cdr.detectChanges(); });
+      el.addEventListener('timeupdate', () => { state.current = el.currentTime; this.cdr.detectChanges(); });
+      el.addEventListener('ended', () => { state.playing = false; state.current = 0; el.currentTime = 0; this.cdr.detectChanges(); });
+      this.audioPlayers.set(msgId, state);
+    }
+    return this.audioPlayers.get(msgId)!;
+  }
+
+  toggleAudio(msgId: string, audioUrl: string) {
+    const state = this.getPlayer(msgId, audioUrl);
+    // Pause any other playing audio
+    this.audioPlayers.forEach((s, id) => { if (id !== msgId && s.playing) { s.el.pause(); s.playing = false; } });
+    if (state.playing) {
+      state.el.pause();
+      state.playing = false;
+    } else {
+      state.el.play().catch(() => {});
+      state.playing = true;
+    }
+  }
+
+  formatAudioTime(seconds: number): string {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   }
 
   private scrollToBottom(): void {

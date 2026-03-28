@@ -289,8 +289,24 @@
             <img *ngIf="msg.type === 'image' && msg.imageUrl"
                  [src]="msg.imageUrl" class="message-image"
                  (click)="openImage(msg.imageUrl!)" alt="Imagen">
-            <audio *ngIf="msg.type === 'audio' && msg.audioUrl"
-                   controls [src]="msg.audioUrl" class="message-audio" preload="none"></audio>
+            <div *ngIf="msg.type === 'audio' && msg.audioUrl" class="msg-audio-player">
+              <button class="msg-audio-play" (click)="toggleAudio(msg.id, msg.audioUrl!)">
+                <i class="fas" [class.fa-play]="!getPlayer(msg.id, msg.audioUrl!).playing"
+                               [class.fa-pause]="getPlayer(msg.id, msg.audioUrl!).playing"></i>
+              </button>
+              <div class="msg-audio-bar">
+                <div class="msg-audio-progress"
+                     [style.width.%]="getPlayer(msg.id, msg.audioUrl!).duration
+                       ? (getPlayer(msg.id, msg.audioUrl!).current / getPlayer(msg.id, msg.audioUrl!).duration) * 100
+                       : 0">
+                </div>
+              </div>
+              <span class="msg-audio-time">
+                {{ formatAudioTime(getPlayer(msg.id, msg.audioUrl!).playing || getPlayer(msg.id, msg.audioUrl!).current > 0
+                    ? getPlayer(msg.id, msg.audioUrl!).current
+                    : (msg.duration || getPlayer(msg.id, msg.audioUrl!).duration)) }}
+              </span>
+            </div>
             <p class="message-text" *ngIf="msg.type !== 'image' && msg.type !== 'audio'" [innerHTML]="msg.text | waFormat"></p>
             <p class="message-text" *ngIf="msg.type === 'audio' && !msg.audioUrl" [innerHTML]="msg.text | waFormat"></p>
             <p class="message-caption" *ngIf="msg.type === 'image' && msg.imageUrl && msg.text && msg.text !== '📷 Foto'" [innerHTML]="msg.text | waFormat"></p>

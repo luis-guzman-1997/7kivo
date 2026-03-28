@@ -719,15 +719,68 @@
   color: #888;
 }
 
-.message-audio {
-  display: block;
-  width: min(240px, 100%);
-  max-width: 100%;
-  height: 40px;
-  border-radius: 20px;
-  outline: none;
-  box-sizing: border-box;
+.msg-audio-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+  max-width: 260px;
+  padding: 4px 2px;
   margin-bottom: 4px;
+}
+
+.msg-audio-play {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #25d366;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+.from-user .msg-audio-play,
+.from-bot .msg-audio-play {
+  background: #25d366;
+}
+
+.from-admin .msg-audio-play {
+  background: #128c5e;
+}
+
+.msg-audio-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.msg-audio-progress {
+  height: 100%;
+  background: #25d366;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.from-admin .msg-audio-progress {
+  background: #128c5e;
+}
+
+.msg-audio-time {
+  font-size: 0.75rem;
+  color: #555;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .audio-preview-row {
@@ -1378,7 +1431,8 @@
   .btn-send { width: 44px; height: 44px; min-width: 44px; font-size: 1.1rem; }
   .btn-attach { width: 40px; height: 40px; min-width: 40px; font-size: 1.05rem; }
   .message-image { max-width: min(220px, 85vw); max-height: 180px; }
-  .message-audio { width: 100%; max-width: 100%; height: 40px; }
+  .msg-audio-player { min-width: 140px; max-width: 100%; }
+  .msg-audio-play { width: 40px; height: 40px; min-width: 40px; font-size: 1rem; }
   .audio-preview-row { padding: 6px 8px; gap: 6px; }
   .audio-preview-player { height: 32px; }
   .btn-audio-cancel, .btn-audio-send, .btn-stop-recording { width: 40px; height: 40px; min-width: 40px; font-size: 1rem; }
