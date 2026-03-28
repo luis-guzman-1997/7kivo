@@ -32,7 +32,11 @@ const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, rej
     .format("ogg");
 
   if (durationSeconds && durationSeconds > 0) {
-    cmd.outputOptions(["-t", String(durationSeconds)]);
+    // recordingSeconds es entero (setInterval cada 1s), el audio real puede ser
+    // hasta ~1s más largo. Se añaden 2s de buffer para no cortar el final.
+    // ffmpeg para al agotar el audio real, no añade silencio, así que el
+    // buffer extra no afecta la duración final del OGG.
+    cmd.outputOptions(["-t", String(durationSeconds + 2)]);
   }
 
   cmd
