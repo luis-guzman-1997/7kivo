@@ -10,7 +10,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 // OGG/Opus requiere seek en la salida para escribir el granule position final
 // (que es lo que WhatsApp usa para mostrar la duración). Con pipes ffmpeg no
 // puede hacer seek → WhatsApp siempre muestra 1s. Solución: archivos temp.
-const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, reject) => {
+const convertToOgg = (inputBuffer) => new Promise((resolve, reject) => {
   const tmpIn  = path.join(os.tmpdir(), `wa_audio_in_${Date.now()}.webm`);
   const tmpOut = path.join(os.tmpdir(), `wa_audio_out_${Date.now()}.ogg`);
 
@@ -21,26 +21,19 @@ const convertToOgg = (inputBuffer, durationSeconds) => new Promise((resolve, rej
 
   fs.writeFileSync(tmpIn, inputBuffer);
 
-  // Problema: MediaRecorder produce WebM con PTS inflados (ej. 5s real → 13min PTS).
-  // Con -ar 48000 como no-op (fuente ya es 48kHz), los PTS inflados se propagan al encoder.
-  // Cuando llega -t N, ffmpeg ve el 2do frame con PTS=13min > N → detiene tras 1 frame
-  // → OGG tiene granule position de ~1 frame → WhatsApp muestra 1 segundo.
-  //
-  // Solución: asetpts=NB_CONSUMED_SAMPLES/SR/TB regenera el PTS de cada frame a partir
-  // del conteo acumulado de muestras reales, ignorando completamente los PTS del input.
-  // Frame 1: PTS=0, Frame 2: PTS=960/48000=0.02s, ..., garantizando PTS correctos y
-  // secuenciales para que -t N y el granule position del OGG sean precisos.
+  // Problema: MediaRecorder WebM tiene PTS inflados (ej. 5s real → 13min PTS).
+  // asetpts=NB_CONSUMED_SAMPLES/SR/TB regenera el PTS de cada frame desde el conteo real
+  // de muestras acumuladas, ignorando completamente los PTS del input.
+  // Frame 1: PTS=0, Frame 2: PTS=960/48000=0.02s, ..., garantizando que el granule
+  // position del OGG sea correcto y WhatsApp muestre la duración real.
+  // No usamos -t: el archivo WebM es finito, ffmpeg termina solo al leerlo completo.
   const cmd = ffmpeg(tmpIn)
     .inputOptions(["-fflags", "+discardcorrupt"])
-    .audioFilters("asetpts=NB_CONSUMED_SAMPLES/SR/TB")  // regenera PTS desde muestras reales
+    .audioFilters("asetpts=NB_CONSUMED_SAMPLES/SR/TB")
     .audioFrequency(48000)
     .audioChannels(1)
     .audioCodec("libopus")
     .format("ogg");
-
-  if (durationSeconds && durationSeconds > 0) {
-    cmd.outputOptions(["-t", String(durationSeconds + 2)]);
-  }
 
   cmd
     .on("error", (err) => { cleanup(); reject(err); })
@@ -324,7 +317,7 @@ const sendAudioMessage = async (audioUrl, phoneNumber, durationSeconds) => {
     // 2. Convert webm → ogg if needed (WhatsApp doesn't accept audio/webm)
     let uploadType = srcType;
     if (srcType.includes("webm")) {
-      buffer = await convertToOgg(buffer, durationSeconds);
+      buffer = await convertToOgg(buffer);
       uploadType = "audio/ogg";
     }
 

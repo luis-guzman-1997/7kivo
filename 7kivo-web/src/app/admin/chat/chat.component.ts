@@ -70,6 +70,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: BlobPart[] = [];
   private recordingTimer: any = null;
+  private recordingStartMs = 0;
+  audioDurationSeconds = 0;
 
   // ── Audio player custom ──
   audioPlayers: Map<string, { el: HTMLAudioElement; playing: boolean; current: number; duration: number }> = new Map();
@@ -512,6 +514,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.mediaRecorder.start(100); // timeslice 100ms → proper timestamps in webm
       this.isRecording = true;
       this.recordingSeconds = 0;
+      this.recordingStartMs = Date.now();
       this.recordingTimer = setInterval(() => {
         this.recordingSeconds++;
         this.cdr.detectChanges();
@@ -526,6 +529,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   stopRecording(): void {
     if (this.recordingTimer) { clearInterval(this.recordingTimer); this.recordingTimer = null; }
+    if (this.recordingStartMs > 0) {
+      this.audioDurationSeconds = (Date.now() - this.recordingStartMs) / 1000;
+      this.recordingStartMs = 0;
+    }
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       this.mediaRecorder.stop();
     }
@@ -568,7 +575,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         body: JSON.stringify({
           phone,
           audioUrl,
-          duration: this.recordingSeconds,
+          duration: this.audioDurationSeconds || this.recordingSeconds,
           adminEmail: user?.email || '',
           adminName: user?.displayName || user?.email || 'Admin'
         })
