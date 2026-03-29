@@ -61,6 +61,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   promoOrdersLoaded = false;
   takingPromoOrderId: string | null = null;
   promoOrderError = '';
+  promoView: 'active' | 'cancelled' = 'active';
   private unsubPromoOrders: (() => void) | null = null;
 
   campaigns: any[] = [];

@@ -591,11 +591,28 @@
   padding: 16px;
   margin-bottom: 20px;
 }
+.promo-orders-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+}
 .promo-orders-header h2 {
   font-size: 1rem; font-weight: 700; color: #1e293b;
-  display: flex; align-items: center; gap: 8px; margin: 0 0 12px;
+  display: flex; align-items: center; gap: 8px; margin: 0;
 }
 .promo-orders-header h2 i { color: #7c3aed; }
+.promo-view-toggle { display: flex; gap: 4px; }
+.promo-view-toggle button {
+  display: flex; align-items: center; gap: 5px;
+  background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 5px 12px; font-size: 0.8rem; font-weight: 600; color: #64748b; cursor: pointer;
+  transition: all 0.2s;
+}
+.promo-view-toggle button.active {
+  background: #7c3aed; border-color: #7c3aed; color: white;
+}
+.promo-view-toggle button.active i { color: white !important; }
+.promo-view-toggle button .tab-badge {
+  background: white; color: #7c3aed; font-size: 0.7rem; padding: 0 5px; border-radius: 10px;
+}
 .promo-orders-error {
   background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5;
   border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; margin-bottom: 10px;
