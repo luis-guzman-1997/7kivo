@@ -63,11 +63,28 @@ export class InboxComponent implements OnInit, OnDestroy {
   promoOrderError = '';
   private unsubPromoOrders: (() => void) | null = null;
 
+  campaigns: any[] = [];
+  private unsubCampaigns: (() => void) | null = null;
+
   get pendingPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending'); }
   get activePromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending' || o.status === 'taken'); }
   get cancelledPromoOrders(): any[] {
     return this.promoOrders.filter(o => o.status === 'cancelled' &&
       (!this.isDelivery || o.assignedTo?.uid === this.currentUserId));
+  }
+
+  get promoStatsByCampaign(): any[] {
+    return this.campaigns
+      .map(c => ({
+        id: c.id,
+        name: c.name || '',
+        imageUrl: c.imageUrl || '',
+        totalOrders: c.totalOrders || 0,
+        stockDenied: c.stockDenied || 0,
+        activeCount: this.promoOrders.filter(o => o.campaignId === c.id && (o.status === 'pending' || o.status === 'taken')).length,
+        cancelledCount: this.promoOrders.filter(o => o.campaignId === c.id && o.status === 'cancelled').length,
+      }))
+      .filter(c => c.totalOrders > 0 || c.stockDenied > 0);
   }
 
   get isDeliveryOrg(): boolean { return this.authService.orgIndustry === 'delivery'; }
@@ -141,6 +158,11 @@ export class InboxComponent implements OnInit, OnDestroy {
         this.promoOrders = orders;
         this.promoOrdersLoaded = true;
       });
+      if (!this.isDelivery) {
+        this.unsubCampaigns = this.firebaseService.watchCampaigns((campaigns) => {
+          this.campaigns = campaigns;
+        });
+      }
     }
   }
 
@@ -152,6 +174,7 @@ export class InboxComponent implements OnInit, OnDestroy {
       this.firebaseService.clearDeliveryLocation(this.currentUserId);
     }
     if (this.unsubPromoOrders) this.unsubPromoOrders();
+    if (this.unsubCampaigns) this.unsubCampaigns();
   }
 
   startLocationTracking(): void {

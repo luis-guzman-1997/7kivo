@@ -369,6 +369,8 @@ const createPromoOrder = async (phone, campaign) => {
     // stock === null/undefined → ilimitado; stock <= 0 → agotado
     if (stock !== null && stock !== undefined && stock <= 0) {
       outOfStock = true;
+      // Registrar intento rechazado por sin existencias
+      tx.update(campaignRef, { stockDenied: admin.firestore.FieldValue.increment(1) });
       return;
     }
 
@@ -387,10 +389,12 @@ const createPromoOrder = async (phone, campaign) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // Descontar existencia solo si está definida
+    // Descontar existencia y acumular total de pedidos recibidos
+    const campaignUpdate = { totalOrders: admin.firestore.FieldValue.increment(1) };
     if (stock !== null && stock !== undefined) {
-      tx.update(campaignRef, { stock: admin.firestore.FieldValue.increment(-1) });
+      campaignUpdate.stock = admin.firestore.FieldValue.increment(-1);
     }
+    tx.update(campaignRef, campaignUpdate);
 
     orderId = orderRef.id;
   });

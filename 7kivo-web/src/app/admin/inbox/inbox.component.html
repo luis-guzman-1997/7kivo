@@ -138,6 +138,45 @@
 
   </div>
 
+  <!-- Estadísticas de Promos (solo admin/owner en org delivery) -->
+  <div class="promo-stats-section" *ngIf="isDeliveryOrg && !isDelivery && promoStatsByCampaign.length > 0">
+    <div class="promo-stats-header">
+      <h2><i class="fas fa-chart-bar"></i> Estadísticas de Promos</h2>
+    </div>
+    <div class="promo-stats-grid">
+      <div class="promo-stat-card" *ngFor="let c of promoStatsByCampaign">
+        <div class="psc-img" *ngIf="c.imageUrl">
+          <img [src]="c.imageUrl" alt="promo" />
+        </div>
+        <div class="psc-body">
+          <div class="psc-name"><i class="fas fa-tag"></i> {{ c.name }}</div>
+          <div class="psc-metrics">
+            <span class="psc-m psc-received" title="Pedidos recibidos">
+              <i class="fas fa-inbox"></i> {{ c.totalOrders }}
+              <small>Recibidos</small>
+            </span>
+            <span class="psc-m psc-active" title="En curso">
+              <i class="fas fa-clock"></i> {{ c.activeCount }}
+              <small>En curso</small>
+            </span>
+            <span class="psc-m psc-cancelled" title="Cancelados">
+              <i class="fas fa-times-circle"></i> {{ c.cancelledCount }}
+              <small>Cancelados</small>
+            </span>
+            <span class="psc-m psc-completed" title="Completados">
+              <i class="fas fa-check-circle"></i> {{ c.totalOrders - c.activeCount - c.cancelledCount }}
+              <small>Completados</small>
+            </span>
+            <span class="psc-m psc-denied" title="Sin existencias (rechazados)" *ngIf="c.stockDenied > 0">
+              <i class="fas fa-ban"></i> {{ c.stockDenied }}
+              <small>Sin stock</small>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Loading -->
   <div *ngIf="loading" class="loading-state">
     <i class="fas fa-spinner fa-spin"></i> Cargando bandeja...

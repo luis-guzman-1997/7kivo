@@ -1030,6 +1030,15 @@ export class FirebaseService {
 
   // ==================== PROMO ORDERS ====================
 
+  watchCampaigns(callback: (campaigns: any[]) => void): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'campaigns');
+    const q = query(colRef, where('actionKeywordEnabled', '==', true));
+    return onSnapshot(q, (snap) => {
+      const campaigns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      callback(campaigns);
+    });
+  }
+
   watchPromoOrders(callback: (orders: any[]) => void): () => void {
     const colRef = collection(this.db, this.orgPath(), 'promo_orders');
     return onSnapshot(colRef, (snap) => {

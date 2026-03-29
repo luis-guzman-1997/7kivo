@@ -654,3 +654,28 @@
 .promo-extra span, .promo-extra a { font-size: 0.78rem; color: #475569; display: flex; align-items: center; gap: 5px; }
 .promo-wa-link { color: #16a34a !important; font-weight: 600; text-decoration: none; }
 .promo-wa-link:hover { text-decoration: underline; }
+
+/* Promo Stats Section */
+.promo-stats-section { margin-bottom: 24px; }
+.promo-stats-header h2 { font-size: 1rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.promo-stats-header h2 i { color: #f59e0b !important; }
+.promo-stats-grid { display: flex; flex-direction: column; gap: 10px; }
+.promo-stat-card { display: flex; gap: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; align-items: center; }
+.psc-img { width: 52px; height: 52px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+.psc-img img { width: 100%; height: 100%; object-fit: cover; }
+.psc-body { flex: 1; min-width: 0; }
+.psc-name { font-size: 0.88rem; font-weight: 700; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.psc-metrics { display: flex; flex-wrap: wrap; gap: 8px; }
+.psc-m { display: flex; flex-direction: column; align-items: center; background: #f8fafc; border-radius: 8px; padding: 6px 10px; min-width: 58px; font-size: 1rem; font-weight: 700; color: #1e293b; }
+.psc-m small { font-size: 0.65rem; font-weight: 500; color: #94a3b8; margin-top: 1px; }
+.psc-m i { font-size: 0.7rem; margin-bottom: 1px; }
+.psc-received { color: #2563eb; }
+.psc-received i { color: #2563eb !important; }
+.psc-active { color: #d97706; }
+.psc-active i { color: #d97706 !important; }
+.psc-completed { color: #16a34a; }
+.psc-completed i { color: #16a34a !important; }
+.psc-cancelled { color: #64748b; }
+.psc-cancelled i { color: #64748b !important; }
+.psc-denied { color: #ef4444; }
+.psc-denied i { color: #ef4444 !important; }
