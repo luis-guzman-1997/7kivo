@@ -202,7 +202,7 @@ export class FirebaseService {
   }
 
   // Creates a Firebase Auth user without affecting the current admin session
-  async createUserForOrg(orgId: string, email: string, password: string, name: string, role: string, whatsappPhone?: string): Promise<string> {
+  async createUserForOrg(orgId: string, email: string, password: string, name: string, role: string, whatsappPhone?: string, vehicleType?: string): Promise<string> {
     const secondaryName = 'secondary-user-creation';
     const secondaryApp = getApps().find(a => a.name === secondaryName)
       || initializeApp(getApp().options, secondaryName);
@@ -210,7 +210,9 @@ export class FirebaseService {
     try {
       const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       const uid = credential.user.uid;
-      const extraFields = whatsappPhone ? { whatsappPhone } : {};
+      const extraFields: any = {};
+      if (whatsappPhone) extraFields.whatsappPhone = whatsappPhone;
+      if (vehicleType)   extraFields.vehicleType   = vehicleType;
       await setDoc(doc(this.db, 'users', uid), {
         email, organizationId: orgId, role, name, ...extraFields, updatedAt: serverTimestamp()
       });
@@ -1014,6 +1016,11 @@ export class FirebaseService {
   }): Promise<void> {
     const docRef = doc(this.db, this.orgPath(), 'delivery_locations', userId);
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  async updateDeliveryVehicleType(userId: string, vehicleType: string): Promise<void> {
+    const docRef = doc(this.db, this.orgPath(), 'delivery_locations', userId);
+    await setDoc(docRef, { vehicleType }, { merge: true });
   }
 
   async clearDeliveryLocation(userId: string): Promise<void> {

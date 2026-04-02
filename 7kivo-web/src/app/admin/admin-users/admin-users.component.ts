@@ -40,7 +40,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     email: '',
     password: '',
     role: 'editor',
-    whatsappPhone: ''
+    whatsappPhone: '',
+    vehicleType: 'motorcycle'
   };
 
   presenceMap: Record<string, any> = {};
@@ -146,7 +147,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   }
 
   resetForm(): void {
-    this.newAdmin = { name: '', email: '', password: '', role: 'editor', whatsappPhone: '' };
+    this.newAdmin = { name: '', email: '', password: '', role: 'editor', whatsappPhone: '', vehicleType: 'motorcycle' };
   }
 
   async createAdmin(): Promise<void> {
@@ -176,7 +177,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
         this.newAdmin.password,
         this.newAdmin.name.trim(),
         this.newAdmin.role,
-        this.newAdmin.role === 'delivery' ? this.newAdmin.whatsappPhone.trim() : undefined
+        this.newAdmin.role === 'delivery' ? this.newAdmin.whatsappPhone.trim() : undefined,
+        this.newAdmin.role === 'delivery' ? this.newAdmin.vehicleType : undefined
       );
 
       this.formSuccess = `Usuario "${this.newAdmin.name}" creado exitosamente`;
@@ -323,13 +325,17 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     try {
       await this.firebaseService.updateAdmin(admin.id, { vehicleType });
       if (admin.uid) {
-        await this.firebaseService.setUserOrg(admin.uid, {
-          organizationId: this.firebaseService.getOrgId(),
-          email: admin.email,
-          role: admin.role,
-          name: admin.name,
-          vehicleType
-        });
+        await Promise.all([
+          this.firebaseService.setUserOrg(admin.uid, {
+            organizationId: this.firebaseService.getOrgId(),
+            email: admin.email,
+            role: admin.role,
+            name: admin.name,
+            vehicleType
+          }),
+          // Actualizar delivery_locations para que el mapa lo refleje en tiempo real
+          this.firebaseService.updateDeliveryVehicleType(admin.uid, vehicleType)
+        ]);
       }
       admin.vehicleType = vehicleType;
     } catch (err) {
