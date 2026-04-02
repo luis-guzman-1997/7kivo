@@ -1032,9 +1032,26 @@ export class FirebaseService {
 
   watchDeliveryLocations(callback: (users: any[]) => void): () => void {
     const colRef = collection(this.db, this.orgPath(), 'delivery_locations');
+    const STALE_MS = 5 * 60 * 1000; // 5 minutos — los deliveries actualizan cada 15s
     return onSnapshot(colRef, (snap) => {
-      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const now = Date.now();
+      const users = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter((u: any) => {
+          const updatedMs = u.updatedAt?.toMillis?.() ?? (u.updatedAt?.seconds ? u.updatedAt.seconds * 1000 : null);
+          return updatedMs && (now - updatedMs) < STALE_MS;
+        });
       callback(users);
+    });
+  }
+
+  watchUserVehicleType(uid: string, callback: (vehicleType: string) => void): () => void {
+    const docRef = doc(this.db, 'users', uid);
+    return onSnapshot(docRef, (snap) => {
+      if (snap.exists()) {
+        const vehicleType = snap.data()['vehicleType'] || '';
+        callback(vehicleType);
+      }
     });
   }
 

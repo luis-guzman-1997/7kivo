@@ -107,6 +107,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   private locationInterval: any = null;
   private currentLat: number | null = null;
   private currentLng: number | null = null;
+  private unsubVehicleType: (() => void) | null = null;
 
   // ── Push notifications ──
   pushPermission: NotificationPermission = 'default';
@@ -177,6 +178,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     }
     if (this.unsubPromoOrders) this.unsubPromoOrders();
     if (this.unsubCampaigns) this.unsubCampaigns();
+    if (this.unsubVehicleType) this.unsubVehicleType();
   }
 
   startLocationTracking(): void {
@@ -309,6 +311,12 @@ export class InboxComponent implements OnInit, OnDestroy {
       this.currentUserName = userData?.name || this.currentUserEmail;
       this.currentUserWaPhone = userData?.whatsappPhone || '';
       this.currentUserVehicleType = userData?.vehicleType || '';
+      // Escuchar cambios de vehículo en tiempo real (el propietario puede cambiarlo)
+      if (this.isDelivery && uid) {
+        this.unsubVehicleType = this.firebaseService.watchUserVehicleType(uid, (vt) => {
+          this.currentUserVehicleType = vt;
+        });
+      }
     } catch { /* silent */ }
   }
 
