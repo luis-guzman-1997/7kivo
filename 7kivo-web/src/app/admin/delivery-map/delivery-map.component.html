@@ -68,8 +68,41 @@
         </button>
       </div>
 
-      <!-- Info del pedido -->
-      <div *ngIf="selectedUser.status === 'active'" class="dmap-order-info">
+      <!-- Pedido promo activo -->
+      <div *ngIf="selectedOrder" class="dmap-order-info">
+        <div class="dmap-section-label"><i class="fas fa-clipboard-list"></i> Pedido activo</div>
+
+        <div class="dmap-order-card">
+          <div class="dmap-order-campaign">
+            <i class="fas fa-tag"></i>
+            <span>{{ selectedOrder.campaignName }}</span>
+          </div>
+          <div class="dmap-order-msg" *ngIf="selectedOrder.promoMessage">
+            {{ selectedOrder.promoMessage }}
+          </div>
+          <div class="dmap-order-row" *ngIf="selectedOrder.phone">
+            <i class="fab fa-whatsapp" style="color:#25d366"></i>
+            <span>{{ selectedOrder.phone }}</span>
+          </div>
+          <div class="dmap-order-row" *ngIf="selectedOrder.address">
+            <i class="fas fa-map-marker-alt" style="color:#ef4444"></i>
+            <span>{{ selectedOrder.address }}</span>
+          </div>
+          <div class="dmap-order-time">{{ orderTimeAgo(selectedOrder) }}</div>
+
+          <!-- Cancelar pedido (solo owner/admin) -->
+          <button *ngIf="authService.isOwnerOrAdmin"
+                  class="dmap-btn-cancel-order"
+                  (click)="cancelOrderFromMap(selectedOrder)"
+                  [disabled]="cancellingOrderId === selectedOrder.id">
+            <i class="fas fa-ban"></i>
+            {{ cancellingOrderId === selectedOrder.id ? 'Cancelando...' : 'Cancelar pedido' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Sin pedido promo pero con activePhone (caso de flujo) -->
+      <div *ngIf="!selectedOrder && selectedUser.status === 'active'" class="dmap-order-info">
         <div class="dmap-section-label"><i class="fas fa-clipboard-list"></i> Pedido activo</div>
         <div class="dmap-order-row" *ngIf="selectedUser.activePhone">
           <i class="fab fa-whatsapp" style="color:#25d366"></i>
