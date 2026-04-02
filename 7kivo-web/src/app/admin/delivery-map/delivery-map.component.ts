@@ -231,7 +231,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  private vehicleIcon(vehicleType: string): string {
+  vehicleIcon(vehicleType: string): string {
     const map: Record<string, string> = {
       motorcycle: 'fa-motorcycle',
       bicycle:    'fa-bicycle',
