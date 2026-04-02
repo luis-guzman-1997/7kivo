@@ -53,7 +53,7 @@
              [class.selected]="selectedUser?.userId === u.userId"
              (click)="selectUserFromList(u)">
           <div class="dmap-avatar" [class.active]="u.status === 'active'">
-            <i class="fas fa-motorcycle"></i>
+            <i class="fas" [class]="vehicleIcon(u.vehicleType)"></i>
           </div>
           <div class="dmap-user-info">
             <div class="dmap-user-name">{{ u.userName }}</div>
@@ -140,7 +140,7 @@
       <div class="dmap-detail-header">
         <div class="dmap-detail-name">
           <div class="dmap-detail-avatar" [class.active]="selectedUser.status === 'active'">
-            <i class="fas fa-motorcycle"></i>
+            <i class="fas" [class]="vehicleIcon(selectedUser.vehicleType)"></i>
           </div>
           <div>
             <strong>{{ selectedUser.userName }}</strong>
