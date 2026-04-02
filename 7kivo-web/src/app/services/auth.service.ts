@@ -123,11 +123,12 @@ export class AuthService {
     await signInWithEmailAndPassword(this.auth, email, password);
   }
 
-  waitForReady(): Promise<void> {
+  waitForReady(timeoutMs = 10000): Promise<void> {
     return new Promise(resolve => {
       if (!this.loadingSubject.value) { resolve(); return; }
+      const timer = setTimeout(() => { sub.unsubscribe(); resolve(); }, timeoutMs);
       const sub = this.loading$.subscribe(loading => {
-        if (!loading) { sub.unsubscribe(); resolve(); }
+        if (!loading) { clearTimeout(timer); sub.unsubscribe(); resolve(); }
       });
     });
   }
