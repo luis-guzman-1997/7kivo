@@ -164,7 +164,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
 
     users.forEach((user: any) => {
       if (!user.lat || !user.lng) return;
-      const icon = this.buildIcon(user.status);
+      const icon = this.buildIcon(user.status, user.vehicleType);
       const latlng: L.LatLngTuple = [user.lat, user.lng];
       if (this.markers.has(user.userId)) {
         const m = this.markers.get(user.userId)!;
@@ -231,12 +231,23 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  private buildIcon(status: string): L.DivIcon {
+  private vehicleIcon(vehicleType: string): string {
+    const map: Record<string, string> = {
+      motorcycle: 'fa-motorcycle',
+      bicycle:    'fa-bicycle',
+      car:        'fa-car',
+      truck:      'fa-truck'
+    };
+    return map[vehicleType] || 'fa-motorcycle';
+  }
+
+  private buildIcon(status: string, vehicleType?: string): L.DivIcon {
     const active = status === 'active';
+    const icon = this.vehicleIcon(vehicleType || 'motorcycle');
     return L.divIcon({
       className: '',
       html: `<div class="dm-pin ${active ? 'dm-pin--active' : 'dm-pin--available'}">
-        <i class="fas fa-motorcycle"></i>
+        <i class="fas ${icon}"></i>
         ${active ? '<span class="dm-pin-dot"></span>' : ''}
       </div>`,
       iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -42]

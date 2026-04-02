@@ -95,6 +95,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   currentUserName = '';
   currentUserEmail = '';
   currentUserWaPhone = '';
+  currentUserVehicleType = '';
   takingCaseId: string | null = null;
   takeError = '';
 
@@ -249,7 +250,8 @@ export class InboxComponent implements OnInit, OnDestroy {
         status,
         activeCaseId,
         activeCollection,
-        activePhone
+        activePhone,
+        ...(this.currentUserVehicleType && { vehicleType: this.currentUserVehicleType })
       });
     } catch { /* silent */ }
   }
@@ -306,6 +308,7 @@ export class InboxComponent implements OnInit, OnDestroy {
       const userData = await this.firebaseService.getUserOrg(uid);
       this.currentUserName = userData?.name || this.currentUserEmail;
       this.currentUserWaPhone = userData?.whatsappPhone || '';
+      this.currentUserVehicleType = userData?.vehicleType || '';
     } catch { /* silent */ }
   }
 

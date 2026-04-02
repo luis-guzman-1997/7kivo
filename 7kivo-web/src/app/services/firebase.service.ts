@@ -56,7 +56,7 @@ export class FirebaseService {
     return snap.exists() ? snap.data() : null;
   }
 
-  async setUserOrg(uid: string, data: { organizationId: string; email: string; role: string; name?: string; whatsappPhone?: string }): Promise<void> {
+  async setUserOrg(uid: string, data: { organizationId: string; email: string; role: string; name?: string; whatsappPhone?: string; vehicleType?: string }): Promise<void> {
     const userDocRef = doc(this.db, 'users', uid);
     await setDoc(userDocRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
@@ -1010,6 +1010,7 @@ export class FirebaseService {
     userId: string; userName: string; lat: number; lng: number;
     status: 'available' | 'active';
     activeCaseId: string | null; activeCollection: string | null; activePhone: string | null;
+    vehicleType?: string;
   }): Promise<void> {
     const docRef = doc(this.db, this.orgPath(), 'delivery_locations', userId);
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });

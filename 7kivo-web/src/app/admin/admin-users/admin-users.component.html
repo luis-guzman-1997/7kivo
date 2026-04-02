@@ -134,6 +134,21 @@
         <div class="admin-meta" *ngIf="admin.role === 'delivery' && admin.whatsappPhone">
           <span><i class="fab fa-whatsapp" style="color:#25d366"></i> {{ admin.whatsappPhone }}</span>
         </div>
+        <!-- Vehicle type selector (delivery) -->
+        <div class="vehicle-selector" *ngIf="admin.role === 'delivery' && canManage(admin)">
+          <span class="vehicle-label"><i class="fas fa-route"></i> Vehículo:</span>
+          <div class="vehicle-options">
+            <button *ngFor="let v of vehicleOptions"
+                    class="vehicle-btn"
+                    [class.selected]="(admin.vehicleType || 'motorcycle') === v.value"
+                    [disabled]="savingVehicleId === admin.id"
+                    (click)="setVehicleType(admin, v.value)"
+                    [title]="v.label">
+              <i class="fas" [class]="v.icon"></i>
+              <span>{{ v.label }}</span>
+            </button>
+          </div>
+        </div>
         <!-- Role change -->
         <div class="role-change" *ngIf="canManage(admin)">
           <label>Cambiar rol:</label>

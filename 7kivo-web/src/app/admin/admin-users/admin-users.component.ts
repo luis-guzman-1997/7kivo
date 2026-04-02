@@ -46,6 +46,14 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   presenceMap: Record<string, any> = {};
   private presenceUnsub: (() => void) | null = null;
 
+  vehicleOptions = [
+    { value: 'motorcycle', label: 'Moto',      icon: 'fa-motorcycle' },
+    { value: 'bicycle',    label: 'Bicicleta',  icon: 'fa-bicycle'   },
+    { value: 'car',        label: 'Auto',       icon: 'fa-car'       },
+    { value: 'truck',      label: 'Camión',     icon: 'fa-truck'     }
+  ];
+  savingVehicleId: string | null = null;
+
   changePwAdmin: any = null;
   changePwValue = '';
   changePwSaving = false;
@@ -307,6 +315,36 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     } finally {
       this.changePhoneSaving = false;
     }
+  }
+
+  async setVehicleType(admin: any, vehicleType: string): Promise<void> {
+    if (this.savingVehicleId === admin.id) return;
+    this.savingVehicleId = admin.id;
+    try {
+      await this.firebaseService.updateAdmin(admin.id, { vehicleType });
+      if (admin.uid) {
+        await this.firebaseService.setUserOrg(admin.uid, {
+          organizationId: this.firebaseService.getOrgId(),
+          email: admin.email,
+          role: admin.role,
+          name: admin.name,
+          vehicleType
+        });
+      }
+      admin.vehicleType = vehicleType;
+    } catch (err) {
+      console.error('Error saving vehicle type:', err);
+    } finally {
+      this.savingVehicleId = null;
+    }
+  }
+
+  getVehicleIcon(vehicleType: string): string {
+    return this.vehicleOptions.find(v => v.value === vehicleType)?.icon || 'fa-motorcycle';
+  }
+
+  getVehicleLabel(vehicleType: string): string {
+    return this.vehicleOptions.find(v => v.value === vehicleType)?.label || 'Moto';
   }
 
   isOwner(admin: any): boolean {
