@@ -83,7 +83,7 @@ export class LoginOrgComponent implements OnInit {
     this.error = '';
     try {
       await this.authService.login(this.email, this.password);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await this.authService.waitForReady();
 
       if (this.authService.isSuperAdmin) {
         this.router.navigate(['/superadmin']);

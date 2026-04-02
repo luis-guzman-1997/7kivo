@@ -119,7 +119,17 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<void> {
+    this.loadingSubject.next(true);
     await signInWithEmailAndPassword(this.auth, email, password);
+  }
+
+  waitForReady(): Promise<void> {
+    return new Promise(resolve => {
+      if (!this.loadingSubject.value) { resolve(); return; }
+      const sub = this.loading$.subscribe(loading => {
+        if (!loading) { sub.unsubscribe(); resolve(); }
+      });
+    });
   }
 
   async logout(): Promise<void> {
