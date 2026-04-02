@@ -717,7 +717,9 @@ export class ChatComponent implements OnInit, OnDestroy {
             })
           }).catch(() => {});
         }
+        const pos = await this.getCurrentPositionOrNull();
         await this.firebaseService.cancelPromoOrder(this.promoOrderId, this.cancelReason.trim());
+        await this.saveDeliveryHistory(pos, 'cancelled', this.cancelReason.trim());
         this.router.navigate(['/admin/bandeja']);
       } catch {
         this.error = 'No se pudo cancelar el pedido.';
@@ -785,6 +787,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         }
       }
 
+      const pos = await this.getCurrentPositionOrNull();
+      await this.saveDeliveryHistory(pos, 'cancelled', this.cancelReason.trim());
       this.router.navigate(['/admin/bandeja']);
     } catch (err) {
       this.error = 'No se pudo conectar con el bot.';
@@ -858,6 +862,53 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.resendingCode = false;
   }
 
+  private getCurrentPositionOrNull(): Promise<{ lat: number; lng: number } | null> {
+    return new Promise(resolve => {
+      if (!navigator.geolocation) { resolve(null); return; }
+      navigator.geolocation.getCurrentPosition(
+        p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 30000 }
+      );
+    });
+  }
+
+  private async saveDeliveryHistory(
+    endPos: { lat: number; lng: number } | null,
+    status: 'completed' | 'cancelled',
+    cancelReason?: string
+  ): Promise<void> {
+    const user = this.authService.currentUser;
+    const startLat = this.promoOrderData?.startLat ?? this.deliverySubmission?.startLat ?? null;
+    const startLng = this.promoOrderData?.startLng ?? this.deliverySubmission?.startLng ?? null;
+    try {
+      await this.firebaseService.addDeliveryHistory({
+        status,
+        startLat: startLat ?? null,
+        startLng: startLng ?? null,
+        endLat: endPos?.lat ?? null,
+        endLng: endPos?.lng ?? null,
+        deliveryAgent: {
+          uid: user?.uid || '',
+          name: this.deliveryUserName || user?.email || '',
+          email: user?.email || ''
+        },
+        clientPhone: this.selectedConversation?.phoneNumber || '',
+        clientName: this.selectedConversation?.contactName || '',
+        type: this.promoOrderId ? 'promo' : 'submission',
+        promoOrderId: this.promoOrderId || undefined,
+        campaignId: this.promoOrderData?.campaignId || undefined,
+        campaignName: this.promoOrderData?.campaignName || undefined,
+        imageUrl: this.promoOrderData?.imageUrl || undefined,
+        promoMessage: this.promoOrderData?.promoMessage || undefined,
+        submissionId: this.deliverySubmissionId || undefined,
+        collection: this.deliveryCollection || undefined,
+        cancelReason: cancelReason || undefined,
+        takenAt: this.deliveryTakenAt || undefined
+      });
+    } catch { /* silent — historial no debe bloquear el flujo */ }
+  }
+
   async resolveDeliveryCase(): Promise<void> {
     if (!this.selectedConversation || this.resolvingCase) return;
 
@@ -873,7 +924,9 @@ export class ChatComponent implements OnInit, OnDestroy {
             body: JSON.stringify({ phone: this.selectedConversation.phoneNumber, clientName: '' })
           }).catch(() => {});
         }
+        const pos = await this.getCurrentPositionOrNull();
         await this.firebaseService.resolvePromoOrder(this.promoOrderId);
+        await this.saveDeliveryHistory(pos, 'completed');
         this.router.navigate(['/admin/bandeja']);
       } catch {
         this.error = 'No se pudo resolver el pedido.';
@@ -899,6 +952,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         return;
       }
 
+      const pos = await this.getCurrentPositionOrNull();
+
       if (this.deliverySubmissionId && this.deliveryCollection) {
         const user = this.authService.currentUser;
         await this.firebaseService.updateDocument(
@@ -915,6 +970,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         );
       }
 
+      await this.saveDeliveryHistory(pos, 'completed');
       this.router.navigate(['/admin/bandeja']);
     } catch (err) {
       this.error = 'No se pudo conectar con el bot.';

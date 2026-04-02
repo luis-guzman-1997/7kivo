@@ -375,7 +375,8 @@ export class FirebaseService {
   async assignSubmission(
     collName: string,
     docId: string,
-    agent: { uid: string; name: string; email: string; whatsappPhone?: string; deliveryCode?: string }
+    agent: { uid: string; name: string; email: string; whatsappPhone?: string; deliveryCode?: string },
+    startCoords?: { lat: number; lng: number } | null
   ): Promise<{ ok: boolean; takenBy?: string }> {
     const docRef = doc(this.db, this.orgPath(), collName, docId);
     let takenBy: string | undefined;
@@ -396,7 +397,8 @@ export class FirebaseService {
         assignedAt: serverTimestamp(),
         status: 'read',
         updatedAt: serverTimestamp(),
-        ...(agent.deliveryCode && { deliveryCode: agent.deliveryCode })
+        ...(agent.deliveryCode && { deliveryCode: agent.deliveryCode }),
+        ...(startCoords && { startLat: startCoords.lat, startLng: startCoords.lng })
       };
       transaction.update(docRef, updateData);
       return true;
@@ -1054,7 +1056,11 @@ export class FirebaseService {
     });
   }
 
-  async takePromoOrder(orderId: string, agent: { uid: string; name: string; email: string; deliveryCode?: string }): Promise<{ ok: boolean; takenBy?: string }> {
+  async takePromoOrder(
+    orderId: string,
+    agent: { uid: string; name: string; email: string; deliveryCode?: string },
+    startCoords?: { lat: number; lng: number } | null
+  ): Promise<{ ok: boolean; takenBy?: string }> {
     const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
     const snap = await getDoc(ref);
     if (!snap.exists()) return { ok: false };
@@ -1063,7 +1069,8 @@ export class FirebaseService {
     await updateDoc(ref, {
       status: 'taken',
       assignedTo: agent,
-      takenAt: serverTimestamp()
+      takenAt: serverTimestamp(),
+      ...(startCoords && { startLat: startCoords.lat, startLng: startCoords.lng })
     });
     return { ok: true };
   }
@@ -1084,6 +1091,33 @@ export class FirebaseService {
     const data: any = { status: 'cancelled', cancelledAt: serverTimestamp() };
     if (reason) data['cancelReason'] = reason;
     await updateDoc(ref, data);
+  }
+
+  // ==================== DELIVERY HISTORY ====================
+
+  async addDeliveryHistory(data: {
+    status: 'completed' | 'cancelled';
+    startLat: number | null; startLng: number | null;
+    endLat: number | null; endLng: number | null;
+    deliveryAgent: { uid: string; name: string; email: string };
+    clientPhone: string; clientName: string;
+    type: 'promo' | 'submission';
+    promoOrderId?: string; campaignId?: string; campaignName?: string;
+    imageUrl?: string; promoMessage?: string;
+    submissionId?: string; collection?: string;
+    cancelReason?: string;
+    takenAt?: number;
+  }): Promise<void> {
+    const colRef = collection(this.db, this.orgPath(), 'delivery_history');
+    await addDoc(colRef, { ...data, completedAt: serverTimestamp() });
+  }
+
+  watchDeliveryHistory(callback: (records: any[]) => void, limitCount = 50): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'delivery_history');
+    const q = query(colRef, orderBy('completedAt', 'desc'), limit(limitCount));
+    return onSnapshot(q, (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
   }
 
   // ==================== PLATFORM (SUPER ADMIN) ====================

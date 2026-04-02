@@ -12,17 +12,27 @@ import * as L from 'leaflet';
 export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   private map!: L.Map;
   private markers = new Map<string, L.Marker>();
+  private historyMarkers: L.Marker[] = [];
+  private routeLayer: L.LayerGroup | null = null;
   private unsubLocations: (() => void) | null = null;
   private unsubPromoOrders: (() => void) | null = null;
+  private unsubHistory: (() => void) | null = null;
   private boundsSet = false;
 
+  mapView: 'live' | 'history' = 'live';
+
+  // Live
   deliveryUsers: any[] = [];
   selectedUser: any = null;
   selectedMessages: any[] = [];
   loadingPreview = false;
-
   promoOrders: any[] = [];
   cancellingOrderId: string | null = null;
+
+  // History
+  historyRecords: any[] = [];
+  selectedRecord: any = null;
+  historyLoaded = false;
 
   get activeCount(): number {
     return this.deliveryUsers.filter((u: any) => u.status === 'active').length;
@@ -46,7 +56,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.initMap();
     this.unsubLocations = this.firebaseService.watchDeliveryLocations((users) => {
       this.deliveryUsers = users;
-      this.updateMarkers(users);
+      if (this.mapView === 'live') this.updateMarkers(users);
     });
     this.unsubPromoOrders = this.firebaseService.watchPromoOrders((orders) => {
       this.promoOrders = orders;
@@ -56,6 +66,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.unsubLocations?.();
     this.unsubPromoOrders?.();
+    this.unsubHistory?.();
     if (this.map) this.map.remove();
   }
 
@@ -66,6 +77,44 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(this.map);
     setTimeout(() => this.map.invalidateSize(), 200);
+  }
+
+  setView(view: 'live' | 'history'): void {
+    if (this.mapView === view) return;
+    this.mapView = view;
+    this.selectedUser = null;
+    this.selectedRecord = null;
+    this.clearRouteLayer();
+
+    if (view === 'live') {
+      this.clearHistoryMarkers();
+      this.updateMarkers(this.deliveryUsers);
+    } else {
+      this.clearLiveMarkers();
+      if (!this.unsubHistory) {
+        this.unsubHistory = this.firebaseService.watchDeliveryHistory((records) => {
+          this.historyRecords = records;
+          this.historyLoaded = true;
+          if (this.mapView === 'history') this.renderHistoryMarkers();
+        });
+      } else {
+        this.renderHistoryMarkers();
+      }
+    }
+  }
+
+  private clearLiveMarkers(): void {
+    this.markers.forEach(m => m.remove());
+    this.markers.clear();
+  }
+
+  private clearHistoryMarkers(): void {
+    this.historyMarkers.forEach(m => m.remove());
+    this.historyMarkers = [];
+  }
+
+  private clearRouteLayer(): void {
+    if (this.routeLayer) { this.routeLayer.clearLayers(); this.routeLayer.remove(); this.routeLayer = null; }
   }
 
   private updateMarkers(users: any[]): void {
@@ -90,7 +139,6 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // Ajustar mapa para englobar todos los puntos la primera vez
     if (!this.boundsSet && this.markers.size > 0) {
       const coords = Array.from(this.markers.values()).map(m => m.getLatLng());
       if (coords.length === 1) {
@@ -99,6 +147,50 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
         this.map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
       }
       this.boundsSet = true;
+    }
+  }
+
+  private renderHistoryMarkers(): void {
+    this.clearHistoryMarkers();
+    const withCoords = this.historyRecords.filter(r => r.endLat && r.endLng);
+    withCoords.forEach(record => {
+      const icon = this.buildHistoryIcon(record.status);
+      const m = L.marker([record.endLat, record.endLng], { icon })
+        .addTo(this.map)
+        .on('click', () => this.selectRecordFromList(record));
+      this.historyMarkers.push(m);
+    });
+    if (withCoords.length > 0) {
+      const coords = this.historyMarkers.map(m => m.getLatLng());
+      if (coords.length === 1) {
+        this.map.setView(coords[0], 14);
+      } else {
+        this.map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
+      }
+    }
+  }
+
+  private showRouteForRecord(record: any): void {
+    this.clearRouteLayer();
+    this.routeLayer = L.layerGroup().addTo(this.map);
+
+    const points: L.LatLng[] = [];
+
+    if (record.startLat && record.startLng) {
+      const startIcon = this.buildRoutePointIcon('start');
+      L.marker([record.startLat, record.startLng], { icon: startIcon }).addTo(this.routeLayer);
+      points.push(L.latLng(record.startLat, record.startLng));
+    }
+    if (record.endLat && record.endLng) {
+      points.push(L.latLng(record.endLat, record.endLng));
+    }
+
+    if (points.length === 2) {
+      const color = record.status === 'cancelled' ? '#ef4444' : '#6366f1';
+      L.polyline(points, { color, weight: 3, opacity: 0.7, dashArray: '6 4' }).addTo(this.routeLayer);
+      this.map.fitBounds(L.latLngBounds(points), { padding: [60, 60] });
+    } else if (points.length === 1) {
+      this.map.setView(points[0], 15);
     }
   }
 
@@ -113,6 +205,29 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       iconSize: [40, 40],
       iconAnchor: [20, 40],
       popupAnchor: [0, -42]
+    });
+  }
+
+  private buildHistoryIcon(status: string): L.DivIcon {
+    const done = status !== 'cancelled';
+    return L.divIcon({
+      className: '',
+      html: `<div class="dm-pin ${done ? 'dm-pin--done' : 'dm-pin--cancelled'}">
+        <i class="fas ${done ? 'fa-check' : 'fa-times'}"></i>
+      </div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
+      popupAnchor: [0, -38]
+    });
+  }
+
+  private buildRoutePointIcon(type: 'start'): L.DivIcon {
+    return L.divIcon({
+      className: '',
+      html: `<div class="dm-pin dm-pin--start"><i class="fas fa-dot-circle"></i></div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -32]
     });
   }
 
@@ -135,9 +250,16 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectUser(user);
   }
 
+  selectRecordFromList(record: any): void {
+    this.selectedRecord = record;
+    this.showRouteForRecord(record);
+  }
+
   closePanel(): void {
     this.selectedUser = null;
+    this.selectedRecord = null;
     this.selectedMessages = [];
+    this.clearRouteLayer();
   }
 
   async cancelOrderFromMap(order: any): Promise<void> {
@@ -151,6 +273,22 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getStatusLabel(status: string): string {
     return status === 'active' ? 'Con pedido activo' : 'Disponible';
+  }
+
+  recordTimeAgo(record: any): string {
+    const ms = record.completedAt?.toMillis?.() ?? (record.completedAt?.seconds ? record.completedAt.seconds * 1000 : null);
+    if (!ms) return '';
+    const diff = Math.floor((Date.now() - ms) / 1000);
+    if (diff < 60) return 'hace un momento';
+    if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`;
+    return new Date(ms).toLocaleDateString('es-SV', { day: '2-digit', month: 'short' });
+  }
+
+  recordFullDate(record: any): string {
+    const ms = record.completedAt?.toMillis?.() ?? (record.completedAt?.seconds ? record.completedAt.seconds * 1000 : null);
+    if (!ms) return '';
+    return new Date(ms).toLocaleString('es-SV', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
 
   orderTimeAgo(order: any): string {

@@ -781,7 +781,8 @@ export class InboxComponent implements OnInit, OnDestroy {
         deliveryCode
       };
 
-      const result = await this.firebaseService.assignSubmission(tab.collection, item.id, agent);
+      const startCoords = (this.currentLat && this.currentLng) ? { lat: this.currentLat, lng: this.currentLng } : null;
+      const result = await this.firebaseService.assignSubmission(tab.collection, item.id, agent, startCoords);
 
       if (!result.ok) {
         this.takeError = `Este caso ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
@@ -856,7 +857,8 @@ export class InboxComponent implements OnInit, OnDestroy {
         email: this.currentUserEmail,
         deliveryCode
       };
-      const result = await this.firebaseService.takePromoOrder(order.id, agent);
+      const startCoords = (this.currentLat && this.currentLng) ? { lat: this.currentLat, lng: this.currentLng } : null;
+      const result = await this.firebaseService.takePromoOrder(order.id, agent, startCoords);
       if (!result.ok) {
         this.promoOrderError = `Este pedido ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
         setTimeout(() => this.promoOrderError = '', 4000);

@@ -3,7 +3,18 @@
   <!-- Header compacto -->
   <div class="dmap-header">
     <h1 class="dmap-title"><i class="fas fa-map-marked-alt"></i> Mapa de Deliveries</h1>
-    <div class="dmap-legend">
+
+    <!-- Toggle vista -->
+    <div class="dmap-view-toggle">
+      <button [class.active]="mapView === 'live'" (click)="setView('live')">
+        <i class="fas fa-circle"></i> En línea
+      </button>
+      <button [class.active]="mapView === 'history'" (click)="setView('history')">
+        <i class="fas fa-history"></i> Historial
+      </button>
+    </div>
+
+    <div class="dmap-legend" *ngIf="mapView === 'live'">
       <span class="legend-item">
         <span class="legend-dot legend-available"></span>
         Disponible ({{ deliveryUsers.length - activeCount }})
@@ -11,6 +22,12 @@
       <span class="legend-item">
         <span class="legend-dot legend-active"></span>
         Con pedido ({{ activeCount }})
+      </span>
+    </div>
+    <div class="dmap-legend" *ngIf="mapView === 'history'">
+      <span class="legend-item">
+        <span class="legend-dot legend-done"></span>
+        Entregas completadas ({{ historyRecords.length }})
       </span>
     </div>
   </div>
@@ -21,8 +38,8 @@
     <!-- Mapa Leaflet -->
     <div id="delivery-map-el" class="dmap-map"></div>
 
-    <!-- Panel flotante izquierdo: lista de deliveries -->
-    <div class="dmap-floating-list">
+    <!-- ── VISTA EN LÍNEA: lista de deliveries ── -->
+    <div class="dmap-floating-list" *ngIf="mapView === 'live'">
       <div class="dmap-list-header">
         <i class="fas fa-motorcycle"></i> Deliveries en línea
       </div>
@@ -48,8 +65,44 @@
       </div>
     </div>
 
-    <!-- Panel flotante derecho: detalle al seleccionar un delivery -->
-    <div class="dmap-detail-panel" *ngIf="selectedUser">
+    <!-- ── VISTA HISTORIAL: lista de registros ── -->
+    <div class="dmap-floating-list" *ngIf="mapView === 'history'">
+      <div class="dmap-list-header">
+        <i class="fas fa-check-circle"></i> Entregas completadas
+      </div>
+      <div class="dmap-list-body">
+        <div *ngIf="!historyLoaded" class="dmap-empty">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Cargando...</span>
+        </div>
+        <div *ngIf="historyLoaded && historyRecords.length === 0" class="dmap-empty">
+          <i class="fas fa-box-open"></i>
+          <span>Sin entregas completadas aún.</span>
+        </div>
+        <div *ngFor="let r of historyRecords"
+             class="dmap-user-row"
+             [class.selected]="selectedRecord?.id === r.id"
+             (click)="selectRecordFromList(r)">
+          <div class="dmap-avatar"
+               [class.dmap-avatar--done]="r.status !== 'cancelled'"
+               [class.dmap-avatar--cancelled]="r.status === 'cancelled'">
+            <i class="fas" [class.fa-check]="r.status !== 'cancelled'" [class.fa-times]="r.status === 'cancelled'"></i>
+          </div>
+          <div class="dmap-user-info">
+            <div class="dmap-user-name">{{ r.deliveryAgent?.name || 'Delivery' }}</div>
+            <div class="dmap-user-status" [class.cancelled]="r.status === 'cancelled'">
+              {{ r.clientName || r.clientPhone }} · {{ recordTimeAgo(r) }}
+            </div>
+          </div>
+          <div class="dmap-no-gps" *ngIf="!r.endLat" title="Sin ubicación GPS">
+            <i class="fas fa-map-marker-alt" style="color:#cbd5e1"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Panel detalle: delivery en línea ── -->
+    <div class="dmap-detail-panel" *ngIf="mapView === 'live' && selectedUser">
 
       <div class="dmap-detail-header">
         <div class="dmap-detail-name">
@@ -71,7 +124,6 @@
       <!-- Pedido promo activo -->
       <div *ngIf="selectedOrder" class="dmap-order-info">
         <div class="dmap-section-label"><i class="fas fa-clipboard-list"></i> Pedido activo</div>
-
         <div class="dmap-order-card">
           <div class="dmap-order-campaign">
             <i class="fas fa-tag"></i>
@@ -89,8 +141,6 @@
             <span>{{ selectedOrder.address }}</span>
           </div>
           <div class="dmap-order-time">{{ orderTimeAgo(selectedOrder) }}</div>
-
-          <!-- Cancelar pedido (solo owner/admin) -->
           <button *ngIf="authService.isOwnerOrAdmin"
                   class="dmap-btn-cancel-order"
                   (click)="cancelOrderFromMap(selectedOrder)"
@@ -101,7 +151,7 @@
         </div>
       </div>
 
-      <!-- Sin pedido promo pero con activePhone (caso de flujo) -->
+      <!-- Sin pedido promo pero con activePhone (flujo) -->
       <div *ngIf="!selectedOrder && selectedUser.status === 'active'" class="dmap-order-info">
         <div class="dmap-section-label"><i class="fas fa-clipboard-list"></i> Pedido activo</div>
         <div class="dmap-order-row" *ngIf="selectedUser.activePhone">
@@ -117,15 +167,12 @@
         <div *ngIf="loadingPreview" class="dmap-loading">
           <i class="fas fa-spinner fa-spin"></i> Cargando...
         </div>
-
         <div *ngIf="!loadingPreview && selectedUser.status !== 'active'" class="dmap-no-conv">
           Sin pedido activo en este momento.
         </div>
-
         <div *ngIf="!loadingPreview && selectedUser.status === 'active' && selectedMessages.length === 0" class="dmap-no-conv">
           Sin mensajes recientes.
         </div>
-
         <div class="dmap-messages" *ngIf="!loadingPreview && selectedMessages.length > 0">
           <div *ngFor="let msg of selectedMessages"
                class="dmap-msg"
@@ -149,7 +196,100 @@
           </div>
         </div>
       </div>
-
     </div>
+
+    <!-- ── Panel detalle: registro histórico ── -->
+    <div class="dmap-detail-panel" *ngIf="mapView === 'history' && selectedRecord">
+
+      <div class="dmap-detail-header">
+        <div class="dmap-detail-name">
+          <div class="dmap-detail-avatar"
+               [class.dmap-detail-avatar--done]="selectedRecord.status !== 'cancelled'"
+               [class.dmap-detail-avatar--cancelled]="selectedRecord.status === 'cancelled'">
+            <i class="fas" [class.fa-check]="selectedRecord.status !== 'cancelled'" [class.fa-times]="selectedRecord.status === 'cancelled'"></i>
+          </div>
+          <div>
+            <strong>{{ selectedRecord.status === 'cancelled' ? 'Pedido cancelado' : 'Entrega completada' }}</strong>
+            <span class="dmap-detail-badge"
+                  [class.dmap-detail-badge--done]="selectedRecord.status !== 'cancelled'"
+                  [class.dmap-detail-badge--cancelled]="selectedRecord.status === 'cancelled'">
+              {{ recordFullDate(selectedRecord) }}
+            </span>
+          </div>
+        </div>
+        <button class="dmap-close-btn" (click)="closePanel()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="dmap-hist-body">
+
+        <!-- Delivery -->
+        <div class="dmap-hist-section">
+          <div class="dmap-section-label"><i class="fas fa-motorcycle"></i> Delivery</div>
+          <div class="dmap-hist-row">
+            <i class="fas fa-user"></i>
+            <span>{{ selectedRecord.deliveryAgent?.name || '—' }}</span>
+          </div>
+          <div class="dmap-hist-row" *ngIf="selectedRecord.deliveryAgent?.email">
+            <i class="fas fa-envelope"></i>
+            <span>{{ selectedRecord.deliveryAgent.email }}</span>
+          </div>
+        </div>
+
+        <!-- Cliente -->
+        <div class="dmap-hist-section">
+          <div class="dmap-section-label"><i class="fas fa-user-circle"></i> Cliente</div>
+          <div class="dmap-hist-row" *ngIf="selectedRecord.clientName">
+            <i class="fas fa-id-card"></i>
+            <span>{{ selectedRecord.clientName }}</span>
+          </div>
+          <div class="dmap-hist-row">
+            <i class="fab fa-whatsapp" style="color:#25d366"></i>
+            <span>{{ selectedRecord.clientPhone }}</span>
+          </div>
+        </div>
+
+        <!-- Pedido -->
+        <div class="dmap-hist-section" *ngIf="selectedRecord.campaignName">
+          <div class="dmap-section-label"><i class="fas fa-tag"></i> Pedido</div>
+          <div class="dmap-hist-row">
+            <i class="fas fa-store"></i>
+            <span>{{ selectedRecord.campaignName }}</span>
+          </div>
+          <div class="dmap-hist-row" *ngIf="selectedRecord.promoMessage">
+            <i class="fas fa-comment-alt"></i>
+            <span>{{ selectedRecord.promoMessage }}</span>
+          </div>
+        </div>
+
+        <!-- Cancelación -->
+        <div class="dmap-hist-section" *ngIf="selectedRecord.status === 'cancelled' && selectedRecord.cancelReason">
+          <div class="dmap-section-label"><i class="fas fa-ban"></i> Motivo cancelación</div>
+          <div class="dmap-hist-row">
+            <i class="fas fa-comment"></i>
+            <span>{{ selectedRecord.cancelReason }}</span>
+          </div>
+        </div>
+
+        <!-- Ruta -->
+        <div class="dmap-hist-section">
+          <div class="dmap-section-label"><i class="fas fa-route"></i> Ruta</div>
+          <div *ngIf="selectedRecord.startLat && selectedRecord.startLng" class="dmap-hist-row">
+            <i class="fas fa-dot-circle" style="color:#10b981"></i>
+            <span>Inicio: {{ selectedRecord.startLat | number:'1.4-4' }}, {{ selectedRecord.startLng | number:'1.4-4' }}</span>
+          </div>
+          <div *ngIf="selectedRecord.endLat && selectedRecord.endLng" class="dmap-hist-row">
+            <i class="fas fa-map-marker-alt" [style.color]="selectedRecord.status === 'cancelled' ? '#ef4444' : '#6366f1'"></i>
+            <span>{{ selectedRecord.status === 'cancelled' ? 'Canceló en' : 'Entregó en' }}: {{ selectedRecord.endLat | number:'1.4-4' }}, {{ selectedRecord.endLng | number:'1.4-4' }}</span>
+          </div>
+          <div *ngIf="!selectedRecord.startLat && !selectedRecord.endLat" class="dmap-no-conv" style="text-align:left;padding:4px 0">
+            Sin ubicación GPS registrada
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
