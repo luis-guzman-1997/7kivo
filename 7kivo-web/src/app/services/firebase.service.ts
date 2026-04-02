@@ -1112,9 +1112,18 @@ export class FirebaseService {
     await addDoc(colRef, { ...data, completedAt: serverTimestamp() });
   }
 
-  watchDeliveryHistory(callback: (records: any[]) => void, limitCount = 50): () => void {
+  watchDeliveryHistory(
+    callback: (records: any[]) => void,
+    fromMs?: number,
+    toMs?: number,
+    limitCount = 200
+  ): () => void {
     const colRef = collection(this.db, this.orgPath(), 'delivery_history');
-    const q = query(colRef, orderBy('completedAt', 'desc'), limit(limitCount));
+    const constraints: QueryConstraint[] = [orderBy('completedAt', 'desc')];
+    if (fromMs) constraints.push(where('completedAt', '>=', Timestamp.fromMillis(fromMs)));
+    if (toMs)   constraints.push(where('completedAt', '<=', Timestamp.fromMillis(toMs)));
+    constraints.push(limit(limitCount));
+    const q = query(colRef, ...constraints);
     return onSnapshot(q, (snap) => {
       callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });

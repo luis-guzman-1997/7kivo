@@ -33,6 +33,8 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   historyRecords: any[] = [];
   selectedRecord: any = null;
   historyLoaded = false;
+  fromDate: string = this.todayStr();
+  toDate: string = this.todayStr();
 
   get activeCount(): number {
     return this.deliveryUsers.filter((u: any) => u.status === 'active').length;
@@ -43,6 +45,22 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.promoOrders.find(
       o => o.status === 'taken' && o.assignedTo?.uid === this.selectedUser.userId
     ) || null;
+  }
+
+  get top5(): { name: string; email: string; completed: number; cancelled: number; total: number }[] {
+    const map = new Map<string, { name: string; email: string; completed: number; cancelled: number }>();
+    for (const r of this.historyRecords) {
+      const uid = r.deliveryAgent?.uid || r.deliveryAgent?.email || 'unknown';
+      if (!map.has(uid)) {
+        map.set(uid, { name: r.deliveryAgent?.name || '—', email: r.deliveryAgent?.email || '', completed: 0, cancelled: 0 });
+      }
+      const entry = map.get(uid)!;
+      if (r.status === 'cancelled') entry.cancelled++; else entry.completed++;
+    }
+    return Array.from(map.values())
+      .map(e => ({ ...e, total: e.completed + e.cancelled }))
+      .sort((a, b) => b.completed - a.completed)
+      .slice(0, 5);
   }
 
   constructor(
@@ -70,6 +88,16 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.map) this.map.remove();
   }
 
+  private todayStr(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private dateRangeMs(): { fromMs: number; toMs: number } {
+    const from = new Date(this.fromDate + 'T00:00:00');
+    const to   = new Date(this.toDate   + 'T23:59:59.999');
+    return { fromMs: from.getTime(), toMs: to.getTime() };
+  }
+
   private initMap(): void {
     this.map = L.map('delivery-map-el', { center: [13.7942, -88.8965], zoom: 11 });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -91,16 +119,27 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       this.updateMarkers(this.deliveryUsers);
     } else {
       this.clearLiveMarkers();
-      if (!this.unsubHistory) {
-        this.unsubHistory = this.firebaseService.watchDeliveryHistory((records) => {
-          this.historyRecords = records;
-          this.historyLoaded = true;
-          if (this.mapView === 'history') this.renderHistoryMarkers();
-        });
-      } else {
-        this.renderHistoryMarkers();
-      }
+      this.subscribeHistory();
     }
+  }
+
+  applyDateFilter(): void {
+    if (this.unsubHistory) { this.unsubHistory(); this.unsubHistory = null; }
+    this.historyRecords = [];
+    this.historyLoaded = false;
+    this.selectedRecord = null;
+    this.clearRouteLayer();
+    this.clearHistoryMarkers();
+    this.subscribeHistory();
+  }
+
+  private subscribeHistory(): void {
+    const { fromMs, toMs } = this.dateRangeMs();
+    this.unsubHistory = this.firebaseService.watchDeliveryHistory((records) => {
+      this.historyRecords = records;
+      this.historyLoaded = true;
+      if (this.mapView === 'history') this.renderHistoryMarkers();
+    }, fromMs, toMs);
   }
 
   private clearLiveMarkers(): void {
@@ -173,12 +212,10 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   private showRouteForRecord(record: any): void {
     this.clearRouteLayer();
     this.routeLayer = L.layerGroup().addTo(this.map);
-
     const points: L.LatLng[] = [];
 
     if (record.startLat && record.startLng) {
-      const startIcon = this.buildRoutePointIcon('start');
-      L.marker([record.startLat, record.startLng], { icon: startIcon }).addTo(this.routeLayer);
+      L.marker([record.startLat, record.startLng], { icon: this.buildRoutePointIcon() }).addTo(this.routeLayer);
       points.push(L.latLng(record.startLat, record.startLng));
     }
     if (record.endLat && record.endLng) {
@@ -202,9 +239,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
         <i class="fas fa-motorcycle"></i>
         ${active ? '<span class="dm-pin-dot"></span>' : ''}
       </div>`,
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-      popupAnchor: [0, -42]
+      iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -42]
     });
   }
 
@@ -215,19 +250,15 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       html: `<div class="dm-pin ${done ? 'dm-pin--done' : 'dm-pin--cancelled'}">
         <i class="fas ${done ? 'fa-check' : 'fa-times'}"></i>
       </div>`,
-      iconSize: [36, 36],
-      iconAnchor: [18, 36],
-      popupAnchor: [0, -38]
+      iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -38]
     });
   }
 
-  private buildRoutePointIcon(type: 'start'): L.DivIcon {
+  private buildRoutePointIcon(): L.DivIcon {
     return L.divIcon({
       className: '',
       html: `<div class="dm-pin dm-pin--start"><i class="fas fa-dot-circle"></i></div>`,
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -32]
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -32]
     });
   }
 
@@ -246,9 +277,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  selectUserFromList(user: any): void {
-    this.selectUser(user);
-  }
+  selectUserFromList(user: any): void { this.selectUser(user); }
 
   selectRecordFromList(record: any): void {
     this.selectedRecord = record;
