@@ -56,6 +56,20 @@ export class FirebaseService {
     return snap.exists() ? snap.data() : null;
   }
 
+  async updateUserSessionToken(uid: string, token: string): Promise<void> {
+    const userDocRef = doc(this.db, 'users', uid);
+    await updateDoc(userDocRef, { sessionToken: token });
+  }
+
+  watchUserSessionToken(uid: string, callback: (token: string | null) => void): Unsubscribe {
+    const userDocRef = doc(this.db, 'users', uid);
+    let isFirst = true;
+    return onSnapshot(userDocRef, (snap) => {
+      if (isFirst) { isFirst = false; return; }
+      callback(snap.exists() ? (snap.data()?.['sessionToken'] ?? null) : null);
+    });
+  }
+
   async setUserOrg(uid: string, data: { organizationId: string; email: string; role: string; name?: string; whatsappPhone?: string; vehicleType?: string }): Promise<void> {
     const userDocRef = doc(this.db, 'users', uid);
     await setDoc(userDocRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });

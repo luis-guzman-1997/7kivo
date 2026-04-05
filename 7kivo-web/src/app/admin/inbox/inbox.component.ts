@@ -70,8 +70,17 @@ export class InboxComponent implements OnInit, OnDestroy {
   get pendingPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending'); }
   get activePromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending' || o.status === 'taken'); }
   get cancelledPromoOrders(): any[] {
-    return this.promoOrders.filter(o => o.status === 'cancelled' &&
-      (!this.isDelivery || o.assignedTo?.uid === this.currentUserId));
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+    return this.promoOrders.filter(o => {
+      if (o.status !== 'cancelled') return false;
+      if (this.isDelivery) {
+        if (o.assignedTo?.uid !== this.currentUserId) return false;
+        const ts = o.cancelledAt?.toDate ? o.cancelledAt.toDate() : (o.cancelledAt ? new Date(o.cancelledAt) : null);
+        return ts && ts >= todayStart && ts <= todayEnd;
+      }
+      return true;
+    });
   }
 
   get promoStatsByCampaign(): any[] {
@@ -435,12 +444,15 @@ export class InboxComponent implements OnInit, OnDestroy {
       const uid = this.authService.currentUser?.uid || '';
       const email = this.authService.currentUser?.email || '';
       const name = this.currentUserName || email;
+      const resolvedAt = new Date();
       await this.firebaseService.updateDocument(tab.collection, item.id, {
         status: 'resolved',
-        resolvedBy: { uid, name, email }
+        resolvedBy: { uid, name, email },
+        resolvedAt
       });
       item.status = 'resolved';
       item.resolvedBy = { uid, name, email };
+      item.resolvedAt = resolvedAt;
       tab.unreadCount = tab.submissions.filter(i => i.status === 'pending').length;
       this.applyFilters(tab);
     } catch (err) {
@@ -736,9 +748,15 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   deliveryMyHistory(tab: FlowTab): any[] {
-    return tab.submissions.filter(s =>
-      s.assignedTo?.uid === this.currentUserId && s.status === 'resolved'
-    );
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    return tab.submissions.filter(s => {
+      if (s.assignedTo?.uid !== this.currentUserId || s.status !== 'resolved') return false;
+      const ts = s.resolvedAt?.toDate ? s.resolvedAt.toDate() : (s.resolvedAt ? new Date(s.resolvedAt) : null);
+      return ts && ts >= todayStart && ts <= todayEnd;
+    });
   }
 
   get deliveryTotalAvailable(): number {

@@ -1,14 +1,15 @@
-<div class="inbox-page">
+<div class="inbox-page" [class.delivery-mode]="isDelivery">
   <div class="page-header">
     <div>
       <h1 class="page-title">
         <i class="fas fa-inbox"></i> Bandeja de Entrada
         <span class="unread-total" *ngIf="totalUnread > 0">{{ totalUnread }}</span>
       </h1>
-      <p class="page-subtitle">Consultas y mensajes recibidos desde los flujos del bot</p>
+      <p class="page-subtitle" *ngIf="!isDelivery">Consultas y mensajes recibidos desde los flujos del bot</p>
     </div>
-    <button class="btn-refresh" (click)="loadFlows()">
-      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Recargar
+    <button class="btn-refresh" (click)="loadFlows()" [title]="'Recargar'">
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+      <span *ngIf="!isDelivery"> Recargar</span>
     </button>
   </div>
 
@@ -75,9 +76,10 @@
 
       <div class="promo-orders-list" *ngIf="activePromoOrders.length > 0">
         <div class="promo-order-card" *ngFor="let o of activePromoOrders"
-             [class.promo-taken]="o.status === 'taken'">
+             [class.promo-taken]="o.status === 'taken'"
+             [class.dc-promo-card]="isDelivery">
 
-          <div class="promo-img" *ngIf="o.imageUrl">
+          <div class="promo-img" *ngIf="o.imageUrl && !isDelivery">
             <img [src]="o.imageUrl" alt="promo" />
           </div>
 
@@ -352,109 +354,86 @@
         <ng-container *ngIf="isDelivery && activeTab">
 
           <!-- Error global -->
-          <div class="delivery-error" *ngIf="takeError">
+          <div class="dc-error" *ngIf="takeError">
             <i class="fas fa-exclamation-circle"></i> {{ takeError }}
           </div>
 
           <!-- Mi caso activo -->
-          <div class="delivery-section" *ngIf="deliveryMyCases(activeTab).length > 0">
-            <h4 class="delivery-section-title"><i class="fas fa-motorcycle"></i> Mi Caso Activo</h4>
+          <div class="dc-section" *ngIf="deliveryMyCases(activeTab).length > 0">
+            <div class="dc-section-label dc-label-active">
+              <span class="dc-dot dc-dot-active"></span> En progreso
+            </div>
             <div *ngFor="let item of deliveryMyCases(activeTab)"
-                 class="message-card delivery-active-card" (click)="openDetail(item, activeTab)">
-              <div class="message-left">
-                <div class="message-avatar avatar-delivery-active">
-                  <i class="fas fa-user"></i>
+                 class="dc-card dc-card-active" (click)="openDetail(item, activeTab)">
+              <div class="dc-card-header">
+                <strong class="dc-name">{{ getPersonName(item) }}</strong>
+                <span class="dc-time">{{ formatDate(item.createdAt) }}</span>
+              </div>
+              <div class="dc-fields">
+                <div *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="dc-field-row">
+                  <span class="dc-field-label">{{ f.label }}</span>
+                  <span class="dc-field-val">{{ f.value.length > 55 ? f.value.substring(0, 55) + '…' : f.value }}</span>
                 </div>
               </div>
-              <div class="message-body">
-                <div class="message-top">
-                  <strong class="message-name">{{ getPersonName(item) }}</strong>
-                  <span class="message-date">{{ formatDate(item.createdAt) }}</span>
-                </div>
-                <div class="message-preview">
-                  <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
-                    <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 60 ? f.value.substring(0, 60) + '...' : f.value }}
-                  </span>
-                </div>
-                <div class="message-bottom">
-                  <span class="badge badge-read">En progreso</span>
-                </div>
-              </div>
-              <div class="message-actions" (click)="$event.stopPropagation()">
-                <button class="btn-icon btn-delivery-go" (click)="goToChat(item, activeTab)" title="Ir al chat">
-                  <i class="fas fa-comments"></i>
+              <div class="dc-card-footer" (click)="$event.stopPropagation()">
+                <button class="dc-btn dc-btn-chat" (click)="goToChat(item, activeTab)">
+                  <i class="fas fa-comments"></i> Abrir Chat
                 </button>
               </div>
             </div>
           </div>
 
           <!-- Casos disponibles -->
-          <div class="delivery-section">
-            <h4 class="delivery-section-title"><i class="fas fa-clipboard-list"></i> Casos Disponibles</h4>
-            <div class="delivery-blocked-notice" *ngIf="hasActiveDeliveryCase">
+          <div class="dc-section">
+            <div class="dc-section-label">
+              <span class="dc-dot dc-dot-pending"></span> Disponibles
+              <span class="dc-count" *ngIf="deliveryAvailableCases(activeTab).length > 0">{{ deliveryAvailableCases(activeTab).length }}</span>
+            </div>
+            <div class="dc-blocked" *ngIf="hasActiveDeliveryCase">
               <i class="fas fa-lock"></i> Resuelve tu caso activo antes de tomar otro
             </div>
-            <div *ngIf="deliveryAvailableCases(activeTab).length === 0" class="empty-state-sm">
-              <i class="fas fa-check-circle"></i> No hay casos pendientes
+            <div *ngIf="deliveryAvailableCases(activeTab).length === 0" class="dc-empty">
+              <i class="fas fa-check-circle"></i> Sin casos pendientes
             </div>
             <div *ngFor="let item of deliveryAvailableCases(activeTab)"
-                 class="message-card" [class.unread]="item.status === 'pending'"
-                 (click)="openDetail(item, activeTab)">
-              <div class="message-left">
-                <div class="message-avatar" [class.avatar-unread]="item.status === 'pending'">
-                  <i class="fas fa-user"></i>
+                 class="dc-card" (click)="openDetail(item, activeTab)">
+              <div class="dc-card-header">
+                <strong class="dc-name">{{ getPersonName(item) }}</strong>
+                <span class="dc-time">{{ formatDate(item.createdAt) }}</span>
+              </div>
+              <div class="dc-fields">
+                <div *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="dc-field-row">
+                  <span class="dc-field-label">{{ f.label }}</span>
+                  <span class="dc-field-val">{{ f.value.length > 55 ? f.value.substring(0, 55) + '…' : f.value }}</span>
                 </div>
               </div>
-              <div class="message-body">
-                <div class="message-top">
-                  <strong class="message-name">{{ getPersonName(item) }}</strong>
-                  <span class="message-date">{{ formatDate(item.createdAt) }}</span>
-                </div>
-                <div class="message-preview">
-                  <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="preview-field">
-                    <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 60 ? f.value.substring(0, 60) + '...' : f.value }}
-                  </span>
-                </div>
-                <div class="message-bottom">
-                  <span class="badge badge-pending">Disponible</span>
-                </div>
-              </div>
-              <div class="message-actions" (click)="$event.stopPropagation()">
-                <button class="btn-delivery-take"
+              <div class="dc-card-footer" (click)="$event.stopPropagation()">
+                <button class="dc-btn dc-btn-take"
                         [disabled]="!!takingCaseId || hasActiveDeliveryCase || !locationGranted"
-                        [title]="!locationGranted ? 'Activa tu ubicación para tomar pedidos' : hasActiveDeliveryCase ? 'Debes resolver tu caso activo antes de tomar otro' : ''"
+                        [title]="!locationGranted ? 'Activa tu ubicación' : hasActiveDeliveryCase ? 'Resuelve tu caso activo' : ''"
                         (click)="takeCase(item, activeTab)">
                   <i class="fas" [class.fa-hand-paper]="takingCaseId !== item.id" [class.fa-spinner]="takingCaseId === item.id" [class.fa-spin]="takingCaseId === item.id"></i>
-                  {{ takingCaseId === item.id ? 'Tomando...' : 'Tomar' }}
+                  {{ takingCaseId === item.id ? 'Tomando...' : 'Tomar caso' }}
                 </button>
               </div>
             </div>
           </div>
 
           <!-- Historial -->
-          <div class="delivery-section" *ngIf="deliveryMyHistory(activeTab).length > 0">
-            <h4 class="delivery-section-title"><i class="fas fa-history"></i> Mi Historial</h4>
+          <div class="dc-section" *ngIf="deliveryMyHistory(activeTab).length > 0">
+            <div class="dc-section-label dc-label-history">
+              <span class="dc-dot dc-dot-done"></span> Historial de hoy
+            </div>
             <div *ngFor="let item of deliveryMyHistory(activeTab)"
-                 class="message-card delivery-history-card" (click)="openDetail(item, activeTab)">
-              <div class="message-left">
-                <div class="message-avatar avatar-resolved">
-                  <i class="fas fa-check"></i>
-                </div>
+                 class="dc-history-item" (click)="openDetail(item, activeTab)">
+              <div class="dc-history-icon"><i class="fas fa-check"></i></div>
+              <div class="dc-history-info">
+                <strong>{{ getPersonName(item) }}</strong>
+                <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 1)" class="dc-history-sub">
+                  {{ f.value.length > 45 ? f.value.substring(0, 45) + '…' : f.value }}
+                </span>
               </div>
-              <div class="message-body">
-                <div class="message-top">
-                  <strong class="message-name">{{ getPersonName(item) }}</strong>
-                  <span class="message-date">{{ formatDate(item.createdAt) }}</span>
-                </div>
-                <div class="message-preview">
-                  <span *ngFor="let f of getItemFields(item, activeTab).slice(0, 1)" class="preview-field">
-                    <span class="preview-label">{{ f.label }}:</span> {{ f.value.length > 60 ? f.value.substring(0, 60) + '...' : f.value }}
-                  </span>
-                </div>
-                <div class="message-bottom">
-                  <span class="badge badge-resolved">Completado</span>
-                </div>
-              </div>
+              <span class="dc-history-time">{{ formatDate(item.createdAt) }}</span>
             </div>
           </div>
 

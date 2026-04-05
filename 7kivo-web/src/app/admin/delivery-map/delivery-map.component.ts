@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewEncapsulation, HostListener } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
 import * as L from 'leaflet';
@@ -35,6 +35,11 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   historyLoaded = false;
   fromDate: string = this.todayStr();
   toDate: string = this.todayStr();
+  historyFilterCollapsed = false;
+
+  get isMobileView(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth <= 768;
+  }
 
   get activeCount(): number {
     return this.deliveryUsers.filter((u: any) => u.status === 'active').length;
@@ -69,6 +74,20 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {}
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (!this.isMobileView && this.historyFilterCollapsed) {
+      this.historyFilterCollapsed = false;
+    }
+    this.refreshMapSize();
+  }
+
+  private refreshMapSize(): void {
+    if (this.map) {
+      setTimeout(() => this.map.invalidateSize(), 200);
+    }
+  }
 
   ngAfterViewInit(): void {
     this.initMap();
@@ -112,7 +131,9 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.mapView = view;
     this.selectedUser = null;
     this.selectedRecord = null;
+    this.historyFilterCollapsed = view === 'history' ? this.isMobileView : false;
     this.clearRouteLayer();
+    this.refreshMapSize();
 
     if (view === 'live') {
       this.clearHistoryMarkers();
@@ -131,6 +152,15 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.clearRouteLayer();
     this.clearHistoryMarkers();
     this.subscribeHistory();
+    if (this.isMobileView) {
+      this.historyFilterCollapsed = true;
+      this.refreshMapSize();
+    }
+  }
+
+  toggleHistoryFilter(): void {
+    this.historyFilterCollapsed = !this.historyFilterCollapsed;
+    this.refreshMapSize();
   }
 
   private subscribeHistory(): void {
@@ -286,6 +316,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       } catch { /* silent */ }
       this.loadingPreview = false;
     }
+    this.refreshMapSize();
   }
 
   selectUserFromList(user: any): void { this.selectUser(user); }
@@ -293,6 +324,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   selectRecordFromList(record: any): void {
     this.selectedRecord = record;
     this.showRouteForRecord(record);
+    this.refreshMapSize();
   }
 
   closePanel(): void {
@@ -300,6 +332,7 @@ export class DeliveryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedRecord = null;
     this.selectedMessages = [];
     this.clearRouteLayer();
+    this.refreshMapSize();
   }
 
   async cancelOrderFromMap(order: any): Promise<void> {

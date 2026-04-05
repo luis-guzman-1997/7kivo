@@ -23,6 +23,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   botBlocked = false;
   isOnChatPage = false;
   isOnMapPage = false;
+  sessionDisplacedAlert = false;
   private subs: Subscription[] = [];
 
   constructor(
@@ -53,6 +54,14 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       }),
       this.authService.botPaused$.subscribe(val => { this.botPaused = val; }),
       this.authService.botBlocked$.subscribe(val => { this.botBlocked = val; }),
+      this.authService.sessionDisplaced$.subscribe(() => {
+        this.sessionDisplacedAlert = true;
+        const slug = localStorage.getItem('orgLoginSlug');
+        setTimeout(() => {
+          this.sessionDisplacedAlert = false;
+          this.router.navigate(slug ? ['/admin/login', slug] : ['/admin/login']);
+        }, 3000);
+      }),
       this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe((e) => {
         const ne = e as NavigationEnd;
         this.isOnChatPage = ne.url.startsWith('/admin/chat');

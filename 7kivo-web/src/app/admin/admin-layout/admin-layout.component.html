@@ -1,3 +1,11 @@
+<div *ngIf="sessionDisplacedAlert" class="session-displaced-overlay">
+  <div class="session-displaced-box">
+    <i class="fas fa-sign-out-alt"></i>
+    <p>Tu sesión fue cerrada porque iniciaste sesión en otro dispositivo.</p>
+    <span>Redirigiendo al login...</span>
+  </div>
+</div>
+
 <div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed" [class.on-chat-page]="isOnChatPage" [class.on-map-page]="isOnMapPage">
   <!-- Backdrop (mobile) -->
   <div class="sidebar-backdrop" *ngIf="!sidebarCollapsed" (click)="toggleSidebar()" aria-hidden="true"></div>

@@ -440,6 +440,7 @@
   .admin-sidebar {
     width: 280px;
     left: 0;
+    z-index: 2200;
     transform: translateX(-100%);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     /* Evitar espacio residual en iOS */
@@ -467,7 +468,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    z-index: 999;
+    z-index: 2190;
     animation: fadeIn 0.2s ease;
   }
 
@@ -486,6 +487,16 @@
   .admin-content {
     max-width: 100%;
     overflow-x: hidden;
+  }
+
+  /* Mapa delivery: el contenido debe quedar por encima de la barra inferior fija */
+  .on-map-page .admin-content {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+    box-sizing: border-box;
   }
 
   /* Evitar espacio lateral y overscroll horizontal en iOS */
@@ -562,6 +573,14 @@
     padding: 12px;
     height: calc(100vh - 58px);
   }
+
+  .on-map-page .admin-content {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
   .bot-setup-banner {
     padding: 10px 14px;
   }
@@ -677,4 +696,46 @@
 @media (max-width: 480px) {
   /* Hide email on very small screens — accessible via sidebar */
   .topbar-right { display: none; }
+}
+
+
+/* Session displaced overlay */
+.session-displaced-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.session-displaced-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 360px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.session-displaced-box i {
+  font-size: 2.5rem;
+  color: #ef4444;
+}
+
+.session-displaced-box p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.session-displaced-box span {
+  font-size: 0.85rem;
+  color: #64748b;
 }

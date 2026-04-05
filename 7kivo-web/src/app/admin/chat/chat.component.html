@@ -356,6 +356,21 @@
         <i class="fas fa-comment-dots"></i>
         <p>No hay mensajes aún</p>
       </div>
+
+      <!-- Burbuja "enviando audio" -->
+      <div class="message-group from-admin" *ngIf="sendingAudio">
+        <div class="message-bubble">
+          <div class="msg-audio-player msg-audio-sending">
+            <button class="msg-audio-play" disabled>
+              <i class="fas fa-spinner fa-spin"></i>
+            </button>
+            <div class="msg-audio-bar">
+              <div class="msg-audio-progress msg-audio-progress-sending"></div>
+            </div>
+            <span class="msg-audio-time">Enviando...</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Window Expired Banner -->
@@ -381,7 +396,7 @@
         <button (click)="error = ''"><i class="fas fa-times"></i></button>
       </div>
       <!-- Audio recording preview -->
-      <div class="audio-preview-row" *ngIf="audioBlob && !isRecording">
+      <div class="audio-preview-row" *ngIf="audioBlob && !isRecording && !sendingAudio">
         <audio #audioPreviewEl controls [src]="audioPreviewUrl!" class="audio-preview-player" preload="auto"></audio>
         <button class="btn-audio-cancel" (click)="cancelAudio()" title="Descartar">
           <i class="fas fa-trash"></i>
@@ -398,7 +413,7 @@
           <i class="fas fa-stop"></i>
         </button>
       </div>
-      <div class="input-row" *ngIf="!audioBlob && !isRecording">
+      <div class="input-row" *ngIf="!audioBlob && !isRecording && !sendingAudio">
         <input type="file" accept="image/*" #imageInput style="display:none"
                (change)="onImageSelected($event)">
         <button class="btn-attach" *ngIf="isAdminMode"

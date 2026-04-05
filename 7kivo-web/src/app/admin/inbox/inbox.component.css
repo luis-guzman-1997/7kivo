@@ -696,3 +696,395 @@
 .psc-cancelled i { color: #64748b !important; }
 .psc-denied { color: #ef4444; }
 .psc-denied i { color: #ef4444 !important; }
+
+/* ==================== Delivery Compact Mode ==================== */
+.delivery-mode .page-header {
+  margin-bottom: 10px;
+}
+.delivery-mode .page-title {
+  font-size: 1.1rem;
+  gap: 6px;
+}
+.delivery-mode .btn-refresh {
+  padding: 7px 10px;
+  min-width: 0;
+}
+
+/* Push banners más compactos */
+.delivery-mode .push-banner {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.delivery-mode .push-banner button {
+  padding: 5px 12px;
+  font-size: 0.8rem;
+}
+
+/* Tabs más finos */
+.delivery-mode .tabs {
+  margin-bottom: 10px;
+  gap: 4px;
+}
+.delivery-mode .tab {
+  padding: 7px 12px;
+  font-size: 0.82rem;
+}
+
+/* Promo section */
+.delivery-mode .promo-orders-section {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+}
+.delivery-mode .promo-orders-header {
+  margin-bottom: 8px;
+}
+.delivery-mode .promo-orders-header h2 {
+  font-size: 0.88rem;
+}
+.delivery-mode .promo-view-toggle button {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+.delivery-mode .promo-order-card {
+  padding: 9px 10px;
+  gap: 8px;
+  border-radius: 10px;
+  margin-bottom: 0;
+}
+.delivery-mode .promo-name {
+  font-size: 0.82rem;
+}
+.delivery-mode .promo-message {
+  font-size: 0.8rem;
+  -webkit-line-clamp: 1;
+}
+.delivery-mode .promo-meta {
+  font-size: 0.75rem;
+  margin-top: 3px;
+}
+.delivery-mode .promo-extra span,
+.delivery-mode .promo-extra a {
+  font-size: 0.75rem;
+}
+.delivery-mode .btn-take-promo,
+.delivery-mode .btn-chat-promo,
+.delivery-mode .btn-cancel-promo {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+}
+
+/* Sections de casos */
+.delivery-mode .delivery-section {
+  margin-bottom: 14px;
+}
+.delivery-mode .delivery-section-title {
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+}
+.delivery-mode .message-card {
+  padding: 9px 10px;
+  gap: 8px;
+}
+.delivery-mode .message-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 0.85rem;
+}
+.delivery-mode .message-name {
+  font-size: 0.87rem;
+}
+.delivery-mode .message-date {
+  font-size: 0.72rem;
+}
+.delivery-mode .preview-field {
+  font-size: 0.78rem;
+}
+.delivery-mode .message-bottom {
+  margin-top: 4px;
+}
+
+/* ==================== DC Cards (Delivery Mobile Redesign) ==================== */
+
+.dc-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dc-section {
+  margin-bottom: 20px;
+}
+
+.dc-section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.dc-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dc-dot-active  { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.2); }
+.dc-dot-pending { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.2); }
+.dc-dot-done    { background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
+
+.dc-count {
+  background: #3b82f6;
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 2px;
+}
+
+/* Main card */
+.dc-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+.dc-card:active {
+  box-shadow: 0 0 0 2px rgba(59,130,246,.3);
+  border-color: #93c5fd;
+}
+
+.dc-card-active {
+  border-color: #fde68a;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 60%);
+  border-left: 4px solid #f59e0b;
+}
+
+.dc-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.dc-name {
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: #1e293b;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-time {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dc-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.dc-field-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 0.83rem;
+  line-height: 1.4;
+}
+
+.dc-field-label {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dc-field-val {
+  color: #334155;
+  font-weight: 500;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dc-card-footer {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons */
+.dc-btn {
+  flex: 1;
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: filter 0.15s, transform 0.1s;
+}
+.dc-btn:active { transform: scale(0.97); }
+.dc-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dc-btn-chat {
+  background: #0ea5e9;
+  color: white;
+}
+.dc-btn-chat:hover:not(:disabled) { filter: brightness(1.08); }
+
+.dc-btn-take {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+.dc-btn-take:hover:not(:disabled) { filter: brightness(1.08); }
+
+/* Blocked notice */
+.dc-blocked {
+  background: #fef9f0;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+/* Empty state */
+.dc-empty {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px;
+}
+
+/* History items */
+.dc-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dc-history-item:active { background: #f1f5f9; }
+
+.dc-history-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.dc-history-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dc-history-info strong {
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-history-sub {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-history-time {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Promo card delivery layout ── */
+.dc-promo-card {
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+.dc-promo-card .promo-info {
+  width: 100%;
+  margin-bottom: 10px;
+}
+.dc-promo-card .promo-actions {
+  width: 100%;
+  flex-direction: row !important;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+}
+.dc-promo-card .btn-take-promo,
+.dc-promo-card .btn-chat-promo {
+  flex: 1;
+  height: 40px;
+  justify-content: center;
+  border-radius: 10px;
+}
+.dc-promo-card .btn-cancel-promo {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+}

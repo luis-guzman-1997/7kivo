@@ -813,6 +813,18 @@
   background: #128c5e;
 }
 
+.msg-audio-progress-sending {
+  width: 40% !important;
+  background: #128c5e;
+  opacity: 0.5;
+  animation: audio-sending-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes audio-sending-pulse {
+  0%, 100% { width: 20% !important; opacity: 0.4; }
+  50% { width: 70% !important; opacity: 0.8; }
+}
+
 .msg-audio-time {
   font-size: 0.75rem;
   color: #555;

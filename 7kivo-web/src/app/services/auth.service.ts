@@ -4,7 +4,7 @@ import {
   onAuthStateChanged, User, createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { FirebaseService } from './firebase.service';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 const SUPER_ADMIN_EMAILS = ['admin@7kivo.com'];
 
@@ -42,6 +42,9 @@ export class AuthService {
   private botBlockedSubject = new BehaviorSubject<boolean>(false);
   private botPausedReasonSubject = new BehaviorSubject<string | null>(null);
   private orgIndustrySubject = new BehaviorSubject<string>('general');
+  private localSessionToken = '';
+  private unsubSessionWatch: (() => void) | null = null;
+  readonly sessionDisplaced$ = new Subject<void>();
 
   currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
   isAdmin$: Observable<boolean> = this.isAdminSubject.asObservable();
@@ -85,6 +88,7 @@ export class AuthService {
   }
 
   private async resolveUserOrg(user: User): Promise<void> {
+    if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
     try {
       const userData = await this.firebaseService.getUserOrg(user.uid);
       if (userData?.organizationId) {
@@ -107,19 +111,49 @@ export class AuthService {
         this.botPausedReasonSubject.next(orgDoc?.botPausedReason || null);
         this.orgIndustrySubject.next(orgConfig?.industry || orgDoc?.industry || 'general');
         this.isAdminSubject.next(true);
+        this.startSessionWatch(user.uid).catch(err => console.warn('[Auth] Session watch error:', err));
       } else {
         this.isAdminSubject.next(false);
         this.userRoleSubject.next('');
       }
     } catch (err) {
-      console.error('Error resolving user org:', err);
+      console.error('[Auth] Error resolving user org:', err);
       this.isAdminSubject.next(false);
       this.userRoleSubject.next('');
     }
   }
 
+  private async startSessionWatch(uid: string): Promise<void> {
+    if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
+    const token = crypto.randomUUID();
+    this.localSessionToken = token;
+    await this.firebaseService.updateUserSessionToken(uid, token);
+    this.unsubSessionWatch = this.firebaseService.watchUserSessionToken(uid, (remoteToken) => {
+      if (remoteToken && remoteToken !== this.localSessionToken) {
+        this.forceLogout();
+      }
+    });
+  }
+
+  private forceLogout(): void {
+    if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
+    this.localSessionToken = '';
+    this.isSuperAdminSubject.next(false);
+    this.orgLogoSubject.next('');
+    this.botPausedSubject.next(false);
+    this.botBlockedSubject.next(false);
+    this.botPausedReasonSubject.next(null);
+    this.sessionDisplaced$.next();
+    signOut(this.auth);
+  }
+
   async login(email: string, password: string): Promise<void> {
-    this.loadingSubject.next(true);
+    // Only set loading=true if not already authenticated.
+    // Firebase doesn't re-fire onAuthStateChanged for already-authenticated users,
+    // so setting loading=true would leave the auth guard blocked indefinitely.
+    if (!this.currentUserSubject.value) {
+      this.loadingSubject.next(true);
+    }
     await signInWithEmailAndPassword(this.auth, email, password);
   }
 
@@ -134,6 +168,8 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
+    if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
+    this.localSessionToken = '';
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
     this.botPausedSubject.next(false);

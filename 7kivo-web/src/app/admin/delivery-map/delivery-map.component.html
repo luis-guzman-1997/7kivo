@@ -33,7 +33,7 @@
   </div>
 
   <!-- Cuerpo: mapa full + paneles flotantes -->
-  <div class="dmap-body">
+  <div class="dmap-body" [class.detail-open]="!!selectedUser || !!selectedRecord">
 
     <!-- Mapa Leaflet -->
     <div id="delivery-map-el" class="dmap-map"></div>
@@ -70,17 +70,23 @@
 
       <!-- Filtro de fechas -->
       <div class="dmap-date-filter">
-        <div class="dmap-date-row">
-          <label>Desde</label>
-          <input type="date" [(ngModel)]="fromDate" [max]="toDate" />
-        </div>
-        <div class="dmap-date-row">
-          <label>Hasta</label>
-          <input type="date" [(ngModel)]="toDate" [min]="fromDate" />
-        </div>
-        <button class="dmap-btn-filter" (click)="applyDateFilter()">
-          <i class="fas fa-search"></i> Aplicar
+        <button class="dmap-filter-toggle" *ngIf="isMobileView" (click)="toggleHistoryFilter()">
+          <span><i class="fas fa-calendar-alt"></i> Filtro de fechas</span>
+          <i class="fas" [class.fa-chevron-down]="historyFilterCollapsed" [class.fa-chevron-up]="!historyFilterCollapsed"></i>
         </button>
+        <div class="dmap-date-filter-body" *ngIf="!isMobileView || !historyFilterCollapsed">
+          <div class="dmap-date-row">
+            <label>Desde</label>
+            <input type="date" [(ngModel)]="fromDate" [max]="toDate" />
+          </div>
+          <div class="dmap-date-row">
+            <label>Hasta</label>
+            <input type="date" [(ngModel)]="toDate" [min]="fromDate" />
+          </div>
+          <button class="dmap-btn-filter" (click)="applyDateFilter()">
+            <i class="fas fa-search"></i> Aplicar
+          </button>
+        </div>
       </div>
 
       <!-- Top 5 -->

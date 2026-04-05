@@ -562,6 +562,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.sendingAudio = true;
     this.error = '';
+    this.cdr.detectChanges();
+    setTimeout(() => this.scrollToBottom(), 50);
 
     try {
       const phone = this.selectedConversation.phoneNumber;
