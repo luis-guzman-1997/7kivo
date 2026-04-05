@@ -1287,6 +1287,17 @@ export class FirebaseService {
     return snap.exists() ? snap.data() : null;
   }
 
+  async getPublicOrgInfo(orgId: string): Promise<any | null> {
+    const docRef = doc(this.db, 'organizations', orgId, 'public', 'info');
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async savePublicOrgInfo(orgId: string, data: { privacyPolicy: string; orgName: string; orgLogo?: string }): Promise<void> {
+    const docRef = doc(this.db, 'organizations', orgId, 'public', 'info');
+    await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
   async getOrgAdminsByOrgId(orgId: string): Promise<any[]> {
     const colRef = collection(this.db, 'organizations', orgId, 'admins');
     const snapshot = await getDocs(colRef);

@@ -1,0 +1,76 @@
+<div class="pp-page">
+  <div class="pp-main">
+    <div *ngIf="loading" class="pp-loading" role="status" aria-live="polite">
+      <div class="pp-loading-inner">
+        <div class="pp-meta-row pp-meta-row--loading">
+          <div class="pp-skeleton pp-skeleton-badge" aria-hidden="true"></div>
+          <span class="pp-platform pp-platform--meta">Con tecnología de <strong>7kivo</strong></span>
+        </div>
+        <div class="pp-skeleton pp-skeleton-title"></div>
+        <div class="pp-skeleton pp-skeleton-line"></div>
+        <div class="pp-skeleton pp-skeleton-line pp-skeleton-line--short"></div>
+        <div class="pp-skeleton pp-skeleton-line"></div>
+        <div class="pp-skeleton pp-skeleton-line pp-skeleton-line--medium"></div>
+      </div>
+      <span class="visually-hidden">Cargando política de privacidad…</span>
+    </div>
+
+    <ng-container *ngIf="!loading && !notFound">
+      <div class="pp-hero">
+        <div class="pp-hero-inner">
+          <div class="pp-meta-row">
+            <span class="pp-doc-badge">Documento público</span>
+            <span class="pp-platform pp-platform--meta">Con tecnología de <strong>7kivo</strong></span>
+          </div>
+          <div class="pp-brand" *ngIf="orgLogo || orgName">
+            <img
+              *ngIf="orgLogo"
+              [src]="orgLogo"
+              [alt]="'Logotipo de ' + orgName"
+              class="pp-brand-logo"
+              width="120"
+              height="120"
+            />
+            <p class="pp-org-name">{{ orgName }}</p>
+          </div>
+        </div>
+      </div>
+
+      <article class="pp-article" aria-label="Política de privacidad">
+        <div class="pp-body">
+          <div class="pp-content" [innerHTML]="policyHtml"></div>
+        </div>
+      </article>
+
+      <footer class="pp-footer">
+        <p class="pp-footer-note">
+          Este texto lo publica la organización indicada. Para consultas sobre el tratamiento de datos, contacte
+          directamente a dicha organización.
+        </p>
+        <p class="pp-footer-copy">© {{ currentYear }} · Publicado con <a routerLink="/">7kivo</a></p>
+      </footer>
+    </ng-container>
+
+    <div *ngIf="!loading && notFound" class="pp-not-found" role="alert">
+      <div class="pp-not-found-wrap">
+        <div class="pp-meta-row">
+          <span class="pp-doc-badge">Documento público</span>
+          <span class="pp-platform pp-platform--meta">Con tecnología de <strong>7kivo</strong></span>
+        </div>
+        <div class="pp-not-found-card">
+          <div class="pp-not-found-icon" aria-hidden="true">
+            <i class="fas fa-file-circle-question"></i>
+          </div>
+          <h2 class="pp-not-found-title">Política no disponible</h2>
+          <p class="pp-not-found-text">
+            No hay una política de privacidad publicada para esta organización, o el enlace no es válido.
+          </p>
+          <a routerLink="/" class="pp-not-found-btn">
+            <i class="fas fa-home" aria-hidden="true"></i>
+            Ir al inicio
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

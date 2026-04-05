@@ -11,6 +11,7 @@ import { ServicesComponent } from './components/services/services.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { TermsComponent } from './components/terms/terms.component';
 import { PrivacyComponent } from './components/privacy/privacy.component';
+import { OrgPrivacyComponent } from './components/org-privacy/org-privacy.component';
 
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
@@ -25,7 +26,8 @@ registerLocaleData(localeEs, 'es');
     ServicesComponent,
     ContactComponent,
     TermsComponent,
-    PrivacyComponent
+    PrivacyComponent,
+    OrgPrivacyComponent
   ],
   imports: [
     BrowserModule,

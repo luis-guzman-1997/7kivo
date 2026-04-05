@@ -23,11 +23,19 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         filter(e => e.type === 'VERSION_READY')
       ).subscribe(() => window.location.reload());
     }
+    this.applyAdminRouteFlags(this.router.url);
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      this.isAdminRoute = event.url.startsWith('/admin') || event.url.startsWith('/superadmin');
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe(event => {
+      this.applyAdminRouteFlags(event.urlAfterRedirects || event.url);
     });
+  }
+
+  private applyAdminRouteFlags(url: string): void {
+    this.isAdminRoute =
+      url.startsWith('/admin') ||
+      url.startsWith('/superadmin') ||
+      url.startsWith('/privacidad');
   }
 
   ngOnInit(): void {}

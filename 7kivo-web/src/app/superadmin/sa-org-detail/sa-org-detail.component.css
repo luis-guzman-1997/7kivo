@@ -973,3 +973,23 @@
   .scard { padding: 10px; }
   .header-org-name { font-size: 0.95rem; }
 }
+
+
+.pp-url-hint {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+.pp-url-hint strong {
+  color: #6366f1;
+}
+.pp-link {
+  color: #6366f1;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pp-link:hover { text-decoration: underline; }

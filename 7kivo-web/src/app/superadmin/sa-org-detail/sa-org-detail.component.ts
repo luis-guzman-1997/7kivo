@@ -352,7 +352,8 @@ export class SaOrgDetailComponent implements OnInit {
     this.editGeneral = {
       orgName: this.orgDetail?.orgName || '',
       description: this.orgDetail?.description || '',
-      industry: this.orgDetail?.industry || 'general'
+      industry: this.orgDetail?.industry || 'general',
+      privacyPolicy: this.orgDetail?.privacyPolicy || ''
     };
     this.editingGeneral = true;
   }
@@ -373,6 +374,13 @@ export class SaOrgDetailComponent implements OnInit {
         this.selectedOrg.orgLogo = url;
       }
       await this.firebaseService.saveOrgConfigByOrgId(this.selectedOrg.id, data);
+      if (data.privacyPolicy !== undefined) {
+        await this.firebaseService.savePublicOrgInfo(this.selectedOrg.id, {
+          privacyPolicy: data.privacyPolicy,
+          orgName: data.orgName || '',
+          orgLogo: data.orgLogo || this.orgDetail?.orgLogo || ''
+        });
+      }
       this.orgDetail = { ...this.orgDetail, ...data };
       this.selectedOrg.orgName = data.orgName;
       this.selectedOrg.industry = data.industry;
