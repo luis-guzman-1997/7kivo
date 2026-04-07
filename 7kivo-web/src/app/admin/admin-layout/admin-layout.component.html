@@ -50,19 +50,21 @@
         </a>
 
         <!-- Bot -->
-        <div class="nav-section-label">Bot</div>
-        <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
-          <i class="fas fa-sitemap"></i>
-          <span>Flujos del Bot</span>
-        </a>
-        <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/citas" routerLinkActive="active" class="nav-item-admin">
-          <i class="fas fa-calendar-check"></i>
-          <span>Citas</span>
-        </a>
-        <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
-          <i class="fas fa-database"></i>
-          <span>Base de Datos</span>
-        </a>
+        <ng-container *ngIf="!isDeliveryRole">
+          <div class="nav-section-label">Bot</div>
+          <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
+            <i class="fas fa-sitemap"></i>
+            <span>Flujos del Bot</span>
+          </a>
+          <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/citas" routerLinkActive="active" class="nav-item-admin">
+            <i class="fas fa-calendar-check"></i>
+            <span>Citas</span>
+          </a>
+          <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
+            <i class="fas fa-database"></i>
+            <span>Base de Datos</span>
+          </a>
+        </ng-container>
       </ng-container>
 
       <!-- Configuración (always accessible) -->
