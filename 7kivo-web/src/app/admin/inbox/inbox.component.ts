@@ -182,7 +182,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
     if (this.locationInterval) clearInterval(this.locationInterval);
     if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
-    if (this.isDelivery && this.currentUserId) {
+    if (this.isDelivery && this.currentUserId && !this.hasActiveDeliveryCase) {
       this.firebaseService.clearDeliveryLocation(this.currentUserId);
     }
     if (this.unsubPromoOrders) this.unsubPromoOrders();

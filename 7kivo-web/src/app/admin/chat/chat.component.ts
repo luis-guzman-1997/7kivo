@@ -106,6 +106,10 @@ export class ChatComponent implements OnInit, OnDestroy {
   private convsUnsub: Unsubscribe | null = null;
   private msgsUnsub: Unsubscribe | null = null;
   private windowTimer: any = null;
+  private locationInterval: any = null;
+  private locationWatchId: number | null = null;
+  private currentLat: number | null = null;
+  private currentLng: number | null = null;
 
   get orgId(): string { return this.firebaseService.getOrgId(); }
 
@@ -197,6 +201,10 @@ export class ChatComponent implements OnInit, OnDestroy {
       }
     }
 
+    if (this.isDeliveryMode) {
+      this.startLocationTracking();
+    }
+
     this.convsUnsub = this.firebaseService.onConversationsChange((convs) => {
       this.conversations = convs;
       this.applyFilter();
@@ -221,7 +229,46 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.convsUnsub) this.convsUnsub();
     if (this.msgsUnsub) this.msgsUnsub();
     if (this.windowTimer) clearInterval(this.windowTimer);
+    if (this.locationInterval) clearInterval(this.locationInterval);
+    if (this.locationWatchId !== null) navigator.geolocation.clearWatch(this.locationWatchId);
     this.stopRecordingCleanup();
+  }
+
+  private startLocationTracking(): void {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.currentLat = pos.coords.latitude;
+        this.currentLng = pos.coords.longitude;
+        this.pushLocationToFirebase();
+        this.locationWatchId = navigator.geolocation.watchPosition(
+          (p) => { this.currentLat = p.coords.latitude; this.currentLng = p.coords.longitude; },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+        );
+        if (!this.locationInterval) {
+          this.locationInterval = setInterval(() => this.pushLocationToFirebase(), 15000);
+        }
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
+  }
+
+  private pushLocationToFirebase(): void {
+    const uid = this.authService.currentUser?.uid;
+    if (!uid || this.currentLat === null || this.currentLng === null) return;
+    const name = this.deliveryUserName || this.authService.currentUser?.email || '';
+    this.firebaseService.updateDeliveryLocation(uid, {
+      userId: uid,
+      userName: name,
+      lat: this.currentLat,
+      lng: this.currentLng,
+      status: 'active',
+      activeCaseId: this.deliverySubmissionId ?? this.promoOrderId,
+      activeCollection: this.deliveryCollection,
+      activePhone: this.deliveryPhone
+    }).catch(() => {});
   }
 
   async loadConfig(): Promise<void> {
