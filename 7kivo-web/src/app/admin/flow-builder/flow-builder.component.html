@@ -625,6 +625,29 @@
           </ng-container>
         </div>
 
+        <!-- Bloque: Números de prueba -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-flask"></i> Modo prueba — números autorizados</div>
+          <p class="fe-hint">Si agregas números aquí, este flujo solo estará disponible para esos contactos de WhatsApp. Déjalo vacío para que todos lo vean.</p>
+          <div class="test-phones-input-row">
+            <input type="text" class="test-phone-input" [(ngModel)]="newTestPhone"
+              placeholder="Ej: 50377581735"
+              (keydown.enter)="$event.preventDefault(); addTestPhone()" />
+            <button type="button" class="btn-add-test-phone" (click)="addTestPhone()">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+          <div class="test-phones-list" *ngIf="(currentFlow.testPhones || []).length > 0">
+            <div class="test-phone-tag" *ngFor="let p of currentFlow.testPhones">
+              <i class="fab fa-whatsapp"></i> {{ p }}
+              <button type="button" (click)="removeTestPhone(p)"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <p class="fe-hint" *ngIf="(currentFlow.testPhones || []).length > 0" style="margin-top:8px;color:#7c3aed">
+            <i class="fas fa-lock"></i> Visible solo para {{ (currentFlow.testPhones || []).length }} número(s) configurado(s)
+          </p>
+        </div>
+
         <!-- Bloque: Pasos -->
         <div class="fe-block" id="fe-steps-block">
           <div class="fe-block-title">

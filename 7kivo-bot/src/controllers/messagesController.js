@@ -387,7 +387,7 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
 // ==================== DYNAMIC MENU ====================
 
-const buildMenuItems = async () => {
+const buildMenuItems = async (phoneNumber) => {
   const menuConfig = await getMenuConfig();
   const flows = await getFlows();
 
@@ -406,7 +406,9 @@ const buildMenuItems = async () => {
         });
       } else if (item.type === "flow") {
         const flow = flows.find(f => f.id === item.flowId);
-        if (flow && flow.active !== false) {
+        const allowedPhones = Array.isArray(flow?.testPhones) ? flow.testPhones : [];
+        const phoneAllowed = allowedPhones.length === 0 || allowedPhones.includes(String(phoneNumber));
+        if (flow && flow.active !== false && phoneAllowed) {
           rows.push({
             id: `flow_${flow.id}`,
             title: (item.label || flow.menuLabel || flow.name).substring(0, 24),
@@ -462,7 +464,7 @@ const sendGreeting = async (phoneNumber, contactName = null) => {
   const menuButtonText = menuConfig?.menuButtonText ||
     await getMessage("menu_button_text", "Ver opciones");
 
-  const menuRows = await buildMenuItems();
+  const menuRows = await buildMenuItems(phoneNumber);
 
   if (menuRows.length === 0) {
     await sendTextMessage(greeting, phoneNumber);
@@ -479,7 +481,7 @@ const sendMenu = async (phoneNumber) => {
   const menuButtonText = menuConfig?.menuButtonText ||
     await getMessage("menu_button_text", "Ver opciones");
 
-  const menuRows = await buildMenuItems();
+  const menuRows = await buildMenuItems(phoneNumber);
 
   if (menuRows.length === 0) {
     await sendTextMessage("No hay opciones disponibles.", phoneNumber);
@@ -796,6 +798,13 @@ const startFlow = async (phoneNumber, flowId) => {
 
   const flow = await getFlow(flowId);
   if (!flow || !flow.steps || flow.steps.length === 0) {
+    await sendTextMessage("Este servicio no está disponible actualmente.", phoneNumber);
+    return;
+  }
+
+  // Validar acceso por número (modo prueba)
+  const allowedPhones = Array.isArray(flow.testPhones) ? flow.testPhones : [];
+  if (allowedPhones.length > 0 && !allowedPhones.includes(String(phoneNumber))) {
     await sendTextMessage("Este servicio no está disponible actualmente.", phoneNumber);
     return;
   }
@@ -2017,7 +2026,7 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     const fallbackText = menuConfig?.fallbackMessage ||
       await getMessage("fallback", "No estoy seguro de qué necesitas. Selecciona una opción:");
 
-    const menuRows = await buildMenuItems();
+    const menuRows = await buildMenuItems(phoneNumber);
     if (menuRows.length > 0) {
       const sections = [{ title: "Opciones", rows: menuRows }];
       await sendInteractiveList(fallbackText, "Ver opciones", sections, phoneNumber);

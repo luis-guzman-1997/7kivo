@@ -59,6 +59,8 @@ interface Flow {
   unattendedEnabled?: boolean;
   unattendedTimeoutHours?: number;
   unattendedMessage?: string;
+  // Restricción por número (modo prueba)
+  testPhones?: string[]; // vacío = todos; con números = solo esos
 }
 
 interface TourStep { selector: string; title: string; body: string; position: 'below' | 'above' | 'center'; }
@@ -343,6 +345,21 @@ export class FlowBuilderComponent implements OnInit {
     return slot.days.includes(day);
   }
 
+  newTestPhone = '';
+
+  addTestPhone(): void {
+    const phone = this.newTestPhone.replace(/\D/g, '').trim();
+    if (!phone) return;
+    if (!(this.currentFlow.testPhones ?? []).includes(phone)) {
+      this.currentFlow.testPhones = [...(this.currentFlow.testPhones ?? []), phone];
+    }
+    this.newTestPhone = '';
+  }
+
+  removeTestPhone(phone: string): void {
+    this.currentFlow.testPhones = (this.currentFlow.testPhones ?? []).filter(p => p !== phone);
+  }
+
   emptyFlow(): Flow {
     return {
       name: '', description: '', menuLabel: '', menuDescription: '',
@@ -351,7 +368,8 @@ export class FlowBuilderComponent implements OnInit {
       scheduleEnabled: false,
       scheduleSlots: [{ days: [1,2,3,4,5], start: '07:00', end: '17:00' }],
       scheduleOffMessage: '',
-      unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: ''
+      unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: '',
+      testPhones: []
     };
   }
 

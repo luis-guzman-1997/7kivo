@@ -1515,3 +1515,15 @@
 .day-btn { padding: 5px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white; color: #64748b; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .day-btn:hover { border-color: #8b5cf6; color: #7c3aed; }
 .day-btn-on { background: #ede9fe; border-color: #8b5cf6; color: #7c3aed; }
+
+/* Test phones */
+.test-phones-input-row { display: flex; gap: 8px; margin-top: 8px; }
+.test-phone-input { flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; font-size: 0.83rem; font-family: inherit; }
+.test-phone-input:focus { outline: none; border-color: #7c3aed; }
+.btn-add-test-phone { display: flex; align-items: center; gap: 5px; padding: 7px 14px; border: none; border-radius: 8px; background: #7c3aed; color: white; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-add-test-phone:hover { background: #6d28d9; }
+.test-phones-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.test-phone-tag { display: flex; align-items: center; gap: 6px; background: #ede9fe; border: 1px solid #c4b5fd; border-radius: 20px; padding: 4px 10px; font-size: 0.8rem; color: #5b21b6; font-weight: 500; }
+.test-phone-tag i.fab { color: #25D366; }
+.test-phone-tag button { background: none; border: none; color: #8b5cf6; cursor: pointer; padding: 0; line-height: 1; font-size: 0.75rem; }
+.test-phone-tag button:hover { color: #ef4444; }
