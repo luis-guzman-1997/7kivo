@@ -139,11 +139,10 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.chatLiveAllowed = this.authService.getPlanLimits().chatLive;
     await this.loadConfig();
 
-    // Delivery: solo puede ver su caso activo
-    if (this.authService.userRole === 'delivery') {
+    // Delivery (single y multi): inicialización de caso activo
+    if (this.authService.userRole === 'delivery' || this.authService.userRole === 'delivery_multi') {
       const params = this.route.snapshot.queryParams;
       const phone = params['phone'];
-      // Cargar nombre del delivery para guardarlo al resolver
       const uid = this.authService.currentUser?.uid;
       if (uid) {
         const userData = await this.firebaseService.getUserOrg(uid);
@@ -151,7 +150,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       }
 
       if (phone) {
-        // Viene desde la bandeja con caso específico
+        // Viene desde la bandeja con caso específico (delivery Y delivery_multi)
         this.isDeliveryMode = true;
         this.deliveryPhone = phone;
         this.deliverySubmissionId = params['submissionId'] || null;
@@ -171,16 +170,15 @@ export class ChatComponent implements OnInit, OnDestroy {
           if (!this.deliveryCode) {
             this.deliveryCode = sub?.deliveryCode || sub?.assignedTo?.deliveryCode || '';
           }
-          // Siempre preferir assignedAt del servidor (mismo reloj que los timestamps de mensajes)
-          // para evitar desfase entre el reloj del cliente (Date.now()) y el servidor de Firestore
+          // Siempre preferir assignedAt del servidor para evitar desfase de reloj
           if (sub?.assignedAt) {
             const assignedMs = sub.assignedAt?.toMillis?.()
               ?? (sub.assignedAt?.seconds ? sub.assignedAt.seconds * 1000 : null);
             if (assignedMs) this.deliveryTakenAt = assignedMs;
           }
         }
-      } else {
-        // Entró directo al chat — buscar su caso activo
+      } else if (this.authService.userRole === 'delivery') {
+        // Solo delivery single busca caso activo cuando entra sin phone
         const activeCase = await this.findMyActiveDeliveryCase();
         if (activeCase) {
           this.isDeliveryMode = true;
@@ -201,14 +199,15 @@ export class ChatComponent implements OnInit, OnDestroy {
           return;
         }
       }
+      // delivery_multi sin phone → queda en modo sidebar (isDeliveryMode=false)
     }
 
     if (this.isDeliveryMode) {
       this.startLocationTracking();
     }
 
-    // delivery_multi: cargar phones de casos activos antes de suscribir conversaciones
-    if (this.authService.userRole === 'delivery_multi') {
+    // delivery_multi en modo sidebar (sin caso específico abierto)
+    if (this.authService.userRole === 'delivery_multi' && !this.isDeliveryMode) {
       await this.loadDeliveryMultiPhones();
       this.startLocationTracking();
       // Re-cargar cuando naveguen con un nuevo phone (toman otro caso desde bandeja)
@@ -228,15 +227,6 @@ export class ChatComponent implements OnInit, OnDestroy {
         const conv = convs.find(c => c.phoneNumber === this.deliveryPhone || c.id === this.deliveryPhone);
         if (conv) this.selectConversation(conv);
       }
-      // Auto-seleccionar para delivery_multi cuando llegan con ?phone desde la bandeja
-      if (this.authService.userRole === 'delivery_multi' && !this.selectedConversation) {
-        const paramPhone = this.route.snapshot.queryParams['phone'];
-        if (paramPhone) {
-          const conv = convs.find(c => c.phoneNumber === paramPhone);
-          if (conv) this.selectConversation(conv);
-        }
-      }
-
       if (this.selectedConversation) {
         const updated = convs.find(c => c.id === this.selectedConversation!.id);
         if (updated) {
@@ -334,12 +324,15 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.windowTimer) clearInterval(this.windowTimer);
 
     const listenPhone = conv.phoneNumber;
-    // En modo delivery (single), filtrar mensajes desde cuando se tomó el caso
+    // Filtrar mensajes desde cuando se tomó el caso
     let sinceMs: number | undefined;
     if (this.isDeliveryMode && this.deliveryTakenAt) {
       sinceMs = this.deliveryTakenAt - 1000;
+    } else if (this.authService.userRole === 'delivery_multi') {
+      // Modo sidebar: usar takenAt del mapa de casos activos
+      const takenAt = this.deliveryMultiActivePhones.get(conv.phoneNumber);
+      if (takenAt) sinceMs = takenAt - 1000;
     }
-    // delivery_multi ve el historial completo de sus casos asignados
     this.lastMsgCount = -1;
     this.msgsUnsub = this.firebaseService.onConversationMessages(
       listenPhone,
