@@ -99,6 +99,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   resolveCodeError = '';
   deliverySubmission: any = null;
   showDeliveryDetail = false;
+  showPromoBanner = false;
 
   // ── Promo order mode ──
   promoOrderId: string | null = null;

@@ -248,23 +248,33 @@
       </div>
     </div>
 
-    <!-- Promo: contexto del pedido promo -->
+    <!-- Promo: contexto del pedido promo (colapsable) -->
     <div class="promo-order-banner" *ngIf="isDeliveryMode && promoOrderData">
-      <div class="promo-banner-img" *ngIf="promoOrderData.imageUrl">
-        <img [src]="promoOrderData.imageUrl" alt="promo" />
+      <div class="promo-banner-header" (click)="showPromoBanner = !showPromoBanner">
+        <div class="promo-banner-header-left">
+          <i class="fas fa-tag"></i>
+          <span class="promo-banner-name">{{ promoOrderData.campaignName }}</span>
+        </div>
+        <i class="fas" [class.fa-chevron-down]="!showPromoBanner" [class.fa-chevron-up]="showPromoBanner"></i>
       </div>
-      <div class="promo-banner-body">
-        <div class="promo-banner-name"><i class="fas fa-tag"></i> {{ promoOrderData.campaignName }}</div>
-        <div class="promo-banner-msg">{{ promoOrderData.promoMessage }}</div>
-        <div class="promo-banner-fields" *ngIf="promoOrderData.address || promoOrderData.businessName">
-          <span *ngIf="promoOrderData.address"><i class="fas fa-map-marker-alt"></i> {{ promoOrderData.address }}</span>
-          <span *ngIf="promoOrderData.businessName"><i class="fas fa-store"></i> {{ promoOrderData.businessName }}</span>
-          <span *ngIf="promoOrderData.contactName"><i class="fas fa-user"></i> {{ promoOrderData.contactName }}</span>
-          <a *ngIf="promoOrderData.contactWhatsapp"
-             [href]="'https://wa.me/' + promoOrderData.contactWhatsapp"
-             target="_blank" class="promo-banner-wa">
-            <i class="fab fa-whatsapp"></i> {{ promoOrderData.contactWhatsapp }}
-          </a>
+      <div class="promo-banner-content" *ngIf="showPromoBanner">
+        <div class="promo-banner-inner">
+          <div class="promo-banner-img" *ngIf="promoOrderData.imageUrl">
+            <img [src]="promoOrderData.imageUrl" alt="promo" />
+          </div>
+          <div class="promo-banner-body">
+            <div class="promo-banner-msg">{{ promoOrderData.promoMessage }}</div>
+            <div class="promo-banner-fields" *ngIf="promoOrderData.address || promoOrderData.businessName">
+              <span *ngIf="promoOrderData.address"><i class="fas fa-map-marker-alt"></i> {{ promoOrderData.address }}</span>
+              <span *ngIf="promoOrderData.businessName"><i class="fas fa-store"></i> {{ promoOrderData.businessName }}</span>
+              <span *ngIf="promoOrderData.contactName"><i class="fas fa-user"></i> {{ promoOrderData.contactName }}</span>
+              <a *ngIf="promoOrderData.contactWhatsapp"
+                 [href]="'https://wa.me/' + promoOrderData.contactWhatsapp"
+                 target="_blank" class="promo-banner-wa">
+                <i class="fab fa-whatsapp"></i> {{ promoOrderData.contactWhatsapp }}
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
