@@ -71,8 +71,13 @@ export class InboxComponent implements OnInit, OnDestroy {
   campaigns: any[] = [];
   private unsubCampaigns: (() => void) | null = null;
 
-  get pendingPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending'); }
-  get activePromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending' || o.status === 'taken'); }
+  private isPromoVisibleToMe(o: any): boolean {
+    const uids: string[] = o.assignedDeliveryUids || [];
+    if (uids.length === 0) return true;
+    return uids.includes(this.currentUserId);
+  }
+  get pendingPromoOrders(): any[] { return this.promoOrders.filter(o => o.status === 'pending' && this.isPromoVisibleToMe(o)); }
+  get activePromoOrders(): any[] { return this.promoOrders.filter(o => (o.status === 'pending' || o.status === 'taken') && this.isPromoVisibleToMe(o)); }
   get cancelledPromoOrders(): any[] {
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);

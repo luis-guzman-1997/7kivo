@@ -371,6 +371,26 @@
 .optout-desc { font-size: 0.78rem; color: #64748b; line-height: 1.5; margin: 0; }
 .keyword-action-config { margin-top: 12px; padding: 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; display: flex; flex-direction: column; gap: 10px; }
 
+/* ── Assign users ── */
+.assign-users-box { margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: white; }
+.assign-search { display: flex; align-items: center; gap: 7px; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+.assign-search i { color: #94a3b8; font-size: 0.8rem; flex-shrink: 0; }
+.assign-search input { flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; font-size: 0.83rem; color: #1e293b; font-family: inherit; }
+.assign-search input:focus { outline: none; border-color: #7c3aed; }
+.assign-list { max-height: 200px; overflow-y: auto; }
+.assign-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #f1f5f9; }
+.assign-item:last-child { border-bottom: none; }
+.assign-item:hover { background: #f8fafc; }
+.assign-item-checked { background: #f5f3ff; }
+.assign-item-checked:hover { background: #ede9fe; }
+.assign-item input[type="checkbox"] { accent-color: #7c3aed; width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+.assign-item-info { flex: 1; min-width: 0; }
+.assign-item-name { font-size: 0.85rem; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.assign-item-role { font-size: 0.75rem; color: #7c3aed; font-weight: 500; }
+.assign-item-flag { font-size: 0.72rem; color: #94a3b8; margin-left: 4px; }
+.assign-empty { padding: 20px; text-align: center; color: #94a3b8; font-size: 0.83rem; }
+.assign-summary { padding: 7px 12px; background: #f5f3ff; border-top: 1px solid #ede9fe; font-size: 0.78rem; color: #6d28d9; font-weight: 600; }
+
 .promo-biz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .promo-biz-field { display: flex; flex-direction: column; gap: 4px; }
 .promo-biz-full { grid-column: 1 / -1; }

@@ -386,6 +386,7 @@ const createPromoOrder = async (phone, campaign) => {
       contactName: campaign.contactName || '',
       address: campaign.address || '',
       contactWhatsapp: campaign.contactWhatsapp || '',
+      assignedDeliveryUids: Array.isArray(data.assignedDeliveryUids) ? data.assignedDeliveryUids : [],
       status: 'pending',
       unattendedNotified: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp()

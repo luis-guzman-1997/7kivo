@@ -436,6 +436,51 @@
           </div>
         </div>
 
+        <!-- Asignación de usuarios delivery -->
+        <div class="fp-group" *ngIf="isDeliveryOrg && form.actionKeywordEnabled">
+          <label><i class="fas fa-users"></i> ¿Quién puede tomar este pedido?</label>
+          <label class="optout-toggle">
+            <input type="checkbox" [(ngModel)]="form.restrictToUsers"
+                   (ngModelChange)="form.assignedDeliveryUids = []" />
+            <div class="toggle-pill"></div>
+            <span>Restringir a usuarios específicos</span>
+          </label>
+          <p class="optout-desc" *ngIf="!form.restrictToUsers">
+            <i class="fas fa-globe"></i> Todos los usuarios delivery podrán ver y tomar este pedido.
+          </p>
+          <ng-container *ngIf="form.restrictToUsers">
+            <p class="optout-desc">
+              <i class="fas fa-lock"></i>
+              Solo los usuarios seleccionados verán este pedido en su bandeja, aunque tengan los pedidos promo desactivados en su perfil.
+            </p>
+            <div class="assign-users-box">
+              <div class="assign-search">
+                <i class="fas fa-search"></i>
+                <input type="text" [(ngModel)]="adminSearch" (ngModelChange)="filterAdmins()"
+                       placeholder="Buscar por nombre o email..." />
+              </div>
+              <div class="assign-list" *ngIf="filteredDeliveryAdmins.length > 0">
+                <label class="assign-item" *ngFor="let a of filteredDeliveryAdmins"
+                       [class.assign-item-checked]="isAdminAssigned(a.uid)">
+                  <input type="checkbox" [checked]="isAdminAssigned(a.uid)"
+                         (change)="toggleAdminAssignment(a.uid)" />
+                  <div class="assign-item-info">
+                    <span class="assign-item-name">{{ a.name || a.email }}</span>
+                    <span class="assign-item-role">{{ a.role === 'delivery_multi' ? 'Delivery Múltiple' : 'Delivery' }}</span>
+                  </div>
+                </label>
+              </div>
+              <div class="assign-empty" *ngIf="filteredDeliveryAdmins.length === 0">
+                <i class="fas fa-user-slash"></i> No se encontraron usuarios
+              </div>
+              <div class="assign-summary" *ngIf="(form.assignedDeliveryUids || []).length > 0">
+                <i class="fas fa-check-circle"></i>
+                {{ (form.assignedDeliveryUids || []).length }} usuario{{ (form.assignedDeliveryUids || []).length !== 1 ? 's' : '' }} seleccionado{{ (form.assignedDeliveryUids || []).length !== 1 ? 's' : '' }}
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
         <!-- Error -->
         <div class="fp-error" *ngIf="formError">
           <i class="fas fa-exclamation-circle"></i> {{ formError }}

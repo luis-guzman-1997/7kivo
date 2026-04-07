@@ -14,6 +14,9 @@ export class CampaignsComponent implements OnInit {
   filterTab: string = 'all';
 
   deliveryFlows: any[] = [];
+  deliveryAdmins: any[] = [];
+  adminSearch = '';
+  filteredDeliveryAdmins: any[] = [];
 
   dailyBulkLimit = 0;
   totalSentToday = 0;
@@ -49,7 +52,7 @@ export class CampaignsComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.orgId = this.firebaseService.getOrgId() || '';
     const tasks: Promise<any>[] = [this.loadCampaigns(), this.loadOrgInfo(), this.loadCollections()];
-    if (this.isDeliveryOrg) tasks.push(this.loadDeliveryFlows());
+    if (this.isDeliveryOrg) tasks.push(this.loadDeliveryFlows(), this.loadDeliveryAdmins());
     await Promise.all(tasks);
   }
 
@@ -83,6 +86,44 @@ export class CampaignsComponent implements OnInit {
     try {
       this.deliveryFlows = await this.firebaseService.getDeliveryFlowsForOrg(this.orgId);
     } catch (err) { console.error(err); }
+  }
+
+  async loadDeliveryAdmins(): Promise<void> {
+    try {
+      const admins = await this.firebaseService.getAdmins();
+      this.deliveryAdmins = admins.filter(
+        (a: any) => (a.role === 'delivery' || a.role === 'delivery_multi') && a.active !== false
+      );
+      this.filteredDeliveryAdmins = [...this.deliveryAdmins];
+    } catch (err) { console.error(err); }
+  }
+
+  filterAdmins(): void {
+    const q = this.adminSearch.toLowerCase().trim();
+    this.filteredDeliveryAdmins = q
+      ? this.deliveryAdmins.filter(a =>
+          (a.name || '').toLowerCase().includes(q) || (a.email || '').toLowerCase().includes(q))
+      : [...this.deliveryAdmins];
+  }
+
+  toggleAdminAssignment(uid: string): void {
+    const list: string[] = this.form.assignedDeliveryUids || [];
+    const idx = list.indexOf(uid);
+    if (idx === -1) list.push(uid);
+    else list.splice(idx, 1);
+    this.form.assignedDeliveryUids = [...list];
+  }
+
+  isAdminAssigned(uid: string): boolean {
+    return (this.form.assignedDeliveryUids || []).includes(uid);
+  }
+
+  getAssignedNames(): string {
+    const uids: string[] = this.form.assignedDeliveryUids || [];
+    return this.deliveryAdmins
+      .filter(a => uids.includes(a.uid))
+      .map(a => a.name || a.email)
+      .join(', ') || 'Ninguno';
   }
 
   get isDeliveryOrg(): boolean {
@@ -138,8 +179,12 @@ export class CampaignsComponent implements OnInit {
       businessName: '',
       contactName: '',
       address: '',
-      contactWhatsapp: ''
+      contactWhatsapp: '',
+      restrictToUsers: false,
+      assignedDeliveryUids: []
     };
+    this.adminSearch = '';
+    this.filteredDeliveryAdmins = [...this.deliveryAdmins];
     this.formImageFile = null;
     this.formImagePreview = '';
     this.formError = '';
@@ -172,8 +217,12 @@ export class CampaignsComponent implements OnInit {
       businessName: campaign.businessName || '',
       contactName: campaign.contactName || '',
       address: campaign.address || '',
-      contactWhatsapp: campaign.contactWhatsapp || ''
+      contactWhatsapp: campaign.contactWhatsapp || '',
+      restrictToUsers: Array.isArray(campaign.assignedDeliveryUids) && campaign.assignedDeliveryUids.length > 0,
+      assignedDeliveryUids: campaign.assignedDeliveryUids || []
     };
+    this.adminSearch = '';
+    this.filteredDeliveryAdmins = [...this.deliveryAdmins];
     this.formImageFile = null;
     this.formImagePreview = campaign.imageUrl || '';
     this.formError = '';
@@ -260,7 +309,10 @@ export class CampaignsComponent implements OnInit {
       businessName: this.isDeliveryOrg ? (this.form.businessName || '').trim() : '',
       contactName: this.isDeliveryOrg ? (this.form.contactName || '').trim() : '',
       address: this.isDeliveryOrg ? (this.form.address || '').trim() : '',
-      contactWhatsapp: this.isDeliveryOrg ? (this.form.contactWhatsapp || '').trim().replace(/[^0-9]/g, '') : ''
+      contactWhatsapp: this.isDeliveryOrg ? (this.form.contactWhatsapp || '').trim().replace(/[^0-9]/g, '') : '',
+      assignedDeliveryUids: (this.isDeliveryOrg && this.form.restrictToUsers)
+        ? (this.form.assignedDeliveryUids || [])
+        : []
     };
     if (this.form.type === 'once') data.scheduledDate = this.form.scheduledDate;
     if (this.form.type === 'daily') {
