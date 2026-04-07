@@ -910,7 +910,8 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   async takePromoOrder(order: any): Promise<void> {
     if (this.takingPromoOrderId) return;
-    if (this.isDelivery && this.hasActiveDeliveryCase) {
+    // Solo delivery single: un caso a la vez
+    if (!this.isDeliveryMulti && this.hasActiveDeliveryCase) {
       this.promoOrderError = 'Resuelve tu caso activo antes de tomar otro pedido.';
       setTimeout(() => this.promoOrderError = '', 5000);
       return;
