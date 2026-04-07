@@ -173,6 +173,28 @@
             </button>
           </div>
         </div>
+        <!-- Flow assignment (delivery, owner/SA only) -->
+        <div class="flow-assign-section" *ngIf="admin.role === 'delivery' && canAssignFlows">
+          <button class="flow-assign-toggle" (click)="toggleFlowPanel(admin)">
+            <i class="fas fa-project-diagram"></i>
+            Flujos asignados
+            <span class="fa-badge">{{ (admin.assignedFlows?.length || 0) }}</span>
+            <i class="fas fa-chevron-down fa-toggle-icon" [class.rotated]="flowPanelAdminId === admin.id"></i>
+          </button>
+          <div class="flow-assign-panel" *ngIf="flowPanelAdminId === admin.id">
+            <p class="fa-hint" *ngIf="flows.length === 0">No hay flujos creados.</p>
+            <label *ngFor="let flow of flows" class="fa-flow-row" [class.fa-flow-inactive]="!flow.active">
+              <input type="checkbox"
+                     [checked]="isFlowAssigned(admin, flow.id)"
+                     [disabled]="flowAssignSaving === admin.id"
+                     (change)="toggleFlowAssignment(admin, flow.id)" />
+              <span class="fa-flow-name">{{ flow.name }}</span>
+              <span class="fa-flow-label">{{ flow.menuLabel }}</span>
+              <span class="fa-flow-status" *ngIf="!flow.active">inactivo</span>
+            </label>
+          </div>
+        </div>
+
         <!-- Role change -->
         <div class="role-change" *ngIf="canManage(admin)">
           <label>Cambiar rol:</label>

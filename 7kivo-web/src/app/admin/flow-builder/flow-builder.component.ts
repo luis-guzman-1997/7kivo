@@ -71,6 +71,7 @@ export class FlowBuilderComponent implements OnInit {
 
   // List view tabs
   activeTab: 'menu' | 'flows' = 'menu';
+  flowStatusFilter: 'all' | 'active' | 'inactive' = 'all';
 
   // Drag-and-drop state
   draggedStepIndex: number | null = null;
@@ -108,6 +109,16 @@ export class FlowBuilderComponent implements OnInit {
   // Delete flow modal state
   deleteFlowTarget: Flow | null = null;
   deletingFlow = false;
+
+  // Copy flow modal state
+  copyFlowSource: Flow | null = null;
+  copyFlowName = '';
+  copyFlowLabel = '';
+  copyFlowDesc = '';
+  copyFlowCollectionMode: 'existing' | 'new' = 'existing';
+  copyFlowCollection = '';
+  copyFlowNewCollection = '';
+  copyingFlow = false;
 
   // Tour state
   tourActive = false;
@@ -188,6 +199,23 @@ export class FlowBuilderComponent implements OnInit {
 
   get canCreateFlow(): boolean {
     return this.flows.length < this.planLimit;
+  }
+
+  get filteredFlows(): Flow[] {
+    if (this.flowStatusFilter === 'active') return this.flows.filter(f => f.active);
+    if (this.flowStatusFilter === 'inactive') return this.flows.filter(f => !f.active);
+    return this.flows;
+  }
+
+  get activeFlowsCount(): number { return this.flows.filter(f => f.active).length; }
+  get inactiveFlowsCount(): number { return this.flows.filter(f => !f.active).length; }
+
+  get isOwner(): boolean {
+    return this.authService.userRole === 'owner' || this.authService.isSuperAdmin;
+  }
+
+  get hasInactiveMenuItems(): boolean {
+    return this.menuConfig.items.some((i: any) => i.active === false);
   }
 
   get canAddMenuItem(): boolean {
@@ -459,6 +487,65 @@ export class FlowBuilderComponent implements OnInit {
     } catch (err) {
       this.error = 'Error al actualizar flujo';
       setTimeout(() => this.error = '', 3000);
+    }
+  }
+
+  // ==================== COPY FLOW ====================
+
+  sanitizeCopySlug(): void {
+    this.copyFlowNewCollection = this.copyFlowNewCollection
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_');
+  }
+
+  openCopyFlow(flow: Flow): void {
+    this.copyFlowSource = flow;
+    this.copyFlowName = flow.name + ' (copia)';
+    this.copyFlowLabel = flow.menuLabel;
+    this.copyFlowDesc = flow.menuDescription || '';
+    this.copyFlowCollection = flow.saveToCollection || '';
+    this.copyFlowNewCollection = '';
+    this.copyFlowCollectionMode = flow.saveToCollection ? 'existing' : 'new';
+  }
+
+  async confirmCopyFlow(): Promise<void> {
+    if (!this.copyFlowSource || !this.copyFlowName.trim() || !this.copyFlowLabel.trim()) return;
+    const collection = this.copyFlowCollectionMode === 'new'
+      ? this.copyFlowNewCollection.trim()
+      : this.copyFlowCollection.trim();
+    this.copyingFlow = true;
+    try {
+      const data: any = {
+        ...this.copyFlowSource,
+        name: this.copyFlowName.trim(),
+        menuLabel: this.copyFlowLabel.trim(),
+        menuDescription: this.copyFlowDesc.trim(),
+        saveToCollection: collection,
+        active: true,
+        order: this.flows.length
+      };
+      delete data.id;
+      if (data.steps) {
+        data.steps = data.steps.map((s: any) => {
+          const c = { ...s };
+          delete c._originalFieldKey;
+          delete c._fieldKeyChanged;
+          return c;
+        });
+      }
+      await this.firebaseService.addFlow(data);
+      if (collection) {
+        await this.firebaseService.syncFlowToCollection(collection, data.steps || []);
+      }
+      this.copyFlowSource = null;
+      await this.loadData();
+      this.notice = `Flujo "${data.name}" creado`;
+      setTimeout(() => this.notice = '', 3000);
+    } catch (err) {
+      this.error = 'Error al copiar flujo';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.copyingFlow = false;
     }
   }
 

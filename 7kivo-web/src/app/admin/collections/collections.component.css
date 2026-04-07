@@ -409,3 +409,39 @@
 .btn-clear-data { display:inline-flex; align-items:center; gap:5px; padding:7px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#dc2626; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
 .btn-clear-data:hover:not(:disabled) { background:#fee2e2; border-color:#f87171; }
 .btn-clear-data:disabled { opacity:0.45; cursor:not-allowed; }
+
+/* Copy button on collection card */
+.btn-copy-col {
+  margin-left: auto; flex-shrink: 0; align-self: flex-start;
+  width: 32px; height: 32px; border-radius: 8px;
+  background: #f1f5f9; border: 1.5px solid #e2e8f0;
+  color: #8b5cf6; font-size: 0.85rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; opacity: 0;
+}
+.collection-card:hover .btn-copy-col { opacity: 1; }
+.btn-copy-col:hover { background: #ede9fe; border-color: #8b5cf6; }
+.btn-copy-col i { color: inherit !important; }
+
+/* Copy modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-box { background: white; border-radius: 16px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 0; }
+.modal-header h3 { font-size: 1rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; background: none; -webkit-text-fill-color: #1e293b; }
+.modal-header h3 i { color: #8b5cf6 !important; }
+.modal-close { background: none; border: none; font-size: 1rem; color: #94a3b8; cursor: pointer; padding: 4px; line-height: 1; }
+.modal-close:hover { color: #475569; }
+.modal-body { padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+.modal-source { font-size: 0.85rem; color: #64748b; margin: 0; }
+.input-md { width: 100%; padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 9px; font-size: 0.88rem; font-family: inherit; box-sizing: border-box; transition: border-color 0.15s; }
+.input-md:focus { outline: none; border-color: #8b5cf6; }
+.copy-data-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: #334155; cursor: pointer; user-select: none; }
+.copy-data-toggle input { width: 16px; height: 16px; cursor: pointer; }
+.copy-data-hint { font-size: 0.8rem; color: #94a3b8; margin: 0; }
+.modal-footer { padding: 16px 24px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f1f5f9; }
+.btn-cancel { padding: 8px 18px; border: 1.5px solid #e2e8f0; border-radius: 9px; background: white; color: #64748b; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.btn-cancel:hover { background: #f8fafc; }
+.btn-confirm { display: flex; align-items: center; gap: 6px; padding: 8px 18px; border: none; border-radius: 9px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+.btn-confirm:hover:not(:disabled) { opacity: 0.9; }
+.btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-confirm i { font-size: 0.82rem; color: inherit !important; }

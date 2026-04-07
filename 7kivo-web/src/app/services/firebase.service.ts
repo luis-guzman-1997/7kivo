@@ -862,6 +862,26 @@ export class FirebaseService {
     await this.deleteDocument(slug, itemId);
   }
 
+  async copyCollectionDef(source: any, newName: string, newSlug: string, withData: boolean): Promise<void> {
+    const orgId = this.getOrgId();
+    // Create new collection definition (strip id)
+    const newDef = { ...source, name: newName, slug: newSlug };
+    delete newDef.id;
+    await this.addDocument('_collections', newDef);
+
+    if (withData) {
+      const srcSnap = await getDocs(collection(this.db, `organizations/${orgId}/${source.slug}`));
+      const destRef = collection(this.db, `organizations/${orgId}/${newSlug}`);
+      for (let i = 0; i < srcSnap.docs.length; i += 500) {
+        const batch = writeBatch(this.db);
+        srcSnap.docs.slice(i, i + 500).forEach(d => {
+          batch.set(doc(destRef), d.data());
+        });
+        await batch.commit();
+      }
+    }
+  }
+
   async batchWriteCollectionItems(
     slug: string,
     items: any[],

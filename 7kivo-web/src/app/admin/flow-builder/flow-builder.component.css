@@ -1340,8 +1340,24 @@
 }
 
 .bmp-item-controls {
-  display: flex; align-items: center; gap: 2px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
+
+.btn-icon-muted { color: #94a3b8 !important; }
+.btn-icon-muted:hover { color: #475569 !important; }
+.btn-icon-activate { color: #10b981 !important; }
+.btn-icon-activate:hover { color: #059669 !important; }
+
+.bmp-inactive-group {
+  margin-top: 12px; border-top: 1.5px dashed #e2e8f0; padding-top: 10px; display: flex; flex-direction: column; gap: 6px;
+}
+.bmp-inactive-label {
+  display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600;
+  color: #94a3b8; padding: 0 2px 4px;
+}
+.bmp-inactive-label i { font-size: 0.72rem; color: inherit !important; }
+.bmp-item-inactive { opacity: 0.6; background: #f1f5f9 !important; }
+.bmp-inactive-name { font-size: 0.85rem; color: #64748b; font-style: italic; }
 
 /* Advanced step toggle */
 .fe-advanced-toggle {
@@ -1454,3 +1470,31 @@
 .tour-tooltip-wide h4 { font-size:0.95rem; }
 
 @media (max-width:480px) { .tour-tooltip-wide { width:calc(100vw - 32px); } }
+
+/* Flow status filter tabs */
+.flow-status-filter { display:flex; gap:8px; margin-bottom:16px; }
+.fsf-btn { display:flex; align-items:center; gap:6px; padding:6px 14px; border:1.5px solid #e2e8f0; border-radius:20px; background:white; color:#64748b; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.18s; font-family:inherit; }
+.fsf-btn:hover { border-color:#8b5cf6; color:#7c3aed; }
+.fsf-btn.fsf-active { background:#8b5cf6; border-color:#8b5cf6; color:white; }
+.fsf-count { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:18px; padding:0 5px; border-radius:9px; background:rgba(0,0,0,0.12); font-size:0.72rem; font-weight:700; }
+.fsf-btn.fsf-active .fsf-count { background:rgba(255,255,255,0.25); }
+
+/* Copy flow button */
+.btn-flow-copy { border-color: rgba(139,92,246,0.2); color: #7c3aed; background: rgba(139,92,246,0.05); }
+.btn-flow-copy:hover { background: rgba(139,92,246,0.12); }
+
+/* Copy flow modal */
+.copy-flow-modal { max-width: 460px; }
+.copy-flow-body { padding: 4px 24px 8px; display: flex; flex-direction: column; gap: 14px; }
+.cf-field { display: flex; flex-direction: column; gap: 5px; }
+.cf-field label { font-size: 0.78rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 6px; }
+.cf-count { font-weight: 400; color: #94a3b8; text-transform: none; letter-spacing: 0; }
+.cf-input { padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 9px; font-size: 0.88rem; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s; }
+.cf-input:focus { outline: none; border-color: #8b5cf6; }
+.cf-hint { font-size: 0.75rem; color: #94a3b8; }
+.cf-col-tabs { display: flex; gap: 6px; margin-bottom: 4px; }
+.cf-col-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white; color: #64748b; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.cf-col-tab.active { background: #ede9fe; border-color: #8b5cf6; color: #7c3aed; }
+.cf-col-tab i { font-size: 0.75rem; color: inherit !important; }
+.copy-flow-footer { padding: 12px 24px 20px; display: flex; gap: 10px; border-top: 1px solid #f1f5f9; }
+.copy-flow-footer .delete-option-btn { flex: 1; }

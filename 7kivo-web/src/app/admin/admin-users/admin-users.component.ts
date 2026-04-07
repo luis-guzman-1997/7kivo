@@ -3,6 +3,8 @@ import { FirebaseService } from '../../services/firebase.service';
 import { AuthService, ROLE_PERMISSIONS } from '../../services/auth.service';
 import { PresenceService } from '../../services/presence.service';
 
+interface FlowOption { id: string; name: string; menuLabel: string; active: boolean; notifyDelivery: boolean; }
+
 @Component({
   selector: 'app-admin-users',
   templateUrl: './admin-users.component.html',
@@ -43,6 +45,12 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     whatsappPhone: '',
     vehicleType: 'motorcycle'
   };
+
+  flows: FlowOption[] = [];
+
+  // Flow assignment
+  flowPanelAdminId: string | null = null;
+  flowAssignSaving: string | null = null;
 
   presenceMap: Record<string, any> = {};
   private presenceUnsub: (() => void) | null = null;
@@ -114,11 +122,18 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    await this.loadAdmins();
+    await Promise.all([this.loadAdmins(), this.loadFlows()]);
     this.presenceUnsub = this.firebaseService.watchPresence(list => {
       this.presenceMap = {};
       list.forEach(p => { this.presenceMap[p.uid] = p; });
     });
+  }
+
+  async loadFlows(): Promise<void> {
+    try {
+      const all = await this.firebaseService.getFlows();
+      this.flows = all.map((f: any) => ({ id: f.id, name: f.name, menuLabel: f.menuLabel, active: f.active !== false, notifyDelivery: !!f.notifyDelivery }));
+    } catch { this.flows = []; }
   }
 
   ngOnDestroy(): void {
@@ -361,6 +376,47 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     if (admin.role === 'owner') return false;
     const myRole = this.authService.userRole;
     return myRole === 'owner' || myRole === 'admin';
+  }
+
+  get canAssignFlows(): boolean {
+    return this.authService.userRole === 'owner' || this.authService.isSuperAdmin;
+  }
+
+  async toggleFlowPanel(admin: any): Promise<void> {
+    if (this.flowPanelAdminId === admin.id) {
+      this.flowPanelAdminId = null;
+      return;
+    }
+    // Auto-initialize assignedFlows with notifyDelivery flows if never set
+    if (!admin.assignedFlows || admin.assignedFlows.length === 0) {
+      const defaults = this.flows.filter(f => f.notifyDelivery).map(f => f.id);
+      if (defaults.length > 0) {
+        admin.assignedFlows = defaults;
+        await this.firebaseService.updateAdmin(admin.id, { assignedFlows: defaults });
+      }
+    }
+    this.flowPanelAdminId = admin.id;
+  }
+
+  isFlowAssigned(admin: any, flowId: string): boolean {
+    return (admin.assignedFlows || []).includes(flowId);
+  }
+
+  async toggleFlowAssignment(admin: any, flowId: string): Promise<void> {
+    const current: string[] = admin.assignedFlows ? [...admin.assignedFlows] : [];
+    const idx = current.indexOf(flowId);
+    if (idx >= 0) current.splice(idx, 1);
+    else current.push(flowId);
+
+    this.flowAssignSaving = admin.id;
+    try {
+      await this.firebaseService.updateAdmin(admin.id, { assignedFlows: current });
+      admin.assignedFlows = current;
+    } catch (err) {
+      console.error('Error saving flow assignment:', err);
+    } finally {
+      this.flowAssignSaving = null;
+    }
   }
 
   formatDate(timestamp: any): string {

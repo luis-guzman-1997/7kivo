@@ -71,36 +71,61 @@
           <i class="fas fa-comment-slash"></i>
           <span>El menú está vacío. Agrega opciones para que los usuarios puedan interactuar con el bot.</span>
         </div>
-        <div *ngFor="let item of menuConfig.items; let i = index" class="bmp-item">
-          <span class="bmp-num">{{ i + 1 }}</span>
-          <i class="fas bmp-item-icon" [ngClass]="getMenuItemIcon(item)"></i>
-          <div class="bmp-item-body">
-            <select [(ngModel)]="item.type" (ngModelChange)="onMenuItemTypeChange(item)" class="select-sm">
-              <option value="builtin">Acción predefinida</option>
-              <option value="flow">Flujo personalizado</option>
-              <option value="message">Mensaje directo</option>
-            </select>
-            <select *ngIf="item.type === 'builtin'" [(ngModel)]="item.action" class="select-sm">
-              <option value="schedule">Horarios</option>
-              <option value="contact">Contacto / Ubicación</option>
-              <option value="general">Información General</option>
-              <option value="my_appointments">Ver mis citas</option>
-              <option value="cancel_appointment">Cancelar mi cita</option>
-            </select>
-            <select *ngIf="item.type === 'flow'" [(ngModel)]="item.flowId" class="select-sm">
-              <option *ngFor="let f of flows" [value]="f.id">{{ f.name }}</option>
-            </select>
-            <input type="text" [(ngModel)]="item.label" placeholder="Etiqueta" class="input-sm" />
-            <input *ngIf="item.type !== 'message'" type="text" [(ngModel)]="item.description" placeholder="Descripción" class="input-sm" />
-            <textarea *ngIf="item.type === 'message'" [(ngModel)]="item.messageContent" placeholder="Mensaje que enviará el bot al seleccionar esta opción..." class="input-sm textarea-message" rows="2"></textarea>
+
+        <!-- Active items -->
+        <ng-container *ngFor="let item of menuConfig.items; let i = index">
+          <div *ngIf="item.active !== false" class="bmp-item">
+            <span class="bmp-num">{{ i + 1 }}</span>
+            <i class="fas bmp-item-icon" [ngClass]="getMenuItemIcon(item)"></i>
+            <div class="bmp-item-body">
+              <select [(ngModel)]="item.type" (ngModelChange)="onMenuItemTypeChange(item)" class="select-sm">
+                <option value="builtin">Acción predefinida</option>
+                <option value="flow">Flujo personalizado</option>
+                <option value="message">Mensaje directo</option>
+              </select>
+              <select *ngIf="item.type === 'builtin'" [(ngModel)]="item.action" class="select-sm">
+                <option value="schedule">Horarios</option>
+                <option value="contact">Contacto / Ubicación</option>
+                <option value="general">Información General</option>
+                <option value="my_appointments">Ver mis citas</option>
+                <option value="cancel_appointment">Cancelar mi cita</option>
+              </select>
+              <select *ngIf="item.type === 'flow'" [(ngModel)]="item.flowId" class="select-sm">
+                <option *ngFor="let f of flows" [value]="f.id">{{ f.name }}</option>
+              </select>
+              <input type="text" [(ngModel)]="item.label" placeholder="Etiqueta" class="input-sm" />
+              <input *ngIf="item.type !== 'message'" type="text" [(ngModel)]="item.description" placeholder="Descripción" class="input-sm" />
+              <textarea *ngIf="item.type === 'message'" [(ngModel)]="item.messageContent" placeholder="Mensaje que enviará el bot al seleccionar esta opción..." class="input-sm textarea-message" rows="2"></textarea>
+            </div>
+            <div class="bmp-item-controls">
+              <button class="btn-icon-sm" (click)="moveMenuItemUp(i)" [disabled]="i === 0" title="Subir"><i class="fas fa-chevron-up"></i></button>
+              <button class="btn-icon-sm" (click)="moveMenuItemDown(i)" [disabled]="i === menuConfig.items.length-1" title="Bajar"><i class="fas fa-chevron-down"></i></button>
+              <button class="btn-icon-sm btn-icon-muted" (click)="item.active = false" title="Inactivar"><i class="fas fa-eye-slash"></i></button>
+              <button class="btn-icon-sm btn-danger" (click)="removeMenuItem(i)" title="Eliminar"><i class="fas fa-trash"></i></button>
+            </div>
           </div>
-          <div class="bmp-item-controls">
-            <button class="btn-icon-sm" (click)="moveMenuItemUp(i)" [disabled]="i === 0" title="Subir"><i class="fas fa-chevron-up"></i></button>
-            <button class="btn-icon-sm" (click)="moveMenuItemDown(i)" [disabled]="i === menuConfig.items.length-1" title="Bajar"><i class="fas fa-chevron-down"></i></button>
-            <button class="btn-icon-sm btn-danger" (click)="removeMenuItem(i)" title="Eliminar"><i class="fas fa-trash"></i></button>
+        </ng-container>
+
+        <!-- Inactive items -->
+        <ng-container *ngIf="hasInactiveMenuItems">
+          <div class="bmp-inactive-group">
+            <span class="bmp-inactive-label"><i class="fas fa-eye-slash"></i> Inactivos — no aparecen en el bot</span>
+            <ng-container *ngFor="let item of menuConfig.items; let i = index">
+              <div *ngIf="item.active === false" class="bmp-item bmp-item-inactive">
+                <i class="fas bmp-item-icon" [ngClass]="getMenuItemIcon(item)"></i>
+                <div class="bmp-item-body">
+                  <span class="bmp-inactive-name">{{ item.label || '(sin etiqueta)' }}</span>
+                </div>
+                <div class="bmp-item-controls">
+                  <button class="btn-icon-sm btn-icon-activate" (click)="item.active = true" title="Activar"><i class="fas fa-eye"></i></button>
+                  <button class="btn-icon-sm btn-danger" (click)="removeMenuItem(i)" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+            </ng-container>
           </div>
-        </div>
+        </ng-container>
       </div>
+
 
       <!-- Add button -->
       <button class="btn-add-item" (click)="showAddMenuPanel = !showAddMenuPanel" [class.btn-add-item-full]="!canAddMenuItem">
@@ -260,9 +285,22 @@
       </button>
     </div>
 
+    <!-- ========== FILTRO ACTIVOS / INACTIVOS ========== -->
+    <div *ngIf="!loading && flows.length > 0" class="flow-status-filter">
+      <button class="fsf-btn" [class.fsf-active]="flowStatusFilter === 'all'"      (click)="flowStatusFilter = 'all'">
+        Todos <span class="fsf-count">{{ flows.length }}</span>
+      </button>
+      <button class="fsf-btn" [class.fsf-active]="flowStatusFilter === 'active'"   (click)="flowStatusFilter = 'active'">
+        Activos <span class="fsf-count">{{ activeFlowsCount }}</span>
+      </button>
+      <button class="fsf-btn" [class.fsf-active]="flowStatusFilter === 'inactive'" (click)="flowStatusFilter = 'inactive'">
+        Inactivos <span class="fsf-count">{{ inactiveFlowsCount }}</span>
+      </button>
+    </div>
+
     <!-- ========== FLOW CARDS ========== -->
     <div *ngIf="!loading" class="flow-grid">
-      <div *ngFor="let flow of flows" class="flow-card" [class.flow-inactive]="!flow.active">
+      <div *ngFor="let flow of filteredFlows" class="flow-card" [class.flow-inactive]="!flow.active">
         <div class="flow-card-header">
           <div class="flow-card-title">
             <i class="fas" [ngClass]="{
@@ -311,7 +349,10 @@
           <button class="btn-flow btn-flow-edit" (click)="openEditFlow(flow)">
             <i class="fas fa-edit"></i> Editar
           </button>
-          <button class="btn-flow" [class.btn-flow-deactivate]="flow.active" [class.btn-flow-activate]="!flow.active"
+          <button *ngIf="authService.isSuperAdmin" class="btn-flow btn-flow-copy" (click)="openCopyFlow(flow)">
+            <i class="fas fa-copy"></i> Copiar
+          </button>
+          <button *ngIf="isOwner" class="btn-flow" [class.btn-flow-deactivate]="flow.active" [class.btn-flow-activate]="!flow.active"
                   (click)="toggleFlowActive(flow)">
             <i class="fas" [class.fa-eye-slash]="flow.active" [class.fa-eye]="!flow.active"></i>
             {{ flow.active ? 'Desactivar' : 'Activar' }}
@@ -354,6 +395,67 @@
       </div>
     </div>
   </ng-container>
+
+  <!-- ==================== COPY FLOW MODAL ==================== -->
+  <div class="template-modal-overlay" *ngIf="copyFlowSource" (click)="copyFlowSource = null">
+    <div class="template-modal copy-flow-modal" (click)="$event.stopPropagation()">
+      <div class="template-modal-header">
+        <i class="fas fa-copy"></i>
+        <h4>Copiar flujo — <span style="font-weight:400;font-size:0.9em">{{ copyFlowSource.name }}</span></h4>
+      </div>
+      <div class="copy-flow-body">
+
+        <div class="cf-field">
+          <label>Nombre del flujo</label>
+          <input type="text" [(ngModel)]="copyFlowName" placeholder="Nombre" class="cf-input" />
+        </div>
+
+        <div class="cf-field">
+          <label>Etiqueta <span class="cf-count">{{ copyFlowLabel.length }}/24</span></label>
+          <input type="text" [(ngModel)]="copyFlowLabel" placeholder="Etiqueta del menú" maxlength="24" class="cf-input" />
+        </div>
+
+        <div class="cf-field">
+          <label>Descripción corta</label>
+          <input type="text" [(ngModel)]="copyFlowDesc" placeholder="Descripción breve" class="cf-input" />
+        </div>
+
+        <div class="cf-field">
+          <label>¿Dónde se guardan las respuestas?</label>
+          <div class="cf-col-tabs">
+            <button class="cf-col-tab" [class.active]="copyFlowCollectionMode === 'existing'" (click)="copyFlowCollectionMode = 'existing'">
+              <i class="fas fa-database"></i> Usar existente
+            </button>
+            <button class="cf-col-tab" [class.active]="copyFlowCollectionMode === 'new'" (click)="copyFlowCollectionMode = 'new'">
+              <i class="fas fa-plus"></i> Crear nueva
+            </button>
+          </div>
+          <select *ngIf="copyFlowCollectionMode === 'existing'" [(ngModel)]="copyFlowCollection" class="cf-input">
+            <option value="">— Sin base de datos —</option>
+            <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }} ({{ col.slug }})</option>
+          </select>
+          <input *ngIf="copyFlowCollectionMode === 'new'" type="text" [(ngModel)]="copyFlowNewCollection"
+                 placeholder="slug_nueva_coleccion" class="cf-input"
+                 (input)="sanitizeCopySlug()" />
+          <span class="cf-hint" *ngIf="copyFlowCollectionMode === 'new'">Solo letras minúsculas, números y guiones bajos</span>
+        </div>
+
+      </div>
+      <div class="copy-flow-footer">
+        <button class="delete-option-btn" style="border-color:#e2e8f0;color:#64748b" (click)="copyFlowSource = null">Cancelar</button>
+        <button class="delete-option-btn delete-only" style="border-color:#8b5cf6;background:#f5f3ff"
+                (click)="confirmCopyFlow()"
+                [disabled]="copyingFlow || !copyFlowName.trim() || !copyFlowLabel.trim()">
+          <i class="fas fa-spinner fa-spin" *ngIf="copyingFlow"></i>
+          <i class="fas fa-copy" *ngIf="!copyingFlow"></i>
+          <div>
+            <strong>{{ copyingFlow ? 'Creando...' : 'Crear copia' }}</strong>
+            <span>Se copia el flujo completo con todos sus pasos</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ==================== DELETE FLOW MODAL ==================== -->
   <div class="template-modal-overlay" *ngIf="deleteFlowTarget" (click)="cancelDeleteFlow()">

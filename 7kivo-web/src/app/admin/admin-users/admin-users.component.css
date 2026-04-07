@@ -716,3 +716,40 @@
   font-weight: 600;
 }
 .vehicle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Flow assignment section */
+.flow-assign-section { margin: 10px 0 4px; }
+
+.flow-assign-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 12px; border: 1.5px solid #e2e8f0; border-radius: 9px;
+  background: #f8fafc; color: #475569; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.15s; text-align: left;
+}
+.flow-assign-toggle:hover { border-color: #8b5cf6; color: #7c3aed; background: #faf5ff; }
+.flow-assign-toggle i { font-size: 0.78rem; color: inherit !important; }
+.fa-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: #ede9fe; color: #7c3aed; font-size: 0.72rem; font-weight: 700;
+}
+.fa-toggle-icon { margin-left: auto; transition: transform 0.2s; }
+.fa-toggle-icon.rotated { transform: rotate(180deg); }
+
+.flow-assign-panel {
+  margin-top: 6px; border: 1.5px solid #e2e8f0; border-radius: 9px;
+  background: white; padding: 8px 4px; display: flex; flex-direction: column; gap: 2px;
+}
+.fa-hint { font-size: 0.8rem; color: #94a3b8; padding: 4px 10px; margin: 0; }
+
+.fa-flow-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  border-radius: 7px; cursor: pointer; transition: background 0.12s;
+  font-size: 0.83rem; color: #334155;
+}
+.fa-flow-row:hover { background: #f1f5f9; }
+.fa-flow-row input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #8b5cf6; }
+.fa-flow-inactive { opacity: 0.5; }
+.fa-flow-name { font-weight: 600; flex: 1; }
+.fa-flow-label { color: #94a3b8; font-size: 0.78rem; }
+.fa-flow-status { font-size: 0.72rem; color: #f59e0b; background: #fef3c7; padding: 1px 6px; border-radius: 6px; font-weight: 600; }

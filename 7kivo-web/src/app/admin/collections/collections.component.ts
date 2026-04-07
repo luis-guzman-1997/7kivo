@@ -89,12 +89,21 @@ export class CollectionsComponent implements OnInit {
 
   clearingData = false;
 
+  // Copy collection modal
+  showCopyModal = false;
+  copySource: CollectionDef | null = null;
+  copyNewName = '';
+  copyNewSlug = '';
+  copyWithData = false;
+  copying = false;
+
   get canEditSchema(): boolean {
     const role = this.authService.userRole;
-    return role === 'owner' || role === 'admin';
+    return role === 'owner' || role === 'admin' || this.authService.isSuperAdmin;
   }
 
   get canCreateCollection(): boolean {
+    if (this.authService.isSuperAdmin) return true;
     const limit = this.authService.getPlanLimits().collections;
     return this.collections.length < limit;
   }
@@ -753,6 +762,44 @@ export class CollectionsComponent implements OnInit {
       this.importError = 'Error al importar. Intenta de nuevo.';
     } finally {
       this.importing = false;
+    }
+  }
+
+  // ==================== COPY COLLECTION ====================
+
+  openCopyModal(col: CollectionDef, event: Event): void {
+    event.stopPropagation();
+    this.copySource = col;
+    this.copyNewName = col.name + ' (copia)';
+    this.copyNewSlug = '';
+    this.copyWithData = false;
+    this.showCopyModal = true;
+  }
+
+  generateCopySlug(): void {
+    this.copyNewSlug = this.copyNewName
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/(^_|_$)/g, '');
+  }
+
+  async confirmCopy(): Promise<void> {
+    if (!this.copySource || !this.copyNewName.trim() || !this.copyNewSlug.trim()) return;
+    this.copying = true;
+    try {
+      await this.firebaseService.copyCollectionDef(
+        this.copySource, this.copyNewName.trim(), this.copyNewSlug.trim(), this.copyWithData
+      );
+      this.showCopyModal = false;
+      await this.loadCollections();
+      this.notice = `Colección "${this.copyNewName}" creada correctamente.`;
+      setTimeout(() => this.notice = '', 3000);
+    } catch (err) {
+      this.error = 'Error al copiar la colección.';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.copying = false;
     }
   }
 }

@@ -38,6 +38,44 @@
             <span><i class="fas fa-columns"></i> {{ col.fields.length || 0 }} campos</span>
           </div>
         </div>
+        <button *ngIf="authService.isSuperAdmin" class="btn-copy-col" (click)="openCopyModal(col, $event)" title="Copiar colección">
+          <i class="fas fa-copy"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== COPY MODAL ==================== -->
+  <div class="modal-overlay" *ngIf="showCopyModal" (click)="showCopyModal = false">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-copy"></i> Copiar colección</h3>
+        <button class="modal-close" (click)="showCopyModal = false"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-source">Origen: <strong>{{ copySource?.name }}</strong> ({{ copySource?.slug }})</p>
+        <div class="form-group-config">
+          <label>Nombre de la nueva colección</label>
+          <input type="text" [(ngModel)]="copyNewName" (input)="generateCopySlug()" placeholder="Nombre" class="input-md" />
+        </div>
+        <div class="form-group-config">
+          <label>Slug (identificador interno)</label>
+          <input type="text" [(ngModel)]="copyNewSlug" placeholder="slug_nuevo" class="input-md" />
+        </div>
+        <label class="copy-data-toggle">
+          <input type="checkbox" [(ngModel)]="copyWithData" />
+          <span>Copiar también los datos (registros)</span>
+        </label>
+        <p class="copy-data-hint" *ngIf="!copyWithData">Solo se copiará la estructura (campos y configuración).</p>
+        <p class="copy-data-hint" *ngIf="copyWithData">Se copiarán la estructura <strong>y todos los registros</strong> existentes.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showCopyModal = false">Cancelar</button>
+        <button class="btn-confirm" (click)="confirmCopy()" [disabled]="copying || !copyNewName.trim() || !copyNewSlug.trim()">
+          <i class="fas fa-spinner fa-spin" *ngIf="copying"></i>
+          <i class="fas fa-copy" *ngIf="!copying"></i>
+          {{ copying ? 'Copiando...' : 'Copiar' }}
+        </button>
       </div>
     </div>
   </div>
