@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
+import { AuthService } from '../../services/auth.service';
 
 interface BotMessage {
   id: string;
@@ -46,7 +47,7 @@ export class BotConfigComponent implements OnInit {
   newKw: Keyword = this.emptyKeyword();
   showNewKwForm = false;
 
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(private firebaseService: FirebaseService, public authService: AuthService) {}
 
   async ngOnInit(): Promise<void> {
     await this.loadAll();

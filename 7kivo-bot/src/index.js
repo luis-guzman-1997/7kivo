@@ -4,6 +4,7 @@ const cors = require("cors");
 const { router } = require("./routes/route");
 const { startInactivityMonitor } = require("./services/inactivityService");
 const { startCampaignScheduler } = require("./services/campaignService");
+const { startUnattendedScheduler } = require("./services/unattendedService");
 
 const PORT = process.env.PORT || 3005;
 const app = express();
@@ -16,5 +17,6 @@ app.listen(PORT, () => {
   console.log(`✅ 7kivo Bot activo en http://localhost:${PORT}`);
   startInactivityMonitor();
   startCampaignScheduler();
+  startUnattendedScheduler();
 });
 

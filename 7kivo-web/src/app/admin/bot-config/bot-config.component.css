@@ -651,3 +651,11 @@ textarea.input-new { resize: vertical; font-family: inherit; }
 .kw-textarea { width:100%; padding:8px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.85rem; color:#1e293b; font-family:inherit; resize:vertical; box-sizing:border-box; transition:border-color 0.2s; }
 .kw-textarea:focus { outline:none; border-color:#8b5cf6; }
 .kw-edit-actions { display:flex; gap:8px; margin-top:10px; }
+
+/* ── Unattended notify config ── */
+.config-divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0 16px; }
+.config-section-title { font-size: 0.85rem; font-weight: 700; color: #7c3aed; display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+.config-section-title i { font-size: 0.8rem; }
+.form-group-toggle { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.toggle-label { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.toggle-label span:first-child { font-size: 0.88rem; font-weight: 600; color: #1e293b; }

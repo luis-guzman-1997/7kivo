@@ -314,7 +314,8 @@ const saveFlowSubmission = async (collectionName, data) => {
       organizationId: getOrgId(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      status: "pending"
+      status: "pending",
+      unattendedNotified: false
     });
     console.log(`Flow submission saved to ${collectionName}:`, docRef.id);
     return docRef.id;
@@ -386,6 +387,7 @@ const createPromoOrder = async (phone, campaign) => {
       address: campaign.address || '',
       contactWhatsapp: campaign.contactWhatsapp || '',
       status: 'pending',
+      unattendedNotified: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
