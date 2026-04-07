@@ -209,12 +209,16 @@
           <i class="fas" [class.fa-ban]="admin.active" [class.fa-check]="!admin.active"></i>
           {{ admin.active ? 'Desactivar' : 'Activar' }}
         </button>
+        <button class="btn-card btn-pw" (click)="startChangeName(admin)"
+                *ngIf="canChangeName && changeNameAdmin?.id !== admin.id && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id">
+          <i class="fas fa-user-edit"></i> Nombre
+        </button>
         <button class="btn-card btn-pw" (click)="startChangePassword(admin)"
-                *ngIf="changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id">
+                *ngIf="changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id && changeNameAdmin?.id !== admin.id">
           <i class="fas fa-key"></i> Contraseña
         </button>
         <button class="btn-card btn-pw" (click)="startChangePhone(admin)"
-                *ngIf="admin.role === 'delivery' && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id">
+                *ngIf="admin.role === 'delivery' && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id && changeNameAdmin?.id !== admin.id">
           <i class="fas fa-phone"></i> Número WA
         </button>
         <button class="btn-card btn-delete" (click)="deleteAdmin(admin)">
@@ -238,6 +242,24 @@
           </button>
         </div>
         <span class="pw-error" *ngIf="changePhoneError"><i class="fas fa-exclamation-circle"></i> {{ changePhoneError }}</span>
+      </div>
+
+      <!-- Inline name change form -->
+      <div class="change-pw-form" *ngIf="changeNameAdmin?.id === admin.id">
+        <label><i class="fas fa-user-edit"></i> Nuevo nombre</label>
+        <div class="change-pw-row">
+          <input type="text" [(ngModel)]="changeNameValue" placeholder="Nombre completo"
+                 [name]="'name-' + admin.id" (keyup.enter)="saveChangeName()" />
+          <button class="btn-card btn-save-pw" (click)="saveChangeName()" [disabled]="changeNameSaving">
+            <i class="fas fa-spinner fa-spin" *ngIf="changeNameSaving"></i>
+            <i class="fas fa-check" *ngIf="!changeNameSaving"></i>
+            {{ changeNameSaving ? '' : 'Guardar' }}
+          </button>
+          <button class="btn-card btn-cancel-pw" (click)="cancelChangeName()" [disabled]="changeNameSaving">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <span class="pw-error" *ngIf="changeNameError"><i class="fas fa-exclamation-circle"></i> {{ changeNameError }}</span>
       </div>
 
       <!-- Inline password change form -->
@@ -270,5 +292,8 @@
   </div>
   <div class="pw-global-notice" *ngIf="changePhoneNotice">
     <i class="fas fa-check-circle"></i> {{ changePhoneNotice }}
+  </div>
+  <div class="pw-global-notice" *ngIf="changeNameNotice">
+    <i class="fas fa-check-circle"></i> {{ changeNameNotice }}
   </div>
 </div>

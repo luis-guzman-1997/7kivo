@@ -75,6 +75,12 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   changePhoneError = '';
   changePhoneNotice = '';
 
+  changeNameAdmin: any = null;
+  changeNameValue = '';
+  changeNameSaving = false;
+  changeNameError = '';
+  changeNameNotice = '';
+
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService
@@ -332,6 +338,53 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     } finally {
       this.changePhoneSaving = false;
     }
+  }
+
+  startChangeName(admin: any): void {
+    this.changeNameAdmin = admin;
+    this.changeNameValue = admin.name || '';
+    this.changeNameError = '';
+  }
+
+  cancelChangeName(): void {
+    this.changeNameAdmin = null;
+    this.changeNameValue = '';
+    this.changeNameError = '';
+  }
+
+  async saveChangeName(): Promise<void> {
+    if (!this.changeNameAdmin) return;
+    if (!this.changeNameValue.trim()) {
+      this.changeNameError = 'El nombre no puede estar vacío';
+      return;
+    }
+    this.changeNameSaving = true;
+    this.changeNameError = '';
+    try {
+      const name = this.changeNameValue.trim();
+      await this.firebaseService.updateAdmin(this.changeNameAdmin.id, { name });
+      if (this.changeNameAdmin.uid) {
+        await this.firebaseService.setUserOrg(this.changeNameAdmin.uid, {
+          organizationId: this.firebaseService.getOrgId(),
+          email: this.changeNameAdmin.email,
+          role: this.changeNameAdmin.role,
+          name
+        });
+      }
+      this.changeNameAdmin.name = name;
+      this.changeNameAdmin = null;
+      this.changeNameValue = '';
+      this.changeNameNotice = 'Nombre actualizado correctamente';
+      setTimeout(() => this.changeNameNotice = '', 4000);
+    } catch (err: any) {
+      this.changeNameError = err?.message || 'Error al actualizar nombre';
+    } finally {
+      this.changeNameSaving = false;
+    }
+  }
+
+  get canChangeName(): boolean {
+    return this.authService.userRole === 'owner' || this.authService.isSuperAdmin;
   }
 
   async setVehicleType(admin: any, vehicleType: string): Promise<void> {
