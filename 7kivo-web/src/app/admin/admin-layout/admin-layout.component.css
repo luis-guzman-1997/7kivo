@@ -301,6 +301,12 @@
   color: #10b981;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .topbar-user {
   color: #64748b;
   font-size: 0.9rem;
@@ -695,7 +701,7 @@
 
 @media (max-width: 480px) {
   /* Hide email on very small screens — accessible via sidebar */
-  .topbar-right { display: none; }
+  .topbar-right .topbar-user { display: none; }
 }
 
 
