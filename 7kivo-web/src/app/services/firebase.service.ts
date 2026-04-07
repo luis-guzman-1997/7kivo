@@ -375,6 +375,12 @@ export class FirebaseService {
     return this.getCollection('admins');
   }
 
+  async getAdminByUid(uid: string): Promise<any | null> {
+    const snap = await getDocs(collection(this.db, this.orgPath(), 'admins'));
+    const doc = snap.docs.find(d => d.data()['uid'] === uid);
+    return doc ? { id: doc.id, ...doc.data() } : null;
+  }
+
   async addAdmin(data: { email: string; name: string; role: string; uid?: string }): Promise<string> {
     return this.addDocument('admins', { ...data, active: true });
   }

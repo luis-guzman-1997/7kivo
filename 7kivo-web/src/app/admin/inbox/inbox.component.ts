@@ -105,6 +105,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   currentUserEmail = '';
   currentUserWaPhone = '';
   currentUserVehicleType = '';
+  assignedFlows: string[] = [];
   takingCaseId: string | null = null;
   takeError = '';
 
@@ -316,10 +317,16 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.currentUserId = uid;
     this.currentUserEmail = this.authService.currentUser?.email || '';
     try {
-      const userData = await this.firebaseService.getUserOrg(uid);
+      const [userData, adminDoc] = await Promise.all([
+        this.firebaseService.getUserOrg(uid),
+        this.isDelivery ? this.firebaseService.getAdminByUid(uid) : Promise.resolve(null)
+      ]);
       this.currentUserName = userData?.name || this.currentUserEmail;
       this.currentUserWaPhone = userData?.whatsappPhone || '';
       this.currentUserVehicleType = userData?.vehicleType || '';
+      if (adminDoc?.assignedFlows?.length) {
+        this.assignedFlows = adminDoc.assignedFlows;
+      }
       // Escuchar cambios de vehículo en tiempo real (el propietario puede cambiarlo)
       if (this.isDelivery && uid) {
         this.unsubVehicleType = this.firebaseService.watchUserVehicleType(uid, (vt) => {
@@ -342,7 +349,10 @@ export class InboxComponent implements OnInit, OnDestroy {
 
       const inboxFlows = flows.filter((f: any) => {
         const base = f.saveToCollection && f.saveToCollection !== 'applicants' && f.saveToCollection !== 'contacts';
-        if (this.isDelivery) return base && f.notifyDelivery === true;
+        if (this.isDelivery) {
+          if (this.assignedFlows.length > 0) return base && this.assignedFlows.includes(f.id);
+          return base && f.notifyDelivery === true;
+        }
         return base;
       });
 
