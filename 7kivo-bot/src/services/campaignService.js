@@ -7,6 +7,34 @@ const SEND_DELAY_MS = 1200; // 1.2 segundos entre mensajes
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// ── Obtiene teléfonos que tienen una solicitud/caso activo (no resuelto) ──
+const getActiveCasePhones = async (orgId) => {
+  try {
+    const colsSnap = await db
+      .collection('organizations').doc(orgId)
+      .collection('_collections')
+      .get();
+
+    const activePhones = new Set();
+    for (const colDoc of colsSnap.docs) {
+      const slug = colDoc.data().slug || colDoc.id;
+      const subsSnap = await db
+        .collection('organizations').doc(orgId)
+        .collection(slug)
+        .where('status', 'in', ['pending', 'taken'])
+        .get();
+      subsSnap.docs.forEach(d => {
+        const phone = d.data().phoneNumber;
+        if (phone) activePhones.add(String(phone));
+      });
+    }
+    return activePhones;
+  } catch (err) {
+    console.error('getActiveCasePhones error:', err.message);
+    return new Set();
+  }
+};
+
 // ── Obtiene los teléfonos destinatarios de una campaña ──
 const getRecipients = async (orgId, campaign) => {
   const optedOut = new Set(campaign.optedOutPhones || []);
@@ -65,9 +93,15 @@ const runCampaign = async (orgId, campaignId) => {
     throw new Error(`Límite diario alcanzado (${sentToday}/${dailyLimit})`);
   }
 
-  const phones = await getRecipients(orgId, campaign);
-  if (phones.length === 0) {
-    // Sin destinatarios: completar de igual forma
+  const [phones, activeCasePhones] = await Promise.all([
+    getRecipients(orgId, campaign),
+    getActiveCasePhones(orgId)
+  ]);
+
+  // Excluir clientes con una solicitud/caso activo abierto
+  const filteredPhones = phones.filter(p => !activeCasePhones.has(String(p)));
+
+  if (filteredPhones.length === 0) {
     await campaignRef.update({
       status: 'completed',
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -75,8 +109,8 @@ const runCampaign = async (orgId, campaignId) => {
     return { sentCount: 0, failedCount: 0, total: 0 };
   }
 
-  const remaining = dailyLimit > 0 ? dailyLimit - sentToday : phones.length;
-  const toSend = phones.slice(0, remaining);
+  const remaining = dailyLimit > 0 ? dailyLimit - sentToday : filteredPhones.length;
+  const toSend = filteredPhones.slice(0, remaining);
 
   let sentCount = 0;
   let failedCount = 0;
