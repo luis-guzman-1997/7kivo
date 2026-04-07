@@ -25,6 +25,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   botBlocked = false;
   isOnChatPage = false;
   isOnMapPage = false;
+  isOnInboxPage = false;
   sessionDisplacedAlert = false;
   showAlertPanel = false;
   private subs: Subscription[] = [];
@@ -71,6 +72,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
         const ne = e as NavigationEnd;
         this.isOnChatPage = ne.url.startsWith('/admin/chat');
         this.isOnMapPage = ne.url.startsWith('/admin/mapa-delivery');
+        this.isOnInboxPage = ne.url.startsWith('/admin/bandeja');
         // Auto-close sidebar on mobile when navigating
         if (typeof window !== 'undefined' && window.innerWidth < 768 && !this.sidebarCollapsed) {
           this.sidebarCollapsed = true;
@@ -83,6 +85,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.isOnChatPage = this.router.url.startsWith('/admin/chat');
     this.isOnMapPage = this.router.url.startsWith('/admin/mapa-delivery');
+    this.isOnInboxPage = this.router.url.startsWith('/admin/bandeja');
     await this.checkSetupComplete();
     this.presenceService.start();
   }

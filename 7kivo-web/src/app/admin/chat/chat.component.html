@@ -86,7 +86,7 @@
         <i class="fab fa-whatsapp"></i> Conversaciones
         <span class="unread-total" *ngIf="getTotalUnread() > 0">{{ getTotalUnread() }}</span>
       </h2>
-      <button class="btn-icon" (click)="showSettings = true" title="Configuración">
+      <button class="btn-icon" *ngIf="authService.userRole !== 'delivery_multi'" (click)="showSettings = true" title="Configuración">
         <i class="fas fa-cog"></i>
       </button>
     </div>

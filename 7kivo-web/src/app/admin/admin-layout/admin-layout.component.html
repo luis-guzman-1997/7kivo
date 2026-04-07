@@ -6,7 +6,7 @@
   </div>
 </div>
 
-<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed" [class.on-chat-page]="isOnChatPage" [class.on-map-page]="isOnMapPage">
+<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed" [class.sidebar-open]="!sidebarCollapsed" [class.on-chat-page]="isOnChatPage" [class.on-map-page]="isOnMapPage" [class.on-inbox-page]="isOnInboxPage">
   <!-- Backdrop (mobile) -->
   <div class="sidebar-backdrop" *ngIf="!sidebarCollapsed" (click)="toggleSidebar()" aria-hidden="true"></div>
   <!-- Sidebar -->
@@ -228,6 +228,9 @@
       </a>
       <a *ngIf="botEnabled && authService.hasPermission('chat')" routerLink="/admin/chat" routerLinkActive="active" class="bn-item">
         <i class="fas fa-comments"></i><span>Chat</span>
+      </a>
+      <a *ngIf="botEnabled && authService.hasPermission('inbox')" routerLink="/admin/bandeja" routerLinkActive="active" class="bn-item">
+        <i class="fas fa-inbox"></i><span>Bandeja</span>
       </a>
       <a *ngIf="botEnabled && authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="bn-item">
         <i class="fas fa-project-diagram"></i><span>Flujos</span>
