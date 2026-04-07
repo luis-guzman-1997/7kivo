@@ -888,13 +888,15 @@ export class InboxComponent implements OnInit, OnDestroy {
 
       // Navegar al chat con este cliente
       if (item.phoneNumber) {
+        const startMs = item.createdAt?.toMillis?.()
+          ?? (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : Date.now());
         this.router.navigate(['/admin/chat'], {
           queryParams: {
             phone: item.phoneNumber,
             submissionId: item.id,
             collection: tab.collection,
             deliveryCode,
-            takenAt: Date.now()
+            takenAt: startMs
           }
         });
       }
@@ -954,8 +956,10 @@ export class InboxComponent implements OnInit, OnDestroy {
       }
 
       this.pushLocationToFirebase();
+      const promoStartMs = order.createdAt?.toMillis?.()
+        ?? (order.createdAt?.seconds ? order.createdAt.seconds * 1000 : Date.now());
       this.router.navigate(['/admin/chat'], {
-        queryParams: { phone: order.phone, promoOrderId: order.id, deliveryCode, takenAt: Date.now() }
+        queryParams: { phone: order.phone, promoOrderId: order.id, deliveryCode, takenAt: promoStartMs }
       });
     } catch {
       this.promoOrderError = 'Error al tomar el pedido.';
@@ -980,9 +984,8 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   openPromoChat(order: any): void {
-    const takenAt = order.takenAt?.seconds
-      ? order.takenAt.seconds * 1000
-      : (order.takenAt?.toMillis?.() || Date.now());
+    const takenAt = order.createdAt?.toMillis?.()
+      ?? (order.createdAt?.seconds ? order.createdAt.seconds * 1000 : Date.now());
     this.router.navigate(['/admin/chat'], {
       queryParams: { phone: order.phone, promoOrderId: order.id, takenAt }
     });
@@ -1003,9 +1006,8 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   goToChat(item: any, tab: FlowTab): void {
     const code = item.deliveryCode || item.assignedTo?.deliveryCode;
-    const takenAt = item.assignedAt?.seconds
-      ? item.assignedAt.seconds * 1000
-      : item.assignedAt?.toMillis?.() || null;
+    const takenAt = item.createdAt?.toMillis?.()
+      ?? (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : null);
     this.router.navigate(['/admin/chat'], {
       queryParams: {
         phone: item.phoneNumber,
