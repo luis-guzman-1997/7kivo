@@ -168,15 +168,24 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (this.deliverySubmissionId && this.deliveryCollection) {
           const sub = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
           this.deliverySubmission = sub || null;
-          if (!this.deliveryCode) {
-            this.deliveryCode = sub?.deliveryCode || sub?.assignedTo?.deliveryCode || '';
+          // Si el caso ya fue resuelto/cancelado, salir del modo delivery → chat normal
+          if (sub?.status === 'resolved' || sub?.status === 'cancelled') {
+            this.isDeliveryMode = false;
+          } else {
+            if (!this.deliveryCode) {
+              this.deliveryCode = sub?.deliveryCode || sub?.assignedTo?.deliveryCode || '';
+            }
+            // Siempre preferir assignedAt del servidor para evitar desfase de reloj
+            if (sub?.assignedAt) {
+              const assignedMs = sub.assignedAt?.toMillis?.()
+                ?? (sub.assignedAt?.seconds ? sub.assignedAt.seconds * 1000 : null);
+              if (assignedMs) this.deliveryTakenAt = assignedMs;
+            }
           }
-          // Siempre preferir assignedAt del servidor para evitar desfase de reloj
-          if (sub?.assignedAt) {
-            const assignedMs = sub.assignedAt?.toMillis?.()
-              ?? (sub.assignedAt?.seconds ? sub.assignedAt.seconds * 1000 : null);
-            if (assignedMs) this.deliveryTakenAt = assignedMs;
-          }
+        }
+        // Para promo orders: salir del modo delivery si ya está resuelto/cancelado
+        if (this.promoOrderData && (this.promoOrderData.status === 'resolved' || this.promoOrderData.status === 'cancelled')) {
+          this.isDeliveryMode = false;
         }
       } else if (this.authService.userRole === 'delivery') {
         // Solo delivery single busca caso activo cuando entra sin phone
