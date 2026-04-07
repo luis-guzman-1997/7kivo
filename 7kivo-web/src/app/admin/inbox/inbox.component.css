@@ -1088,3 +1088,19 @@
   padding: 0 14px;
   border-radius: 10px;
 }
+
+/* Main section tabs (Pedidos / Solicitudes) */
+.inbox-main-tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+.imt-btn {
+  display: flex; align-items: center; gap: 8px; padding: 10px 20px;
+  border: 2px solid #e2e8f0; border-radius: 12px; background: white;
+  color: #64748b; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.18s;
+}
+.imt-btn:hover { border-color: #8b5cf6; color: #7c3aed; }
+.imt-btn.imt-active { background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-color: transparent; color: white; box-shadow: 0 4px 12px rgba(139,92,246,0.3); }
+.imt-btn i { font-size: 0.85rem; color: inherit !important; }
+.imt-badge { background: rgba(0,0,0,0.08); color: inherit; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; min-width: 22px; text-align: center; transition: all 0.2s; }
+.imt-badge-alert { background: #ef4444; color: white; }
+.imt-btn.imt-active .imt-badge { background: rgba(255,255,255,0.25); color: white; }
+.imt-btn.imt-active .imt-badge-alert { background: rgba(255,255,255,0.35); }

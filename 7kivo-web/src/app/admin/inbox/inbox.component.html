@@ -46,8 +46,24 @@
     </div>
   </div>
 
+  <!-- ── Tabs principales ── -->
+  <div class="inbox-main-tabs" *ngIf="isDeliveryOrg">
+    <button class="imt-btn" [class.imt-active]="mainSection === 'solicitudes'" (click)="mainSection = 'solicitudes'">
+      <i class="fas fa-inbox"></i> Solicitudes
+      <span class="imt-badge" [class.imt-badge-alert]="(isDelivery ? deliveryTotalAvailable : totalUnread) > 0">
+        {{ isDelivery ? deliveryTotalAvailable : totalUnread }}
+      </span>
+    </button>
+    <button class="imt-btn" [class.imt-active]="mainSection === 'pedidos'" (click)="mainSection = 'pedidos'">
+      <i class="fas fa-motorcycle"></i> Pedidos Promo
+      <span class="imt-badge" [class.imt-badge-alert]="pendingPromoOrders.length > 0">
+        {{ pendingPromoOrders.length }}
+      </span>
+    </button>
+  </div>
+
   <!-- ── Promo Pedidos (solo orgs delivery) ── -->
-  <div class="promo-orders-section" *ngIf="isDeliveryOrg && promoOrdersLoaded">
+  <div class="promo-orders-section" *ngIf="isDeliveryOrg && promoOrdersLoaded && mainSection === 'pedidos'">
     <div class="promo-orders-header">
       <h2><i class="fas fa-motorcycle"></i> Promo Pedidos
         <span class="tab-badge" *ngIf="pendingPromoOrders.length > 0">{{ pendingPromoOrders.length }}</span>
@@ -162,7 +178,7 @@
   </div>
 
   <!-- Estadísticas de Promos (solo admin/owner en org delivery) -->
-  <div class="promo-stats-section" *ngIf="isDeliveryOrg && !isDelivery && promoStatsByCampaign.length > 0">
+  <div class="promo-stats-section" *ngIf="isDeliveryOrg && !isDelivery && promoStatsByCampaign.length > 0 && mainSection === 'pedidos'">
     <div class="promo-stats-header">
       <h2><i class="fas fa-chart-bar"></i> Estadísticas de Promos</h2>
     </div>
@@ -200,20 +216,20 @@
     </div>
   </div>
 
-  <!-- Loading -->
+  <!-- Loading / Flows section (hidden when pedidos tab active in delivery org) -->
   <div *ngIf="loading" class="loading-state">
     <i class="fas fa-spinner fa-spin"></i> Cargando bandeja...
   </div>
 
   <!-- No flows configured -->
-  <div *ngIf="!loading && tabs.length === 0" class="empty-state">
+  <div *ngIf="!loading && tabs.length === 0 && (!isDeliveryOrg || mainSection === 'solicitudes')" class="empty-state">
     <i class="fas fa-inbox"></i>
     <p>No hay flujos con bandeja configurada.</p>
     <p class="empty-hint">Los flujos que guardan en bases de datos distintas a "applicants" aparecen aquí automáticamente.</p>
   </div>
 
   <!-- Content -->
-  <div *ngIf="!loading && tabs.length > 0">
+  <div *ngIf="!loading && tabs.length > 0 && (!isDeliveryOrg || mainSection === 'solicitudes')">
     <!-- Flow Tabs -->
     <div class="tabs">
       <button *ngFor="let tab of tabs; let i = index"

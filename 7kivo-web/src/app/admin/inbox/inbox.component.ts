@@ -35,6 +35,8 @@ export class InboxComponent implements OnInit, OnDestroy {
   tabs: FlowTab[] = [];
   activeTabIndex = 0;
   loading = true;
+  mainSection: 'pedidos' | 'solicitudes' = 'solicitudes';
+
   searchTerm = '';
   statusFilter = 'all';
 
