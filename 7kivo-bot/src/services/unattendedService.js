@@ -12,21 +12,26 @@ const processUnattendedForOrg = async (orgId) => {
   try {
     const orgRef = db.collection('organizations').doc(orgId);
 
-    // Leer config
-    const configSnap = await orgRef.collection('config').doc('general').get();
-    const config = configSnap.exists ? configSnap.data() : {};
+    // Cargar todos los flujos con unattendedEnabled
+    const flowsSnap = await orgRef.collection('flows')
+      .where('unattendedEnabled', '==', true)
+      .get();
 
-    if (!config.unattendedNotifyEnabled) return;
+    if (flowsSnap.empty) return;
 
-    const timeoutHours = Number(config.unattendedTimeoutHours) || 2;
-    const message = (config.unattendedMessage || '').trim() || DEFAULT_MESSAGE;
-    const cutoffMs = Date.now() - timeoutHours * 3600 * 1000;
+    // Mapa flowId -> config del flujo
+    const flowMap = {};
+    flowsSnap.docs.forEach(d => {
+      flowMap[d.id] = d.data();
+    });
 
     // Obtener todas las colecciones de la org
     const colsSnap = await orgRef.collection('_collections').get();
 
     for (const colDoc of colsSnap.docs) {
       const slug = colDoc.data().slug || colDoc.id;
+
+      // Buscar submissions pending no notificadas
       const subsSnap = await orgRef
         .collection(slug)
         .where('status', '==', 'pending')
@@ -35,6 +40,14 @@ const processUnattendedForOrg = async (orgId) => {
 
       for (const subDoc of subsSnap.docs) {
         const data = subDoc.data();
+        const flowId = data.flowId;
+        if (!flowId || !flowMap[flowId]) continue; // flujo sin unattendedEnabled
+
+        const flowConfig = flowMap[flowId];
+        const timeoutHours = Number(flowConfig.unattendedTimeoutHours) || 2;
+        const message = (flowConfig.unattendedMessage || '').trim() || DEFAULT_MESSAGE;
+        const cutoffMs = Date.now() - timeoutHours * 3600 * 1000;
+
         const createdMs = data.createdAt?.toMillis?.()
           ?? (data.createdAt?.seconds ? data.createdAt.seconds * 1000 : null);
 

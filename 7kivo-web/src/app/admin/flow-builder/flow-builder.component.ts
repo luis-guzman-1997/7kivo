@@ -47,6 +47,15 @@ interface Flow {
   saveToCollection: string;
   notifyAdmin: boolean;
   notifyDelivery: boolean;
+  // Horario de atención del flujo
+  scheduleEnabled?: boolean;
+  scheduleStart?: string;
+  scheduleEnd?: string;
+  scheduleOffMessage?: string;
+  // Aviso si no es atendido
+  unattendedEnabled?: boolean;
+  unattendedTimeoutHours?: number;
+  unattendedMessage?: string;
 }
 
 interface TourStep { selector: string; title: string; body: string; position: 'below' | 'above' | 'center'; }
@@ -291,7 +300,9 @@ export class FlowBuilderComponent implements OnInit {
     return {
       name: '', description: '', menuLabel: '', menuDescription: '',
       type: 'registration', active: true, order: this.flows?.length || 0,
-      steps: [], completionMessage: '', saveToCollection: '', notifyAdmin: false, notifyDelivery: false
+      steps: [], completionMessage: '', saveToCollection: '', notifyAdmin: false, notifyDelivery: false,
+      scheduleEnabled: false, scheduleStart: '07:00', scheduleEnd: '17:00', scheduleOffMessage: '',
+      unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: ''
     };
   }
 

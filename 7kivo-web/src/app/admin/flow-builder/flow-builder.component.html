@@ -550,6 +550,54 @@
           </label>
         </div>
 
+        <!-- Bloque: Horario de atención del flujo -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-clock"></i> Horario de atención</div>
+          <p class="fe-hint">Si el cliente inicia este flujo fuera del horario configurado, el bot le avisa y no abre el flujo.</p>
+          <label class="fe-check">
+            <input type="checkbox" [(ngModel)]="currentFlow.scheduleEnabled" />
+            Activar horario de atención para este flujo
+          </label>
+          <ng-container *ngIf="currentFlow.scheduleEnabled">
+            <div class="fe-row-2" style="margin-top:12px">
+              <div class="fe-field">
+                <label>Hora de apertura</label>
+                <input type="time" [(ngModel)]="currentFlow.scheduleStart" />
+              </div>
+              <div class="fe-field">
+                <label>Hora de cierre</label>
+                <input type="time" [(ngModel)]="currentFlow.scheduleEnd" />
+              </div>
+            </div>
+            <div class="fe-field" style="margin-top:10px">
+              <label>Mensaje fuera de horario</label>
+              <textarea [(ngModel)]="currentFlow.scheduleOffMessage" rows="2"
+                placeholder="Ej: Nuestro horario de atención es de 7:00 AM a 5:00 PM. ¡Escríbenos en ese horario y con gusto te atendemos! 😊"></textarea>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Bloque: Aviso si no es atendido -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-bell-slash"></i> Aviso si no es atendido</div>
+          <p class="fe-hint">Si la solicitud del cliente no es tomada en el tiempo indicado, el bot le envía un mensaje de disculpa.</p>
+          <label class="fe-check">
+            <input type="checkbox" [(ngModel)]="currentFlow.unattendedEnabled" />
+            Activar aviso de no atención para este flujo
+          </label>
+          <ng-container *ngIf="currentFlow.unattendedEnabled">
+            <div class="fe-field" style="margin-top:12px">
+              <label>Tiempo máximo de espera (horas)</label>
+              <input type="number" [(ngModel)]="currentFlow.unattendedTimeoutHours" min="1" max="72" placeholder="2" style="max-width:120px" />
+            </div>
+            <div class="fe-field" style="margin-top:10px">
+              <label>Mensaje de disculpa</label>
+              <textarea [(ngModel)]="currentFlow.unattendedMessage" rows="2"
+                placeholder="Ej: Lo sentimos 😔 En este momento no pudimos atender tu solicitud. Te contactaremos a la brevedad. ¡Gracias por tu paciencia! 🙏"></textarea>
+            </div>
+          </ng-container>
+        </div>
+
         <!-- Bloque: Pasos -->
         <div class="fe-block" id="fe-steps-block">
           <div class="fe-block-title">

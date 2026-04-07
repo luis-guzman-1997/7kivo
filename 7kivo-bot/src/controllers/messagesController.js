@@ -793,6 +793,19 @@ const startFlow = async (phoneNumber, flowId) => {
     return;
   }
 
+  // Validar horario de atención del flujo
+  if (flow.scheduleEnabled && flow.scheduleStart && flow.scheduleEnd) {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    if (currentTime < flow.scheduleStart || currentTime >= flow.scheduleEnd) {
+      const offMsg = (flow.scheduleOffMessage || '').trim()
+        || `Nuestro horario de atención para este servicio es de ${flow.scheduleStart} a ${flow.scheduleEnd}. ¡Escríbenos en ese horario! 😊`;
+      await sendTextMessage(offMsg, phoneNumber);
+      return;
+    }
+  }
+
   const cancelHint = await getMessage("flow_cancel_hint", "Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.\n");
   await sendTextMessage(cancelHint, phoneNumber);
 
