@@ -40,7 +40,8 @@ export class DashboardComponent implements OnInit {
   deliveryActiveTab: string = '';
 
   get isDelivery(): boolean {
-    return this.authService.userRole === 'delivery';
+    const r = this.authService.userRole;
+    return r === 'delivery' || r === 'delivery_multi';
   }
 
   // Onboarding

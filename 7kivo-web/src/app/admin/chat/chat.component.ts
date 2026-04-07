@@ -81,6 +81,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   // ── Delivery mode ──
   isDeliveryMode = false;
+  deliveryMultiActivePhones: Set<string> = new Set();
   deliveryPhone: string | null = null;
   deliverySubmissionId: string | null = null;
   deliveryCollection: string | null = null;
@@ -108,6 +109,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   private windowTimer: any = null;
   private locationInterval: any = null;
   private locationWatchId: number | null = null;
+  private routeSub: any = null;
   private currentLat: number | null = null;
   private currentLng: number | null = null;
 
@@ -205,6 +207,17 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.startLocationTracking();
     }
 
+    // delivery_multi: cargar phones de casos activos antes de suscribir conversaciones
+    if (this.authService.userRole === 'delivery_multi') {
+      await this.loadDeliveryMultiPhones();
+      this.startLocationTracking();
+      // Re-cargar cuando naveguen con un nuevo phone (toman otro caso desde bandeja)
+      this.routeSub = this.route.queryParamMap.subscribe(async () => {
+        await this.loadDeliveryMultiPhones();
+        this.applyFilter();
+      });
+    }
+
     this.convsUnsub = this.firebaseService.onConversationsChange((convs) => {
       this.conversations = convs;
       this.applyFilter();
@@ -231,6 +244,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.windowTimer) clearInterval(this.windowTimer);
     if (this.locationInterval) clearInterval(this.locationInterval);
     if (this.locationWatchId !== null) navigator.geolocation.clearWatch(this.locationWatchId);
+    if (this.routeSub) this.routeSub.unsubscribe();
     this.stopRecordingCleanup();
   }
 
@@ -286,10 +300,17 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   applyFilter(): void {
     const term = this.searchTerm.toLowerCase().trim();
+    let base = [...this.conversations];
+
+    // delivery_multi: solo ve las conversaciones de sus casos activos
+    if (this.authService.userRole === 'delivery_multi') {
+      base = base.filter(c => this.deliveryMultiActivePhones.has(c.phoneNumber));
+    }
+
     if (!term) {
-      this.filteredConversations = [...this.conversations];
+      this.filteredConversations = base;
     } else {
-      this.filteredConversations = this.conversations.filter(c =>
+      this.filteredConversations = base.filter(c =>
         (c.contactName || '').toLowerCase().includes(term) ||
         (c.phoneNumber || '').includes(term)
       );
@@ -1102,6 +1123,35 @@ export class ChatComponent implements OnInit, OnDestroy {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
+  }
+
+  async loadDeliveryMultiPhones(): Promise<void> {
+    const uid = this.authService.currentUser?.uid;
+    if (!uid) return;
+    try {
+      const adminDoc = await this.firebaseService.getAdminByUid(uid);
+      this.deliveryUserName = adminDoc?.name || this.authService.currentUser?.email || '';
+      const slugs: string[] = adminDoc?.assignedFlows?.length
+        ? await this.getCollectionSlugsForFlows(adminDoc.assignedFlows)
+        : [];
+      const phones = slugs.length > 0
+        ? await this.firebaseService.getActiveSubmissionPhonesByUid(uid, slugs)
+        : [];
+      // Si viene de la bandeja con un phone específico, asegurar que esté incluido
+      const paramPhone = this.route.snapshot.queryParams['phone'];
+      if (paramPhone) phones.push(paramPhone);
+      this.deliveryMultiActivePhones = new Set(phones);
+    } catch { /* silent */ }
+  }
+
+  private async getCollectionSlugsForFlows(flowIds: string[]): Promise<string[]> {
+    try {
+      const flows = await this.firebaseService.getFlows();
+      return flows
+        .filter((f: any) => flowIds.includes(f.id) && f.saveToCollection)
+        .map((f: any) => f.saveToCollection as string)
+        .filter((s, i, arr) => arr.indexOf(s) === i);
+    } catch { return []; }
   }
 
   private scrollToBottom(): void {

@@ -146,7 +146,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       admin:    'Gerente',
       editor:   'Operador',
       viewer:   'Agente',
-      delivery: 'Delivery'
+      delivery:       'Delivery',
+      delivery_multi: 'Delivery Múltiple'
     };
     return labels[role] || role;
   }

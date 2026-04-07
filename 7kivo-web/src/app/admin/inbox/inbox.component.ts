@@ -108,6 +108,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   currentUserWaPhone = '';
   currentUserVehicleType = '';
   assignedFlows: string[] = [];
+  canSeePromoOrders = true;
   takingCaseId: string | null = null;
   takeError = '';
 
@@ -143,7 +144,12 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   get isDelivery(): boolean {
-    return this.authService.userRole === 'delivery';
+    const r = this.authService.userRole;
+    return r === 'delivery' || r === 'delivery_multi';
+  }
+
+  get isDeliveryMulti(): boolean {
+    return this.authService.userRole === 'delivery_multi';
   }
 
   get hasActiveDeliveryCase(): boolean {
@@ -328,6 +334,9 @@ export class InboxComponent implements OnInit, OnDestroy {
       this.currentUserVehicleType = userData?.vehicleType || '';
       if (adminDoc?.assignedFlows?.length) {
         this.assignedFlows = adminDoc.assignedFlows;
+      }
+      if (adminDoc && adminDoc.canSeePromoOrders === false) {
+        this.canSeePromoOrders = false;
       }
       // Escuchar cambios de vehículo en tiempo real (el propietario puede cambiarlo)
       if (this.isDelivery && uid) {
@@ -800,12 +809,14 @@ export class InboxComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // No se permite tomar si ya tiene un caso activo en cualquier tab
-    const hasActive = this.tabs.some(t => this.deliveryMyCases(t).length > 0);
-    if (hasActive) {
-      this.takeError = 'Ya tienes un caso activo. Resuélvelo antes de tomar otro.';
-      setTimeout(() => this.takeError = '', 4000);
-      return;
+    // Delivery normal: solo un caso a la vez
+    if (!this.isDeliveryMulti) {
+      const hasActive = this.tabs.some(t => this.deliveryMyCases(t).length > 0);
+      if (hasActive) {
+        this.takeError = 'Ya tienes un caso activo. Resuélvelo antes de tomar otro.';
+        setTimeout(() => this.takeError = '', 4000);
+        return;
+      }
     }
 
     this.takingCaseId = item.id;

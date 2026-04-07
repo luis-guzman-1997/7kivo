@@ -54,7 +54,8 @@
         {{ isDelivery ? deliveryTotalAvailable : totalUnread }}
       </span>
     </button>
-    <button class="imt-btn" [class.imt-active]="mainSection === 'pedidos'" (click)="mainSection = 'pedidos'">
+    <button class="imt-btn" [class.imt-active]="mainSection === 'pedidos'" (click)="mainSection = 'pedidos'"
+            *ngIf="!isDelivery || canSeePromoOrders">
       <i class="fas fa-motorcycle"></i> Pedidos Promo
       <span class="imt-badge" [class.imt-badge-alert]="pendingPromoOrders.length > 0">
         {{ pendingPromoOrders.length }}

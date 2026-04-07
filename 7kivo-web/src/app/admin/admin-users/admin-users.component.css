@@ -753,3 +753,15 @@
 .fa-flow-name { font-weight: 600; flex: 1; }
 .fa-flow-label { color: #94a3b8; font-size: 0.78rem; }
 .fa-flow-status { font-size: 0.72rem; color: #f59e0b; background: #fef3c7; padding: 1px 6px; border-radius: 6px; font-weight: 600; }
+
+/* Delivery Multi params */
+.dm-params { margin: 10px 0 4px; padding: 10px 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 9px; display: flex; flex-direction: column; gap: 8px; }
+.dm-params-label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 6px; }
+.dm-params-label i { color: #8b5cf6 !important; font-size: 0.72rem; }
+.dm-param-row { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #334155; cursor: pointer; }
+.dm-param-row span:first-child { flex: 1; }
+.dm-toggle { position: relative; width: 36px; height: 20px; border-radius: 10px; border: none; background: #cbd5e1; cursor: pointer; transition: background 0.2s; flex-shrink: 0; padding: 0; }
+.dm-toggle.dm-on { background: #8b5cf6; }
+.dm-toggle-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.dm-toggle.dm-on .dm-toggle-knob { left: 18px; }
+.dm-toggle-label { font-size: 0.78rem; color: #64748b; min-width: 20px; }

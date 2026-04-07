@@ -20,7 +20,8 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'campaigns', 'delivery_map'],
   editor:   ['dashboard', 'contacts', 'chat', 'inbox', 'collections'],
   viewer:   ['dashboard', 'inbox', 'chat'],
-  delivery: ['dashboard', 'inbox', 'chat']
+  delivery:       ['dashboard', 'inbox', 'chat'],
+  delivery_multi: ['dashboard', 'inbox', 'chat']
 };
 
 @Injectable({ providedIn: 'root' })

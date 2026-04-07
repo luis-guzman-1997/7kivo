@@ -73,7 +73,7 @@
           </span>
         </div>
       </div>
-      <div class="form-row" *ngIf="newAdmin.role === 'delivery'">
+      <div class="form-row" *ngIf="newAdmin.role === 'delivery' || newAdmin.role === 'delivery_multi'">
         <div class="form-group-admin">
           <label>Número WhatsApp del Delivery</label>
           <input type="tel" [(ngModel)]="newAdmin.whatsappPhone" name="whatsappPhone"
@@ -155,11 +155,11 @@
             <i class="fas fa-circle"></i> {{ admin.active ? 'Activo' : 'Inactivo' }}
           </span>
         </div>
-        <div class="admin-meta" *ngIf="admin.role === 'delivery' && admin.whatsappPhone">
+        <div class="admin-meta" *ngIf="isDeliveryRole(admin) && admin.whatsappPhone">
           <span><i class="fab fa-whatsapp" style="color:#25d366"></i> {{ admin.whatsappPhone }}</span>
         </div>
         <!-- Vehicle type selector (delivery) -->
-        <div class="vehicle-selector" *ngIf="admin.role === 'delivery' && canManage(admin)">
+        <div class="vehicle-selector" *ngIf="isDeliveryRole(admin) && canManage(admin)">
           <span class="vehicle-label"><i class="fas fa-route"></i> Vehículo:</span>
           <div class="vehicle-options">
             <button *ngFor="let v of vehicleOptions"
@@ -173,8 +173,20 @@
             </button>
           </div>
         </div>
+        <!-- Parámetros Delivery Múltiple (owner/SA only) -->
+        <div class="dm-params" *ngIf="admin.role === 'delivery_multi' && canAssignFlows">
+          <span class="dm-params-label"><i class="fas fa-sliders-h"></i> Parámetros</span>
+          <label class="dm-param-row">
+            <span>Tomar pedidos de marketing</span>
+            <button class="dm-toggle" [class.dm-on]="admin.canSeePromoOrders !== false" (click)="toggleCanSeePromoOrders(admin)">
+              <span class="dm-toggle-knob"></span>
+            </button>
+            <span class="dm-toggle-label">{{ admin.canSeePromoOrders !== false ? 'Sí' : 'No' }}</span>
+          </label>
+        </div>
+
         <!-- Flow assignment (delivery, owner/SA only) -->
-        <div class="flow-assign-section" *ngIf="admin.role === 'delivery' && canAssignFlows">
+        <div class="flow-assign-section" *ngIf="isDeliveryRole(admin) && canAssignFlows">
           <button class="flow-assign-toggle" (click)="toggleFlowPanel(admin)">
             <i class="fas fa-project-diagram"></i>
             Flujos asignados
@@ -218,7 +230,7 @@
           <i class="fas fa-key"></i> Contraseña
         </button>
         <button class="btn-card btn-pw" (click)="startChangePhone(admin)"
-                *ngIf="admin.role === 'delivery' && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id && changeNameAdmin?.id !== admin.id">
+                *ngIf="isDeliveryRole(admin) && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id && changeNameAdmin?.id !== admin.id">
           <i class="fas fa-phone"></i> Número WA
         </button>
         <button class="btn-card btn-delete" (click)="deleteAdmin(admin)">

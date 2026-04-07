@@ -375,6 +375,22 @@ export class FirebaseService {
     return this.getCollection('admins');
   }
 
+  async getActiveSubmissionPhonesByUid(uid: string, slugs: string[]): Promise<string[]> {
+    const phones = new Set<string>();
+    for (const slug of slugs) {
+      const colRef = collection(this.db, this.orgPath(), slug);
+      const q = query(colRef, where('assignedTo.uid', '==', uid));
+      const snap = await getDocs(q);
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (data['status'] !== 'resolved' && data['phoneNumber']) {
+          phones.add(data['phoneNumber']);
+        }
+      });
+    }
+    return Array.from(phones);
+  }
+
   async getAdminByUid(uid: string): Promise<any | null> {
     const snap = await getDocs(collection(this.db, this.orgPath(), 'admins'));
     const doc = snap.docs.find(d => d.data()['uid'] === uid);

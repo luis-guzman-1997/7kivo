@@ -22,7 +22,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     { value: 'admin',    label: 'Gerente',     desc: 'Gestión operativa: mensajería, flujos, bases de datos y usuarios (sin configuración de empresa)' },
     { value: 'editor',   label: 'Operador',    desc: 'Operaciones del día a día: dashboard, contactos, chat, bandeja y bases de datos' },
     { value: 'viewer',   label: 'Agente',      desc: 'Atención al cliente: dashboard, bandeja de entrada y chat (sin acceso a contactos)' },
-    { value: 'delivery', label: 'Delivery',  desc: 'Solo bandeja de delivery: puede tomar y resolver pedidos asignados' }
+    { value: 'delivery',       label: 'Delivery',          desc: 'Solo bandeja de delivery: puede tomar y resolver pedidos asignados (un pedido a la vez)' },
+    { value: 'delivery_multi', label: 'Delivery Múltiple', desc: 'Igual que Delivery pero puede tomar múltiples pedidos simultáneamente' }
   ];
 
   allPermissions = [
@@ -124,7 +125,21 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   get rolesForSelector() {
     return this.isDeliveryOrg
       ? this.availableRoles
-      : this.availableRoles.filter(r => r.value !== 'delivery');
+      : this.availableRoles.filter(r => r.value !== 'delivery' && r.value !== 'delivery_multi');
+  }
+
+  isDeliveryRole(admin: any): boolean {
+    return admin.role === 'delivery' || admin.role === 'delivery_multi';
+  }
+
+  async toggleCanSeePromoOrders(admin: any): Promise<void> {
+    const newVal = !(admin.canSeePromoOrders !== false);
+    try {
+      await this.firebaseService.updateAdmin(admin.id, { canSeePromoOrders: newVal });
+      admin.canSeePromoOrders = newVal;
+    } catch (err) {
+      console.error('Error saving canSeePromoOrders:', err);
+    }
   }
 
   async ngOnInit(): Promise<void> {
@@ -177,7 +192,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.newAdmin.role === 'delivery' && !this.newAdmin.whatsappPhone.trim()) {
+    if ((this.newAdmin.role === 'delivery' || this.newAdmin.role === 'delivery_multi') && !this.newAdmin.whatsappPhone.trim()) {
       this.formError = 'El número de WhatsApp del Delivery es requerido';
       return;
     }
@@ -198,8 +213,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
         this.newAdmin.password,
         this.newAdmin.name.trim(),
         this.newAdmin.role,
-        this.newAdmin.role === 'delivery' ? this.newAdmin.whatsappPhone.trim() : undefined,
-        this.newAdmin.role === 'delivery' ? this.newAdmin.vehicleType : undefined
+        (this.newAdmin.role === 'delivery' || this.newAdmin.role === 'delivery_multi') ? this.newAdmin.whatsappPhone.trim() : undefined,
+        (this.newAdmin.role === 'delivery' || this.newAdmin.role === 'delivery_multi') ? this.newAdmin.vehicleType : undefined
       );
 
       this.formSuccess = `Usuario "${this.newAdmin.name}" creado exitosamente`;
@@ -490,7 +505,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       admin:    'Gerente',
       editor:   'Operador',
       viewer:   'Agente',
-      delivery: 'Delivery'
+      delivery:       'Delivery',
+      delivery_multi: 'Delivery Múltiple'
     };
     return labels[role] || role;
   }
