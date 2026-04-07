@@ -136,7 +136,7 @@ const requestMessageFromWhatsapp = async (req, res) => {
         );
 
         const mode = await getConversationMode(phoneNumber);
-        if (mode === "admin") {
+        if (mode === "admin" && !buttonId.startsWith('campaign_order_')) {
           return res.sendStatus(200);
         }
 
@@ -2100,7 +2100,7 @@ const requestMessageMulti = async (req, res) => {
             console.error("Error saving interactive user message:", err.message)
           );
           const mode = await getConversationMode(phoneNumber);
-          if (mode === "admin") return res.sendStatus(200);
+          if (mode === "admin" && !buttonId.startsWith('campaign_order_')) return res.sendStatus(200);
           await handleInteractiveResponse(phoneNumber, buttonId);
           return res.sendStatus(200);
         }
