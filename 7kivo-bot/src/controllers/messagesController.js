@@ -22,7 +22,8 @@ const {
   getCampaignKeywordTriggers,
   getCampaignById,
   createPromoOrder,
-  getOrgStatus
+  getOrgStatus,
+  hasActiveCaseForPhone
 } = require("../services/botMessagesService");
 const { saveMessage, getConversationMode } = require("../services/conversationService");
 const { registerCampaignOptOut } = require("../services/campaignService");
@@ -776,6 +777,16 @@ const startLegacyOrFlowRegistration = async (phoneNumber) => {
 // ==================== DYNAMIC FLOW ENGINE ====================
 
 const startFlow = async (phoneNumber, flowId) => {
+  // Bloquear si el cliente ya tiene una solicitud/caso activo sin resolver
+  const hasActive = await hasActiveCaseForPhone(phoneNumber);
+  if (hasActive) {
+    await sendTextMessage(
+      '⏳ Ya tienes una solicitud en curso. Por favor espera a que sea atendida antes de iniciar una nueva.',
+      phoneNumber
+    );
+    return;
+  }
+
   const flow = await getFlow(flowId);
   if (!flow || !flow.steps || flow.steps.length === 0) {
     await sendTextMessage("Este servicio no está disponible actualmente.", phoneNumber);

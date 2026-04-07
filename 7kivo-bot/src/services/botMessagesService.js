@@ -434,6 +434,27 @@ const lookupCollectionByField = async (collectionName, fieldKey, value) => {
   }
 };
 
+// ── Verifica si un teléfono tiene una solicitud/caso activo sin resolver ──
+const hasActiveCaseForPhone = async (phoneNumber) => {
+  try {
+    const colsSnap = await getOrgRef().collection('_collections').get();
+    for (const colDoc of colsSnap.docs) {
+      const slug = colDoc.data().slug || colDoc.id;
+      const snap = await getOrgRef()
+        .collection(slug)
+        .where('phoneNumber', '==', String(phoneNumber))
+        .where('status', 'in', ['pending', 'taken'])
+        .limit(1)
+        .get();
+      if (!snap.empty) return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('hasActiveCaseForPhone error:', err.message);
+    return false;
+  }
+};
+
 module.exports = {
   loadBotMessages,
   getMessage,
@@ -461,5 +482,6 @@ module.exports = {
   createPromoOrder,
   getCampaignKeywordTriggers,
   getOrgStatus,
-  clearCache
+  clearCache,
+  hasActiveCaseForPhone
 };
