@@ -495,6 +495,13 @@ const sendMenu = async (phoneNumber) => {
 const handleInteractiveResponse = async (phoneNumber, buttonId) => {
   // Botón de pedido de campaña delivery
   if (buttonId.startsWith('campaign_order_')) {
+    // Bloquear si ya tiene una solicitud o promo activa
+    const alreadyActive = await hasActiveCaseForPhone(phoneNumber);
+    if (alreadyActive) {
+      await sendTextMessage('Ya tienes una solicitud en proceso 🙏\n\nEspera a que sea atendida o cancelada antes de hacer otro pedido.', phoneNumber);
+      return;
+    }
+
     const campaignId = buttonId.replace('campaign_order_', '');
     const campaign = await getCampaignById(campaignId);
     if (campaign) {

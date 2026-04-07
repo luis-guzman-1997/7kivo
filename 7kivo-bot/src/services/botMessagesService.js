@@ -440,6 +440,16 @@ const lookupCollectionByField = async (collectionName, fieldKey, value) => {
 // ── Verifica si un teléfono tiene una solicitud/caso activo sin resolver ──
 const hasActiveCaseForPhone = async (phoneNumber) => {
   try {
+    // 1. Revisar promo_orders activos
+    const promoSnap = await getOrgRef()
+      .collection('promo_orders')
+      .where('phone', '==', String(phoneNumber))
+      .where('status', 'in', ['pending', 'taken'])
+      .limit(1)
+      .get();
+    if (!promoSnap.empty) return true;
+
+    // 2. Revisar colecciones de flujos
     const colsSnap = await getOrgRef().collection('_collections').get();
     for (const colDoc of colsSnap.docs) {
       const slug = colDoc.data().slug || colDoc.id;
