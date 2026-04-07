@@ -322,13 +322,13 @@ const takeDeliveryCase = async (req, res) => {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
-    const greeting = clientName ? `Hola *${clientName}*! ` : "";
-    const agentLine = deliveryName ? `*${deliveryName}* tomó tu solicitud` : `Un Delivery tomó tu solicitud`;
-    let msg = `*¡Buenas noticias!* 🎉\n\n${greeting}${agentLine} y se pondrá en contacto contigo por este chat.`;
+    const clientGreeting = clientName ? ` *${clientName}*` : "";
+    const myName = deliveryName ? `Soy *${deliveryName}*` : "Soy tu repartidor";
+    let msg = `¡Hola${clientGreeting}! 👋\n\n${myName}. Acabo de tomar tu solicitud y seguiré en contacto contigo por este chat. 🚗`;
     if (deliveryCode) {
-      msg += `\n\n*Tu código de confirmación es: ${deliveryCode}*\n\nGuárdalo. Cuando el Delivery llegue, te pedirá este código para confirmar la entrega. ✅\n\n⚠️ Si alguien te contacta sin pedirte este código, no confíes y avísanos.`;
+      msg += `\n\n*Tu código de confirmación es: ${deliveryCode}*\n\nGuárdalo: te lo pediré al entregar para confirmar que soy yo quien te entrega. ✅\n\n⚠️ Si alguien te escribe desde otro número, no confíes y avísanos.`;
     } else {
-      msg += `\n\nTe pedirá un código de confirmación al momento de la entrega.`;
+      msg += `\n\nTe pediré un código de confirmación al momento de la entrega.`;
     }
 
     // Switch to admin mode so client media (audio/images) gets forwarded to delivery
