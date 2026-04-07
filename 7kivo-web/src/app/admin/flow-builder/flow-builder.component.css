@@ -1500,6 +1500,16 @@
 .copy-flow-footer .delete-option-btn { flex: 1; }
 
 
+/* Schedule slots */
+.slot-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.slot-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+.slot-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.slot-num { font-size: 0.78rem; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.04em; }
+.slot-remove { background: none; border: none; color: #94a3b8; font-size: 0.85rem; cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: color 0.15s; }
+.slot-remove:hover { color: #ef4444; }
+.btn-add-slot { margin-top: 10px; display: flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1.5px dashed #8b5cf6; border-radius: 8px; background: transparent; color: #7c3aed; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.btn-add-slot:hover { background: #f5f3ff; }
+
 /* Schedule days selector */
 .schedule-days-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 .day-btn { padding: 5px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white; color: #64748b; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }

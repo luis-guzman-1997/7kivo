@@ -555,32 +555,51 @@
           <div class="fe-block-title"><i class="fas fa-clock"></i> Horario de atención</div>
           <p class="fe-hint">Si el cliente inicia este flujo fuera del horario configurado, el bot le avisa y no abre el flujo.</p>
           <label class="fe-check">
-            <input type="checkbox" [(ngModel)]="currentFlow.scheduleEnabled" />
+            <input type="checkbox" [(ngModel)]="currentFlow.scheduleEnabled"
+                   (ngModelChange)="$event && ensureSlots()" />
             Activar horario de atención para este flujo
           </label>
           <ng-container *ngIf="currentFlow.scheduleEnabled">
-            <div class="fe-row-2" style="margin-top:12px">
-              <div class="fe-field">
-                <label>Hora de apertura</label>
-                <input type="time" [(ngModel)]="currentFlow.scheduleStart" />
-              </div>
-              <div class="fe-field">
-                <label>Hora de cierre</label>
-                <input type="time" [(ngModel)]="currentFlow.scheduleEnd" />
+
+            <!-- Franjas de horario -->
+            <div class="slot-list">
+              <div *ngFor="let slot of currentFlow.scheduleSlots; let i = index" class="slot-card">
+                <div class="slot-card-top">
+                  <span class="slot-num">Franja {{ i + 1 }}</span>
+                  <button *ngIf="(currentFlow.scheduleSlots?.length || 0) > 1" type="button"
+                    class="slot-remove" (click)="removeScheduleSlot(i)" title="Eliminar franja">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="fe-field">
+                  <label>Días</label>
+                  <div class="schedule-days-row">
+                    <button *ngFor="let d of DAYS_OF_WEEK" type="button"
+                      class="day-btn" [class.day-btn-on]="isSlotDay(slot, d.value)"
+                      (click)="toggleSlotDay(slot, d.value)">{{ d.label }}</button>
+                  </div>
+                </div>
+                <div class="fe-row-2">
+                  <div class="fe-field">
+                    <label>Apertura</label>
+                    <input type="time" [(ngModel)]="slot.start" />
+                  </div>
+                  <div class="fe-field">
+                    <label>Cierre</label>
+                    <input type="time" [(ngModel)]="slot.end" />
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="fe-field" style="margin-top:12px">
-              <label>Días de atención</label>
-              <div class="schedule-days-row">
-                <button *ngFor="let d of DAYS_OF_WEEK" type="button"
-                  class="day-btn" [class.day-btn-on]="isScheduleDay(d.value)"
-                  (click)="toggleScheduleDay(d.value)">{{ d.label }}</button>
-              </div>
-            </div>
-            <div class="fe-field" style="margin-top:10px">
+
+            <button type="button" class="btn-add-slot" (click)="addScheduleSlot()">
+              <i class="fas fa-plus"></i> Agregar franja
+            </button>
+
+            <div class="fe-field" style="margin-top:14px">
               <label>Mensaje fuera de horario</label>
               <textarea [(ngModel)]="currentFlow.scheduleOffMessage" rows="2"
-                placeholder="Ej: Nuestro horario de atención es de lunes a viernes de 7:00 AM a 5:00 PM. ¡Escríbenos en ese horario y con gusto te atendemos! 😊"></textarea>
+                placeholder="Ej: Nuestro horario es lunes a viernes de 8:00 AM a 5:00 PM y sábados de 8:00 AM a 12:00 PM. ¡Escríbenos en ese horario! 😊"></textarea>
             </div>
           </ng-container>
         </div>

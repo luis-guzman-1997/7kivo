@@ -794,19 +794,27 @@ const startFlow = async (phoneNumber, flowId) => {
   }
 
   // Validar horario de atención del flujo
-  if (flow.scheduleEnabled && flow.scheduleStart && flow.scheduleEnd) {
+  if (flow.scheduleEnabled) {
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const currentDay = now.getDay(); // 0=Dom … 6=Sáb
-    const allowedDays = Array.isArray(flow.scheduleDays) && flow.scheduleDays.length > 0
-      ? flow.scheduleDays
-      : [1, 2, 3, 4, 5]; // default lun-vie si no está configurado
-    const outOfHours = currentTime < flow.scheduleStart || currentTime >= flow.scheduleEnd;
-    const outOfDays = !allowedDays.includes(currentDay);
-    if (outOfHours || outOfDays) {
+
+    // Soporte para scheduleSlots (nuevo) y fallback legacy
+    const slots = Array.isArray(flow.scheduleSlots) && flow.scheduleSlots.length > 0
+      ? flow.scheduleSlots
+      : [{ days: flow.scheduleDays ?? [1,2,3,4,5], start: flow.scheduleStart ?? '07:00', end: flow.scheduleEnd ?? '17:00' }];
+
+    // Está dentro del horario si alguna franja lo cubre
+    const withinSchedule = slots.some(slot =>
+      slot.days.includes(currentDay) &&
+      currentTime >= slot.start &&
+      currentTime < slot.end
+    );
+
+    if (!withinSchedule) {
       const offMsg = (flow.scheduleOffMessage || '').trim()
-        || `Nuestro horario de atención para este servicio es de ${flow.scheduleStart} a ${flow.scheduleEnd}. ¡Escríbenos en ese horario! 😊`;
+        || `Nuestro horario de atención para este servicio no está disponible en este momento. ¡Escríbenos en nuestro horario de atención! 😊`;
       await sendTextMessage(offMsg, phoneNumber);
       return;
     }

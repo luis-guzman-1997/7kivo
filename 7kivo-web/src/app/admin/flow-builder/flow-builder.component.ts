@@ -49,10 +49,12 @@ interface Flow {
   notifyDelivery: boolean;
   // Horario de atención del flujo
   scheduleEnabled?: boolean;
+  scheduleSlots?: { days: number[]; start: string; end: string }[]; // franjas por días
+  scheduleOffMessage?: string;
+  // Legacy (compatibilidad con docs anteriores)
   scheduleStart?: string;
   scheduleEnd?: string;
-  scheduleDays?: number[]; // 0=Dom 1=Lun 2=Mar 3=Mié 4=Jue 5=Vie 6=Sáb
-  scheduleOffMessage?: string;
+  scheduleDays?: number[];
   // Aviso si no es atendido
   unattendedEnabled?: boolean;
   unattendedTimeoutHours?: number;
@@ -307,16 +309,38 @@ export class FlowBuilderComponent implements OnInit {
     { label: 'Sáb', value: 6 },
   ];
 
-  toggleScheduleDay(day: number): void {
-    const days = this.currentFlow.scheduleDays ?? [1,2,3,4,5];
-    const idx = days.indexOf(day);
-    if (idx === -1) days.push(day);
-    else days.splice(idx, 1);
-    this.currentFlow.scheduleDays = [...days].sort();
+  emptySlot(): { days: number[]; start: string; end: string } {
+    return { days: [], start: '08:00', end: '17:00' };
   }
 
-  isScheduleDay(day: number): boolean {
-    return (this.currentFlow.scheduleDays ?? []).includes(day);
+  ensureSlots(): void {
+    if (!this.currentFlow.scheduleSlots || this.currentFlow.scheduleSlots.length === 0) {
+      // Migrar del formato legacy si existe
+      const legacyDays = this.currentFlow.scheduleDays ?? [1,2,3,4,5];
+      const legacyStart = this.currentFlow.scheduleStart ?? '07:00';
+      const legacyEnd = this.currentFlow.scheduleEnd ?? '17:00';
+      this.currentFlow.scheduleSlots = [{ days: legacyDays, start: legacyStart, end: legacyEnd }];
+    }
+  }
+
+  addScheduleSlot(): void {
+    this.ensureSlots();
+    this.currentFlow.scheduleSlots!.push(this.emptySlot());
+  }
+
+  removeScheduleSlot(i: number): void {
+    this.currentFlow.scheduleSlots!.splice(i, 1);
+  }
+
+  toggleSlotDay(slot: { days: number[]; start: string; end: string }, day: number): void {
+    const idx = slot.days.indexOf(day);
+    if (idx === -1) slot.days.push(day);
+    else slot.days.splice(idx, 1);
+    slot.days = [...slot.days].sort();
+  }
+
+  isSlotDay(slot: { days: number[]; start: string; end: string }, day: number): boolean {
+    return slot.days.includes(day);
   }
 
   emptyFlow(): Flow {
@@ -324,7 +348,9 @@ export class FlowBuilderComponent implements OnInit {
       name: '', description: '', menuLabel: '', menuDescription: '',
       type: 'registration', active: true, order: this.flows?.length || 0,
       steps: [], completionMessage: '', saveToCollection: '', notifyAdmin: false, notifyDelivery: false,
-      scheduleEnabled: false, scheduleStart: '07:00', scheduleEnd: '17:00', scheduleDays: [1,2,3,4,5], scheduleOffMessage: '',
+      scheduleEnabled: false,
+      scheduleSlots: [{ days: [1,2,3,4,5], start: '07:00', end: '17:00' }],
+      scheduleOffMessage: '',
       unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: ''
     };
   }
