@@ -81,7 +81,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   // ── Delivery mode ──
   isDeliveryMode = false;
-  deliveryMultiActivePhones: Set<string> = new Set();
+  deliveryMultiActivePhones: Map<string, number | null> = new Map();
   deliveryPhone: string | null = null;
   deliverySubmissionId: string | null = null;
   deliveryCollection: string | null = null;
@@ -326,11 +326,14 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.windowTimer) clearInterval(this.windowTimer);
 
     const listenPhone = conv.phoneNumber;
-    // En modo delivery, filtrar por createdMs directo en Firestore para evitar el límite
-    // de 100 mensajes históricos y asegurar que los mensajes nuevos siempre se capturen
-    const sinceMs = (this.isDeliveryMode && this.deliveryTakenAt)
-      ? this.deliveryTakenAt - 1000
-      : undefined;
+    // En modo delivery, filtrar mensajes desde cuando se tomó el caso
+    let sinceMs: number | undefined;
+    if (this.isDeliveryMode && this.deliveryTakenAt) {
+      sinceMs = this.deliveryTakenAt - 1000;
+    } else if (this.authService.userRole === 'delivery_multi') {
+      const takenAt = this.deliveryMultiActivePhones.get(conv.phoneNumber);
+      if (takenAt) sinceMs = takenAt - 1000;
+    }
     this.lastMsgCount = -1;
     this.msgsUnsub = this.firebaseService.onConversationMessages(
       listenPhone,
@@ -1134,13 +1137,17 @@ export class ChatComponent implements OnInit, OnDestroy {
       const slugs: string[] = adminDoc?.assignedFlows?.length
         ? await this.getCollectionSlugsForFlows(adminDoc.assignedFlows)
         : [];
-      const phones = slugs.length > 0
+      const entries = slugs.length > 0
         ? await this.firebaseService.getActiveSubmissionPhonesByUid(uid, slugs)
         : [];
+      const map = new Map<string, number | null>(entries.map(e => [e.phone, e.takenAt]));
       // Si viene de la bandeja con un phone específico, asegurar que esté incluido
       const paramPhone = this.route.snapshot.queryParams['phone'];
-      if (paramPhone) phones.push(paramPhone);
-      this.deliveryMultiActivePhones = new Set(phones);
+      const paramTakenAt = this.route.snapshot.queryParams['takenAt'];
+      if (paramPhone && !map.has(paramPhone)) {
+        map.set(paramPhone, paramTakenAt ? +paramTakenAt : null);
+      }
+      this.deliveryMultiActivePhones = map;
     } catch { /* silent */ }
   }
 

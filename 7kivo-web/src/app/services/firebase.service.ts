@@ -375,8 +375,8 @@ export class FirebaseService {
     return this.getCollection('admins');
   }
 
-  async getActiveSubmissionPhonesByUid(uid: string, slugs: string[]): Promise<string[]> {
-    const phones = new Set<string>();
+  async getActiveSubmissionPhonesByUid(uid: string, slugs: string[]): Promise<{ phone: string; takenAt: number | null }[]> {
+    const result = new Map<string, number | null>();
     for (const slug of slugs) {
       const colRef = collection(this.db, this.orgPath(), slug);
       const q = query(colRef, where('assignedTo.uid', '==', uid));
@@ -384,11 +384,16 @@ export class FirebaseService {
       snap.docs.forEach(d => {
         const data = d.data();
         if (data['status'] !== 'resolved' && data['phoneNumber']) {
-          phones.add(data['phoneNumber']);
+          const at = data['assignedAt'];
+          const takenAt: number | null = at?.toMillis?.()
+            ?? (at?.seconds ? at.seconds * 1000 : null);
+          if (!result.has(data['phoneNumber'])) {
+            result.set(data['phoneNumber'], takenAt);
+          }
         }
       });
     }
-    return Array.from(phones);
+    return Array.from(result.entries()).map(([phone, takenAt]) => ({ phone, takenAt }));
   }
 
   async getAdminByUid(uid: string): Promise<any | null> {
