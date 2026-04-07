@@ -4,7 +4,23 @@
       "Bash(npm install:*)",
       "Bash(node -e \"const webpush = require\\(''web-push''\\); const keys = webpush.generateVAPIDKeys\\(\\); console.log\\(''PUBLIC:'', keys.publicKey\\); console.log\\(''PRIVATE:'', keys.privateKey\\);\")",
       "Bash(echo \":*)",
-      "Bash(\"C:/Users/PC/Desktop/7kivo/7kivo-web/src/app/superadmin/sa-plans/sa-plans.component.css\")"
+      "Bash(\"C:/Users/PC/Desktop/7kivo/7kivo-web/src/app/superadmin/sa-plans/sa-plans.component.css\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(node -e \"require\\(''fluent-ffmpeg''\\); console.log\\(''ok''\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"require\\(''@google-cloud/storage''\\); console.log\\(''ok''\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx ng:*)",
+      "Bash(find C:UsersPCDesktop7kivo -type f -name *.ts -path */7kivo-bot/*)",
+      "Bash(find C:/Users/PC/Desktop/7kivo -name firestore.rules -o -name *.rules)",
+      "Bash(npm run:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(find C:\\\\Users\\\\PC\\\\Desktop\\\\7kivo\\\\7kivo-bot\\\\src:*)",
+      "Bash(npm list:*)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(node_modules/.bin/ngc --noEmit)"
     ]
   }
 }
