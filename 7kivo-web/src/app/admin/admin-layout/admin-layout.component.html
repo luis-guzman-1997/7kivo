@@ -132,6 +132,44 @@
         <i class="fas fa-bars"></i>
       </button>
       <span class="topbar-org">{{ orgName }}</span>
+      <!-- Delivery alert bell (outside topbar-right so it stays visible on small screens) -->
+      <div class="topbar-bell-wrap" *ngIf="isDeliveryRole">
+        <button class="topbar-bell" (click)="showAlertPanel = !showAlertPanel" [class.has-alerts]="deliveryAlertCount > 0" title="Alertas">
+          <i class="fas fa-bell"></i>
+          <span class="bell-badge" *ngIf="deliveryAlertCount > 0">{{ deliveryAlertCount }}</span>
+        </button>
+        <div class="alert-panel-backdrop" *ngIf="showAlertPanel" (click)="showAlertPanel = false"></div>
+        <div class="alert-panel" *ngIf="showAlertPanel">
+          <div class="alert-panel-title">Permisos del dispositivo</div>
+
+          <!-- Ubicación -->
+          <div class="alert-item" [class.alert-ok]="deliveryAlert.locationGranted$.value" [class.alert-warn]="!deliveryAlert.locationGranted$.value">
+            <i class="fas" [class.fa-check-circle]="deliveryAlert.locationGranted$.value" [class.fa-map-marker-alt]="!deliveryAlert.locationGranted$.value"></i>
+            <div class="alert-item-body">
+              <span *ngIf="deliveryAlert.locationGranted$.value">Ubicación activa</span>
+              <span *ngIf="deliveryAlert.locationDenied$.value">Permiso de ubicación bloqueado. Ve al candado 🔒 → Permisos del sitio → Ubicación → Permitir. Luego recarga.</span>
+              <span *ngIf="!deliveryAlert.locationGranted$.value && !deliveryAlert.locationDenied$.value && deliveryAlert.locationError$.value">{{ deliveryAlert.locationError$.value }}</span>
+              <span *ngIf="!deliveryAlert.locationGranted$.value && !deliveryAlert.locationDenied$.value && !deliveryAlert.locationError$.value">Activa tu ubicación para tomar pedidos.</span>
+            </div>
+            <button *ngIf="!deliveryAlert.locationGranted$.value && !deliveryAlert.locationDenied$.value" class="alert-btn" (click)="triggerLocationRequest()">
+              {{ deliveryAlert.locationError$.value ? 'Reintentar' : 'Activar' }}
+            </button>
+          </div>
+
+          <!-- Notificaciones -->
+          <div class="alert-item" [class.alert-ok]="deliveryAlert.pushPermission$.value === 'granted'" [class.alert-warn]="deliveryAlert.pushPermission$.value !== 'granted'">
+            <i class="fas" [class.fa-check-circle]="deliveryAlert.pushPermission$.value === 'granted'" [class.fa-bell]="deliveryAlert.pushPermission$.value !== 'granted'"></i>
+            <div class="alert-item-body">
+              <span *ngIf="deliveryAlert.pushPermission$.value === 'granted'">Notificaciones activas</span>
+              <span *ngIf="deliveryAlert.pushPermission$.value === 'denied'">Notificaciones bloqueadas. {{ deliveryAlert.pushInstructions$.value }}</span>
+              <span *ngIf="deliveryAlert.pushPermission$.value === 'default'">Activa las notificaciones para recibir alertas de nuevas solicitudes.</span>
+            </div>
+            <button *ngIf="deliveryAlert.pushPermission$.value !== 'granted' && pushService.isSupported" class="alert-btn" (click)="triggerPushRequest()">
+              {{ deliveryAlert.pushPermission$.value === 'denied' ? '¿Cómo activar?' : 'Activar' }}
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="topbar-right">
         <span class="topbar-user">
           <i class="fas fa-user-circle"></i> {{ userEmail }}

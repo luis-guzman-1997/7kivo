@@ -3,6 +3,8 @@ import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { FirebaseService } from '../../services/firebase.service';
 import { PresenceService } from '../../services/presence.service';
+import { DeliveryAlertService } from '../../services/delivery-alert.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -24,13 +26,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   isOnChatPage = false;
   isOnMapPage = false;
   sessionDisplacedAlert = false;
+  showAlertPanel = false;
   private subs: Subscription[] = [];
 
   constructor(
     public authService: AuthService,
     private firebaseService: FirebaseService,
     private router: Router,
-    private presenceService: PresenceService
+    private presenceService: PresenceService,
+    public deliveryAlert: DeliveryAlertService,
+    public pushService: PushNotificationService
   ) {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       this.sidebarCollapsed = true;
@@ -150,6 +155,24 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       delivery_multi: 'Delivery Múltiple'
     };
     return labels[role] || role;
+  }
+
+  get isDeliveryRole(): boolean {
+    const r = this.authService.userRole;
+    return r === 'delivery' || r === 'delivery_multi';
+  }
+
+  get deliveryAlertCount(): number {
+    if (!this.isDeliveryRole) return 0;
+    return this.deliveryAlert.alertCount;
+  }
+
+  triggerLocationRequest(): void {
+    this.deliveryAlert.requestLocation$.next();
+  }
+
+  triggerPushRequest(): void {
+    this.deliveryAlert.requestPush$.next();
   }
 
   clearOrgContext(): void {

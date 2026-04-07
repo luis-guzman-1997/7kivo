@@ -1,8 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
 import { PushNotificationService } from '../../services/push-notification.service';
+import { DeliveryAlertService } from '../../services/delivery-alert.service';
 
 interface FlowTab {
   flowId: string;
@@ -113,18 +115,20 @@ export class InboxComponent implements OnInit, OnDestroy {
   takeError = '';
 
   // ── Location tracking ──
-  locationGranted = false;
-  locationDenied = false;   // solo true si el permiso fue explícitamente rechazado
-  locationError = '';       // mensaje descriptivo del error
   private watchId: number | null = null;
   private locationInterval: any = null;
   private currentLat: number | null = null;
   private currentLng: number | null = null;
   private unsubVehicleType: (() => void) | null = null;
+  private alertSubs: Subscription[] = [];
+
+  get locationGranted(): boolean { return this.deliveryAlert.locationGranted$.value; }
+  get locationDenied(): boolean  { return this.deliveryAlert.locationDenied$.value; }
+  get locationError(): string    { return this.deliveryAlert.locationError$.value; }
 
   // ── Push notifications ──
-  pushPermission: NotificationPermission = 'default';
-  showPushInstructions = false;
+  get pushPermission(): NotificationPermission { return this.deliveryAlert.pushPermission$.value; }
+  get showPushInstructions(): boolean { return this.deliveryAlert.showPushInstructions$.value; }
 
   get pushEnabled(): boolean { return this.pushPermission === 'granted'; }
   get pushDenied(): boolean  { return this.pushPermission === 'denied'; }
@@ -162,7 +166,8 @@ export class InboxComponent implements OnInit, OnDestroy {
     private firebaseService: FirebaseService,
     public authService: AuthService,
     private router: Router,
-    public pushService: PushNotificationService
+    public pushService: PushNotificationService,
+    public deliveryAlert: DeliveryAlertService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -173,6 +178,10 @@ export class InboxComponent implements OnInit, OnDestroy {
     if (this.isDelivery && this.currentUserId) {
       this.checkPushStatus();
       this.startLocationTracking();
+      this.alertSubs.push(
+        this.deliveryAlert.requestLocation$.subscribe(() => this.startLocationTracking()),
+        this.deliveryAlert.requestPush$.subscribe(() => this.enablePushNotifications())
+      );
     }
     if (this.isDeliveryOrg) {
       this.unsubPromoOrders = this.firebaseService.watchPromoOrders((orders) => {
@@ -197,20 +206,21 @@ export class InboxComponent implements OnInit, OnDestroy {
     if (this.unsubPromoOrders) this.unsubPromoOrders();
     if (this.unsubCampaigns) this.unsubCampaigns();
     if (this.unsubVehicleType) this.unsubVehicleType();
+    this.alertSubs.forEach(s => s.unsubscribe());
   }
 
   startLocationTracking(): void {
     if (!navigator.geolocation) {
-      this.locationDenied = true;
-      this.locationError = 'Tu navegador no soporta geolocalización.';
+      this.deliveryAlert.locationDenied$.next(true);
+      this.deliveryAlert.locationError$.next('Tu navegador no soporta geolocalización.');
       return;
     }
-    this.locationError = '';
-    this.locationDenied = false;
+    this.deliveryAlert.locationError$.next('');
+    this.deliveryAlert.locationDenied$.next(false);
 
     const onSuccess = (pos: GeolocationPosition) => {
-      this.locationGranted = true;
-      this.locationError = '';
+      this.deliveryAlert.locationGranted$.next(true);
+      this.deliveryAlert.locationError$.next('');
       this.currentLat = pos.coords.latitude;
       this.currentLng = pos.coords.longitude;
       this.pushLocationToFirebase();
@@ -228,15 +238,15 @@ export class InboxComponent implements OnInit, OnDestroy {
     const onError = (err: GeolocationPositionError) => {
       if (err.code === 1) {
         // PERMISSION_DENIED — el usuario rechazó en el navegador
-        this.locationDenied = true;
-        this.locationError = 'Permiso denegado en el navegador.';
+        this.deliveryAlert.locationDenied$.next(true);
+        this.deliveryAlert.locationError$.next('Permiso denegado en el navegador.');
       } else {
         // POSITION_UNAVAILABLE (2) o TIMEOUT (3) — reintenta sin alta precisión
-        this.locationError = 'No se pudo obtener la ubicación. Reintentando...';
+        this.deliveryAlert.locationError$.next('No se pudo obtener la ubicación. Reintentando...');
         navigator.geolocation.getCurrentPosition(
           onSuccess,
           () => {
-            this.locationError = 'No se pudo obtener tu ubicación. Verifica que el GPS esté activo y toca "Reintentar".';
+            this.deliveryAlert.locationError$.next('No se pudo obtener tu ubicación. Verifica que el GPS esté activo y toca "Reintentar".');
           },
           { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
         );
@@ -287,19 +297,23 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   checkPushStatus(): void {
     if (!this.pushService.isSupported) return;
-    this.pushPermission = (Notification.permission as NotificationPermission);
-    if (this.pushPermission === 'granted') {
+    const perm = Notification.permission as NotificationPermission;
+    this.deliveryAlert.pushPermission$.next(perm);
+    this.deliveryAlert.pushInstructions$.next(this.pushInstructionsText);
+    if (perm === 'granted') {
       this.pushService.subscribe(this.currentUserId);
     }
   }
 
   async enablePushNotifications(): Promise<void> {
     const result = await Notification.requestPermission();
-    this.pushPermission = result;
+    this.deliveryAlert.pushPermission$.next(result);
+    this.deliveryAlert.pushInstructions$.next(this.pushInstructionsText);
     if (result === 'granted') {
+      this.deliveryAlert.showPushInstructions$.next(false);
       await this.pushService.subscribe(this.currentUserId);
     } else {
-      this.showPushInstructions = true;
+      this.deliveryAlert.showPushInstructions$.next(true);
     }
   }
 
