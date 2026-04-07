@@ -420,7 +420,6 @@
   .btn-refresh span { display: none; }
 
   /* Content padding */
-  .inbox-main-tabs,
   .promo-orders-section,
   .tabs,
   .filters-bar,
@@ -436,19 +435,16 @@
   }
 
   .inbox-main-tabs {
-    padding-top: 14px;
-    padding-bottom: 0;
-    gap: 8px;
+    margin: 12px 14px 0;
+    padding: 4px;
+    border-radius: 10px;
     margin-bottom: 0;
   }
 
   .imt-btn {
-    flex: 1;
-    padding: 9px 10px;
-    font-size: 0.82rem;
-    border-radius: 10px;
-    gap: 6px;
-    justify-content: center;
+    padding: 7px 8px;
+    font-size: 0.8rem;
+    border-radius: 7px;
   }
 
   /* Sticky tabs */
@@ -584,7 +580,8 @@
   .calendar-nav { padding: 10px 12px; }
   .cal-month-label { font-size: 0.88rem; }
   .loading-state, .empty-state { padding: 30px 14px; }
-  .imt-btn { padding: 7px 8px; font-size: 0.78rem; }
+  .imt-btn { padding: 6px 6px; font-size: 0.76rem; }
+  .inbox-main-tabs { margin: 10px 12px 0; }
 }
 
 @media (max-width: 480px) {
@@ -1210,17 +1207,36 @@
 }
 
 /* Main section tabs (Pedidos / Solicitudes) */
-.inbox-main-tabs { display: flex; gap: 6px; margin-bottom: 20px; }
-.imt-btn {
-  display: flex; align-items: center; gap: 8px; padding: 10px 20px;
-  border: 2px solid #e2e8f0; border-radius: 12px; background: white;
-  color: #64748b; font-size: 0.88rem; font-weight: 600; cursor: pointer;
-  font-family: inherit; transition: all 0.18s;
+/* ── Inbox main tabs: segmented control style ── */
+.inbox-main-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: #e2e8f0;
+  border-radius: 12px;
+  padding: 4px;
 }
-.imt-btn:hover { border-color: #8b5cf6; color: #7c3aed; }
-.imt-btn.imt-active { background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-color: transparent; color: white; box-shadow: 0 4px 12px rgba(139,92,246,0.3); }
-.imt-btn i { font-size: 0.85rem; color: inherit !important; }
-.imt-badge { background: rgba(0,0,0,0.08); color: inherit; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; min-width: 22px; text-align: center; transition: all 0.2s; }
+.imt-btn {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 12px;
+  border: none; border-radius: 9px; background: transparent;
+  color: #64748b; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.18s;
+  white-space: nowrap;
+}
+.imt-btn:hover { color: #7c3aed; background: rgba(255,255,255,0.5); }
+.imt-btn.imt-active {
+  background: white;
+  color: #7c3aed;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.imt-btn i { font-size: 0.8rem; color: inherit !important; }
+.imt-badge {
+  background: rgba(0,0,0,0.1); color: inherit;
+  font-size: 0.7rem; padding: 1px 6px; border-radius: 10px;
+  font-weight: 700; min-width: 18px; text-align: center; transition: all 0.2s;
+}
 .imt-badge-alert { background: #ef4444; color: white; }
-.imt-btn.imt-active .imt-badge { background: rgba(255,255,255,0.25); color: white; }
-.imt-btn.imt-active .imt-badge-alert { background: rgba(255,255,255,0.35); }
+.imt-btn.imt-active .imt-badge { background: rgba(124,58,237,0.12); color: #7c3aed; }
+.imt-btn.imt-active .imt-badge-alert { background: #ef4444; color: white; }
