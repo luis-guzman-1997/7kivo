@@ -228,6 +228,14 @@ export class ChatComponent implements OnInit, OnDestroy {
         const conv = convs.find(c => c.phoneNumber === this.deliveryPhone || c.id === this.deliveryPhone);
         if (conv) this.selectConversation(conv);
       }
+      // Auto-seleccionar para delivery_multi cuando llegan con ?phone desde la bandeja
+      if (this.authService.userRole === 'delivery_multi' && !this.selectedConversation) {
+        const paramPhone = this.route.snapshot.queryParams['phone'];
+        if (paramPhone) {
+          const conv = convs.find(c => c.phoneNumber === paramPhone);
+          if (conv) this.selectConversation(conv);
+        }
+      }
 
       if (this.selectedConversation) {
         const updated = convs.find(c => c.id === this.selectedConversation!.id);
@@ -326,14 +334,12 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.windowTimer) clearInterval(this.windowTimer);
 
     const listenPhone = conv.phoneNumber;
-    // En modo delivery, filtrar mensajes desde cuando se tomó el caso
+    // En modo delivery (single), filtrar mensajes desde cuando se tomó el caso
     let sinceMs: number | undefined;
     if (this.isDeliveryMode && this.deliveryTakenAt) {
       sinceMs = this.deliveryTakenAt - 1000;
-    } else if (this.authService.userRole === 'delivery_multi') {
-      const takenAt = this.deliveryMultiActivePhones.get(conv.phoneNumber);
-      if (takenAt) sinceMs = takenAt - 1000;
     }
+    // delivery_multi ve el historial completo de sus casos asignados
     this.lastMsgCount = -1;
     this.msgsUnsub = this.firebaseService.onConversationMessages(
       listenPhone,
