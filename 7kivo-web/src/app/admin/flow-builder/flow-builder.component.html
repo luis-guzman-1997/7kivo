@@ -569,10 +569,18 @@
                 <input type="time" [(ngModel)]="currentFlow.scheduleEnd" />
               </div>
             </div>
+            <div class="fe-field" style="margin-top:12px">
+              <label>Días de atención</label>
+              <div class="schedule-days-row">
+                <button *ngFor="let d of DAYS_OF_WEEK" type="button"
+                  class="day-btn" [class.day-btn-on]="isScheduleDay(d.value)"
+                  (click)="toggleScheduleDay(d.value)">{{ d.label }}</button>
+              </div>
+            </div>
             <div class="fe-field" style="margin-top:10px">
               <label>Mensaje fuera de horario</label>
               <textarea [(ngModel)]="currentFlow.scheduleOffMessage" rows="2"
-                placeholder="Ej: Nuestro horario de atención es de 7:00 AM a 5:00 PM. ¡Escríbenos en ese horario y con gusto te atendemos! 😊"></textarea>
+                placeholder="Ej: Nuestro horario de atención es de lunes a viernes de 7:00 AM a 5:00 PM. ¡Escríbenos en ese horario y con gusto te atendemos! 😊"></textarea>
             </div>
           </ng-container>
         </div>

@@ -51,6 +51,7 @@ interface Flow {
   scheduleEnabled?: boolean;
   scheduleStart?: string;
   scheduleEnd?: string;
+  scheduleDays?: number[]; // 0=Dom 1=Lun 2=Mar 3=Mié 4=Jue 5=Vie 6=Sáb
   scheduleOffMessage?: string;
   // Aviso si no es atendido
   unattendedEnabled?: boolean;
@@ -296,12 +297,34 @@ export class FlowBuilderComponent implements OnInit {
     }
   }
 
+  readonly DAYS_OF_WEEK = [
+    { label: 'Dom', value: 0 },
+    { label: 'Lun', value: 1 },
+    { label: 'Mar', value: 2 },
+    { label: 'Mié', value: 3 },
+    { label: 'Jue', value: 4 },
+    { label: 'Vie', value: 5 },
+    { label: 'Sáb', value: 6 },
+  ];
+
+  toggleScheduleDay(day: number): void {
+    const days = this.currentFlow.scheduleDays ?? [1,2,3,4,5];
+    const idx = days.indexOf(day);
+    if (idx === -1) days.push(day);
+    else days.splice(idx, 1);
+    this.currentFlow.scheduleDays = [...days].sort();
+  }
+
+  isScheduleDay(day: number): boolean {
+    return (this.currentFlow.scheduleDays ?? []).includes(day);
+  }
+
   emptyFlow(): Flow {
     return {
       name: '', description: '', menuLabel: '', menuDescription: '',
       type: 'registration', active: true, order: this.flows?.length || 0,
       steps: [], completionMessage: '', saveToCollection: '', notifyAdmin: false, notifyDelivery: false,
-      scheduleEnabled: false, scheduleStart: '07:00', scheduleEnd: '17:00', scheduleOffMessage: '',
+      scheduleEnabled: false, scheduleStart: '07:00', scheduleEnd: '17:00', scheduleDays: [1,2,3,4,5], scheduleOffMessage: '',
       unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: ''
     };
   }

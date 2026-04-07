@@ -798,7 +798,13 @@ const startFlow = async (phoneNumber, flowId) => {
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    if (currentTime < flow.scheduleStart || currentTime >= flow.scheduleEnd) {
+    const currentDay = now.getDay(); // 0=Dom … 6=Sáb
+    const allowedDays = Array.isArray(flow.scheduleDays) && flow.scheduleDays.length > 0
+      ? flow.scheduleDays
+      : [1, 2, 3, 4, 5]; // default lun-vie si no está configurado
+    const outOfHours = currentTime < flow.scheduleStart || currentTime >= flow.scheduleEnd;
+    const outOfDays = !allowedDays.includes(currentDay);
+    if (outOfHours || outOfDays) {
       const offMsg = (flow.scheduleOffMessage || '').trim()
         || `Nuestro horario de atención para este servicio es de ${flow.scheduleStart} a ${flow.scheduleEnd}. ¡Escríbenos en ese horario! 😊`;
       await sendTextMessage(offMsg, phoneNumber);

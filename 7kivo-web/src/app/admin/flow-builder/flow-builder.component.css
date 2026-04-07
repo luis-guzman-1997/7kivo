@@ -1498,3 +1498,10 @@
 .cf-col-tab i { font-size: 0.75rem; color: inherit !important; }
 .copy-flow-footer { padding: 12px 24px 20px; display: flex; gap: 10px; border-top: 1px solid #f1f5f9; }
 .copy-flow-footer .delete-option-btn { flex: 1; }
+
+
+/* Schedule days selector */
+.schedule-days-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.day-btn { padding: 5px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white; color: #64748b; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.day-btn:hover { border-color: #8b5cf6; color: #7c3aed; }
+.day-btn-on { background: #ede9fe; border-color: #8b5cf6; color: #7c3aed; }
