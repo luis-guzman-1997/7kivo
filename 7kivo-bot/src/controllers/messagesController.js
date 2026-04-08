@@ -513,9 +513,10 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
         clearSession(phoneNumber);
         return;
       }
+      const promoClientName = contactName || getSession(phoneNumber)?.contactName || phoneNumber;
       sendPushToDeliveries({
         title: '🛵 Nuevo pedido promo',
-        body: `${campaign.name} — ${phoneNumber}`,
+        body: `${campaign.name} — ${promoClientName}`,
         url: '/admin/inbox'
       }).catch(() => {});
       await sendTextMessage('¡Pedido recibido! 🛵 En breve un repartidor te contactará.', phoneNumber);

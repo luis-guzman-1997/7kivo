@@ -693,9 +693,10 @@
   .on-chat-page .bot-setup-banner { display: none !important; }
 
   .on-chat-page .admin-content {
-    height: 100vh !important;
+    height: 100dvh !important;
     padding: 0 !important;
     padding-bottom: 0 !important;
+    overflow: hidden !important;
   }
 
   /* ── Inbox page: compact topbar, full height with bottom nav ── */

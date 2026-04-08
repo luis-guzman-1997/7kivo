@@ -252,6 +252,10 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.windowTimer) clearInterval(this.windowTimer);
     if (this.locationInterval) clearInterval(this.locationInterval);
     if (this.locationWatchId !== null) navigator.geolocation.clearWatch(this.locationWatchId);
+    if (this.locationInterval || this.locationWatchId !== null) {
+      const uid = this.authService.currentUser?.uid;
+      if (uid) this.firebaseService.clearDeliveryLocation(uid).catch(() => {});
+    }
     if (this.routeSub) this.routeSub.unsubscribe();
     this.stopRecordingCleanup();
   }
@@ -802,6 +806,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         const pos = await this.getCurrentPositionOrNull();
         await this.firebaseService.cancelPromoOrder(this.promoOrderId, this.cancelReason.trim());
         await this.saveDeliveryHistory(pos, 'cancelled', this.cancelReason.trim());
+        const uid1 = this.authService.currentUser?.uid;
+        if (uid1) this.firebaseService.clearDeliveryLocation(uid1).catch(() => {});
         this.router.navigate(['/admin/bandeja']);
       } catch {
         this.error = 'No se pudo cancelar el pedido.';
@@ -871,6 +877,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
       const pos = await this.getCurrentPositionOrNull();
       await this.saveDeliveryHistory(pos, 'cancelled', this.cancelReason.trim());
+      const uid2 = this.authService.currentUser?.uid;
+      if (uid2) this.firebaseService.clearDeliveryLocation(uid2).catch(() => {});
       this.router.navigate(['/admin/bandeja']);
     } catch (err) {
       this.error = 'No se pudo conectar con el bot.';
@@ -1053,6 +1061,8 @@ export class ChatComponent implements OnInit, OnDestroy {
       }
 
       await this.saveDeliveryHistory(pos, 'completed');
+      const uid3 = this.authService.currentUser?.uid;
+      if (uid3) this.firebaseService.clearDeliveryLocation(uid3).catch(() => {});
       this.router.navigate(['/admin/bandeja']);
     } catch (err) {
       this.error = 'No se pudo conectar con el bot.';

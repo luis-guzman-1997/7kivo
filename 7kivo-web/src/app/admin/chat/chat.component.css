@@ -1299,7 +1299,7 @@
   /* ── Visibilidad sidebar / chat ── */
   .chat-has-selection .chat-sidebar { display: none; }
   .chat-main { display: none; }
-  .chat-has-selection .chat-main { display: flex; width: 100%; }
+  .chat-has-selection .chat-main { display: flex; width: 100%; height: 100%; overflow: hidden; }
   .chat-placeholder { display: flex; }
   .chat-wrapper:not(.chat-has-selection) .chat-placeholder { display: none; }
   .chat-wrapper:not(.chat-has-selection) .chat-sidebar { display: flex; }
@@ -1450,6 +1450,8 @@
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
     background: #e5ddd5;
     flex: 1;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .message-group { max-width: 88%; }
   .message-bubble { padding: 8px 12px 6px; }
