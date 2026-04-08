@@ -45,6 +45,7 @@ export class AuthService {
   private orgIndustrySubject = new BehaviorSubject<string>('general');
   private localSessionToken = '';
   private unsubSessionWatch: (() => void) | null = null;
+  private sessionWatchGen = 0;
   readonly sessionDisplaced$ = new Subject<void>();
 
   currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
@@ -126,10 +127,15 @@ export class AuthService {
 
   private async startSessionWatch(uid: string): Promise<void> {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
+    const gen = ++this.sessionWatchGen;
     const token = crypto.randomUUID();
     this.localSessionToken = token;
     await this.firebaseService.updateUserSessionToken(uid, token);
+    // Si otra llamada concurrente ya tomó el control, no configurar este listener
+    if (gen !== this.sessionWatchGen) return;
     this.unsubSessionWatch = this.firebaseService.watchUserSessionToken(uid, (remoteToken) => {
+      // Ignorar si este watch fue supersedido por uno más reciente
+      if (gen !== this.sessionWatchGen) return;
       if (remoteToken && remoteToken !== this.localSessionToken) {
         this.forceLogout();
       }

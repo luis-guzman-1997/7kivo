@@ -63,9 +63,7 @@ export class FirebaseService {
 
   watchUserSessionToken(uid: string, callback: (token: string | null) => void): Unsubscribe {
     const userDocRef = doc(this.db, 'users', uid);
-    let isFirst = true;
     return onSnapshot(userDocRef, (snap) => {
-      if (isFirst) { isFirst = false; return; }
       callback(snap.exists() ? (snap.data()?.['sessionToken'] ?? null) : null);
     });
   }
