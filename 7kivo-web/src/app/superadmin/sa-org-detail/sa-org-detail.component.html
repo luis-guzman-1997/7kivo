@@ -648,6 +648,12 @@
                 <i class="fas fa-user-tag"></i>
                 <span class="btn-text-label">Rol</span>
               </button>
+              <button class="btn-member-action btn-member-wa"
+                [class.btn-member-active]="shareWaAdm?.uid === adm.uid"
+                (click)="shareWaAdm?.uid === adm.uid ? cancelShareWA() : startShareWA(adm)"
+                title="Compartir credenciales por WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+              </button>
               <button class="btn-member-remove" (click)="removeAdminFromOrg(adm)" title="Quitar del equipo">
                 <i class="fas fa-trash-alt"></i>
               </button>
@@ -708,6 +714,34 @@
                 {{ changePwSaving ? 'Guardando...' : 'Cambiar contraseña' }}
               </button>
               <button class="btn-panel-cancel" (click)="cancelChangePwSA()" [disabled]="changePwSaving">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- WhatsApp Share panel -->
+          <div class="member-panel member-panel-wa" *ngIf="shareWaAdm?.uid === adm.uid">
+            <div class="member-panel-header">
+              <i class="fab fa-whatsapp" style="color:#25d366"></i> Compartir acceso de <strong>{{ adm.name || adm.email }}</strong>
+            </div>
+            <div class="wa-share-preview">
+              <div class="wa-share-line"><i class="fas fa-link"></i> <span>{{ teamLoginPreviewHref || '/admin/login/' + (selectedOrg?.loginSlug || selectedOrg?.id) }}</span></div>
+              <div class="wa-share-line"><i class="fas fa-envelope"></i> <span>{{ adm.email }}</span></div>
+            </div>
+            <div class="pw-field-wrap">
+              <label>Contraseña (opcional)</label>
+              <div class="pw-input-row">
+                <input [type]="shareWaPwVisible ? 'text' : 'password'"
+                  [(ngModel)]="shareWaPw"
+                  placeholder="Dejar vacío si no quieres incluirla" />
+                <button class="btn-pw-eye" type="button" (click)="shareWaPwVisible = !shareWaPwVisible" tabindex="-1">
+                  <i class="fas" [class.fa-eye]="!shareWaPwVisible" [class.fa-eye-slash]="shareWaPwVisible"></i>
+                </button>
+              </div>
+            </div>
+            <div class="member-panel-actions">
+              <button class="btn-panel-save btn-wa-send" (click)="openShareWA(adm)">
+                <i class="fab fa-whatsapp"></i> Abrir WhatsApp
+              </button>
+              <button class="btn-panel-cancel" (click)="cancelShareWA()">Cancelar</button>
             </div>
           </div>
 

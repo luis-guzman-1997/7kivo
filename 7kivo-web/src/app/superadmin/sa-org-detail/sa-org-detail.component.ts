@@ -76,6 +76,10 @@ export class SaOrgDetailComponent implements OnInit {
   editRoleVal = '';
   roleChangeSaving = false;
 
+  shareWaAdm: any = null;
+  shareWaPw = '';
+  shareWaPwVisible = false;
+
   resetBotConfirmOrg: any = null;
   resettingBot = false;
   resetBotDone = false;
@@ -160,6 +164,8 @@ export class SaOrgDetailComponent implements OnInit {
     this.changePwAdm = null;
     this.changePwVal = '';
     this.changePwError = '';
+    this.shareWaAdm = null;
+    this.shareWaPw = '';
     try {
       const [detail, wa, admins, gc] = await Promise.all([
         this.firebaseService.getOrgConfigByOrgId(this.selectedOrg.id),
@@ -666,6 +672,7 @@ export class SaOrgDetailComponent implements OnInit {
     this.changePwVisible = false;
     this.changePwError = '';
     this.editingRoleAdm = null;
+    this.shareWaAdm = null;
   }
 
   cancelChangePwSA(): void {
@@ -701,11 +708,37 @@ export class SaOrgDetailComponent implements OnInit {
     }
   }
 
+  // ── WhatsApp Share ──
+  startShareWA(adm: any): void {
+    this.shareWaAdm = adm;
+    this.shareWaPw = '';
+    this.shareWaPwVisible = false;
+    this.changePwAdm = null;
+    this.editingRoleAdm = null;
+  }
+
+  cancelShareWA(): void {
+    this.shareWaAdm = null;
+    this.shareWaPw = '';
+  }
+
+  openShareWA(adm: any): void {
+    const loginUrl = this.teamLoginPreviewHref || (window.location.origin + '/admin/login/' + (this.selectedOrg?.loginSlug || this.selectedOrg?.id || ''));
+    const name = adm.name || adm.email;
+    const pw = this.shareWaPw.trim();
+    let msg = `Hola ${name}, aquí tus credenciales de acceso al panel:\n\n`;
+    msg += `🔗 Acceso: ${loginUrl}\n`;
+    msg += `📧 Usuario: ${adm.email}\n`;
+    if (pw) msg += `🔑 Contraseña: ${pw}\n`;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  }
+
   // ── Role Change ──
   startEditRole(adm: any): void {
     this.editingRoleAdm = adm;
     this.editRoleVal = adm.role || 'viewer';
     this.changePwAdm = null;
+    this.shareWaAdm = null;
   }
 
   cancelEditRole(): void {

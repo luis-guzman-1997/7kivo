@@ -20,7 +20,10 @@
       "Bash(npm list:*)",
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(node node_modules/typescript/bin/tsc --noEmit)",
-      "Bash(node_modules/.bin/ngc --noEmit)"
+      "Bash(node_modules/.bin/ngc --noEmit)",
+      "Bash(node scripts/check-caluco-bandeja.js)",
+      "Bash(node -e ':*)",
+      "Bash(grep -v \"Use \\\\`node\")"
     ]
   }
 }

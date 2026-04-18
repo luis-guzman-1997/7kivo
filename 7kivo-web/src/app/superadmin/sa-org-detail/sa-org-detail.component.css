@@ -650,6 +650,21 @@
 .btn-panel-cancel:hover { background: #f8fafc; }
 .btn-panel-cancel:disabled { opacity: 0.5; }
 
+/* WhatsApp share */
+.btn-member-wa.btn-member-active { background: rgba(37,211,102,0.10) !important; border-color: rgba(37,211,102,0.35) !important; }
+.btn-member-wa.btn-member-active i { color: #16a34a !important; }
+.btn-member-wa:hover { background: rgba(37,211,102,0.07) !important; border-color: rgba(37,211,102,0.25) !important; }
+.btn-member-wa:hover i { color: #16a34a; }
+.btn-wa-send { background: #16a34a !important; }
+.btn-wa-send:hover:not(:disabled) { background: #15803d !important; }
+.wa-share-preview {
+  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px;
+}
+.wa-share-line { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #166534; }
+.wa-share-line i { color: #16a34a; width: 14px; flex-shrink: 0; }
+.wa-share-line span { word-break: break-all; }
+
 .role-badge {
   font-size: 0.72rem; padding: 3px 10px; border-radius: 10px;
   font-weight: 600; white-space: nowrap;
