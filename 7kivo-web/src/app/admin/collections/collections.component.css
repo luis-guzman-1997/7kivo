@@ -238,6 +238,9 @@
 .btn-table { border: none; background: transparent; cursor: pointer; padding: 6px 8px; border-radius: 6px; transition: all 0.2s; }
 .btn-table-edit { color: #3b82f6; }
 .btn-table-edit:hover { background: rgba(59, 130, 246, 0.1); }
+.btn-table-cancel { color: #f97316; }
+.btn-table-cancel:hover { background: rgba(249, 115, 22, 0.1); }
+.btn-table-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-table-delete { color: #ef4444; }
 .btn-table-delete:hover { background: rgba(239, 68, 68, 0.1); }
 .btn-table i { color: inherit !important; }

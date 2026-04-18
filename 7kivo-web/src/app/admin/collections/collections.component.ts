@@ -88,6 +88,7 @@ export class CollectionsComponent implements OnInit {
   ) {}
 
   clearingData = false;
+  cancellingItemId: string | null = null;
 
   // Copy collection modal
   showCopyModal = false;
@@ -431,6 +432,39 @@ export class CollectionsComponent implements OnInit {
       setTimeout(() => this.error = '', 3000);
     } finally {
       this.saving = false;
+    }
+  }
+
+  canCancelItem(item: any): boolean {
+    if (this.authService.userRole !== 'owner') return false;
+    const s = item.status || 'pending';
+    return s === 'pending' || s === 'confirmed' || s === 'taken';
+  }
+
+  async cancelItem(item: any): Promise<void> {
+    const createdAt: Date | null = item.createdAt?.toDate?.()
+      ?? (item.createdAt ? new Date(item.createdAt) : null);
+    const isOlderThan24h = createdAt
+      ? (Date.now() - createdAt.getTime()) > 24 * 60 * 60 * 1000
+      : false;
+
+    const displayVal = this.getItemDisplay(item);
+    const msg = isOlderThan24h
+      ? `Este pedido tiene más de 24 horas.\n¿Cancelar "${displayVal}"?\n\nSe actualizará el estado en la base de datos.`
+      : `¿Cancelar el pedido "${displayVal}"?\n\nSe actualizará el estado en la base de datos.`;
+    if (!confirm(msg)) return;
+
+    this.cancellingItemId = item.id;
+    try {
+      await this.firebaseService.cancelCollectionItem(this.currentCollection.slug, item.id);
+      item.status = 'cancelled';
+      this.notice = 'Pedido cancelado';
+      setTimeout(() => this.notice = '', 3000);
+    } catch (err) {
+      this.error = 'Error al cancelar el pedido';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.cancellingItemId = null;
     }
   }
 

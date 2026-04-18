@@ -473,6 +473,14 @@
                    target="_blank" class="btn-icon btn-wa" title="Responder por WhatsApp">
                   <i class="fab fa-whatsapp"></i>
                 </a>
+                <button *ngIf="isOwner" class="btn-icon btn-delete-inbox"
+                        (click)="deleteSubmission(item, activeTab, $event)"
+                        [disabled]="deletingItemId === item.id"
+                        title="Eliminar solicitud">
+                  <i class="fas" [class.fa-trash]="deletingItemId !== item.id"
+                     [class.fa-spinner]="deletingItemId === item.id"
+                     [class.fa-spin]="deletingItemId === item.id"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -562,6 +570,15 @@
                 class="btn-modal btn-resolve-full"
                 (click)="markAsResolved(selectedItem, selectedTab); closeDetail()">
           <i class="fas fa-check-circle"></i> Marcar como Resuelto
+        </button>
+        <button *ngIf="isOwner && selectedTab"
+                class="btn-modal btn-delete-modal"
+                [disabled]="deletingItemId === selectedItem.id"
+                (click)="deleteSubmission(selectedItem, selectedTab)">
+          <i class="fas" [class.fa-trash]="deletingItemId !== selectedItem.id"
+             [class.fa-spinner]="deletingItemId === selectedItem.id"
+             [class.fa-spin]="deletingItemId === selectedItem.id"></i>
+          {{ deletingItemId === selectedItem.id ? 'Eliminando...' : 'Eliminar' }}
         </button>
       </div>
     </div>

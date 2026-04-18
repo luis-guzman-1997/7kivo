@@ -185,6 +185,10 @@
 }
 .action-btn:hover { border-color: #c4b5fd; background: #faf5ff; color: #7c3aed; }
 .action-btn i { width: 20px; text-align: center; font-size: 1rem; color: #a78bfa; }
+.action-btn.danger { border-color: #fecaca; color: #dc2626; }
+.action-btn.danger i { color: #ef4444; }
+.action-btn.danger:hover { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+.action-btn.danger:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Income Card */
 .income-rows { display: flex; flex-direction: column; gap: 10px; }

@@ -812,10 +812,12 @@ const startFlow = async (phoneNumber, flowId) => {
 
   // Validar horario de atención del flujo
   if (flow.scheduleEnabled) {
-    const now = new Date();
+    // Usar hora local de la org (America/El_Salvador) — el servidor corre en UTC
+    const orgTz = 'America/El_Salvador';
+    const localDate = new Date(new Date().toLocaleString('en-US', { timeZone: orgTz }));
     const pad = n => String(n).padStart(2, '0');
-    const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const currentDay = now.getDay(); // 0=Dom … 6=Sáb
+    const currentTime = `${pad(localDate.getHours())}:${pad(localDate.getMinutes())}`;
+    const currentDay = localDate.getDay(); // 0=Dom … 6=Sáb
 
     // Soporte para scheduleSlots (nuevo) y fallback legacy
     const slots = Array.isArray(flow.scheduleSlots) && flow.scheduleSlots.length > 0

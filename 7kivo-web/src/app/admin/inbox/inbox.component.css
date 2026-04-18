@@ -103,6 +103,9 @@
 .btn-resolve:hover { background: #059669; transform: translateY(-1px); }
 .btn-wa { background: #25d366; }
 .btn-wa:hover { background: #128c7e; transform: translateY(-1px); }
+.btn-delete-inbox { background: #ef4444; }
+.btn-delete-inbox:hover { background: #dc2626; transform: translateY(-1px); }
+.btn-delete-inbox:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 /* Badges */
 .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
@@ -139,6 +142,10 @@
 .btn-resolve-full:hover { transform: translateY(-1px); }
 .btn-reschedule-full { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
 .btn-reschedule-full i { color: white !important; }
+.btn-delete-modal { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+.btn-delete-modal i { color: white !important; }
+.btn-delete-modal:hover { transform: translateY(-1px); }
+.btn-delete-modal:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .btn-reschedule-full:hover { transform: translateY(-1px); }
 
 /* Reschedule Form */

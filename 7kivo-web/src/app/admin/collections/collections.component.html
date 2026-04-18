@@ -486,6 +486,13 @@
                   <button class="btn-table btn-table-edit" (click)="openEditItem(item)" title="Editar">
                     <i class="fas fa-edit"></i>
                   </button>
+                  <button *ngIf="canCancelItem(item)"
+                          class="btn-table btn-table-cancel"
+                          (click)="cancelItem(item)"
+                          [disabled]="cancellingItemId === item.id"
+                          title="Cancelar pedido">
+                    <i class="fas" [class.fa-ban]="cancellingItemId !== item.id" [class.fa-spinner]="cancellingItemId === item.id" [class.fa-spin]="cancellingItemId === item.id"></i>
+                  </button>
                   <button class="btn-table btn-table-delete" (click)="deleteItem(item)" title="Eliminar">
                     <i class="fas fa-trash"></i>
                   </button>

@@ -27,6 +27,7 @@ export class SaDashboardComponent implements OnInit {
   planDistribution: { name: string; count: number; color: string }[] = [];
 
   loading = true;
+  killingSessions = false;
 
   constructor(
     private firebaseService: FirebaseService,
@@ -116,4 +117,18 @@ export class SaDashboardComponent implements OnInit {
   goToOrgs(): void { this.router.navigate(['/superadmin/organizaciones']); }
   goToBilling(): void { this.router.navigate(['/superadmin/facturacion']); }
   goToPlans(): void { this.router.navigate(['/superadmin/planes']); }
+
+  async killAllSessions(): Promise<void> {
+    if (!confirm('¿Terminar TODAS las sesiones activas en el sistema? Los usuarios en conversación activa serán desconectados del bot.')) return;
+    this.killingSessions = true;
+    try {
+      const count = await this.firebaseService.killAllSessions();
+      alert(`Listo. Se terminaron ${count} sesión(es) activa(s).`);
+    } catch (err) {
+      console.error('Error terminando sesiones:', err);
+      alert('Error al terminar sesiones. Revisa la consola.');
+    } finally {
+      this.killingSessions = false;
+    }
+  }
 }

@@ -3,7 +3,7 @@ import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore, Firestore, collection, doc, getDocs, getDoc, addDoc,
   updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp,
-  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp, runTransaction
+  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp, runTransaction, deleteField
 } from 'firebase/firestore';
 import {
   getStorage, FirebaseStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll
@@ -587,6 +587,10 @@ export class FirebaseService {
 
   async cancelAppointmentItem(slug: string, itemId: string): Promise<void> {
     await this.updateDocument(slug, itemId, { status: 'cancelled', updatedAt: serverTimestamp() });
+  }
+
+  async cancelCollectionItem(slug: string, itemId: string): Promise<void> {
+    await this.updateDocument(slug, itemId, { status: 'cancelled', cancelledAt: serverTimestamp() });
   }
 
   async getCollectionDefs(): Promise<any[]> {
@@ -1219,6 +1223,21 @@ export class FirebaseService {
     const colRef = collection(this.db, 'organizations');
     const snapshot = await getDocs(colRef);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async killAllSessions(): Promise<number> {
+    const orgsSnap = await getDocs(collection(this.db, 'organizations'));
+    let count = 0;
+    for (const orgDoc of orgsSnap.docs) {
+      const convsSnap = await getDocs(collection(this.db, 'organizations', orgDoc.id, 'conversations'));
+      for (const convDoc of convsSnap.docs) {
+        if (convDoc.data()['session']) {
+          await updateDoc(convDoc.ref, { session: deleteField() });
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   /**

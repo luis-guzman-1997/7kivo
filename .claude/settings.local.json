@@ -23,7 +23,8 @@
       "Bash(node_modules/.bin/ngc --noEmit)",
       "Bash(node scripts/check-caluco-bandeja.js)",
       "Bash(node -e ':*)",
-      "Bash(grep -v \"Use \\\\`node\")"
+      "Bash(grep -v \"Use \\\\`node\")",
+      "Bash(awk '{print $NF}')"
     ]
   }
 }

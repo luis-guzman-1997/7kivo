@@ -58,6 +58,8 @@ export class InboxComponent implements OnInit, OnDestroy {
   selectedCalendarDay: CalendarDay | null = null;
   weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
+  deletingItemId: string | null = null;
+
   private refreshTimer: any = null;
 
   // ── Promo Orders (delivery orgs) ──
@@ -150,6 +152,10 @@ export class InboxComponent implements OnInit, OnDestroy {
       return 'En Firefox: haz clic en el candado (🔒) de la barra de direcciones → Permisos → Recibir notificaciones → Permitir.';
     }
     return 'Haz clic en el candado (🔒) o el ícono de información en la barra de direcciones → Permisos del sitio → Notificaciones → Permitir.';
+  }
+
+  get isOwner(): boolean {
+    return this.authService.userRole === 'owner';
   }
 
   get isDelivery(): boolean {
@@ -465,6 +471,24 @@ export class InboxComponent implements OnInit, OnDestroy {
     }
 
     t.filteredSubmissions = filtered;
+  }
+
+  async deleteSubmission(item: any, tab: FlowTab, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    const name = this.getPersonName(item);
+    if (!confirm(`¿Eliminar la solicitud de "${name}"?\n\nEsta acción no se puede deshacer.`)) return;
+    this.deletingItemId = item.id;
+    try {
+      await this.firebaseService.deleteCollectionItem(tab.collection, item.id);
+      tab.submissions = tab.submissions.filter(s => s.id !== item.id);
+      tab.unreadCount = tab.submissions.filter(i => i.status === 'pending').length;
+      this.applyFilters(tab);
+      if (this.selectedItem?.id === item.id) this.closeDetail();
+    } catch (err) {
+      console.error('Error al eliminar solicitud:', err);
+    } finally {
+      this.deletingItemId = null;
+    }
   }
 
   async markAsRead(item: any, tab: FlowTab): Promise<void> {
