@@ -107,7 +107,8 @@ export class FlowBuilderComponent implements OnInit {
     { value: 'message',          label: 'Mensaje',        icon: 'fa-comment',        desc: 'El bot envía un mensaje sin esperar respuesta' },
     { value: 'image_input',      label: 'Imagen',         icon: 'fa-image',          desc: 'El usuario envía una foto o documento' },
     { value: 'location_input',   label: 'Dirección',      icon: 'fa-map-marker-alt', desc: 'El usuario comparte su ubicación de WhatsApp o escribe la dirección' },
-    { value: 'auth_lookup',      label: 'Autenticación',  icon: 'fa-id-card',        desc: 'El usuario escribe un código único y el bot responde con sus datos' }
+    { value: 'auth_lookup',      label: 'Autenticación',  icon: 'fa-id-card',        desc: 'El usuario escribe un código único y el bot responde con sus datos' },
+    { value: 'phone_lookup',     label: 'Consulta por teléfono', icon: 'fa-phone-square', desc: 'Verifica si el número de WhatsApp está en tu base de datos y muestra información personalizada' }
   ];
 
   planLimit = 999;

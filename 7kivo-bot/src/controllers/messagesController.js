@@ -951,6 +951,37 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
       break;
     }
 
+    case "phone_lookup": {
+      if (step.prompt) await sendTextMessage(step.prompt, phoneNumber);
+      const record = await lookupCollectionByField(step.lookupCollection, step.lookupField, phoneNumber);
+      if (!record) {
+        const notFound = step.notFoundMessage || "Lo sentimos, tu número no está registrado en nuestro sistema.";
+        await sendTextMessage(notFound, phoneNumber);
+        clearSession(phoneNumber);
+        return;
+      }
+      // Guardar todos los campos del registro en flowData para uso en pasos siguientes
+      const cur = getSession(phoneNumber);
+      const recordData = {};
+      for (const [key, val] of Object.entries(record)) {
+        if (key !== "id" && typeof key === "string") recordData[key] = val;
+      }
+      setSession(phoneNumber, { flowData: { ...(cur?.flowData || {}), ...recordData } });
+
+      if (step.foundTemplate) {
+        let response = step.foundTemplate;
+        for (const [key, val] of Object.entries(record)) {
+          if (key && typeof key === "string") {
+            response = response.replace(new RegExp(`\\{${key}\\}`, "g"), String(val ?? ""));
+          }
+        }
+        await sendTextMessage(response, phoneNumber);
+      }
+      setSession(phoneNumber, { flowStepIndex: stepIndex + 1, flowStartTime: Date.now() });
+      await executeFlowStep(phoneNumber, flow, stepIndex + 1);
+      break;
+    }
+
     default:
       await sendTextMessage(step.prompt || "Continuando...", phoneNumber);
       setSession(phoneNumber, { flowStepIndex: stepIndex + 1 });

@@ -716,13 +716,13 @@
 
                 <!-- Prompt -->
                 <div class="fe-field">
-                  <label>{{ step.type === 'message' ? 'Mensaje del bot' : '¿Qué le pregunta el bot?' }}</label>
+                  <label>{{ step.type === 'message' ? 'Mensaje del bot' : step.type === 'phone_lookup' ? 'Mensaje previo a la verificación (opcional)' : '¿Qué le pregunta el bot?' }}</label>
                   <textarea [(ngModel)]="step.prompt" rows="2"
-                    [placeholder]="step.type === 'message' ? 'Escribe el mensaje automático...' : 'Ej: ¿Cuál es tu nombre completo?'"></textarea>
+                    [placeholder]="step.type === 'message' ? 'Escribe el mensaje automático...' : step.type === 'phone_lookup' ? 'Ej: 🔍 Consultando tu información...' : 'Ej: ¿Cuál es tu nombre completo?'"></textarea>
                 </div>
 
-                <!-- Nombre del dato (todos excepto message, appointment, browse, image_input, auth_lookup) -->
-                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection' && step.type !== 'image_input' && step.type !== 'auth_lookup' && step.type !== 'select_services'">
+                <!-- Nombre del dato (todos excepto message, appointment, browse, image_input, auth_lookup, phone_lookup) -->
+                <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'browse_collection' && step.type !== 'image_input' && step.type !== 'auth_lookup' && step.type !== 'select_services' && step.type !== 'phone_lookup'">
                   <label>Nombre de este dato <span class="fe-help-tip" title="Úsalo en el mensaje final con {clave}">?</span></label>
                   <input type="text" [(ngModel)]="step.fieldLabel"
                     placeholder="Ej: Nombre, Correo, Servicio…"
@@ -942,6 +942,52 @@
                   </div>
                 </ng-container>
 
+                <!-- ── PHONE LOOKUP ── -->
+                <ng-container *ngIf="step.type === 'phone_lookup'">
+                  <div style="background:#e8f4fd;border:1px solid #b8d9f5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#1a5f8a;">
+                    <i class="fas fa-info-circle"></i>
+                    El bot usará automáticamente el número de WhatsApp del usuario para buscarlo en la colección. No se le pide ningún dato.
+                  </div>
+                  <div class="fe-field">
+                    <label>Colección a consultar</label>
+                    <select [(ngModel)]="step.lookupCollection">
+                      <option value="">Seleccionar colección...</option>
+                      <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
+                    </select>
+                  </div>
+                  <div class="fe-field" *ngIf="step.lookupCollection">
+                    <label>Campo que contiene el teléfono</label>
+                    <select [(ngModel)]="step.lookupField">
+                      <option value="">Seleccionar campo...</option>
+                      <option *ngFor="let f of getCollectionFields(step.lookupCollection)" [value]="f.key">{{ f.label }}</option>
+                    </select>
+                    <p class="fe-hint">El campo donde guardas el número del cliente (ej: "telefono", "phoneNumber"). Debe coincidir en formato con el número de WhatsApp.</p>
+                  </div>
+                  <div class="fe-field">
+                    <label>Mensaje si está registrado <span class="fe-hint-inline">(opcional)</span></label>
+                    <p class="fe-hint" style="margin:2px 0 6px;">Usa <code>&#123;nombre_campo&#125;</code> para insertar datos del registro. Déjalo vacío para solo verificar y continuar el flujo.</p>
+                    <textarea [(ngModel)]="step.foundTemplate" rows="5"
+                      placeholder="Hola {nombre} 👋&#10;Tu próximo pago es el {fecha_pago} por ${monto}."></textarea>
+                    <div class="fe-keys-preview" *ngIf="step.lookupCollection && getCollectionFields(step.lookupCollection).length">
+                      <span class="fe-keys-label">Variables disponibles:</span>
+                      <span class="fe-var-tag" *ngFor="let f of getCollectionFields(step.lookupCollection)">{{ '{' + f.key + '}' }}</span>
+                    </div>
+                  </div>
+                  <div class="fe-field">
+                    <label>Mensaje cuando no está registrado</label>
+                    <input type="text" [(ngModel)]="step.notFoundMessage"
+                      placeholder="Lo sentimos, tu número no está registrado en nuestro sistema." />
+                    <p class="fe-hint">Si el número no se encuentra, se enviará este mensaje y el flujo terminará.</p>
+                  </div>
+                  <div *ngIf="step.lookupCollection && getCollectionFields(step.lookupCollection).length" style="background:#f0faf0;border:1px solid #b2dfb2;border-radius:8px;padding:10px 14px;font-size:12px;color:#2e6e2e;">
+                    <strong><i class="fas fa-check-circle"></i> Todos los campos del registro quedan disponibles en el resto del flujo</strong>
+                    <br>Puedes usar estas variables en pasos siguientes y en el mensaje de finalización:
+                    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
+                      <span class="fe-var-tag" *ngFor="let f of getCollectionFields(step.lookupCollection)">{{ '{' + f.key + '}' }}</span>
+                    </div>
+                  </div>
+                </ng-container>
+
                 <!-- Advanced toggle -->
                 <div class="fe-advanced-toggle" (click)="toggleStepAdvanced(i)">
                   <i class="fas" [ngClass]="expandedStepAdvanced.has(i) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
@@ -952,13 +998,13 @@
                 <div class="fe-advanced-body" *ngIf="expandedStepAdvanced.has(i)">
 
                   <!-- Required -->
-                  <label class="fe-check fe-field-inline" *ngIf="step.type !== 'message' && step.type !== 'image_input'">
+                  <label class="fe-check fe-field-inline" *ngIf="step.type !== 'message' && step.type !== 'image_input' && step.type !== 'phone_lookup'">
                     <input type="checkbox" [(ngModel)]="step.required" />
                     Respuesta obligatoria
                   </label>
 
                   <!-- Error message -->
-                  <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'image_input' && step.type !== 'select_services'">
+                  <div class="fe-field" *ngIf="step.type !== 'message' && step.type !== 'appointment_slot' && step.type !== 'image_input' && step.type !== 'select_services' && step.type !== 'phone_lookup'">
                     <label class="fe-label-secondary">Mensaje si la respuesta no es válida <span class="fe-hint-inline">(opcional)</span></label>
                     <input type="text" [(ngModel)]="step.errorMessage" placeholder="Ej: Por favor escribe un nombre válido." />
                   </div>
