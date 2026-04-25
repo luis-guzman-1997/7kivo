@@ -21,6 +21,7 @@ const {
 } = require("../controllers/chatController");
 
 const { setUserPassword, sendCampaign } = require("../controllers/adminController");
+const { getCatalogData, createOrder } = require("../controllers/catalogController");
 
 const { getOrgId } = require("../config/orgConfig");
 const { runWithOrgId } = require("../config/requestContext");
@@ -72,6 +73,10 @@ router.post("/api/send-message", withOrgContext(sendAdminMessage));
 router.post("/api/send-image", withOrgContext(sendAdminImage));
 router.post("/api/take-control", withOrgContext(takeControl));
 router.post("/api/release-to-bot", withOrgContext(releaseToBot));
+
+// Catalog (public — no auth)
+router.get("/api/:orgId/catalog/:flowId", withOrgContext(getCatalogData));
+router.post("/api/:orgId/orders", withOrgContext(createOrder));
 
 // Admin operations
 router.post("/api/admin/set-password", setUserPassword);

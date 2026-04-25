@@ -28,6 +28,10 @@ interface FlowStep {
   resultTemplate?: string;
   notFoundMessage?: string;
   maxRetries?: number;
+  lookupField?: string;
+  foundTemplate?: string;
+  source?: 'web' | 'bot' | 'order';
+  orderField?: string;
   // UI-only fields (stripped before saving to Firebase)
   _originalFieldKey?: string;
   _fieldKeyChanged?: boolean;
@@ -59,6 +63,9 @@ interface Flow {
   unattendedEnabled?: boolean;
   unattendedTimeoutHours?: number;
   unattendedMessage?: string;
+  cancelHint?: string;
+  cancelHintImage?: string;
+  catalogCollection?: string;
   // Restricción por número (modo prueba)
   testPhones?: string[]; // vacío = todos; con números = solo esos
 }
@@ -82,6 +89,15 @@ export class FlowBuilderComponent implements OnInit {
   currentFlow: Flow = this.emptyFlow();
   expandedStepIndex: number | null = null;
   expandedStepAdvanced: Set<number> = new Set();
+  cancelHintImageFile: File | null = null;
+  cancelHintImagePreview = '';
+
+  readonly ORDER_FIELDS = [
+    { key: 'orderCode',  label: 'Código de pedido' },
+    { key: 'orderItems', label: 'Resumen de ítems' },
+    { key: 'orderTotal', label: 'Total del pedido' },
+    { key: 'orderDate',  label: 'Fecha del pedido' },
+  ];
 
   // List view tabs
   activeTab: 'menu' | 'flows' = 'menu';
@@ -370,6 +386,8 @@ export class FlowBuilderComponent implements OnInit {
       scheduleSlots: [{ days: [1,2,3,4,5], start: '07:00', end: '17:00' }],
       scheduleOffMessage: '',
       unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: '',
+      cancelHint: 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.',
+      catalogCollection: '',
       testPhones: []
     };
   }
@@ -384,7 +402,8 @@ export class FlowBuilderComponent implements OnInit {
       customOptions: [], buttonText: 'Ver opciones',
       sourceCollection: '', displayField: '', detailFields: [],
       timeFieldKey: '',
-      lookupCollection: '', authField: '', resultTemplate: '', notFoundMessage: '', maxRetries: 3
+      lookupCollection: '', authField: '', resultTemplate: '', notFoundMessage: '', maxRetries: 3,
+      lookupField: '', foundTemplate: ''
     };
   }
 
@@ -435,6 +454,8 @@ export class FlowBuilderComponent implements OnInit {
     this.editMode = true;
     this.expandedStepIndex = null;
     this.expandedStepAdvanced.clear();
+    this.cancelHintImageFile = null;
+    this.cancelHintImagePreview = '';
   }
 
   openEditFlow(flow: Flow): void {
@@ -460,16 +481,51 @@ export class FlowBuilderComponent implements OnInit {
       if (!s.resultTemplate) s.resultTemplate = '';
       if (!s.notFoundMessage) s.notFoundMessage = '';
       if (s.maxRetries === undefined) s.maxRetries = 3;
+      if (!s.lookupField) s.lookupField = '';
+      if (!s.foundTemplate) s.foundTemplate = '';
     });
     this.editMode = true;
     this.expandedStepIndex = null;
     this.expandedStepAdvanced.clear();
+    this.cancelHintImageFile = null;
+    this.cancelHintImagePreview = this.currentFlow.cancelHintImage || '';
   }
 
   cancelEdit(): void {
     this.editMode = false;
     this.expandedStepIndex = null;
     this.expandedStepAdvanced.clear();
+  }
+
+  getCatalogUrl(): string {
+    if (!this.currentFlow.id || !this.currentFlow.catalogCollection) return '';
+    const orgId = this.firebaseService.getOrgId();
+    return `${window.location.origin}/tienda/${orgId}/${this.currentFlow.id}`;
+  }
+
+  async copyCatalogUrl(): Promise<void> {
+    const url = this.getCatalogUrl();
+    if (!url) return;
+    await navigator.clipboard.writeText(url);
+    this.notice = 'URL copiada';
+    setTimeout(() => this.notice = '', 2000);
+  }
+
+  onCancelHintImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) { this.error = 'La imagen no debe superar 5 MB'; setTimeout(() => this.error = '', 3000); return; }
+    this.cancelHintImageFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => { this.cancelHintImagePreview = e.target!.result as string; };
+    reader.readAsDataURL(file);
+  }
+
+  clearCancelHintImage(): void {
+    this.cancelHintImageFile = null;
+    this.cancelHintImagePreview = '';
+    this.currentFlow.cancelHintImage = '';
   }
 
   async saveFlow(): Promise<void> {
@@ -486,6 +542,14 @@ export class FlowBuilderComponent implements OnInit {
 
     this.saving = true;
     try {
+      if (this.cancelHintImageFile) {
+        const orgId = this.firebaseService.getOrgId();
+        const ext = this.cancelHintImageFile.name.split('.').pop() || 'jpg';
+        const path = `organizations/${orgId}/flows/cancel-hint-${Date.now()}.${ext}`;
+        this.currentFlow.cancelHintImage = await this.firebaseService.uploadFileByPath(this.cancelHintImageFile, path);
+        this.cancelHintImageFile = null;
+      }
+
       const data: any = { ...this.currentFlow };
       delete data.id;
       // Strip UI-only internal fields before saving to Firebase

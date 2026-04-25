@@ -1,7 +1,9 @@
 const { getSession, getSessionAsync, setSession, clearSession } = require("../config/sessionData");
-const { sendTextMessage: _rawSendText, sendInteractiveButtons, sendInteractiveList } = require("../models/messageModel");
+const { sendTextMessage: _rawSendText, sendInteractiveButtons, sendInteractiveList, sendImageMessage } = require("../models/messageModel");
 const {
   getMessage,
+  getOrderByCode,
+  updateOrder,
   getContactInfo,
   getScheduleInfo,
   getGeneralInfo,
@@ -839,8 +841,13 @@ const startFlow = async (phoneNumber, flowId) => {
     }
   }
 
-  const cancelHint = await getMessage("flow_cancel_hint", "Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.\n");
-  await sendTextMessage(cancelHint, phoneNumber);
+  const cancelHint = flow.cancelHint?.trim()
+    || await getMessage("flow_cancel_hint", "Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.\n");
+  if (flow.cancelHintImage) {
+    await sendImageMessage(flow.cancelHintImage, cancelHint, phoneNumber);
+  } else {
+    await sendTextMessage(cancelHint, phoneNumber);
+  }
 
   setSession(phoneNumber, {
     step: "flow_pending",
@@ -860,6 +867,12 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
   }
 
   const step = flow.steps[stepIndex];
+
+  // Skip steps pre-filled from web or order data
+  if (step.source === 'web' || step.source === 'order') {
+    await executeFlowStep(phoneNumber, flow, stepIndex + 1);
+    return;
+  }
 
   switch (step.type) {
     case "text_input":
@@ -1894,6 +1907,65 @@ const handleFlowAuthInput = async (phoneNumber, message, session) => {
   }
 };
 
+const handleOrderCode = async (phoneNumber, code) => {
+  const order = await getOrderByCode(code);
+  if (!order) {
+    await sendTextMessage(`No encontramos ningún pedido con el código *${code}*. Verifica e intenta nuevamente.`, phoneNumber);
+    return;
+  }
+  if (order.status === 'confirmed' || order.status === 'cancelled') {
+    await sendTextMessage(`El pedido *${code}* ya fue registrado. Escribe *hola* para ver el menú.`, phoneNumber);
+    return;
+  }
+
+  await updateOrder(order.id, { clientPhone: phoneNumber, status: 'confirmed' });
+
+  const flow = await getFlow(order.flowId);
+  if (!flow) {
+    await sendTextMessage(`✅ Pedido *${code}* recibido. Te contactaremos pronto.`, phoneNumber);
+    return;
+  }
+
+  // Pre-fill flowData from order + web form data
+  const orderFieldValues = {
+    orderCode:  code,
+    orderItems: order.itemsText  || '',
+    orderTotal: order.totalText  || '',
+    orderDate:  order.orderDate  || '',
+  };
+  const webData = order.webData || {};
+  const flowData = {};
+
+  for (const step of (flow.steps || [])) {
+    if (!step.fieldKey) continue;
+    if (step.source === 'order' && step.orderField) {
+      flowData[step.fieldKey] = orderFieldValues[step.orderField] || '';
+    } else if (step.source === 'web') {
+      flowData[step.fieldKey] = webData[step.fieldKey] || '';
+    }
+  }
+
+  // Find first bot step
+  const firstBotIndex = (flow.steps || []).findIndex(s => !s.source || s.source === 'bot');
+
+  if (firstBotIndex === -1) {
+    setSession(phoneNumber, { step: 'flow_pending', flowId: flow.id, flowStepIndex: flow.steps.length, flowData, flowStartTime: Date.now() });
+    await completeFlow(phoneNumber, flow);
+    return;
+  }
+
+  const cancelHint = flow.cancelHint?.trim()
+    || await getMessage('flow_cancel_hint', 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.');
+  if (flow.cancelHintImage) {
+    await sendImageMessage(flow.cancelHintImage, cancelHint, phoneNumber);
+  } else {
+    await sendTextMessage(cancelHint, phoneNumber);
+  }
+
+  setSession(phoneNumber, { step: 'flow_pending', flowId: flow.id, flowStepIndex: firstBotIndex, flowData, flowStartTime: Date.now() });
+  await executeFlowStep(phoneNumber, flow, firstBotIndex);
+};
+
 const handleUserMessage = async (phoneNumber, message, session) => {
   const lowerMessage = message.toLowerCase();
 
@@ -1910,6 +1982,12 @@ const handleUserMessage = async (phoneNumber, message, session) => {
       await sendTextMessage("¡Hasta luego! 👋 Escribe cuando necesites ayuda.", phoneNumber);
       clearSession(phoneNumber);
     }
+    return;
+  }
+
+  // Order code pattern: PED-YYYYMMDD-XXXX
+  if (/^PED-\d{8}-[A-Z0-9]{4}$/i.test(message.trim())) {
+    await handleOrderCode(phoneNumber, message.trim().toUpperCase());
     return;
   }
 

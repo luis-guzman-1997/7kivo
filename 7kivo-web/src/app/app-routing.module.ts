@@ -7,6 +7,7 @@ import { ContactComponent } from './components/contact/contact.component';
 import { TermsComponent } from './components/terms/terms.component';
 import { PrivacyComponent } from './components/privacy/privacy.component';
 import { OrgPrivacyComponent } from './components/org-privacy/org-privacy.component';
+import { CatalogComponent } from './catalog/catalog.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -16,6 +17,7 @@ const routes: Routes = [
   { path: 'terminos-y-condiciones', component: TermsComponent },
   { path: 'politica-de-privacidad', component: PrivacyComponent },
   { path: 'privacidad/:orgId', component: OrgPrivacyComponent },
+  { path: 'tienda/:orgId/:flowId', component: CatalogComponent },
   {
     path: 'admin',
     loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)

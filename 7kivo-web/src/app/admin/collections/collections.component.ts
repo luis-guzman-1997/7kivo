@@ -22,6 +22,7 @@ interface CollectionDef {
   description: string;
   displayField: string;
   fields: CollectionField[];
+  type?: string;
 }
 
 @Component({
@@ -118,7 +119,22 @@ export class CollectionsComponent implements OnInit {
   }
 
   emptyCollection(): CollectionDef {
-    return { name: '', slug: '', description: '', displayField: '', fields: [] };
+    return { name: '', slug: '', description: '', displayField: '', fields: [], type: '' };
+  }
+
+  initCatalogFields(): void {
+    this.currentCollection.type = 'catalog';
+    this.currentCollection.displayField = 'nombre';
+    if (this.currentCollection.fields.length === 0) {
+      this.currentCollection.fields = [
+        { key: 'nombre',     label: 'Nombre',          type: 'text',    required: true  },
+        { key: 'descripcion',label: 'Descripción',      type: 'text',    required: false },
+        { key: 'precio',     label: 'Precio',           type: 'number',  required: true  },
+        { key: 'imagen',     label: 'Imagen (URL)',     type: 'text',    required: false },
+        { key: 'categoria',  label: 'Categoría',        type: 'text',    required: false },
+        { key: 'disponible', label: 'Disponible',       type: 'boolean', required: false },
+      ];
+    }
   }
 
   async loadCollections(): Promise<void> {

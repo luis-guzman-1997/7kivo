@@ -1,8 +1,11 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { CatalogComponent } from './catalog/catalog.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 import { HomeComponent } from './components/home/home.component';
@@ -21,6 +24,7 @@ registerLocaleData(localeEs, 'es');
 @NgModule({
   declarations: [
     AppComponent,
+    CatalogComponent,
     HomeComponent,
     AboutComponent,
     ServicesComponent,
@@ -32,6 +36,8 @@ registerLocaleData(localeEs, 'es');
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
+    FormsModule,
+    HttpClientModule,
     AppRoutingModule,
     ServiceWorkerModule.register('push-sw.js', {
       enabled: true,

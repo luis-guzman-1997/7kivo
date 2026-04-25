@@ -1527,3 +1527,18 @@
 .test-phone-tag i.fab { color: #25D366; }
 .test-phone-tag button { background: none; border: none; color: #8b5cf6; cursor: pointer; padding: 0; line-height: 1; font-size: 0.75rem; }
 .test-phone-tag button:hover { color: #ef4444; }
+
+/* Cancel hint image upload */
+.img-upload-area { border: 2px dashed #e2e8f0; border-radius: 10px; padding: 20px; text-align: center; transition: border-color 0.2s; }
+.img-upload-area:hover { border-color: #a78bfa; }
+.img-upload-label { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #64748b; font-size: 0.85rem; }
+.img-upload-label i { font-size: 1.8rem; color: #c4b5fd; }
+.img-preview-wrap { position: relative; display: inline-block; }
+.form-img-preview { max-width: 100%; max-height: 160px; border-radius: 10px; object-fit: contain; border: 1px solid #e2e8f0; }
+.btn-remove-img { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; }
+
+/* Catalog URL box */
+.fe-catalog-url-box { display:flex; align-items:center; gap:8px; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:8px 12px; margin-top:10px; flex-wrap:wrap; }
+.fe-catalog-url-text { font-size:0.78rem; color:#5b21b6; word-break:break-all; flex:1; }
+.fe-btn-copy-url { background:#8b5cf6; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+.fe-btn-copy-url:hover { background:#7c3aed; }

@@ -36,6 +36,7 @@
           <p class="collection-desc" *ngIf="col.description">{{ col.description }}</p>
           <div class="collection-meta">
             <span><i class="fas fa-columns"></i> {{ col.fields.length || 0 }} campos</span>
+            <span class="catalog-badge" *ngIf="col.type === 'catalog'"><i class="fas fa-shopping-bag"></i> Catálogo</span>
           </div>
         </div>
         <button *ngIf="authService.isSuperAdmin" class="btn-copy-col" (click)="openCopyModal(col, $event)" title="Copiar colección">
@@ -132,6 +133,12 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Inicializar como catálogo (solo colecciones nuevas) -->
+      <div class="catalog-init-bar" *ngIf="!currentCollection.id">
+        <span><i class="fas fa-shopping-bag"></i> ¿Es un catálogo de productos?</span>
+        <button class="btn-catalog-init" (click)="initCatalogFields()">Inicializar campos de catálogo</button>
       </div>
 
       <!-- Fields -->

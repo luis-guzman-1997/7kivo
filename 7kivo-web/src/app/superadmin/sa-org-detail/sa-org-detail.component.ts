@@ -516,6 +516,7 @@ export class SaOrgDetailComponent implements OnInit {
       });
       if (this.editWA.botApiUrl !== undefined) {
         await this.firebaseService.saveOrgConfigByOrgId(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl });
+        await this.firebaseService.savePublicOrgInfo(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl });
         this.orgDetail = { ...this.orgDetail, botApiUrl: this.editWA.botApiUrl };
       }
       this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken };

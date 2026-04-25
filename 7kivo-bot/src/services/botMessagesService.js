@@ -468,6 +468,31 @@ const hasActiveCaseForPhone = async (phoneNumber) => {
   }
 };
 
+// ==================== ORDERS ====================
+const getOrderByCode = async (code) => {
+  try {
+    const snap = await getOrgRef().collection('orders')
+      .where('code', '==', code).limit(1).get();
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() };
+  } catch (err) {
+    console.error('getOrderByCode error:', err.message);
+    return null;
+  }
+};
+
+const updateOrder = async (orderId, data) => {
+  try {
+    await getOrgRef().collection('orders').doc(orderId).update({
+      ...data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    console.error('updateOrder error:', err.message);
+  }
+};
+
 module.exports = {
   loadBotMessages,
   getMessage,
@@ -496,5 +521,7 @@ module.exports = {
   getCampaignKeywordTriggers,
   getOrgStatus,
   clearCache,
-  hasActiveCaseForPhone
+  hasActiveCaseForPhone,
+  getOrderByCode,
+  updateOrder
 };

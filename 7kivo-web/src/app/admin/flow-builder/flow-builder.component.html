@@ -714,8 +714,33 @@
                   </div>
                 </div>
 
+                <!-- ¿Dónde se completa? (solo si el flujo tiene catálogo) -->
+                <div class="fe-field" *ngIf="currentFlow.catalogCollection">
+                  <label>¿Dónde se completa este paso?</label>
+                  <div class="fe-src-row">
+                    <button class="fe-src-btn" [class.fe-src-active]="!step.source || step.source === 'bot'"
+                            (click)="step.source = 'bot'; step.orderField = ''">
+                      <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button class="fe-src-btn" [class.fe-src-active]="step.source === 'web'"
+                            (click)="step.source = 'web'; step.orderField = ''">
+                      <i class="fas fa-globe"></i> Web
+                    </button>
+                    <button class="fe-src-btn" [class.fe-src-active]="step.source === 'order'"
+                            (click)="step.source = 'order'">
+                      <i class="fas fa-bolt"></i> Del pedido
+                    </button>
+                  </div>
+                  <div *ngIf="step.source === 'order'" style="margin-top:8px">
+                    <select [(ngModel)]="step.orderField">
+                      <option value="">— Selecciona campo —</option>
+                      <option *ngFor="let f of ORDER_FIELDS" [value]="f.key">{{ f.label }}</option>
+                    </select>
+                  </div>
+                </div>
+
                 <!-- Prompt -->
-                <div class="fe-field">
+                <div class="fe-field" *ngIf="step.source !== 'order'">
                   <label>{{ step.type === 'message' ? 'Mensaje del bot' : step.type === 'phone_lookup' ? 'Mensaje previo a la verificación (opcional)' : '¿Qué le pregunta el bot?' }}</label>
                   <textarea [(ngModel)]="step.prompt" rows="2"
                     [placeholder]="step.type === 'message' ? 'Escribe el mensaje automático...' : step.type === 'phone_lookup' ? 'Ej: 🔍 Consultando tu información...' : 'Ej: ¿Cuál es tu nombre completo?'"></textarea>
@@ -1036,6 +1061,49 @@
         </div>
 
         <!-- Bloque: Mensaje de confirmación -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-ban"></i> Aviso de cancelación <span class="fe-help-tip" title="Se envía al usuario al iniciar este flujo">?</span></div>
+          <p class="fe-hint">Mensaje que el bot envía al comenzar el flujo para indicar cómo cancelarlo.</p>
+          <div class="fe-field">
+            <textarea [(ngModel)]="currentFlow.cancelHint" rows="2"
+              placeholder="Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso."></textarea>
+          </div>
+          <div class="fe-field" style="margin-top:10px">
+            <label>Imagen (opcional, máx. 5 MB)</label>
+            <div class="img-upload-area" *ngIf="!cancelHintImagePreview">
+              <label class="img-upload-label">
+                <input type="file" accept="image/*" (change)="onCancelHintImageSelected($event)" style="display:none" />
+                <i class="fas fa-image"></i>
+                <span>Seleccionar imagen</span>
+              </label>
+            </div>
+            <div class="img-preview-wrap" *ngIf="cancelHintImagePreview">
+              <img [src]="cancelHintImagePreview" alt="Preview" class="form-img-preview" />
+              <button class="btn-remove-img" (click)="clearCancelHintImage()" type="button">
+                <i class="fas fa-times"></i> Quitar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Catálogo de pedidos -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-shopping-bag"></i> Catálogo de pedidos</div>
+          <p class="fe-hint">Vincula una colección de productos para generar una página pública donde los clientes hacen pedidos que llegan por WhatsApp.</p>
+          <div class="fe-field">
+            <label>Colección de productos</label>
+            <select [(ngModel)]="currentFlow.catalogCollection">
+              <option value="">— Sin catálogo —</option>
+              <option *ngFor="let col of collectionDefs" [value]="col.slug">{{ col.name }}</option>
+            </select>
+          </div>
+          <div class="fe-catalog-url-box" *ngIf="currentFlow.catalogCollection && currentFlow.id">
+            <i class="fas fa-link"></i>
+            <code class="fe-catalog-url-text">{{ getCatalogUrl() }}</code>
+            <button class="fe-btn-copy-url" (click)="copyCatalogUrl()" title="Copiar URL"><i class="fas fa-copy"></i></button>
+          </div>
+        </div>
+
         <div class="fe-block" id="fe-completion-block">
           <div class="fe-block-title"><i class="fas fa-check-circle"></i> Mensaje de confirmación <span class="fe-help-tip" title="Se envía automáticamente cuando el usuario termina todos los pasos">?</span></div>
           <p class="fe-hint">Mensaje que el bot envía cuando el usuario termina el flujo.</p>

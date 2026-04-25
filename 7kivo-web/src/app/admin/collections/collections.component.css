@@ -448,3 +448,9 @@
 .btn-confirm:hover:not(:disabled) { opacity: 0.9; }
 .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-confirm i { font-size: 0.82rem; color: inherit !important; }
+
+/* Catalog */
+.catalog-badge { display:inline-flex; align-items:center; gap:4px; background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; border-radius:12px; padding:2px 8px; font-size:0.72rem; font-weight:600; }
+.catalog-init-bar { display:flex; align-items:center; justify-content:space-between; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:10px 14px; margin:0 0 16px 0; font-size:0.85rem; color:#5b21b6; }
+.btn-catalog-init { background:#8b5cf6; color:white; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:0.82rem; font-weight:600; }
+.btn-catalog-init:hover { background:#7c3aed; }

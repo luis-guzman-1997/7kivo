@@ -1,0 +1,143 @@
+<div class="cat-page">
+
+  <!-- Header -->
+  <div class="cat-header">
+    <img *ngIf="orgLogo" [src]="orgLogo" class="cat-logo" alt="Logo" />
+    <h1 class="cat-org-name">{{ orgName || 'Catálogo' }}</h1>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="cat-loading">
+    <i class="fas fa-spinner fa-spin"></i> Cargando catálogo...
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="cat-error">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+  </div>
+
+  <!-- ==================== PEDIDO ENVIADO ==================== -->
+  <div *ngIf="orderCode" class="cat-success">
+    <div class="cat-success-icon"><i class="fas fa-check-circle"></i></div>
+    <h2>¡Pedido listo!</h2>
+    <p>Tu código de pedido es:</p>
+    <div class="cat-order-code">{{ orderCode }}</div>
+    <p class="cat-success-hint">Envía este código por WhatsApp para confirmar tu pedido:</p>
+    <a [href]="waLink" class="cat-wa-btn">
+      <i class="fab fa-whatsapp"></i> Enviar pedido por WhatsApp
+    </a>
+  </div>
+
+  <!-- ==================== CHECKOUT ==================== -->
+  <div *ngIf="!loading && !error && !orderCode && checkoutMode" class="cat-checkout-view">
+    <button class="cat-back-btn" (click)="backToCart()">
+      <i class="fas fa-arrow-left"></i> Volver al carrito
+    </button>
+    <h2 class="cat-section-title">Datos del pedido</h2>
+
+    <!-- Resumen del carrito -->
+    <div class="cat-checkout-summary">
+      <div class="cat-summary-row" *ngFor="let item of cart">
+        <span>{{ item.qty }}x {{ item.product.nombre }}</span>
+        <span>${{ (item.product.precio * item.qty).toFixed(2) }}</span>
+      </div>
+      <div class="cat-summary-total">
+        <span>Total</span>
+        <span>${{ cartTotal.toFixed(2) }}</span>
+      </div>
+    </div>
+
+    <!-- Campos web del flujo -->
+    <div class="cat-web-fields" *ngIf="webSteps.length > 0">
+      <div *ngFor="let step of webSteps" class="cat-field">
+        <label class="cat-field-label">
+          {{ step.fieldLabel || step.prompt }}
+          <span *ngIf="step.required" class="cat-req">*</span>
+        </label>
+
+        <!-- text_input -->
+        <input *ngIf="step.type === 'text_input'" type="text"
+          [(ngModel)]="webFormData[step.fieldKey]"
+          [placeholder]="step.prompt"
+          class="cat-input" />
+
+        <!-- number_input -->
+        <input *ngIf="step.type === 'number_input'" type="number"
+          [(ngModel)]="webFormData[step.fieldKey]"
+          [placeholder]="step.prompt"
+          class="cat-input" />
+
+        <!-- select_buttons / select_list con opciones -->
+        <div *ngIf="step.type === 'select_buttons' || step.type === 'select_list'" class="cat-options-grid">
+          <button *ngFor="let opt of step.customOptions"
+            class="cat-opt-btn"
+            [class.cat-opt-selected]="webFormData[step.fieldKey] === opt.value"
+            (click)="webFormData[step.fieldKey] = opt.value">
+            {{ opt.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error inline -->
+    <div *ngIf="error" class="cat-inline-error">{{ error }}</div>
+
+    <button class="cat-submit-btn" (click)="submitOrder()" [disabled]="submitting">
+      <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
+      <i class="fab fa-whatsapp" *ngIf="!submitting"></i>
+      {{ submitting ? 'Procesando...' : 'Confirmar y enviar por WhatsApp' }}
+    </button>
+  </div>
+
+  <!-- ==================== CATÁLOGO + CARRITO ==================== -->
+  <div *ngIf="!loading && !error && !orderCode && !checkoutMode" class="cat-main">
+
+    <!-- Sin productos -->
+    <div *ngIf="products.length === 0" class="cat-empty">
+      <i class="fas fa-box-open"></i>
+      <p>No hay productos disponibles en este momento.</p>
+    </div>
+
+    <!-- Productos por categoría -->
+    <div *ngFor="let cat of categories" class="cat-category">
+      <h2 class="cat-cat-title">{{ cat }}</h2>
+      <div class="cat-grid">
+        <div *ngFor="let product of getByCategory(cat)" class="cat-card">
+          <div class="cat-card-img" *ngIf="product.imagen">
+            <img [src]="product.imagen" [alt]="product.nombre" />
+          </div>
+          <div class="cat-card-body">
+            <h3 class="cat-card-name">{{ product.nombre }}</h3>
+            <p class="cat-card-desc" *ngIf="product.descripcion">{{ product.descripcion }}</p>
+            <div class="cat-card-footer">
+              <span class="cat-price">${{ product.precio?.toFixed(2) }}</span>
+              <div class="cat-qty-ctrl">
+                <button class="cat-qty-btn" (click)="removeItem(product)" [disabled]="getQty(product.id) === 0">
+                  <i class="fas fa-minus"></i>
+                </button>
+                <span class="cat-qty-num" [class.cat-qty-active]="getQty(product.id) > 0">
+                  {{ getQty(product.id) }}
+                </span>
+                <button class="cat-qty-btn" (click)="addItem(product)">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carrito flotante -->
+    <div class="cat-cart-bar" *ngIf="cart.length > 0">
+      <span class="cat-cart-info">
+        <i class="fas fa-shopping-bag"></i>
+        {{ cartCount }} ítem{{ cartCount !== 1 ? 's' : '' }} — ${{ cartTotal.toFixed(2) }}
+      </span>
+      <button class="cat-cart-btn" (click)="startCheckout()">
+        Ver pedido <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+
+  </div>
+</div>

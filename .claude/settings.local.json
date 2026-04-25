@@ -24,7 +24,8 @@
       "Bash(node scripts/check-caluco-bandeja.js)",
       "Bash(node -e ':*)",
       "Bash(grep -v \"Use \\\\`node\")",
-      "Bash(awk '{print $NF}')"
+      "Bash(awk '{print $NF}')",
+      "Bash(node -e \"require\\('./src/controllers/catalogController'\\)\")"
     ]
   }
 }
