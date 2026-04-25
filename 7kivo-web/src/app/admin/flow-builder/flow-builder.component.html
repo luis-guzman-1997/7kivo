@@ -714,8 +714,8 @@
                   </div>
                 </div>
 
-                <!-- ¿Dónde se completa? (solo si el flujo tiene catálogo) -->
-                <div class="fe-field" *ngIf="currentFlow.catalogCollection">
+                <!-- ¿Dónde se completa? (solo si el flujo tiene tienda web activa) -->
+                <div class="fe-field" *ngIf="currentFlow.webStoreEnabled || currentFlow.catalogCollection">
                   <label>¿Dónde se completa este paso?</label>
                   <div class="fe-src-row">
                     <button class="fe-src-btn" [class.fe-src-active]="!step.source || step.source === 'bot'"
@@ -1086,10 +1086,25 @@
           </div>
         </div>
 
-        <!-- Catálogo de pedidos -->
-        <div class="fe-block">
+        <!-- Tienda Web (solo orgs delivery) -->
+        <div class="fe-block" *ngIf="authService.orgIndustry === 'delivery'">
+          <div class="fe-block-title"><i class="fas fa-store"></i> Tienda web (WebDelivery)</div>
+          <p class="fe-hint">Activa la tienda web para este flujo. Los productos se gestionan en la sección <strong>WebDelivery</strong> del menú.</p>
+          <label class="fe-check">
+            <input type="checkbox" [(ngModel)]="currentFlow.webStoreEnabled" />
+            Activar tienda web para este flujo
+          </label>
+          <div class="fe-catalog-url-box" *ngIf="currentFlow.webStoreEnabled && currentFlow.id">
+            <i class="fas fa-link"></i>
+            <code class="fe-catalog-url-text">{{ getCatalogUrl() }}</code>
+            <button class="fe-btn-copy-url" (click)="copyCatalogUrl()" title="Copiar URL"><i class="fas fa-copy"></i></button>
+          </div>
+        </div>
+
+        <!-- Catálogo de pedidos (orgs no-delivery — modelo de colección) -->
+        <div class="fe-block" *ngIf="authService.orgIndustry !== 'delivery'">
           <div class="fe-block-title"><i class="fas fa-shopping-bag"></i> Catálogo de pedidos</div>
-          <p class="fe-hint">Vincula una colección de productos para generar una página pública donde los clientes hacen pedidos que llegan por WhatsApp.</p>
+          <p class="fe-hint">Vincula una colección de productos para generar una página pública donde los clientes hacen pedidos por WhatsApp.</p>
           <div class="fe-field">
             <label>Colección de productos</label>
             <select [(ngModel)]="currentFlow.catalogCollection">

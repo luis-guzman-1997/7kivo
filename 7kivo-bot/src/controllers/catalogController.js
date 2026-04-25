@@ -12,11 +12,25 @@ const getCatalogData = async (req, res) => {
 
     const orgId = getOrgId();
 
-    const productsSnap = await db.collection("organizations").doc(orgId)
-      .collection(flow.catalogCollection).get();
-    const products = productsSnap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .filter(p => p.disponible !== false);
+    let products;
+    if (flow.webStoreEnabled) {
+      const snap = await db.collection("organizations").doc(orgId)
+        .collection("webdelivery")
+        .where("flowId", "==", flowId)
+        .get();
+      products = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(p => p.disponible !== false)
+        .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+    } else if (flow.catalogCollection) {
+      const snap = await db.collection("organizations").doc(orgId)
+        .collection(flow.catalogCollection).get();
+      products = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(p => p.disponible !== false);
+    } else {
+      return res.status(404).json({ ok: false, error: "Sin catálogo configurado" });
+    }
 
     const contact = await getContactInfo();
     const waPhone = (contact?.phone || "").replace(/\D/g, "");
@@ -41,6 +55,7 @@ const getCatalogData = async (req, res) => {
         name: flow.name,
         menuLabel: flow.menuLabel,
         completionMessage: flow.completionMessage,
+        storeImage: flow.storeImage || "",
       },
       webSteps,
       products,

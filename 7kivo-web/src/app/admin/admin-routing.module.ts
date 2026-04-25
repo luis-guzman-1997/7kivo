@@ -19,6 +19,7 @@ import { CampaignsComponent } from './campaigns/campaigns.component';
 import { CitasComponent } from './citas/citas.component';
 import { LoginOrgComponent } from './login-org/login-org.component';
 import { DeliveryMapComponent } from './delivery-map/delivery-map.component';
+import { WebDeliveryComponent } from './webdelivery/webdelivery.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -41,7 +42,8 @@ const routes: Routes = [
       { path: 'pendientes', component: AdminSetupComponent, canActivate: [AuthGuard] },
       { path: 'campanas', component: CampaignsComponent, canActivate: [RoleGuard], data: { permission: 'campaigns' } },
       { path: 'citas', component: CitasComponent, canActivate: [RoleGuard], data: { permission: 'collections' } },
-      { path: 'mapa-delivery', component: DeliveryMapComponent, canActivate: [RoleGuard], data: { permission: 'delivery_map' } }
+      { path: 'mapa-delivery', component: DeliveryMapComponent, canActivate: [RoleGuard], data: { permission: 'delivery_map' } },
+      { path: 'webdelivery', component: WebDeliveryComponent, canActivate: [RoleGuard], data: { permission: 'collections' } }
     ]
   }
 ];

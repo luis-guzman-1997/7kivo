@@ -66,6 +66,9 @@ interface Flow {
   cancelHint?: string;
   cancelHintImage?: string;
   catalogCollection?: string;
+  webStoreEnabled?: boolean;
+  storeImage?: string;
+  storeColor?: string;
   // Restricción por número (modo prueba)
   testPhones?: string[]; // vacío = todos; con números = solo esos
 }
@@ -388,6 +391,8 @@ export class FlowBuilderComponent implements OnInit {
       unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: '',
       cancelHint: 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.',
       catalogCollection: '',
+      webStoreEnabled: false,
+      storeImage: '',
       testPhones: []
     };
   }
@@ -498,7 +503,8 @@ export class FlowBuilderComponent implements OnInit {
   }
 
   getCatalogUrl(): string {
-    if (!this.currentFlow.id || !this.currentFlow.catalogCollection) return '';
+    if (!this.currentFlow.id) return '';
+    if (!this.currentFlow.webStoreEnabled && !this.currentFlow.catalogCollection) return '';
     const orgId = this.firebaseService.getOrgId();
     return `${window.location.origin}/tienda/${orgId}/${this.currentFlow.id}`;
   }
@@ -573,6 +579,12 @@ export class FlowBuilderComponent implements OnInit {
       // Sync flow steps → linked collection fields
       if (data.saveToCollection) {
         await this.firebaseService.syncFlowToCollection(data.saveToCollection, data.steps || []);
+      }
+
+      // Sync public store snapshot when web store is enabled
+      const savedId = this.currentFlow.id || (await this.firebaseService.getFlows()).find((f: any) => f.name === data.name)?.id;
+      if (data.webStoreEnabled && savedId) {
+        this.firebaseService.syncPublicStore(savedId).catch(() => {});
       }
 
       this.editMode = false;

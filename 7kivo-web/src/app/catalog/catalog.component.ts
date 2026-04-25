@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FirebaseService } from '../services/firebase.service';
@@ -16,6 +16,7 @@ export class CatalogComponent implements OnInit {
   flowId = '';
   orgName = '';
   orgLogo = '';
+  storeImage = '';
   waPhone = '';
   botApiUrl = '';
 
@@ -27,6 +28,10 @@ export class CatalogComponent implements OnInit {
   cart: CartItem[] = [];
   checkoutMode = false;
   webFormData: Record<string, any> = {};
+  activeCategory = '';
+  sortMode: 'default' | 'priceAsc' | 'priceDesc' | 'nameAsc' = 'default';
+  selectedPrice: 'all' | 'lt5' | '5to10' | 'gt10' = 'all';
+  selectedBrands: string[] = [];
 
   submitting = false;
   orderCode = '';
@@ -36,37 +41,45 @@ export class CatalogComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
-    private firebaseService: FirebaseService
+    private firebaseService: FirebaseService,
+    private el: ElementRef
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.orgId  = this.route.snapshot.paramMap.get('orgId')  || '';
     this.flowId = this.route.snapshot.paramMap.get('flowId') || '';
     try {
-      const publicInfo = await this.firebaseService.getPublicOrgInfo(this.orgId);
+      const [publicInfo, store] = await Promise.all([
+        this.firebaseService.getPublicOrgInfo(this.orgId),
+        this.firebaseService.getPublicStore(this.orgId, this.flowId),
+      ]);
+
       this.orgName   = publicInfo?.orgName  || '';
       this.orgLogo   = publicInfo?.orgLogo  || '';
       this.botApiUrl = publicInfo?.botApiUrl || '';
 
-      if (!this.botApiUrl) {
-        this.error = 'Catálogo no disponible en este momento.';
+      if (!store) {
+        this.error = 'Catálogo no encontrado o no está disponible.';
         return;
       }
 
-      const data: any = await this.http
-        .get(`${this.botApiUrl}/api/${this.orgId}/catalog/${this.flowId}`)
-        .toPromise();
+      this.storeImage = store.storeImage || '';
 
-      if (!data?.ok) { this.error = 'Catálogo no encontrado.'; return; }
+      // Aplicar color de marca como variable CSS
+      const color = store.storeColor || '#2e7d32';
+      const dark  = this.darken(color, 25);
+      this.el.nativeElement.style.setProperty('--cat-primary',      color);
+      this.el.nativeElement.style.setProperty('--cat-primary-dark', dark);
 
-      this.flow     = data.flow;
-      this.products = data.products || [];
-      this.webSteps = data.webSteps || [];
-      this.waPhone  = data.waPhone  || '';
+      this.flow     = store;
+      this.products = (store.products || []).filter((p: any) => p.disponible !== false);
+      this.webSteps = store.webSteps || [];
+      this.waPhone  = store.waPhone  || '';
 
       const cats = [...new Set<string>(this.products.map((p: any) => p.categoria || 'General'))];
       this.categories = cats;
-    } catch {
+    } catch (e) {
+      console.error(e);
       this.error = 'Error al cargar el catálogo.';
     } finally {
       this.loading = false;
@@ -74,7 +87,26 @@ export class CatalogComponent implements OnInit {
   }
 
   getByCategory(cat: string): any[] {
-    return this.products.filter(p => (p.categoria || 'General') === cat);
+    const filtered = this.filteredProducts.filter(p => (p.categoria || 'General') === cat);
+    if (this.sortMode === 'default') return filtered;
+
+    return [...filtered].sort((a, b) => {
+      const priceA = Number(a?.precio) || 0;
+      const priceB = Number(b?.precio) || 0;
+      const nameA = (a?.nombre || '').toString();
+      const nameB = (b?.nombre || '').toString();
+
+      switch (this.sortMode) {
+        case 'priceAsc':
+          return priceA - priceB;
+        case 'priceDesc':
+          return priceB - priceA;
+        case 'nameAsc':
+          return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+        default:
+          return 0;
+      }
+    });
   }
 
   getQty(id: string): number {
@@ -100,6 +132,49 @@ export class CatalogComponent implements OnInit {
     return this.cart.reduce((s, c) => s + c.qty, 0);
   }
 
+  get visibleCategories(): string[] {
+    const source = this.activeCategory
+      ? this.categories.filter(c => c === this.activeCategory)
+      : this.categories;
+    return source.filter(c =>
+      this.filteredProducts.some(p => (p.categoria || 'General') === c)
+    );
+  }
+
+  get availableBrands(): string[] {
+    return [...new Set(this.products.map((p: any) => (p?.marca || '').toString().trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  }
+
+  get filteredProducts(): any[] {
+    return this.products.filter((p: any) => {
+      const price = Number(p?.precio) || 0;
+      const brand = (p?.marca || '').toString().trim();
+
+      const matchPrice =
+        this.selectedPrice === 'all' ||
+        (this.selectedPrice === 'lt5' && price < 5) ||
+        (this.selectedPrice === '5to10' && price >= 5 && price <= 10) ||
+        (this.selectedPrice === 'gt10' && price > 10);
+
+      const matchBrand = this.selectedBrands.length === 0 || this.selectedBrands.includes(brand);
+      return matchPrice && matchBrand;
+    });
+  }
+
+  toggleBrand(brand: string): void {
+    if (this.selectedBrands.includes(brand)) {
+      this.selectedBrands = this.selectedBrands.filter(b => b !== brand);
+      return;
+    }
+    this.selectedBrands = [...this.selectedBrands, brand];
+  }
+
+  setCategory(cat: string): void {
+    this.activeCategory = cat;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   startCheckout(): void {
     this.webFormData  = {};
     this.checkoutMode = true;
@@ -108,6 +183,22 @@ export class CatalogComponent implements OnInit {
 
   backToCart(): void {
     this.checkoutMode = false;
+  }
+
+  private darken(hex: string, amount: number): string {
+    const n = parseInt(hex.replace('#',''), 16);
+    const r = Math.max(0, (n >> 16) - amount);
+    const g = Math.max(0, ((n >> 8) & 0xff) - amount);
+    const b = Math.max(0, (n & 0xff) - amount);
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+  }
+
+  resetOrder(): void {
+    this.orderCode    = '';
+    this.waLink       = '';
+    this.cart         = [];
+    this.checkoutMode = false;
+    this.webFormData  = {};
   }
 
   async submitOrder(): Promise<void> {
@@ -133,12 +224,22 @@ export class CatalogComponent implements OnInit {
         price: c.product.precio, qty: c.qty,
       }));
 
-      await this.http.post(`${this.botApiUrl}/api/${this.orgId}/orders`, {
+      const orderData = {
         code, items, itemsText, total, totalText,
         flowId: this.flowId,
         webData: this.webFormData,
         orderDate: now.toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-      }).toPromise();
+        status: 'pending',
+        clientPhone: null,
+      };
+
+      if (this.botApiUrl) {
+        await this.http
+          .post(`${this.botApiUrl}/api/${this.orgId}/orders`, orderData)
+          .toPromise();
+      } else {
+        await this.firebaseService.saveOrderPublic(this.orgId, orderData);
+      }
 
       this.orderCode = code;
       const msg = encodeURIComponent(`Mi pedido: ${code}`);

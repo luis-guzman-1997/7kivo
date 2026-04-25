@@ -1,143 +1,240 @@
 <div class="cat-page">
 
-  <!-- Header -->
-  <div class="cat-header">
-    <img *ngIf="orgLogo" [src]="orgLogo" class="cat-logo" alt="Logo" />
-    <h1 class="cat-org-name">{{ orgName || 'Catálogo' }}</h1>
-  </div>
+  <!-- ===== HEADER ===== -->
+  <header class="cat-header" *ngIf="!loading && !error && !orderCode">
 
-  <!-- Loading -->
+    <!-- Fila 1: carrito izq | logo centro | espacio der -->
+    <div class="cat-header-row">
+
+      <!-- Carrito izquierda -->
+      <div class="cat-header-left">
+      </div>
+
+      <!-- Logo tienda centrado y grande -->
+      <div class="cat-header-center">
+        <img *ngIf="storeImage" [src]="storeImage" class="cat-logo-store" alt="" />
+        <div *ngIf="!storeImage" class="cat-logo-placeholder-store">
+          <i class="fas fa-store"></i>
+          <span>{{ flow?.menuLabel || orgName }}</span>
+        </div>
+      </div>
+
+      <!-- Espacio derecho para equilibrio visual -->
+      <div class="cat-header-right"></div>
+
+    </div>
+
+    <!-- Fila 2: categorías -->
+    <div class="cat-cats-row" *ngIf="categories.length > 0">
+      <button class="cat-cat-btn" [class.active]="activeCategory === ''" (click)="setCategory('')">Todas</button>
+      <button *ngFor="let c of categories" class="cat-cat-btn"
+              [class.active]="activeCategory === c" (click)="setCategory(c)">{{ c }}</button>
+    </div>
+
+  </header>
+
+  <!-- ===== LOADING ===== -->
   <div *ngIf="loading" class="cat-loading">
-    <i class="fas fa-spinner fa-spin"></i> Cargando catálogo...
+    <div class="cat-spinner"></div>
+    <span>Cargando tienda...</span>
   </div>
 
-  <!-- Error -->
-  <div *ngIf="!loading && error" class="cat-error">
-    <i class="fas fa-exclamation-circle"></i> {{ error }}
+  <!-- ===== ERROR ===== -->
+  <div *ngIf="!loading && error" class="cat-error-screen">
+    <i class="fas fa-store-slash"></i>
+    <h2>Tienda no disponible</h2>
+    <p>{{ error }}</p>
   </div>
 
-  <!-- ==================== PEDIDO ENVIADO ==================== -->
-  <div *ngIf="orderCode" class="cat-success">
-    <div class="cat-success-icon"><i class="fas fa-check-circle"></i></div>
-    <h2>¡Pedido listo!</h2>
-    <p>Tu código de pedido es:</p>
-    <div class="cat-order-code">{{ orderCode }}</div>
-    <p class="cat-success-hint">Envía este código por WhatsApp para confirmar tu pedido:</p>
-    <a [href]="waLink" class="cat-wa-btn">
-      <i class="fab fa-whatsapp"></i> Enviar pedido por WhatsApp
-    </a>
-  </div>
-
-  <!-- ==================== CHECKOUT ==================== -->
-  <div *ngIf="!loading && !error && !orderCode && checkoutMode" class="cat-checkout-view">
-    <button class="cat-back-btn" (click)="backToCart()">
-      <i class="fas fa-arrow-left"></i> Volver al carrito
-    </button>
-    <h2 class="cat-section-title">Datos del pedido</h2>
-
-    <!-- Resumen del carrito -->
-    <div class="cat-checkout-summary">
-      <div class="cat-summary-row" *ngFor="let item of cart">
-        <span>{{ item.qty }}x {{ item.product.nombre }}</span>
-        <span>${{ (item.product.precio * item.qty).toFixed(2) }}</span>
-      </div>
-      <div class="cat-summary-total">
-        <span>Total</span>
-        <span>${{ cartTotal.toFixed(2) }}</span>
-      </div>
-    </div>
-
-    <!-- Campos web del flujo -->
-    <div class="cat-web-fields" *ngIf="webSteps.length > 0">
-      <div *ngFor="let step of webSteps" class="cat-field">
-        <label class="cat-field-label">
-          {{ step.fieldLabel || step.prompt }}
-          <span *ngIf="step.required" class="cat-req">*</span>
-        </label>
-
-        <!-- text_input -->
-        <input *ngIf="step.type === 'text_input'" type="text"
-          [(ngModel)]="webFormData[step.fieldKey]"
-          [placeholder]="step.prompt"
-          class="cat-input" />
-
-        <!-- number_input -->
-        <input *ngIf="step.type === 'number_input'" type="number"
-          [(ngModel)]="webFormData[step.fieldKey]"
-          [placeholder]="step.prompt"
-          class="cat-input" />
-
-        <!-- select_buttons / select_list con opciones -->
-        <div *ngIf="step.type === 'select_buttons' || step.type === 'select_list'" class="cat-options-grid">
-          <button *ngFor="let opt of step.customOptions"
-            class="cat-opt-btn"
-            [class.cat-opt-selected]="webFormData[step.fieldKey] === opt.value"
-            (click)="webFormData[step.fieldKey] = opt.value">
-            {{ opt.label }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Error inline -->
-    <div *ngIf="error" class="cat-inline-error">{{ error }}</div>
-
-    <button class="cat-submit-btn" (click)="submitOrder()" [disabled]="submitting">
-      <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
-      <i class="fab fa-whatsapp" *ngIf="!submitting"></i>
-      {{ submitting ? 'Procesando...' : 'Confirmar y enviar por WhatsApp' }}
-    </button>
-  </div>
-
-  <!-- ==================== CATÁLOGO + CARRITO ==================== -->
-  <div *ngIf="!loading && !error && !orderCode && !checkoutMode" class="cat-main">
-
-    <!-- Sin productos -->
-    <div *ngIf="products.length === 0" class="cat-empty">
-      <i class="fas fa-box-open"></i>
-      <p>No hay productos disponibles en este momento.</p>
-    </div>
-
-    <!-- Productos por categoría -->
-    <div *ngFor="let cat of categories" class="cat-category">
-      <h2 class="cat-cat-title">{{ cat }}</h2>
-      <div class="cat-grid">
-        <div *ngFor="let product of getByCategory(cat)" class="cat-card">
-          <div class="cat-card-img" *ngIf="product.imagen">
-            <img [src]="product.imagen" [alt]="product.nombre" />
-          </div>
-          <div class="cat-card-body">
-            <h3 class="cat-card-name">{{ product.nombre }}</h3>
-            <p class="cat-card-desc" *ngIf="product.descripcion">{{ product.descripcion }}</p>
-            <div class="cat-card-footer">
-              <span class="cat-price">${{ product.precio?.toFixed(2) }}</span>
-              <div class="cat-qty-ctrl">
-                <button class="cat-qty-btn" (click)="removeItem(product)" [disabled]="getQty(product.id) === 0">
-                  <i class="fas fa-minus"></i>
-                </button>
-                <span class="cat-qty-num" [class.cat-qty-active]="getQty(product.id) > 0">
-                  {{ getQty(product.id) }}
-                </span>
-                <button class="cat-qty-btn" (click)="addItem(product)">
-                  <i class="fas fa-plus"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Carrito flotante -->
-    <div class="cat-cart-bar" *ngIf="cart.length > 0">
-      <span class="cat-cart-info">
-        <i class="fas fa-shopping-bag"></i>
-        {{ cartCount }} ítem{{ cartCount !== 1 ? 's' : '' }} — ${{ cartTotal.toFixed(2) }}
-      </span>
-      <button class="cat-cart-btn" (click)="startCheckout()">
-        Ver pedido <i class="fas fa-arrow-right"></i>
+  <!-- ===== SUCCESS ===== -->
+  <div *ngIf="orderCode" class="cat-success-screen">
+    <div class="cat-success-card">
+      <div class="cat-check-ring"><i class="fas fa-check"></i></div>
+      <h2>¡Pedido generado!</h2>
+      <p>Tu código de pedido es:</p>
+      <div class="cat-order-code">{{ orderCode }}</div>
+      <p class="cat-success-hint">Toca el botón para enviar tu código por WhatsApp y confirmar tu pedido.</p>
+      <a [href]="waLink" class="cat-wa-btn">
+        <i class="fab fa-whatsapp"></i> Confirmar por WhatsApp
+      </a>
+      <button class="cat-restart-btn" (click)="resetOrder()">
+        <i class="fas fa-redo"></i> Hacer otro pedido
       </button>
     </div>
+  </div>
+
+  <!-- ===== CHECKOUT ===== -->
+  <div *ngIf="!loading && !error && !orderCode && checkoutMode" class="cat-checkout-screen">
+    <div class="cat-checkout-header">
+      <button class="cat-back-btn" (click)="backToCart()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h2>Tu pedido</h2>
+    </div>
+
+    <div class="cat-checkout-body">
+      <!-- Resumen ítems -->
+      <div class="cat-order-summary">
+        <div class="cat-order-item" *ngFor="let item of cart">
+          <div class="cat-oi-img" *ngIf="item.product.imagen">
+            <img [src]="item.product.imagen" [alt]="item.product.nombre" />
+          </div>
+          <div class="cat-oi-info">
+            <span class="cat-oi-name">{{ item.qty }}× {{ item.product.nombre }}</span>
+            <span class="cat-oi-price">${{ (item.product.precio * item.qty).toFixed(2) }}</span>
+          </div>
+        </div>
+        <div class="cat-order-total">
+          <span>Total a pagar</span>
+          <span class="cat-total-val">${{ cartTotal.toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <!-- Campos del formulario web -->
+      <div class="cat-form-section" *ngIf="webSteps.length > 0">
+        <h3 class="cat-form-title">Datos de entrega</h3>
+        <div *ngFor="let step of webSteps" class="cat-form-field">
+          <label class="cat-form-label">
+            {{ step.fieldLabel || step.prompt }}<span *ngIf="step.required" class="cat-req">*</span>
+          </label>
+          <input *ngIf="step.type === 'text_input'" type="text"
+                 [value]="webFormData[step.fieldKey] || ''"
+                 (input)="webFormData[step.fieldKey] = $any($event.target).value"
+                 [placeholder]="step.prompt" class="cat-form-input" />
+          <input *ngIf="step.type === 'number_input'" type="number"
+                 [value]="webFormData[step.fieldKey] || ''"
+                 (input)="webFormData[step.fieldKey] = $any($event.target).value"
+                 class="cat-form-input" />
+          <div *ngIf="step.type === 'select_buttons' || step.type === 'select_list'"
+               class="cat-form-opts">
+            <button *ngFor="let opt of step.customOptions"
+                    class="cat-form-opt"
+                    [class.selected]="webFormData[step.fieldKey] === opt.value"
+                    (click)="webFormData[step.fieldKey] = opt.value">
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p *ngIf="error" class="cat-form-error">{{ error }}</p>
+    </div>
+
+    <div class="cat-checkout-footer">
+      <button class="cat-place-btn" (click)="submitOrder()" [disabled]="submitting">
+        <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
+        <i class="fab fa-whatsapp" *ngIf="!submitting"></i>
+        {{ submitting ? 'Procesando...' : 'Confirmar y enviar por WhatsApp' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== CATÁLOGO ===== -->
+  <div *ngIf="!loading && !error && !orderCode && !checkoutMode" class="cat-catalog">
+
+    <!-- Category tabs -->
+    <div class="cat-catalog-inner">
+
+      <div class="cat-layout">
+        <aside class="cat-filters" *ngIf="products.length > 0">
+          <div class="cat-filter-block">
+            <h3 class="cat-filter-title">Rango de precios</h3>
+            <label class="cat-check">
+              <input type="radio" name="priceFilter" [checked]="selectedPrice === 'all'" (change)="selectedPrice = 'all'" />
+              <span>Todos</span>
+            </label>
+            <label class="cat-check">
+              <input type="radio" name="priceFilter" [checked]="selectedPrice === 'lt5'" (change)="selectedPrice = 'lt5'" />
+              <span>Menos de $5</span>
+            </label>
+            <label class="cat-check">
+              <input type="radio" name="priceFilter" [checked]="selectedPrice === '5to10'" (change)="selectedPrice = '5to10'" />
+              <span>Entre $5 y $10</span>
+            </label>
+            <label class="cat-check">
+              <input type="radio" name="priceFilter" [checked]="selectedPrice === 'gt10'" (change)="selectedPrice = 'gt10'" />
+              <span>Mayor a $10</span>
+            </label>
+          </div>
+
+          <div class="cat-filter-block" *ngIf="availableBrands.length > 0">
+            <h3 class="cat-filter-title">Marcas</h3>
+            <label class="cat-check" *ngFor="let brand of availableBrands">
+              <input type="checkbox"
+                     [checked]="selectedBrands.includes(brand)"
+                     (change)="toggleBrand(brand)" />
+              <span>{{ brand }}</span>
+            </label>
+          </div>
+        </aside>
+
+        <div class="cat-products-pane">
+          <div class="cat-sort-wrap">
+            <label for="cat-sort">Ordenar por:</label>
+            <select id="cat-sort" [value]="sortMode" (change)="sortMode = $any($event.target).value" class="cat-sort-select">
+              <option value="default">Relevancia</option>
+              <option value="nameAsc">A-Z</option>
+              <option value="priceAsc">Precio: menor a mayor</option>
+              <option value="priceDesc">Precio: mayor a menor</option>
+            </select>
+          </div>
+
+          <div *ngIf="filteredProducts.length === 0" class="cat-empty">
+            <i class="fas fa-box-open"></i>
+            <p>No hay productos con estos filtros.</p>
+          </div>
+
+          <ng-container *ngFor="let cat of visibleCategories">
+            <div class="cat-section" [id]="'sec-' + cat">
+              <h2 class="cat-sec-title">{{ cat }}</h2>
+              <div class="cat-grid">
+                <div *ngFor="let p of getByCategory(cat)" class="cat-card">
+                  <div class="cat-card-photo">
+                    <img *ngIf="p.imagen" [src]="p.imagen" [alt]="p.nombre" loading="lazy" />
+                    <div *ngIf="!p.imagen" class="cat-card-no-photo">
+                      <i class="fas fa-utensils"></i>
+                    </div>
+                    <span class="cat-tag-out"  *ngIf="p.stockLimitado && p.stock === 0">Agotado</span>
+                    <span class="cat-tag-low"  *ngIf="p.stockLimitado && p.stock > 0 && p.stock <= 5">Últimos {{ p.stock }}</span>
+                  </div>
+                  <div class="cat-card-info">
+                    <p class="cat-card-name">{{ p.nombre }}</p>
+                    <p class="cat-card-desc" *ngIf="p.descripcion">{{ p.descripcion }}</p>
+                    <div class="cat-card-bottom">
+                      <span class="cat-card-price">${{ p.precio?.toFixed ? p.precio.toFixed(2) : p.precio }}</span>
+                      <div class="cat-buy-controls">
+                        <div class="cat-stepper">
+                        <button class="cat-step-btn" (click)="removeItem(p)" [disabled]="getQty(p.id) === 0"><i class="fas fa-minus"></i></button>
+                        <span class="cat-step-num">{{ getQty(p.id) }}</span>
+                        <button class="cat-step-btn cat-step-add" (click)="addItem(p)"
+                                [disabled]="p.stockLimitado && getQty(p.id) >= p.stock">
+                          <i class="fas fa-plus"></i>
+                        </button>
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
 
   </div>
+
+  <!-- Floating cart -->
+  <div class="cat-cart-float" *ngIf="!loading && !error && !orderCode && !checkoutMode && cart.length > 0">
+    <button class="cat-cart-float-btn" (click)="startCheckout()">
+      <i class="fas fa-shopping-basket"></i>
+      <span>Ver pedido · ${{ cartTotal.toFixed(2) }}</span>
+      <span class="cat-cart-float-count">{{ cartCount }}</span>
+    </button>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+
+    
+
 </div>

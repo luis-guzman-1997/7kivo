@@ -35,7 +35,8 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isAdminRoute =
       url.startsWith('/admin') ||
       url.startsWith('/superadmin') ||
-      url.startsWith('/privacidad');
+      url.startsWith('/privacidad') ||
+      url.startsWith('/tienda');
   }
 
   ngOnInit(): void {}

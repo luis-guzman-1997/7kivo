@@ -1357,6 +1357,76 @@ export class FirebaseService {
     return snap.exists() ? snap.data() : null;
   }
 
+  // ==================== WEB DELIVERY ====================
+
+  async getWebDeliveryItems(flowId: string): Promise<any[]> {
+    const colRef = collection(this.db, this.orgPath(), 'webdelivery');
+    const q = query(colRef, where('flowId', '==', flowId));
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a: any, b: any) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+  }
+
+  async addWebDeliveryItem(flowId: string, data: DocumentData): Promise<string> {
+    return this.addDocument('webdelivery', { ...data, flowId });
+  }
+
+  async updateWebDeliveryItem(itemId: string, data: DocumentData): Promise<void> {
+    await this.updateDocument('webdelivery', itemId, data);
+  }
+
+  async deleteWebDeliveryItem(itemId: string): Promise<void> {
+    await this.deleteDocument('webdelivery', itemId);
+  }
+
+  async syncPublicStore(flowId: string): Promise<void> {
+    const orgId = this.getOrgId();
+    const [items, flow, contact] = await Promise.all([
+      this.getWebDeliveryItems(flowId),
+      this.getFlow(flowId),
+      this.getDocument('info', 'contact'),
+    ]);
+    if (!flow) return;
+    const waPhone = ((contact as any)?.phone || '').replace(/\D/g, '');
+    const webSteps = (flow.steps || [])
+      .filter((s: any) => s.source === 'web')
+      .map((s: any) => ({
+        id: s.id, type: s.type, prompt: s.prompt,
+        fieldKey: s.fieldKey, fieldLabel: s.fieldLabel,
+        required: s.required !== false,
+        customOptions: s.customOptions || [],
+        optionsSource: s.optionsSource || 'custom',
+      }));
+    const storeDoc = doc(this.db, 'organizations', orgId, 'public', 'stores');
+    await setDoc(
+      doc(this.db, 'organizations', orgId, 'public', 'store_' + flowId),
+      {
+        flowId,
+        storeImage: flow.storeImage || '',
+        storeColor: flow.storeColor || '#2e7d32',
+        menuLabel:  flow.menuLabel  || flow.name || '',
+        webSteps,
+        products: items,
+        waPhone,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: false }
+    );
+  }
+
+  async getPublicStore(orgId: string, flowId: string): Promise<any | null> {
+    const docRef = doc(this.db, 'organizations', orgId, 'public', 'store_' + flowId);
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async saveOrderPublic(orgId: string, data: DocumentData): Promise<string> {
+    const colRef = collection(this.db, 'organizations', orgId, 'orders');
+    const docRef = await addDoc(colRef, { ...data, createdAt: serverTimestamp() });
+    return docRef.id;
+  }
+
   async savePublicOrgInfo(orgId: string, data: { privacyPolicy?: string; orgName?: string; orgLogo?: string; botApiUrl?: string }): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId, 'public', 'info');
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });

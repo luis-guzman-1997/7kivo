@@ -60,6 +60,10 @@
             <i class="fas fa-calendar-check"></i>
             <span>Citas</span>
           </a>
+          <a *ngIf="authService.orgIndustry === 'delivery' && authService.hasPermission('collections')" routerLink="/admin/webdelivery" routerLinkActive="active" class="nav-item-admin">
+            <i class="fas fa-store"></i>
+            <span>WebDelivery</span>
+          </a>
           <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
             <i class="fas fa-database"></i>
             <span>Base de Datos</span>
