@@ -33,6 +33,7 @@ interface FlowStep {
   source?: 'web' | 'bot' | 'order';
   orderField?: string;
   allowWebConfirm?: boolean;
+  showInPanel?: boolean;
   preMessageType?: 'none' | 'text' | 'image' | 'link';
   preMessage?: string;
   preMessageImage?: string;
@@ -419,6 +420,7 @@ export class FlowBuilderComponent implements OnInit {
       timeFieldKey: '',
       lookupCollection: '', authField: '', resultTemplate: '', notFoundMessage: '', maxRetries: 3,
       lookupField: '', foundTemplate: '',
+      showInPanel: true,
       preMessageType: 'none', preMessage: '', preMessageImage: '', preMessageLinkUrl: '', preMessageLinkLabel: ''
     };
   }

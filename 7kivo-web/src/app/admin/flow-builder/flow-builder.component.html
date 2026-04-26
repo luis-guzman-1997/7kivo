@@ -747,8 +747,16 @@
                   </div>
                 </div>
 
+                <!-- Mostrar en panel admin -->
+                <div class="fe-field" *ngIf="step.type !== 'message'">
+                  <label class="fe-check-label">
+                    <input type="checkbox" [(ngModel)]="step.showInPanel" />
+                    Mostrar en el detalle del pedido (panel admin)
+                  </label>
+                </div>
+
                 <!-- Pre-mensaje -->
-                <div class="fe-field" *ngIf="!step.source || step.source === 'bot'">
+                <div class="fe-field" *ngIf="step.source !== 'web'">
                   <label>Mensaje previo <span class="fe-hint-inline">(opcional — se envía antes de la pregunta)</span></label>
                   <div class="fe-src-row" style="margin-bottom:10px">
                     <button class="fe-src-btn" [class.fe-src-active]="!step.preMessageType || step.preMessageType === 'none'"

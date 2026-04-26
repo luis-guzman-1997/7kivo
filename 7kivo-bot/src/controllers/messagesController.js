@@ -321,6 +321,16 @@ const requestMessageFromWhatsapp = async (req, res) => {
       console.error("Error saving user message:", err.message)
     );
 
+    // Order code takes absolute priority — process before mode/session checks
+    if (userMessage) {
+      const earlyOrderMatch = userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
+      if (earlyOrderMatch) {
+        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        await handleOrderCode(phoneNumber, earlyOrderMatch[0].toUpperCase());
+        return res.sendStatus(200);
+      }
+    }
+
     // Check conversation mode - if admin is handling, don't process
     const mode = await getConversationMode(phoneNumber);
     if (mode === "admin") {
@@ -369,15 +379,8 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
     if (session.step === "initial" || !session.hasGreeted) {
       if (phoneNumber) {
-        // Order code takes priority even on first message (user came from web store)
-        const orderCodeMatch = userMessage && userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
-        if (orderCodeMatch) {
-          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
-          await handleOrderCode(phoneNumber, orderCodeMatch[0].toUpperCase());
-        } else {
-          await sendGreeting(phoneNumber, contactName);
-          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
-        }
+        await sendGreeting(phoneNumber, contactName);
+        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
       }
     } else {
       if (phoneNumber) {
@@ -2003,16 +2006,6 @@ const handleOrderCode = async (phoneNumber, code) => {
     return;
   }
 
-  if (flow.cancelHintEnabled !== false) {
-    const cancelHint = flow.cancelHint?.trim()
-      || await getMessage('flow_cancel_hint', 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.');
-    if (flow.cancelHintImage) {
-      await sendImageMessage(flow.cancelHintImage, cancelHint, phoneNumber);
-    } else {
-      await sendTextMessage(cancelHint, phoneNumber);
-    }
-  }
-
   setSession(phoneNumber, { step: 'flow_pending', flowId: flow.id, flowStepIndex: firstBotIndex, flowData, flowStartTime: Date.now() });
   await executeFlowStep(phoneNumber, flow, firstBotIndex);
 };
@@ -2036,15 +2029,7 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
-  // Order code pattern: PED-YYYYMMDD-XXXX — only outside an active flow step
-  const inFlowStep = session.step && session.step.startsWith("flow_");
-  if (!inFlowStep) {
-    const orderCodeMatch = message.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
-    if (orderCodeMatch) {
-      await handleOrderCode(phoneNumber, orderCodeMatch[0].toUpperCase());
-      return;
-    }
-  }
+  // Note: PED- order codes are already handled before reaching this function
 
   // Handle active flow text/number input
   if (session.step === "flow_text") {

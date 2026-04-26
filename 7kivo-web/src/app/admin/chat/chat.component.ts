@@ -98,6 +98,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   resolveConfirmCode = '';
   resolveCodeError = '';
   deliverySubmission: any = null;
+  deliveryFlow: any = null;
   showDeliveryDetail = false;
   showPromoBanner = false;
 
@@ -168,6 +169,9 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (this.deliverySubmissionId && this.deliveryCollection) {
           const sub = await this.firebaseService.getDocument(this.deliveryCollection, this.deliverySubmissionId);
           this.deliverySubmission = sub || null;
+          if (sub?.flowId) {
+            try { this.deliveryFlow = await this.firebaseService.getFlow(sub.flowId); } catch { /* silent */ }
+          }
           // Si el caso ya fue resuelto/cancelado, salir del modo delivery → chat normal
           if (sub?.status === 'resolved' || sub?.status === 'cancelled') {
             this.isDeliveryMode = false;
@@ -1073,23 +1077,37 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   getDeliverySubmissionFields(): { label: string; value: string }[] {
     if (!this.deliverySubmission) return [];
+
+    // If flow definition is available, use it to filter, order and label fields
+    const steps: any[] = this.deliveryFlow?.steps || [];
+    const panelSteps = steps.filter(s =>
+      s.fieldKey && s.showInPanel !== false &&
+      s.type !== 'message' && s.type !== 'browse_collection'
+    );
+
+    if (panelSteps.length > 0) {
+      const fields: { label: string; value: string }[] = [];
+      for (const step of panelSteps) {
+        const val = this.deliverySubmission[step.fieldKey];
+        if (val === null || val === undefined || val === '') continue;
+        if (typeof val === 'object') continue;
+        fields.push({ label: step.fieldLabel || step.fieldKey, value: String(val) });
+      }
+      return fields;
+    }
+
+    // Fallback: show all non-system fields
     const skip = ['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
                    'flowId', 'flowName', 'phoneNumber', 'confirmed', 'assignedTo', 'resolvedBy',
-                   'deliveryCode', 'cancelCount', 'assignedAt'];
-    const labels: Record<string, string> = {
-      fullName: 'Nombre', name: 'Nombre', nombre: 'Nombre',
-      direccion: 'Dirección', address: 'Dirección',
-      productos: 'Productos', items: 'Ítems', detalle: 'Detalle',
-      descripcion: 'Descripción', comment: 'Comentario', motivo: 'Motivo',
-      fecha: 'Fecha', hora: 'Hora', telefono: 'Teléfono',
-    };
+                   'deliveryCode', 'cancelCount', 'assignedAt', 'startLat', 'startLng',
+                   'unattendedNotified', 'unattendedAt'];
     const fields: { label: string; value: string }[] = [];
     for (const [key, val] of Object.entries(this.deliverySubmission)) {
       if (skip.includes(key) || val === null || val === undefined || val === '') continue;
       if (typeof val === 'object') continue;
       if (key.startsWith('_')) continue;
       if (key.endsWith('Id')) continue;
-      const label = labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
       fields.push({ label, value: String(val) });
     }
     return fields;
