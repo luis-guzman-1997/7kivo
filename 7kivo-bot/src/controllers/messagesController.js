@@ -47,27 +47,10 @@ const sendTextMessage = async (text, phoneNumber) => {
   return result;
 };
 
-// ==================== WEBHOOK HANDLERS ====================
+// ==================== WEBHOOK HANDLERS (multi-tenant) ====================
 
-const apiVerification = async (req, res) => {
-  try {
-    const {
-      'hub.mode': mode,
-      'hub.verify_token': token,
-      'hub.challenge': challenge
-    } = req.query;
-
-    if (mode && token && mode === 'subscribe' && token === process.env.VERIFY_META_TOKEN) {
-      return res.status(200).send(challenge);
-    } else {
-      return res.status(403).send('Forbidden');
-    }
-  } catch (error) {
-    return res.status(500).send(error);
-  }
-};
-
-const requestMessageFromWhatsapp = async (req, res) => {
+const requestMessageFromWhatsapp_UNUSED = async (req, res) => {
+  // Deprecated: use requestMessageMulti (/auth/:orgId)
   try {
     const change = req.body?.entry?.[0]?.changes?.[0];
     const messageObj = change?.value?.messages?.[0];
@@ -324,7 +307,7 @@ const requestMessageFromWhatsapp = async (req, res) => {
     // Order code: always takes priority over any session state
     if (userMessage) {
       const earlyOrderMatch = userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
-      console.log('[PED-CHECK] msg:', JSON.stringify(userMessage.substring(0, 60)), '| match:', earlyOrderMatch?.[0] || 'none');
+
       if (earlyOrderMatch) {
         setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
         await handleOrderCode(phoneNumber, earlyOrderMatch[0].toUpperCase());
@@ -2507,8 +2490,6 @@ const requestMessageMulti = async (req, res) => {
 };
 
 module.exports = {
-  apiVerification,
-  requestMessageFromWhatsapp,
   apiVerificationMulti,
   requestMessageMulti
 };
