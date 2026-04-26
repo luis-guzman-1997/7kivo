@@ -2029,11 +2029,14 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
-  // Order code pattern: PED-YYYYMMDD-XXXX (can appear anywhere in the message)
-  const orderCodeMatch = message.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
-  if (orderCodeMatch) {
-    await handleOrderCode(phoneNumber, orderCodeMatch[0].toUpperCase());
-    return;
+  // Order code pattern: PED-YYYYMMDD-XXXX — only outside an active flow step
+  const inFlowStep = session.step && session.step.startsWith("flow_");
+  if (!inFlowStep) {
+    const orderCodeMatch = message.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
+    if (orderCodeMatch) {
+      await handleOrderCode(phoneNumber, orderCodeMatch[0].toUpperCase());
+      return;
+    }
   }
 
   // Handle active flow text/number input
