@@ -237,8 +237,9 @@ export class CatalogComponent implements OnInit {
       const rand    = Math.random().toString(36).slice(2, 6).toUpperCase();
       const code    = `PED-${dateStr}-${rand}`;
 
-      const itemsText = this.cart.map(c => `${c.qty}x ${c.product.nombre}`).join(', ');
-      const total     = this.cartTotal;
+      const itemsText  = this.cart.map(c => `${c.qty}x ${c.product.nombre}`).join(', ');
+      const itemsList  = this.cart.map(c => `• ${c.qty}x ${c.product.nombre}`).join('\n');
+      const total      = this.cartTotal;
       const totalText = `$${total.toFixed(2)}`;
       const items     = this.cart.map(c => ({
         productId: c.product.id, name: c.product.nombre,
@@ -277,7 +278,7 @@ export class CatalogComponent implements OnInit {
         console.log('[DEBUG] Firebase OK ✓');
       }
 
-      const msg = encodeURIComponent(`Mi pedido: ${code}\n${itemsText}\nTotal: ${totalText}`);
+      const msg = encodeURIComponent(`Mi pedido: ${code}\n${itemsList}\nTotal: ${totalText}`);
       const link = this.waPhone
         ? `https://wa.me/${this.waPhone}?text=${msg}`
         : `https://wa.me/?text=${msg}`;
@@ -285,10 +286,10 @@ export class CatalogComponent implements OnInit {
 
     } catch (e: any) {
       console.error('[DEBUG] ERROR TOTAL en submitOrder:', e);
-      const itemsText = this.cart.map(c => `${c.qty}x ${c.product.nombre}`).join(', ');
+      const itemsList = this.cart.map(c => `• ${c.qty}x ${c.product.nombre}`).join('\n');
       const totalText = `$${this.cartTotal.toFixed(2)}`;
       if (this.waPhone) {
-        const msg = encodeURIComponent(`Hola, me gustaría hacer el siguiente pedido:\n${itemsText}\nTotal: ${totalText}`);
+        const msg = encodeURIComponent(`Hola, me gustaría hacer el siguiente pedido:\n${itemsList}\nTotal: ${totalText}`);
         this.openWhatsAppAndClose(`https://wa.me/${this.waPhone}?text=${msg}`);
       } else {
         this.checkoutError = 'Error al enviar el pedido. Por favor intenta nuevamente.';
