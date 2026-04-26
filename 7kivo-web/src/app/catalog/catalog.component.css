@@ -41,7 +41,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 .cat-logo-store {
-  height: 92px; max-width: 280px;
+  height: 74px; max-width: 224px;
   object-fit: contain; display: block;
 }
 .cat-logo-placeholder-store {
@@ -139,6 +139,23 @@
 }
 .cat-error-screen i  { font-size: 3rem; color: #e2e8f0; }
 .cat-error-screen h2 { font-size: 1.15rem; font-weight: 700; color: #1e293b; }
+.cat-error-back-btn {
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+  background: var(--cat-primary, #2e7d32);
+  color: #fff;
+  padding: 7px 10px;
+  font-size: .78rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.cat-error-back-btn:hover {
+  background: var(--cat-primary-dark, #256d2a);
+}
 
 .cat-empty {
   display: flex; flex-direction: column; align-items: center;
@@ -235,6 +252,7 @@
 .cat-form-opt:hover     { border-color: var(--cat-primary, #2e7d32); color: var(--cat-primary, #2e7d32); }
 .cat-form-opt.selected  { background: #f0fdf4; border-color: var(--cat-primary, #2e7d32); color: var(--cat-primary, #2e7d32); font-weight: 700; }
 .cat-form-error   { color: #dc2626; font-size: .82rem; padding: 8px 12px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca; }
+.cat-footer-error { margin-bottom: 10px; }
 
 .cat-place-btn {
   width: 100%; padding: 14px; background: #25D366; color: #fff; border: none;
@@ -452,7 +470,7 @@
 @media (min-width: 600px) {
   .cat-grid       { grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .cat-logo-org   { height: 46px; max-width: 110px; }
-  .cat-logo-store { height: 84px; max-width: 240px; }
+  .cat-logo-store { height: 67px; max-width: 192px; }
   .cat-title-main { font-size: 1rem; }
 }
 

@@ -1985,9 +1985,10 @@ const handleUserMessage = async (phoneNumber, message, session) => {
     return;
   }
 
-  // Order code pattern: PED-YYYYMMDD-XXXX
-  if (/^PED-\d{8}-[A-Z0-9]{4}$/i.test(message.trim())) {
-    await handleOrderCode(phoneNumber, message.trim().toUpperCase());
+  // Order code pattern: PED-YYYYMMDD-XXXX (can appear anywhere in the message)
+  const orderCodeMatch = message.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
+  if (orderCodeMatch) {
+    await handleOrderCode(phoneNumber, orderCodeMatch[0].toUpperCase());
     return;
   }
 

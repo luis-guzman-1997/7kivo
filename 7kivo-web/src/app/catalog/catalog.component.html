@@ -44,17 +44,27 @@
     <i class="fas fa-store-slash"></i>
     <h2>Tienda no disponible</h2>
     <p>{{ error }}</p>
+    <button class="cat-error-back-btn" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i>
+      Regresar
+    </button>
   </div>
 
   <!-- ===== SUCCESS ===== -->
   <div *ngIf="orderCode" class="cat-success-screen">
     <div class="cat-success-card">
       <div class="cat-check-ring"><i class="fas fa-check"></i></div>
-      <h2>¡Pedido generado!</h2>
-      <p>Tu código de pedido es:</p>
-      <div class="cat-order-code">{{ orderCode }}</div>
-      <p class="cat-success-hint">Toca el botón para enviar tu código por WhatsApp y confirmar tu pedido.</p>
-      <a [href]="waLink" class="cat-wa-btn">
+      <ng-container *ngIf="orderCode !== 'WA'">
+        <h2>¡Pedido generado!</h2>
+        <p>Tu código de pedido es:</p>
+        <div class="cat-order-code">{{ orderCode }}</div>
+        <p class="cat-success-hint">Toca el botón para enviar tu código por WhatsApp y confirmar tu pedido.</p>
+      </ng-container>
+      <ng-container *ngIf="orderCode === 'WA'">
+        <h2>¡Listo!</h2>
+        <p class="cat-success-hint">Toca el botón para enviar tu pedido directamente por WhatsApp.</p>
+      </ng-container>
+      <a [href]="waLink" target="_blank" rel="noopener" class="cat-wa-btn">
         <i class="fab fa-whatsapp"></i> Confirmar por WhatsApp
       </a>
       <button class="cat-restart-btn" (click)="resetOrder()">
@@ -117,10 +127,11 @@
         </div>
       </div>
 
-      <p *ngIf="error" class="cat-form-error">{{ error }}</p>
+      <p *ngIf="checkoutError" class="cat-form-error">{{ checkoutError }}</p>
     </div>
 
     <div class="cat-checkout-footer">
+      <p *ngIf="checkoutError" class="cat-form-error cat-footer-error">{{ checkoutError }}</p>
       <button class="cat-place-btn" (click)="submitOrder()" [disabled]="submitting">
         <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
         <i class="fab fa-whatsapp" *ngIf="!submitting"></i>

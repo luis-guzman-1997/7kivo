@@ -370,6 +370,10 @@
             <span class="mono">{{ orgWhatsApp?.phoneNumberId || '—' }}</span>
           </div>
           <div class="detail-item">
+            <label>Número WhatsApp del Bot</label>
+            <span class="mono">{{ orgDetail?.waPhone || '—' }}</span>
+          </div>
+          <div class="detail-item">
             <label>Verify Token</label>
             <span class="mono">{{ orgWhatsApp?.verifyToken || '—' }}</span>
           </div>
@@ -394,6 +398,10 @@
             <label>Verify Token</label>
             <input type="text" [(ngModel)]="editWA.verifyToken" placeholder="mi_token_verificacion" />
           </div>
+        </div>
+        <div class="form-group">
+          <label>Número WhatsApp del Bot <small style="color:#6b7280">(sin +, ej: 50370123456)</small></label>
+          <input type="text" [(ngModel)]="editWA.waPhone" placeholder="50370123456" />
         </div>
         <div class="form-actions">
           <button class="btn-save" (click)="saveWA()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>

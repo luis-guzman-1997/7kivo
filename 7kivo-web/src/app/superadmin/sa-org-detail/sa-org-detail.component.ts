@@ -465,7 +465,8 @@ export class SaOrgDetailComponent implements OnInit {
       token: this.orgWhatsApp?.token || '',
       phoneNumberId: this.orgWhatsApp?.phoneNumberId || '',
       verifyToken: this.orgWhatsApp?.verifyToken || '',
-      botApiUrl: this.orgDetail?.botApiUrl || ''
+      botApiUrl: this.orgDetail?.botApiUrl || '',
+      waPhone: this.orgDetail?.waPhone || ''
     };
     this.editingWA = true;
     this.apiTestResult = null;
@@ -515,9 +516,10 @@ export class SaOrgDetailComponent implements OnInit {
         verifyToken: this.editWA.verifyToken
       });
       if (this.editWA.botApiUrl !== undefined) {
-        await this.firebaseService.saveOrgConfigByOrgId(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl });
-        await this.firebaseService.savePublicOrgInfo(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl });
-        this.orgDetail = { ...this.orgDetail, botApiUrl: this.editWA.botApiUrl };
+        const waPhone = (this.editWA.waPhone || '').replace(/\D/g, '');
+        await this.firebaseService.saveOrgConfigByOrgId(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl, waPhone });
+        await this.firebaseService.savePublicOrgInfo(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl, waPhone });
+        this.orgDetail = { ...this.orgDetail, botApiUrl: this.editWA.botApiUrl, waPhone };
       }
       this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken };
       this.editingWA = false;

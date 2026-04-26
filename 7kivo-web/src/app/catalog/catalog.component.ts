@@ -37,6 +37,7 @@ export class CatalogComponent implements OnInit {
   orderCode = '';
   waLink = '';
   error = '';
+  checkoutError = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -57,6 +58,8 @@ export class CatalogComponent implements OnInit {
       this.orgName   = publicInfo?.orgName  || '';
       this.orgLogo   = publicInfo?.orgLogo  || '';
       this.botApiUrl = publicInfo?.botApiUrl || '';
+      // waPhone from public/info takes priority over store doc (set by SA)
+      if (publicInfo?.waPhone) this.waPhone = publicInfo.waPhone;
 
       if (!store) {
         this.error = 'Catálogo no encontrado o no está disponible.';
@@ -74,7 +77,8 @@ export class CatalogComponent implements OnInit {
       this.flow     = store;
       this.products = (store.products || []).filter((p: any) => p.disponible !== false);
       this.webSteps = store.webSteps || [];
-      this.waPhone  = store.waPhone  || '';
+      // public/info.waPhone (set by SA) takes priority; fall back to store doc
+      if (!this.waPhone) this.waPhone = store.waPhone || '';
 
       const cats = [...new Set<string>(this.products.map((p: any) => p.categoria || 'General'))];
       this.categories = cats;
@@ -182,7 +186,14 @@ export class CatalogComponent implements OnInit {
   }
 
   backToCart(): void {
+    this.checkoutMode  = false;
+    this.checkoutError = '';
+  }
+
+  goBack(): void {
+    this.error = '';
     this.checkoutMode = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   private darken(hex: string, amount: number): string {
@@ -194,22 +205,31 @@ export class CatalogComponent implements OnInit {
   }
 
   resetOrder(): void {
-    this.orderCode    = '';
-    this.waLink       = '';
-    this.cart         = [];
-    this.checkoutMode = false;
-    this.webFormData  = {};
+    this.orderCode     = '';
+    this.waLink        = '';
+    this.cart          = [];
+    this.checkoutMode  = false;
+    this.webFormData   = {};
+    this.checkoutError = '';
   }
 
   async submitOrder(): Promise<void> {
+    console.log('[DEBUG] submitOrder iniciado');
+    console.log('[DEBUG] orgId:', this.orgId, '| flowId:', this.flowId);
+    console.log('[DEBUG] botApiUrl:', this.botApiUrl);
+    console.log('[DEBUG] waPhone:', this.waPhone);
+    console.log('[DEBUG] cart:', this.cart);
+    console.log('[DEBUG] webFormData:', this.webFormData);
+
     for (const step of this.webSteps) {
       if (step.required && !this.webFormData[step.fieldKey]) {
-        this.error = `"${step.fieldLabel || step.prompt}" es obligatorio.`;
-        setTimeout(() => this.error = '', 3000);
+        console.warn('[DEBUG] Campo obligatorio vacío:', step.fieldKey);
+        this.checkoutError = `"${step.fieldLabel || step.prompt}" es obligatorio.`;
         return;
       }
     }
     this.submitting = true;
+    this.checkoutError = '';
     try {
       const now     = new Date();
       const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -233,25 +253,52 @@ export class CatalogComponent implements OnInit {
         clientPhone: null,
       };
 
-      if (this.botApiUrl) {
-        await this.http
-          .post(`${this.botApiUrl}/api/${this.orgId}/orders`, orderData)
-          .toPromise();
+      console.log('[DEBUG] orderData:', orderData);
+
+      let saved = false;
+      const apiUrl = (this.botApiUrl || '').replace(/\/$/, '');
+      if (apiUrl) {
+        console.log('[DEBUG] Intentando bot API:', `${apiUrl}/api/${this.orgId}/orders`);
+        try {
+          await this.http.post(`${apiUrl}/api/${this.orgId}/orders`, orderData).toPromise();
+          saved = true;
+          console.log('[DEBUG] Bot API OK ✓');
+        } catch (botErr) {
+          console.warn('[DEBUG] Bot API falló, usando Firebase fallback:', botErr);
+        }
       } else {
+        console.log('[DEBUG] botApiUrl vacío, usando Firebase directo');
+      }
+
+      if (!saved) {
+        console.log('[DEBUG] Guardando en Firebase...');
         await this.firebaseService.saveOrderPublic(this.orgId, orderData);
+        console.log('[DEBUG] Firebase OK ✓');
       }
 
       this.orderCode = code;
-      const msg = encodeURIComponent(`Mi pedido: ${code}`);
+      const msg = encodeURIComponent(`Mi pedido: ${code}\n${itemsText}\nTotal: ${totalText}`);
       this.waLink = this.waPhone
         ? `https://wa.me/${this.waPhone}?text=${msg}`
         : `https://wa.me/?text=${msg}`;
+      console.log('[DEBUG] waLink generado:', this.waLink);
 
-    } catch {
-      this.error = 'Error al enviar el pedido. Intenta nuevamente.';
-      setTimeout(() => this.error = '', 4000);
+    } catch (e: any) {
+      console.error('[DEBUG] ERROR TOTAL en submitOrder:', e);
+      const itemsText = this.cart.map(c => `${c.qty}x ${c.product.nombre}`).join(', ');
+      const totalText = `$${this.cartTotal.toFixed(2)}`;
+      if (this.waPhone) {
+        console.log('[DEBUG] Fallback WA con detalle del carrito');
+        const msg = encodeURIComponent(`Hola, me gustaría hacer el siguiente pedido:\n${itemsText}\nTotal: ${totalText}`);
+        this.waLink = `https://wa.me/${this.waPhone}?text=${msg}`;
+        this.orderCode = 'WA';
+      } else {
+        console.error('[DEBUG] Sin waPhone y sin backend. No se puede completar el pedido.');
+        this.checkoutError = 'Error al enviar el pedido. Por favor intenta nuevamente.';
+      }
     } finally {
       this.submitting = false;
+      console.log('[DEBUG] submitOrder finalizado. orderCode:', this.orderCode, '| checkoutError:', this.checkoutError);
     }
   }
 }

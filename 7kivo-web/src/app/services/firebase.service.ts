@@ -1382,13 +1382,13 @@ export class FirebaseService {
 
   async syncPublicStore(flowId: string): Promise<void> {
     const orgId = this.getOrgId();
-    const [items, flow, contact] = await Promise.all([
+    const [items, flow, publicInfo] = await Promise.all([
       this.getWebDeliveryItems(flowId),
       this.getFlow(flowId),
-      this.getDocument('info', 'contact'),
+      getDoc(doc(this.db, 'organizations', orgId, 'public', 'info')),
     ]);
     if (!flow) return;
-    const waPhone = ((contact as any)?.phone || '').replace(/\D/g, '');
+    const waPhone = (publicInfo.exists() ? (publicInfo.data() as any)?.waPhone : '') || '';
     const webSteps = (flow.steps || [])
       .filter((s: any) => s.source === 'web')
       .map((s: any) => ({
@@ -1427,7 +1427,7 @@ export class FirebaseService {
     return docRef.id;
   }
 
-  async savePublicOrgInfo(orgId: string, data: { privacyPolicy?: string; orgName?: string; orgLogo?: string; botApiUrl?: string }): Promise<void> {
+  async savePublicOrgInfo(orgId: string, data: { privacyPolicy?: string; orgName?: string; orgLogo?: string; botApiUrl?: string; waPhone?: string }): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId, 'public', 'info');
     await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
   }
