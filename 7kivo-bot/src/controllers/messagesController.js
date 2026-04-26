@@ -1999,7 +1999,14 @@ const handleUserMessage = async (phoneNumber, message, session) => {
 
   // Cancel / exit keywords
   const cancelWords = ["cancelar", "salir", "volver", "cancel", "exit", "parar", "detener", "no quiero", "no gracias"];
-  const isCancelRequest = cancelWords.some(w => lowerMessage.includes(w));
+  const trimmed = lowerMessage.trim();
+  const isCancelRequest = cancelWords.some(w => {
+    // Exact match, or the word appears at start/end of a short message (≤ 30 chars)
+    // This prevents "Quiero cancelar en casa" from triggering cancellation
+    if (trimmed === w) return true;
+    if (trimmed.length <= 30 && (trimmed.startsWith(w) || trimmed.endsWith(w))) return true;
+    return false;
+  });
 
   if (isCancelRequest) {
     if (session.step && session.step.startsWith("flow_")) {
