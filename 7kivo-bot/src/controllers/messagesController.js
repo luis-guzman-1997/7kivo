@@ -369,8 +369,15 @@ const requestMessageFromWhatsapp = async (req, res) => {
 
     if (session.step === "initial" || !session.hasGreeted) {
       if (phoneNumber) {
-        await sendGreeting(phoneNumber, contactName);
-        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        // Order code takes priority even on first message (user came from web store)
+        const orderCodeMatch = userMessage && userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
+        if (orderCodeMatch) {
+          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+          await handleOrderCode(phoneNumber, orderCodeMatch[0].toUpperCase());
+        } else {
+          await sendGreeting(phoneNumber, contactName);
+          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        }
       }
     } else {
       if (phoneNumber) {
