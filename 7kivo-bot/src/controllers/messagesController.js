@@ -2460,6 +2460,16 @@ const requestMessageMulti = async (req, res) => {
         console.error("Error saving user message:", err.message)
       );
 
+      // Order code: always takes priority over any session state
+      if (userMessage) {
+        const earlyOrderMatch = userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
+        if (earlyOrderMatch) {
+          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+          await handleOrderCode(phoneNumber, earlyOrderMatch[0].toUpperCase());
+          return res.sendStatus(200);
+        }
+      }
+
       const mode = await getConversationMode(phoneNumber);
       if (mode === "admin") return res.sendStatus(200);
 
