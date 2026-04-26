@@ -32,6 +32,7 @@ export class CatalogComponent implements OnInit {
   sortMode: 'default' | 'priceAsc' | 'priceDesc' | 'nameAsc' = 'default';
   selectedPrice: 'all' | 'lt5' | '5to10' | 'gt10' = 'all';
   selectedBrands: string[] = [];
+  searchQuery = '';
 
   submitting = false;
   orderCode = '';
@@ -126,6 +127,7 @@ export class CatalogComponent implements OnInit {
     const idx = this.cart.findIndex(c => c.product.id === product.id);
     if (idx === -1) return;
     this.cart[idx].qty > 1 ? this.cart[idx].qty-- : this.cart.splice(idx, 1);
+    if (this.checkoutMode && this.cart.length === 0) this.backToCart();
   }
 
   get cartTotal(): number {
@@ -151,6 +153,7 @@ export class CatalogComponent implements OnInit {
   }
 
   get filteredProducts(): any[] {
+    const q = this.searchQuery.trim().toLowerCase();
     return this.products.filter((p: any) => {
       const price = Number(p?.precio) || 0;
       const brand = (p?.marca || '').toString().trim();
@@ -162,7 +165,13 @@ export class CatalogComponent implements OnInit {
         (this.selectedPrice === 'gt10' && price > 10);
 
       const matchBrand = this.selectedBrands.length === 0 || this.selectedBrands.includes(brand);
-      return matchPrice && matchBrand;
+
+      const matchSearch = !q ||
+        (p?.nombre || '').toLowerCase().includes(q) ||
+        (p?.descripcion || '').toLowerCase().includes(q) ||
+        (p?.categoria || '').toLowerCase().includes(q);
+
+      return matchPrice && matchBrand && matchSearch;
     });
   }
 
@@ -182,7 +191,6 @@ export class CatalogComponent implements OnInit {
   startCheckout(): void {
     this.webFormData  = {};
     this.checkoutMode = true;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   backToCart(): void {

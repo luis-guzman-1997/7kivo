@@ -24,8 +24,20 @@
 
     </div>
 
-    <!-- Fila 2: categorías -->
-    <div class="cat-cats-row" *ngIf="categories.length > 0">
+    <!-- Fila 2: buscador -->
+    <div class="cat-search-row">
+      <div class="cat-search-wrap">
+        <i class="fas fa-search cat-search-icon"></i>
+        <input class="cat-search-input" type="text" [(ngModel)]="searchQuery"
+               placeholder="Buscar producto..." autocomplete="off" />
+        <button *ngIf="searchQuery" class="cat-search-clear" (click)="searchQuery = ''">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Fila 3: categorías -->
+    <div class="cat-cats-row" *ngIf="categories.length > 0 && !searchQuery">
       <button class="cat-cat-btn" [class.active]="activeCategory === ''" (click)="setCategory('')">Todas</button>
       <button *ngFor="let c of categories" class="cat-cat-btn"
               [class.active]="activeCategory === c" (click)="setCategory(c)">{{ c }}</button>
@@ -82,8 +94,20 @@
             <img [src]="item.product.imagen" [alt]="item.product.nombre" />
           </div>
           <div class="cat-oi-info">
-            <span class="cat-oi-name">{{ item.qty }}× {{ item.product.nombre }}</span>
-            <span class="cat-oi-price">${{ (item.product.precio * item.qty).toFixed(2) }}</span>
+            <span class="cat-oi-name">{{ item.product.nombre }}</span>
+            <div class="cat-oi-controls">
+              <span class="cat-oi-price">${{ (item.product.precio * item.qty).toFixed(2) }}</span>
+              <div class="cat-oi-stepper">
+                <button class="cat-oi-btn" (click)="removeItem(item.product)">
+                  <i class="fas" [ngClass]="item.qty === 1 ? 'fa-trash' : 'fa-minus'"></i>
+                </button>
+                <span class="cat-oi-qty">{{ item.qty }}</span>
+                <button class="cat-oi-btn cat-oi-btn-add" (click)="addItem(item.product)"
+                        [disabled]="item.product.stockLimitado && item.qty >= item.product.stock">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="cat-order-total">
@@ -192,7 +216,8 @@
               <h2 class="cat-sec-title">{{ cat }}</h2>
               <div class="cat-grid">
                 <div *ngFor="let p of getByCategory(cat)" class="cat-card">
-                  <div class="cat-card-photo">
+                  <div class="cat-card-photo cat-card-tap"
+                       (click)="!(p.stockLimitado && p.stock === 0) && addItem(p)">
                     <img *ngIf="p.imagen" [src]="p.imagen" [alt]="p.nombre" loading="lazy" />
                     <div *ngIf="!p.imagen" class="cat-card-no-photo">
                       <i class="fas fa-utensils"></i>
@@ -201,19 +226,20 @@
                     <span class="cat-tag-low"  *ngIf="p.stockLimitado && p.stock > 0 && p.stock <= 5">Últimos {{ p.stock }}</span>
                   </div>
                   <div class="cat-card-info">
-                    <p class="cat-card-name">{{ p.nombre }}</p>
+                    <p class="cat-card-name cat-card-tap"
+                       (click)="!(p.stockLimitado && p.stock === 0) && addItem(p)">{{ p.nombre }}</p>
                     <p class="cat-card-desc" *ngIf="p.descripcion">{{ p.descripcion }}</p>
                     <div class="cat-card-bottom">
                       <span class="cat-card-price">${{ p.precio?.toFixed ? p.precio.toFixed(2) : p.precio }}</span>
                       <div class="cat-buy-controls">
                         <div class="cat-stepper">
-                        <button class="cat-step-btn" (click)="removeItem(p)" [disabled]="getQty(p.id) === 0"><i class="fas fa-minus"></i></button>
-                        <span class="cat-step-num">{{ getQty(p.id) }}</span>
-                        <button class="cat-step-btn cat-step-add" (click)="addItem(p)"
-                                [disabled]="p.stockLimitado && getQty(p.id) >= p.stock">
-                          <i class="fas fa-plus"></i>
-                        </button>
-                      </div>
+                          <button class="cat-step-btn" (click)="removeItem(p)" [disabled]="getQty(p.id) === 0"><i class="fas fa-minus"></i></button>
+                          <span class="cat-step-num">{{ getQty(p.id) }}</span>
+                          <button class="cat-step-btn cat-step-add" (click)="addItem(p)"
+                                  [disabled]="p.stockLimitado && getQty(p.id) >= p.stock">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

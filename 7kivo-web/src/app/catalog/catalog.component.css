@@ -103,6 +103,30 @@
 .cat-cart-empty-icon { color: #d1d5db; font-size: 1.1rem; flex-shrink: 0; }
 
 /* Fila 2: categorías */
+.cat-search-row {
+  padding: 6px 10px 4px;
+  max-width: 1200px; margin: 0 auto;
+}
+.cat-search-wrap {
+  position: relative; display: flex; align-items: center;
+}
+.cat-search-icon {
+  position: absolute; left: 10px; color: #9ca3af; font-size: .85rem; pointer-events: none;
+}
+.cat-search-input {
+  width: 100%; padding: 7px 32px 7px 30px;
+  border: 1.5px solid #e5e7eb; border-radius: 20px;
+  font-size: .85rem; background: #f8fafc; outline: none;
+  transition: border-color .15s;
+}
+.cat-search-input:focus { border-color: var(--cat-primary, #2e7d32); background: #fff; }
+.cat-search-clear {
+  position: absolute; right: 8px;
+  background: none; border: none; cursor: pointer;
+  color: #9ca3af; font-size: .8rem; padding: 2px 4px;
+}
+.cat-search-clear:hover { color: #4b5563; }
+
 .cat-cats-row {
   display: flex; gap: 6px; padding: 5px 10px 7px;
   overflow-x: auto; scrollbar-width: none;
@@ -167,9 +191,11 @@
    SUCCESS
 ================================================================ */
 .cat-success-screen {
-  min-height: 100vh; display: flex; align-items: center;
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center;
   justify-content: center; padding: 40px 20px;
   background: linear-gradient(135deg, #0f172a 0%, #1b5e20 100%);
+  overflow-y: auto;
 }
 .cat-success-card {
   background: #fff; border-radius: 24px; padding: 36px 24px;
@@ -209,8 +235,10 @@
    CHECKOUT
 ================================================================ */
 .cat-checkout-screen {
-  min-height: 100vh; display: flex; flex-direction: column;
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; flex-direction: column;
   background: #f4f6f9;
+  overflow-y: auto;
 }
 .cat-checkout-header {
   display: flex; align-items: center; gap: 12px;
@@ -234,9 +262,22 @@
 .cat-order-item    { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #f4f6f9; }
 .cat-oi-img        { width: 42px; height: 42px; border-radius: 8px; overflow: hidden; background: #f1f5f9; flex-shrink: 0; }
 .cat-oi-img img    { width: 100%; height: 100%; object-fit: cover; }
-.cat-oi-info       { flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.cat-oi-name       { font-size: .82rem; font-weight: 600; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cat-oi-price      { font-size: .82rem; font-weight: 700; color: var(--cat-primary, #2e7d32); flex-shrink: 0; }
+.cat-oi-info       { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.cat-oi-name       { font-size: .82rem; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-oi-controls   { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cat-oi-price      { font-size: .82rem; font-weight: 700; color: var(--cat-primary, #2e7d32); }
+.cat-oi-stepper    { display: flex; align-items: center; gap: 4px; }
+.cat-oi-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer;
+  background: #f1f5f9; color: #374151;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; transition: background .15s;
+}
+.cat-oi-btn:hover  { background: #e2e8f0; }
+.cat-oi-btn:disabled { opacity: .4; cursor: default; }
+.cat-oi-btn-add    { background: var(--cat-primary, #2e7d32); color: #fff; }
+.cat-oi-btn-add:hover { background: var(--cat-primary-dark, #256d2a); }
+.cat-oi-qty        { font-size: .85rem; font-weight: 700; min-width: 18px; text-align: center; }
 .cat-order-total   { display: flex; justify-content: space-between; padding: 13px 14px; font-size: .9rem; font-weight: 800; }
 .cat-total-val     { color: var(--cat-primary, #2e7d32); font-size: 1.05rem; }
 
@@ -343,6 +384,8 @@
 .cat-card-photo { position: relative; aspect-ratio: 1; overflow: hidden; background: #f9fafb; }
 .cat-card-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
 .cat-card:hover .cat-card-photo img { transform: scale(1.04); }
+.cat-card-tap { cursor: pointer; }
+.cat-card-tap:active { opacity: .75; }
 .cat-card-no-photo { display: flex; align-items: center; justify-content: center; height: 100%; color: #d1d5db; font-size: 2rem; }
 
 .cat-tag-out, .cat-tag-low {
