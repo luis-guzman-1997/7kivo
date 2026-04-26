@@ -321,17 +321,13 @@ const requestMessageFromWhatsapp = async (req, res) => {
       console.error("Error saving user message:", err.message)
     );
 
-    // Order code: process immediately if user is not mid-flow
+    // Order code: always takes priority over any session state
     if (userMessage) {
-      const currentSession = getSession(phoneNumber) || await getSessionAsync(phoneNumber);
-      const inFlowStep = currentSession?.step?.startsWith("flow_");
-      if (!inFlowStep) {
-        const earlyOrderMatch = userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
-        if (earlyOrderMatch) {
-          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
-          await handleOrderCode(phoneNumber, earlyOrderMatch[0].toUpperCase());
-          return res.sendStatus(200);
-        }
+      const earlyOrderMatch = userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
+      if (earlyOrderMatch) {
+        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        await handleOrderCode(phoneNumber, earlyOrderMatch[0].toUpperCase());
+        return res.sendStatus(200);
       }
     }
 
