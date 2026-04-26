@@ -221,13 +221,6 @@ export class CatalogComponent implements OnInit {
     console.log('[DEBUG] cart:', this.cart);
     console.log('[DEBUG] webFormData:', this.webFormData);
 
-    for (const step of this.webSteps) {
-      if (step.required && !this.webFormData[step.fieldKey]) {
-        console.warn('[DEBUG] Campo obligatorio vacío:', step.fieldKey);
-        this.checkoutError = `"${step.fieldLabel || step.prompt}" es obligatorio.`;
-        return;
-      }
-    }
     this.submitting = true;
     this.checkoutError = '';
     try {
@@ -276,29 +269,31 @@ export class CatalogComponent implements OnInit {
         console.log('[DEBUG] Firebase OK ✓');
       }
 
-      this.orderCode = code;
       const msg = encodeURIComponent(`Mi pedido: ${code}\n${itemsText}\nTotal: ${totalText}`);
-      this.waLink = this.waPhone
+      const link = this.waPhone
         ? `https://wa.me/${this.waPhone}?text=${msg}`
         : `https://wa.me/?text=${msg}`;
-      console.log('[DEBUG] waLink generado:', this.waLink);
+      this.openWhatsAppAndClose(link);
 
     } catch (e: any) {
       console.error('[DEBUG] ERROR TOTAL en submitOrder:', e);
       const itemsText = this.cart.map(c => `${c.qty}x ${c.product.nombre}`).join(', ');
       const totalText = `$${this.cartTotal.toFixed(2)}`;
       if (this.waPhone) {
-        console.log('[DEBUG] Fallback WA con detalle del carrito');
         const msg = encodeURIComponent(`Hola, me gustaría hacer el siguiente pedido:\n${itemsText}\nTotal: ${totalText}`);
-        this.waLink = `https://wa.me/${this.waPhone}?text=${msg}`;
-        this.orderCode = 'WA';
+        this.openWhatsAppAndClose(`https://wa.me/${this.waPhone}?text=${msg}`);
       } else {
-        console.error('[DEBUG] Sin waPhone y sin backend. No se puede completar el pedido.');
         this.checkoutError = 'Error al enviar el pedido. Por favor intenta nuevamente.';
       }
     } finally {
       this.submitting = false;
-      console.log('[DEBUG] submitOrder finalizado. orderCode:', this.orderCode, '| checkoutError:', this.checkoutError);
     }
+  }
+
+  private openWhatsAppAndClose(url: string): void {
+    this.waLink    = url;
+    this.orderCode = 'WA';
+    window.open(url, '_blank');
+    setTimeout(() => window.close(), 300);
   }
 }

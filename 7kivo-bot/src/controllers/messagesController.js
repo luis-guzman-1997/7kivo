@@ -1,5 +1,5 @@
 const { getSession, getSessionAsync, setSession, clearSession } = require("../config/sessionData");
-const { sendTextMessage: _rawSendText, sendInteractiveButtons, sendInteractiveList, sendImageMessage } = require("../models/messageModel");
+const { sendTextMessage: _rawSendText, sendInteractiveButtons, sendInteractiveList, sendImageMessage, sendCtaUrlMessage } = require("../models/messageModel");
 const {
   getMessage,
   getOrderByCode,
@@ -872,6 +872,17 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
   if ((step.source === 'web' || step.source === 'order') && !step.allowWebConfirm) {
     await executeFlowStep(phoneNumber, flow, stepIndex + 1);
     return;
+  }
+
+  // Pre-mensaje antes de la pregunta
+  if (step.preMessageType && step.preMessageType !== 'none') {
+    if (step.preMessageType === 'image' && step.preMessageImage) {
+      await sendImageMessage(step.preMessageImage, step.preMessage || '', phoneNumber);
+    } else if (step.preMessageType === 'link' && step.preMessageLinkUrl) {
+      await sendCtaUrlMessage(step.preMessage || '', step.preMessageLinkUrl, step.preMessageLinkLabel || 'Ver más', phoneNumber);
+    } else if (step.preMessage) {
+      await sendTextMessage(step.preMessage, phoneNumber);
+    }
   }
 
   switch (step.type) {

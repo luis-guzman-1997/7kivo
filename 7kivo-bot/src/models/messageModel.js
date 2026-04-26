@@ -356,6 +356,37 @@ const sendAudioMessage = async (audioUrl, phoneNumber, durationSeconds) => {
   }
 };
 
+const sendCtaUrlMessage = async (text, url, buttonLabel, phoneNumber) => {
+  try {
+    if (!phoneNumber) throw new Error("phoneNumber es requerido");
+    const { version, phoneId, token } = await getWACredentials();
+    const body = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "cta_url",
+        body: { text: text || url },
+        action: {
+          name: "cta_url",
+          parameters: {
+            display_text: (buttonLabel || "Ver más").substring(0, 20),
+            url
+          }
+        }
+      }
+    };
+    const config = { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } };
+    return await axios.post(`https://graph.facebook.com/${version}/${phoneId}/messages`, body, config);
+  } catch (error) {
+    const errData = error?.response?.data;
+    console.log("Error al enviar CTA URL:", errData);
+    const errMsg = errData?.error?.message || error?.message || "Failed to send CTA URL";
+    throw new Error(errMsg);
+  }
+};
+
 module.exports = {
   getWACredentials,
   sendTextMessage,
@@ -364,4 +395,5 @@ module.exports = {
   sendInteractiveImageButton,
   sendImageMessage,
   sendAudioMessage,
+  sendCtaUrlMessage,
 };

@@ -53,19 +53,11 @@
   <!-- ===== SUCCESS ===== -->
   <div *ngIf="orderCode" class="cat-success-screen">
     <div class="cat-success-card">
-      <div class="cat-check-ring"><i class="fas fa-check"></i></div>
-      <ng-container *ngIf="orderCode !== 'WA'">
-        <h2>¡Pedido generado!</h2>
-        <p>Tu código de pedido es:</p>
-        <div class="cat-order-code">{{ orderCode }}</div>
-        <p class="cat-success-hint">Toca el botón para enviar tu código por WhatsApp y confirmar tu pedido.</p>
-      </ng-container>
-      <ng-container *ngIf="orderCode === 'WA'">
-        <h2>¡Listo!</h2>
-        <p class="cat-success-hint">Toca el botón para enviar tu pedido directamente por WhatsApp.</p>
-      </ng-container>
+      <div class="cat-check-ring"><i class="fab fa-whatsapp"></i></div>
+      <h2>¡Pedido enviado!</h2>
+      <p class="cat-success-hint">Se abrió WhatsApp con tu pedido. Si no se abrió automáticamente, toca el botón.</p>
       <a [href]="waLink" target="_blank" rel="noopener" class="cat-wa-btn">
-        <i class="fab fa-whatsapp"></i> Confirmar por WhatsApp
+        <i class="fab fa-whatsapp"></i> Abrir WhatsApp
       </a>
       <button class="cat-restart-btn" (click)="resetOrder()">
         <i class="fas fa-redo"></i> Hacer otro pedido
@@ -105,7 +97,7 @@
         <h3 class="cat-form-title">Datos de entrega</h3>
         <div *ngFor="let step of webSteps" class="cat-form-field">
           <label class="cat-form-label">
-            {{ step.fieldLabel || step.prompt }}<span *ngIf="step.required" class="cat-req">*</span>
+            {{ step.fieldLabel || step.prompt }}
           </label>
           <input *ngIf="step.type === 'text_input'" type="text"
                  [value]="webFormData[step.fieldKey] || ''"

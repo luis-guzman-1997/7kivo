@@ -747,6 +747,65 @@
                   </div>
                 </div>
 
+                <!-- Pre-mensaje -->
+                <div class="fe-field" *ngIf="!step.source || step.source === 'bot'">
+                  <label>Mensaje previo <span class="fe-hint-inline">(opcional — se envía antes de la pregunta)</span></label>
+                  <div class="fe-src-row" style="margin-bottom:10px">
+                    <button class="fe-src-btn" [class.fe-src-active]="!step.preMessageType || step.preMessageType === 'none'"
+                            (click)="step.preMessageType = 'none'">
+                      <i class="fas fa-ban"></i> Ninguno
+                    </button>
+                    <button class="fe-src-btn" [class.fe-src-active]="step.preMessageType === 'text'"
+                            (click)="step.preMessageType = 'text'">
+                      <i class="fas fa-comment"></i> Texto
+                    </button>
+                    <button class="fe-src-btn" [class.fe-src-active]="step.preMessageType === 'image'"
+                            (click)="step.preMessageType = 'image'">
+                      <i class="fas fa-image"></i> Imagen
+                    </button>
+                    <button class="fe-src-btn" [class.fe-src-active]="step.preMessageType === 'link'"
+                            (click)="step.preMessageType = 'link'">
+                      <i class="fas fa-link"></i> Enlace
+                    </button>
+                  </div>
+
+                  <!-- Tipo: texto -->
+                  <ng-container *ngIf="step.preMessageType === 'text'">
+                    <textarea [(ngModel)]="step.preMessage" rows="2"
+                      placeholder="Ej: 📋 A continuación te haremos unas preguntas..."></textarea>
+                  </ng-container>
+
+                  <!-- Tipo: imagen -->
+                  <ng-container *ngIf="step.preMessageType === 'image'">
+                    <div class="img-upload-area" *ngIf="!step._preMessageImagePreview && !step.preMessageImage">
+                      <label class="img-upload-label">
+                        <input type="file" accept="image/*" (change)="onPreMessageImageSelected($event, step)" style="display:none" />
+                        <i class="fas fa-image"></i>
+                        <span>Seleccionar imagen</span>
+                      </label>
+                    </div>
+                    <div class="img-preview-wrap" *ngIf="step._preMessageImagePreview || step.preMessageImage">
+                      <img [src]="step._preMessageImagePreview || step.preMessageImage" alt="Preview" class="form-img-preview" />
+                      <button class="btn-remove-img" (click)="clearPreMessageImage(step)" type="button">
+                        <i class="fas fa-times"></i> Quitar
+                      </button>
+                    </div>
+                    <textarea [(ngModel)]="step.preMessage" rows="2" style="margin-top:8px"
+                      placeholder="Texto / pie de foto (opcional)"></textarea>
+                  </ng-container>
+
+                  <!-- Tipo: enlace -->
+                  <ng-container *ngIf="step.preMessageType === 'link'">
+                    <textarea [(ngModel)]="step.preMessage" rows="2"
+                      placeholder="Mensaje que acompaña al enlace..."></textarea>
+                    <input type="text" [(ngModel)]="step.preMessageLinkUrl" style="margin-top:8px;width:100%;box-sizing:border-box"
+                      placeholder="https://..." />
+                    <input type="text" [(ngModel)]="step.preMessageLinkLabel" style="margin-top:6px;width:100%;box-sizing:border-box"
+                      placeholder="Nombre del botón (ej: Ver menú, Más info)" maxlength="20" />
+                    <small style="color:#888;display:block;margin-top:4px">El nombre del botón tiene máximo 20 caracteres.</small>
+                  </ng-container>
+                </div>
+
                 <!-- Prompt -->
                 <div class="fe-field" *ngIf="step.source !== 'order' || step.allowWebConfirm">
                   <label>{{ step.type === 'message' ? 'Mensaje del bot' : step.type === 'phone_lookup' ? 'Mensaje previo a la verificación (opcional)' : '¿Qué le pregunta el bot?' }}</label>

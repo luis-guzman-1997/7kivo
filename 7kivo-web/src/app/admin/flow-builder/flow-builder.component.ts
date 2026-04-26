@@ -33,9 +33,16 @@ interface FlowStep {
   source?: 'web' | 'bot' | 'order';
   orderField?: string;
   allowWebConfirm?: boolean;
+  preMessageType?: 'none' | 'text' | 'image' | 'link';
+  preMessage?: string;
+  preMessageImage?: string;
+  preMessageLinkUrl?: string;
+  preMessageLinkLabel?: string;
   // UI-only fields (stripped before saving to Firebase)
   _originalFieldKey?: string;
   _fieldKeyChanged?: boolean;
+  _preMessageImageFile?: File | null;
+  _preMessageImagePreview?: string;
 }
 
 interface Flow {
@@ -409,7 +416,8 @@ export class FlowBuilderComponent implements OnInit {
       sourceCollection: '', displayField: '', detailFields: [],
       timeFieldKey: '',
       lookupCollection: '', authField: '', resultTemplate: '', notFoundMessage: '', maxRetries: 3,
-      lookupField: '', foundTemplate: ''
+      lookupField: '', foundTemplate: '',
+      preMessageType: 'none', preMessage: '', preMessageImage: '', preMessageLinkUrl: '', preMessageLinkLabel: ''
     };
   }
 
@@ -518,6 +526,23 @@ export class FlowBuilderComponent implements OnInit {
     setTimeout(() => this.notice = '', 2000);
   }
 
+  onPreMessageImageSelected(event: Event, step: FlowStep): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) { this.error = 'La imagen no debe superar 5 MB'; setTimeout(() => this.error = '', 3000); return; }
+    step._preMessageImageFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => { step._preMessageImagePreview = e.target!.result as string; };
+    reader.readAsDataURL(file);
+  }
+
+  clearPreMessageImage(step: FlowStep): void {
+    step._preMessageImageFile = null;
+    step._preMessageImagePreview = '';
+    step.preMessageImage = '';
+  }
+
   onCancelHintImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || !input.files[0]) return;
@@ -549,12 +574,23 @@ export class FlowBuilderComponent implements OnInit {
 
     this.saving = true;
     try {
+      const orgId = this.firebaseService.getOrgId();
+
       if (this.cancelHintImageFile) {
-        const orgId = this.firebaseService.getOrgId();
         const ext = this.cancelHintImageFile.name.split('.').pop() || 'jpg';
         const path = `organizations/${orgId}/flows/cancel-hint-${Date.now()}.${ext}`;
         this.currentFlow.cancelHintImage = await this.firebaseService.uploadFileByPath(this.cancelHintImageFile, path);
         this.cancelHintImageFile = null;
+      }
+
+      // Upload pre-message images per step
+      for (const step of this.currentFlow.steps) {
+        if (step._preMessageImageFile) {
+          const ext = step._preMessageImageFile.name.split('.').pop() || 'jpg';
+          const path = `organizations/${orgId}/flows/premsg-${Date.now()}.${ext}`;
+          step.preMessageImage = await this.firebaseService.uploadFileByPath(step._preMessageImageFile, path);
+          step._preMessageImageFile = null;
+        }
       }
 
       const data: any = { ...this.currentFlow };
@@ -565,6 +601,8 @@ export class FlowBuilderComponent implements OnInit {
           const clean = { ...s };
           delete clean._originalFieldKey;
           delete clean._fieldKeyChanged;
+          delete clean._preMessageImageFile;
+          delete clean._preMessageImagePreview;
           return clean;
         });
       }
