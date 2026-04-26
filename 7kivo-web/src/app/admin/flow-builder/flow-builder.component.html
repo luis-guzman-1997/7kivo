@@ -371,7 +371,7 @@
   <ng-container *ngIf="tourActive">
     <div class="tour-overlay" (click)="closeTour()"></div>
     <div class="tour-tooltip"
-         [class.tour-tooltip-wide]="activeTourSteps[tourStep]?.position === 'center'"
+         [class.tour-tooltip-wide]="activeTourSteps[tourStep].position === 'center'"
          [style.top.px]="tourTooltipTop" [style.left.px]="tourTooltipLeft"
          (click)="$event.stopPropagation()">
       <div class="tour-header">
@@ -737,10 +737,18 @@
                       <option *ngFor="let f of ORDER_FIELDS" [value]="f.key">{{ f.label }}</option>
                     </select>
                   </div>
+                  <!-- allowWebConfirm: only for text_input with web/order source -->
+                  <div *ngIf="(step.source === 'order' || step.source === 'web') && step.type === 'text_input'" style="margin-top:10px">
+                    <label class="fe-check-label">
+                      <input type="checkbox" [(ngModel)]="step.allowWebConfirm"
+                             (change)="!step.allowWebConfirm && (step.prompt = step.prompt || '')" />
+                      Pedir confirmación al cliente (el bot mostrará el valor y esperará ok o modificación)
+                    </label>
+                  </div>
                 </div>
 
                 <!-- Prompt -->
-                <div class="fe-field" *ngIf="step.source !== 'order'">
+                <div class="fe-field" *ngIf="step.source !== 'order' || step.allowWebConfirm">
                   <label>{{ step.type === 'message' ? 'Mensaje del bot' : step.type === 'phone_lookup' ? 'Mensaje previo a la verificación (opcional)' : '¿Qué le pregunta el bot?' }}</label>
                   <textarea [(ngModel)]="step.prompt" rows="2"
                     [placeholder]="step.type === 'message' ? 'Escribe el mensaje automático...' : step.type === 'phone_lookup' ? 'Ej: 🔍 Consultando tu información...' : 'Ej: ¿Cuál es tu nombre completo?'"></textarea>

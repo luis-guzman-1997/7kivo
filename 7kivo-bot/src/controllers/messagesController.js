@@ -868,15 +868,23 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
 
   const step = flow.steps[stepIndex];
 
-  // Skip steps pre-filled from web or order data
-  if (step.source === 'web' || step.source === 'order') {
+  // Skip steps pre-filled from web or order data (unless allowWebConfirm asks bot to show & confirm)
+  if ((step.source === 'web' || step.source === 'order') && !step.allowWebConfirm) {
     await executeFlowStep(phoneNumber, flow, stepIndex + 1);
     return;
   }
 
   switch (step.type) {
-    case "text_input":
-      await sendTextMessage(step.prompt, phoneNumber);
+    case "text_input": {
+      const cur = getSession(phoneNumber);
+      const preFilledValue = cur?.flowData?.[step.fieldKey];
+      if (step.allowWebConfirm && preFilledValue) {
+        const confirmPrompt = (step.prompt ? step.prompt + '\n\n' : '') +
+          `📋 *Texto sugerido:*\n${preFilledValue}\n\nResponde *ok* para confirmar, o escribe algo diferente.`;
+        await sendTextMessage(confirmPrompt, phoneNumber);
+      } else {
+        await sendTextMessage(step.prompt, phoneNumber);
+      }
       setSession(phoneNumber, {
         step: "flow_text",
         flowId: flow.id,
@@ -884,6 +892,7 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
         flowStartTime: Date.now()
       });
       break;
+    }
 
     case "number_input":
       await sendTextMessage(step.prompt, phoneNumber);
@@ -1297,6 +1306,18 @@ const handleFlowTextInput = async (phoneNumber, message, session) => {
 
   const step = flow.steps[session.flowStepIndex];
   const validation = step.validation || {};
+
+  // If step has allowWebConfirm and user confirms, keep the pre-filled value
+  if (step.allowWebConfirm) {
+    const preFilledValue = session.flowData?.[step.fieldKey];
+    const confirmWords = ['ok', 'confirmar', 'si', 'sí', '1', 'listo', 'confirmo'];
+    if (preFilledValue && confirmWords.includes(message.trim().toLowerCase())) {
+      const nextIndex = session.flowStepIndex + 1;
+      setSession(phoneNumber, { step: 'flow_pending', flowStepIndex: nextIndex, flowStartTime: Date.now() });
+      await executeFlowStep(phoneNumber, flow, nextIndex);
+      return;
+    }
+  }
 
   if (step.required && (!message || message.trim().length === 0)) {
     await sendTextMessage(step.errorMessage || "Este campo es requerido. Intenta de nuevo.", phoneNumber);

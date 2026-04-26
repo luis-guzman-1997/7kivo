@@ -25,7 +25,8 @@
       "Bash(node -e ':*)",
       "Bash(grep -v \"Use \\\\`node\")",
       "Bash(awk '{print $NF}')",
-      "Bash(node -e \"require\\('./src/controllers/catalogController'\\)\")"
+      "Bash(node -e \"require\\('./src/controllers/catalogController'\\)\")",
+      "Bash(tasklist)"
     ]
   }
 }

@@ -32,6 +32,7 @@ interface FlowStep {
   foundTemplate?: string;
   source?: 'web' | 'bot' | 'order';
   orderField?: string;
+  allowWebConfirm?: boolean;
   // UI-only fields (stripped before saving to Firebase)
   _originalFieldKey?: string;
   _fieldKeyChanged?: boolean;
