@@ -324,6 +324,7 @@ const requestMessageFromWhatsapp = async (req, res) => {
     // Order code: always takes priority over any session state
     if (userMessage) {
       const earlyOrderMatch = userMessage.match(/\bPED-\d{8}-[A-Z0-9]{4}\b/i);
+      console.log('[PED-CHECK] msg:', JSON.stringify(userMessage.substring(0, 60)), '| match:', earlyOrderMatch?.[0] || 'none');
       if (earlyOrderMatch) {
         setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
         await handleOrderCode(phoneNumber, earlyOrderMatch[0].toUpperCase());
