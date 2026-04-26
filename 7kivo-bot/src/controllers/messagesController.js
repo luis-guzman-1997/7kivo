@@ -841,12 +841,14 @@ const startFlow = async (phoneNumber, flowId) => {
     }
   }
 
-  const cancelHint = flow.cancelHint?.trim()
-    || await getMessage("flow_cancel_hint", "Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.\n");
-  if (flow.cancelHintImage) {
-    await sendImageMessage(flow.cancelHintImage, cancelHint, phoneNumber);
-  } else {
-    await sendTextMessage(cancelHint, phoneNumber);
+  if (flow.cancelHintEnabled !== false) {
+    const cancelHint = flow.cancelHint?.trim()
+      || await getMessage("flow_cancel_hint", "Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.\n");
+    if (flow.cancelHintImage) {
+      await sendImageMessage(flow.cancelHintImage, cancelHint, phoneNumber);
+    } else {
+      await sendTextMessage(cancelHint, phoneNumber);
+    }
   }
 
   setSession(phoneNumber, {
@@ -1986,12 +1988,14 @@ const handleOrderCode = async (phoneNumber, code) => {
     return;
   }
 
-  const cancelHint = flow.cancelHint?.trim()
-    || await getMessage('flow_cancel_hint', 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.');
-  if (flow.cancelHintImage) {
-    await sendImageMessage(flow.cancelHintImage, cancelHint, phoneNumber);
-  } else {
-    await sendTextMessage(cancelHint, phoneNumber);
+  if (flow.cancelHintEnabled !== false) {
+    const cancelHint = flow.cancelHint?.trim()
+      || await getMessage('flow_cancel_hint', 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.');
+    if (flow.cancelHintImage) {
+      await sendImageMessage(flow.cancelHintImage, cancelHint, phoneNumber);
+    } else {
+      await sendTextMessage(cancelHint, phoneNumber);
+    }
   }
 
   setSession(phoneNumber, { step: 'flow_pending', flowId: flow.id, flowStepIndex: firstBotIndex, flowData, flowStartTime: Date.now() });

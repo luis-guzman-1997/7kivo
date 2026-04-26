@@ -71,6 +71,7 @@ interface Flow {
   unattendedEnabled?: boolean;
   unattendedTimeoutHours?: number;
   unattendedMessage?: string;
+  cancelHintEnabled?: boolean;
   cancelHint?: string;
   cancelHintImage?: string;
   catalogCollection?: string;
@@ -397,6 +398,7 @@ export class FlowBuilderComponent implements OnInit {
       scheduleSlots: [{ days: [1,2,3,4,5], start: '07:00', end: '17:00' }],
       scheduleOffMessage: '',
       unattendedEnabled: false, unattendedTimeoutHours: 2, unattendedMessage: '',
+      cancelHintEnabled: true,
       cancelHint: 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.',
       catalogCollection: '',
       webStoreEnabled: false,
@@ -541,6 +543,14 @@ export class FlowBuilderComponent implements OnInit {
     step._preMessageImageFile = null;
     step._preMessageImagePreview = '';
     step.preMessageImage = '';
+  }
+
+  readonly DEFAULT_CANCEL_HINT = 'Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso.';
+
+  onCancelHintEnabledChange(): void {
+    if (this.currentFlow.cancelHintEnabled && !this.currentFlow.cancelHint?.trim()) {
+      this.currentFlow.cancelHint = this.DEFAULT_CANCEL_HINT;
+    }
   }
 
   onCancelHintImageSelected(event: Event): void {

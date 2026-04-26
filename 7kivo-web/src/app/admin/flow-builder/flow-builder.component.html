@@ -1127,30 +1127,36 @@
           </button>
         </div>
 
-        <!-- Bloque: Mensaje de confirmación -->
+        <!-- Bloque: Aviso de cancelación -->
         <div class="fe-block">
           <div class="fe-block-title"><i class="fas fa-ban"></i> Aviso de cancelación <span class="fe-help-tip" title="Se envía al usuario al iniciar este flujo">?</span></div>
           <p class="fe-hint">Mensaje que el bot envía al comenzar el flujo para indicar cómo cancelarlo.</p>
-          <div class="fe-field">
-            <textarea [(ngModel)]="currentFlow.cancelHint" rows="2"
-              placeholder="Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso."></textarea>
-          </div>
-          <div class="fe-field" style="margin-top:10px">
-            <label>Imagen (opcional, máx. 5 MB)</label>
-            <div class="img-upload-area" *ngIf="!cancelHintImagePreview">
-              <label class="img-upload-label">
-                <input type="file" accept="image/*" (change)="onCancelHintImageSelected($event)" style="display:none" />
-                <i class="fas fa-image"></i>
-                <span>Seleccionar imagen</span>
-              </label>
+          <label class="fe-check" style="margin-bottom:10px">
+            <input type="checkbox" [(ngModel)]="currentFlow.cancelHintEnabled" (ngModelChange)="onCancelHintEnabledChange()" />
+            Mostrar aviso de cancelación
+          </label>
+          <ng-container *ngIf="currentFlow.cancelHintEnabled">
+            <div class="fe-field">
+              <textarea [(ngModel)]="currentFlow.cancelHint" rows="2"
+                placeholder="Puedes escribir *cancelar* o *salir* en cualquier momento para detener el proceso."></textarea>
             </div>
-            <div class="img-preview-wrap" *ngIf="cancelHintImagePreview">
-              <img [src]="cancelHintImagePreview" alt="Preview" class="form-img-preview" />
-              <button class="btn-remove-img" (click)="clearCancelHintImage()" type="button">
-                <i class="fas fa-times"></i> Quitar
-              </button>
+            <div class="fe-field" style="margin-top:10px">
+              <label>Imagen (opcional, máx. 5 MB)</label>
+              <div class="img-upload-area" *ngIf="!cancelHintImagePreview">
+                <label class="img-upload-label">
+                  <input type="file" accept="image/*" (change)="onCancelHintImageSelected($event)" style="display:none" />
+                  <i class="fas fa-image"></i>
+                  <span>Seleccionar imagen</span>
+                </label>
+              </div>
+              <div class="img-preview-wrap" *ngIf="cancelHintImagePreview">
+                <img [src]="cancelHintImagePreview" alt="Preview" class="form-img-preview" />
+                <button class="btn-remove-img" (click)="clearCancelHintImage()" type="button">
+                  <i class="fas fa-times"></i> Quitar
+                </button>
+              </div>
             </div>
-          </div>
+          </ng-container>
         </div>
 
         <!-- Tienda Web (solo orgs delivery) -->
