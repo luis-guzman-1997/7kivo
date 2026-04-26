@@ -870,10 +870,18 @@ const executeFlowStep = async (phoneNumber, flow, stepIndex) => {
 
   const step = flow.steps[stepIndex];
 
-  // Skip steps pre-filled from web or order data (unless allowWebConfirm asks bot to show & confirm)
-  if ((step.source === 'web' || step.source === 'order') && !step.allowWebConfirm) {
+  // Skip web steps always (only filled via web form)
+  if (step.source === 'web' && !step.allowWebConfirm) {
     await executeFlowStep(phoneNumber, flow, stepIndex + 1);
     return;
+  }
+  // Skip order steps only if already pre-filled (web order flow); if direct WhatsApp, ask normally
+  if (step.source === 'order' && !step.allowWebConfirm) {
+    const sessionData = getSession(phoneNumber);
+    if (sessionData?.flowData?.[step.fieldKey]) {
+      await executeFlowStep(phoneNumber, flow, stepIndex + 1);
+      return;
+    }
   }
 
   // Pre-mensaje antes de la pregunta
