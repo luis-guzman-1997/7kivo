@@ -3,7 +3,7 @@ import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore, Firestore, collection, doc, getDocs, getDoc, addDoc,
   updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp,
-  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp, runTransaction, deleteField
+  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp, runTransaction, deleteField, arrayUnion, arrayRemove
 } from 'firebase/firestore';
 import {
   getStorage, FirebaseStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll
@@ -65,6 +65,13 @@ export class FirebaseService {
     const userDocRef = doc(this.db, 'users', uid);
     return onSnapshot(userDocRef, (snap) => {
       callback(snap.exists() ? (snap.data()?.['sessionToken'] ?? null) : null);
+    });
+  }
+
+  watchUserExtraPermissions(uid: string, callback: (perms: string[]) => void): Unsubscribe {
+    return onSnapshot(doc(this.db, 'users', uid), (snap) => {
+      const perms = snap.exists() ? (snap.data()?.['extraPermissions'] ?? []) : [];
+      callback(perms);
     });
   }
 
@@ -406,6 +413,19 @@ export class FirebaseService {
 
   async updateAdmin(adminId: string, data: DocumentData): Promise<void> {
     await this.updateDocument('admins', adminId, data);
+  }
+
+  async setAdminTempPermission(adminId: string, key: string, value: { label: string; expiresAt: Date | null } | null): Promise<void> {
+    const ref = doc(this.db, this.orgPath(), 'admins', adminId);
+    await updateDoc(ref, { [`tempPermissions.${key}`]: value ?? deleteField() });
+  }
+
+  async grantUserExtraPermission(uid: string, key: string): Promise<void> {
+    await updateDoc(doc(this.db, 'users', uid), { extraPermissions: arrayUnion(key) });
+  }
+
+  async revokeUserExtraPermission(uid: string, key: string): Promise<void> {
+    await updateDoc(doc(this.db, 'users', uid), { extraPermissions: arrayRemove(key) });
   }
 
   async deleteAdmin(adminId: string): Promise<void> {

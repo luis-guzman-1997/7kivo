@@ -49,6 +49,12 @@
           <span>Mapa Delivery</span>
         </a>
 
+        <!-- WebDelivery: visible a cualquier rol con el permiso (incluye delivery con acceso extra) -->
+        <a *ngIf="authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="nav-item-admin">
+          <i class="fas fa-store"></i>
+          <span>WebDelivery</span>
+        </a>
+
         <!-- Bot -->
         <ng-container *ngIf="!isDeliveryRole">
           <div class="nav-section-label">Bot</div>
@@ -59,10 +65,6 @@
           <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/citas" routerLinkActive="active" class="nav-item-admin">
             <i class="fas fa-calendar-check"></i>
             <span>Citas</span>
-          </a>
-          <a *ngIf="authService.orgIndustry === 'delivery' && authService.hasPermission('collections')" routerLink="/admin/webdelivery" routerLinkActive="active" class="nav-item-admin">
-            <i class="fas fa-store"></i>
-            <span>WebDelivery</span>
           </a>
           <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
             <i class="fas fa-database"></i>
@@ -235,6 +237,9 @@
       </a>
       <a *ngIf="botEnabled && authService.hasPermission('inbox')" routerLink="/admin/bandeja" routerLinkActive="active" class="bn-item">
         <i class="fas fa-inbox"></i><span>Bandeja</span>
+      </a>
+      <a *ngIf="botEnabled && authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="bn-item">
+        <i class="fas fa-store"></i><span>Tienda</span>
       </a>
       <a *ngIf="botEnabled && authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="bn-item">
         <i class="fas fa-project-diagram"></i><span>Flujos</span>

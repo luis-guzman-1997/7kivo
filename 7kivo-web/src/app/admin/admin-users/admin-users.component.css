@@ -742,6 +742,13 @@
 }
 .fa-hint { font-size: 0.8rem; color: #94a3b8; padding: 4px 10px; margin: 0; }
 
+.tp-row { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; }
+.tp-row:last-child { border-bottom: none; }
+.tp-check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.83rem; color: #334155; }
+.tp-check input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #0ea5e9; }
+.tp-expiry { display: flex; align-items: center; gap: 6px; margin-top: 4px; margin-left: 23px; font-size: 0.75rem; color: #64748b; }
+.tp-date-input { border: 1px solid #e2e8f0; border-radius: 5px; padding: 2px 6px; font-size: 0.75rem; color: #334155; background: #f8fafc; }
+
 .fa-flow-row {
   display: flex; align-items: center; gap: 8px; padding: 6px 10px;
   border-radius: 7px; cursor: pointer; transition: background 0.12s;

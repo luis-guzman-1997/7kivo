@@ -132,6 +132,44 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     return admin.role === 'delivery' || admin.role === 'delivery_multi';
   }
 
+  // ── Accesos extra ──
+  readonly EXTRA_PERM_OPTIONS = [
+    { key: 'webdelivery', label: 'WebDelivery' },
+    { key: 'campaigns',   label: 'Campañas' },
+    { key: 'collections', label: 'Base de Datos' },
+    { key: 'flows',       label: 'Flujos del Bot' },
+    { key: 'contacts',    label: 'Contactos' },
+    { key: 'bot_config',  label: 'Mensajería Bot' },
+    { key: 'delivery_map',label: 'Mapa Delivery' },
+  ];
+
+  extraPermPanel: string | null = null;
+  extraPermSaving: string | null = null;
+
+  toggleExtraPermPanel(adminId: string): void {
+    this.extraPermPanel = this.extraPermPanel === adminId ? null : adminId;
+  }
+
+  hasExtraPerm(admin: any, key: string): boolean {
+    return (admin.extraPermissions || []).includes(key);
+  }
+
+  async toggleExtraPerm(admin: any, key: string): Promise<void> {
+    if (!admin.uid) return;
+    this.extraPermSaving = admin.id + key;
+    const has = this.hasExtraPerm(admin, key);
+    try {
+      if (has) {
+        await this.firebaseService.revokeUserExtraPermission(admin.uid, key);
+        admin.extraPermissions = (admin.extraPermissions || []).filter((k: string) => k !== key);
+      } else {
+        await this.firebaseService.grantUserExtraPermission(admin.uid, key);
+        admin.extraPermissions = [...(admin.extraPermissions || []), key];
+      }
+    } catch (e) { console.error('Error toggling extra perm:', e); }
+    this.extraPermSaving = null;
+  }
+
   async toggleCanSeePromoOrders(admin: any): Promise<void> {
     const newVal = !(admin.canSeePromoOrders !== false);
     try {

@@ -43,7 +43,7 @@ const routes: Routes = [
       { path: 'campanas', component: CampaignsComponent, canActivate: [RoleGuard], data: { permission: 'campaigns' } },
       { path: 'citas', component: CitasComponent, canActivate: [RoleGuard], data: { permission: 'collections' } },
       { path: 'mapa-delivery', component: DeliveryMapComponent, canActivate: [RoleGuard], data: { permission: 'delivery_map' } },
-      { path: 'webdelivery', component: WebDeliveryComponent, canActivate: [RoleGuard], data: { permission: 'collections' } }
+      { path: 'webdelivery', component: WebDeliveryComponent, canActivate: [RoleGuard], data: { permission: 'webdelivery' } }
     ]
   }
 ];

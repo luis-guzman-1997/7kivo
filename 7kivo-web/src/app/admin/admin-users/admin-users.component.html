@@ -207,6 +207,26 @@
           </div>
         </div>
 
+        <!-- Accesos extra (solo owner/admin pueden editar) -->
+        <div class="flow-assign-section" *ngIf="authService.isOwnerOrAdmin">
+          <button class="flow-assign-toggle" (click)="toggleExtraPermPanel(admin.id)">
+            <i class="fas fa-shield-alt"></i>
+            Accesos extra
+            <span class="fa-badge">{{ (admin.extraPermissions?.length || 0) }}</span>
+            <i class="fas fa-chevron-down fa-toggle-icon" [class.rotated]="extraPermPanel === admin.id"></i>
+          </button>
+          <div class="flow-assign-panel" *ngIf="extraPermPanel === admin.id">
+            <p class="fa-hint">Otorga acceso a secciones adicionales del panel.</p>
+            <label *ngFor="let opt of EXTRA_PERM_OPTIONS" class="fa-flow-row">
+              <input type="checkbox"
+                     [checked]="hasExtraPerm(admin, opt.key)"
+                     [disabled]="extraPermSaving === admin.id + opt.key"
+                     (change)="toggleExtraPerm(admin, opt.key)" />
+              <span class="fa-flow-name">{{ opt.label }}</span>
+            </label>
+          </div>
+        </div>
+
         <!-- Role change -->
         <div class="role-change" *ngIf="canManage(admin)">
           <label>Cambiar rol:</label>

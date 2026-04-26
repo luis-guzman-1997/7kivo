@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import {
   getAuth, Auth, signInWithEmailAndPassword, signOut,
   onAuthStateChanged, User, createUserWithEmailAndPassword
@@ -16,9 +16,9 @@ export const PLAN_LIMITS: Record<string, { flows: number; collections: number; a
 };
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  owner:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings', 'campaigns', 'delivery_map'],
-  admin:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'campaigns', 'delivery_map'],
-  editor:   ['dashboard', 'contacts', 'chat', 'inbox', 'collections'],
+  owner:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'settings', 'campaigns', 'delivery_map', 'webdelivery'],
+  admin:    ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'flows', 'bot_config', 'users', 'campaigns', 'delivery_map', 'webdelivery'],
+  editor:   ['dashboard', 'contacts', 'chat', 'inbox', 'collections', 'webdelivery'],
   viewer:   ['dashboard', 'inbox', 'chat'],
   delivery:       ['dashboard', 'inbox', 'chat'],
   delivery_multi: ['dashboard', 'inbox', 'chat']
@@ -43,8 +43,10 @@ export class AuthService {
   private botBlockedSubject = new BehaviorSubject<boolean>(false);
   private botPausedReasonSubject = new BehaviorSubject<string | null>(null);
   private orgIndustrySubject = new BehaviorSubject<string>('general');
+  private extraPermissionsSubject = new BehaviorSubject<string[]>([]);
   private localSessionToken = '';
   private unsubSessionWatch: (() => void) | null = null;
+  private unsubExtraPerms: (() => void) | null = null;
   private sessionWatchGen = 0;
   readonly sessionDisplaced$ = new Subject<void>();
 
@@ -60,7 +62,7 @@ export class AuthService {
   botPaused$: Observable<boolean> = this.botPausedSubject.asObservable();
   botBlocked$: Observable<boolean> = this.botBlockedSubject.asObservable();
 
-  constructor(private firebaseService: FirebaseService) {
+  constructor(private firebaseService: FirebaseService, private ngZone: NgZone) {
     this.auth = getAuth(this.firebaseService.getFirestore().app);
     onAuthStateChanged(this.auth, async (user) => {
       this.currentUserSubject.next(user);
@@ -101,6 +103,10 @@ export class AuthService {
           this.firebaseService.getOrgConfig(),
           this.firebaseService.getOrganization(userData.organizationId)
         ]);
+        if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
+        this.unsubExtraPerms = this.firebaseService.watchUserExtraPermissions(user.uid, (perms) => {
+          this.ngZone.run(() => this.extraPermissionsSubject.next(perms));
+        });
         this.orgNameSubject.next(orgConfig?.orgName || orgConfig?.schoolName || userData.organizationId);
         this.orgLogoSubject.next(orgConfig?.orgLogo || '');
         this.botApiUrlSubject.next(orgConfig?.botApiUrl || '');
@@ -144,6 +150,8 @@ export class AuthService {
 
   private forceLogout(): void {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
+    if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
+    this.extraPermissionsSubject.next([]);
     this.localSessionToken = '';
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
@@ -176,6 +184,8 @@ export class AuthService {
 
   async logout(): Promise<void> {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
+    if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
+    this.extraPermissionsSubject.next([]);
     this.localSessionToken = '';
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
@@ -230,7 +240,17 @@ export class AuthService {
     if (this.isSuperAdminSubject.value) return true;
     const role = this.userRoleSubject.value || 'viewer';
     const perms = ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS['viewer'];
-    return perms.includes(section);
+    if (perms.includes(section)) return true;
+    const raw = this.extraPermissionsSubject.value;
+    // Normalize: accept both string[] and Record<string,any> for safety
+    const extra: string[] = Array.isArray(raw)
+      ? raw
+      : (raw && typeof raw === 'object' ? Object.keys(raw) : []);
+    return extra.some(p => String(p).trim() === String(section).trim());
+  }
+
+  get extraPermissions(): string[] {
+    return this.extraPermissionsSubject.value;
   }
 
   get isOwnerOrAdmin(): boolean {
