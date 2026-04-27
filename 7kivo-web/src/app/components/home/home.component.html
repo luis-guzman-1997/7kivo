@@ -8,13 +8,19 @@
         <h1 class="hero-title">Tu negocio en WhatsApp, automatizado y bajo control</h1>
         <p class="hero-subtitle">Crea un bot de WhatsApp personalizado, gestiona flujos conversacionales, administra colecciones de datos y atiende a tus clientes desde un panel web. Sin escribir una sola linea de codigo.</p>
         <div class="hero-actions">
-          <a routerLink="/admin/login" class="btn-hero-primary">
-            <i class="fas fa-rocket"></i> Comienza Gratis
+          <!-- Registro: SOLD OUT -->
+          <div class="btn-hero-soldout">
+            <span class="soldout-badge-inline">SOLD OUT</span>
+            <span><i class="fas fa-rocket"></i> Registrar nuevo negocio</span>
+          </div>
+          <!-- Login clientes existentes -->
+          <a routerLink="/admin/login" class="btn-hero-login">
+            <i class="fas fa-sign-in-alt"></i> Acceder a mi panel
           </a>
         </div>
         <div class="hero-trust">
-          <div class="trust-item"><i class="fas fa-check-circle"></i> Sin tarjeta de credito</div>
-          <div class="trust-item"><i class="fas fa-check-circle"></i> Configuracion en minutos</div>
+          <div class="trust-item trust-soldout"><i class="fas fa-times-circle"></i> Sin cupos disponibles</div>
+          <div class="trust-item"><i class="fas fa-check-circle"></i> Clientes activos: acceso normal</div>
           <div class="trust-item"><i class="fas fa-check-circle"></i> Soporte incluido</div>
         </div>
       </div>
@@ -78,6 +84,24 @@
               <div class="wa-send-btn"><i class="fas fa-microphone"></i></div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Clientes Exclusivos -->
+<section class="clients-section" *ngIf="clients.length > 0">
+  <div class="container">
+    <div class="clients-header">
+      <span class="clients-badge">Clientes exclusivos</span>
+      <h2 class="clients-title">Negocios que ya confían en 7kivo</h2>
+    </div>
+    <div class="clients-logos">
+      <div *ngFor="let c of clients" class="client-item" [title]="c.name">
+        <img *ngIf="c.logo" [src]="c.logo" [alt]="c.name" class="client-logo" />
+        <div *ngIf="!c.logo" class="client-logo-placeholder">
+          {{ c.name.charAt(0).toUpperCase() }}
         </div>
       </div>
     </div>
@@ -192,7 +216,17 @@
       <h2 class="section-title">{{ plansSectionTitle }}</h2>
       <p class="section-desc">{{ plansSectionDesc }}</p>
     </div>
-    <div class="row g-4 justify-content-center">
+
+    <!-- SOLD OUT BANNER -->
+    <div class="plans-soldout-banner">
+      <i class="fas fa-store-slash"></i>
+      <div>
+        <strong>Sin cupos disponibles</strong>
+        <span>Actualmente no estamos aceptando nuevos negocios. Todos los planes están agotados.</span>
+      </div>
+    </div>
+
+    <div class="row g-4 justify-content-center plans-dimmed">
       <div class="col-lg-3 col-md-6" *ngFor="let plan of plans">
         <div class="plan-card" [class.popular]="plan.popular">
           <div class="popular-badge" *ngIf="plan.popular">Popular</div>
@@ -208,7 +242,7 @@
             <li *ngFor="let feat of plan.features"><i class="fas fa-check"></i> {{ feat }}</li>
             <li class="disabled" *ngFor="let feat of plan.disabledFeatures"><i class="fas fa-times"></i> {{ feat }}</li>
           </ul>
-          <a routerLink="/admin/login" class="btn-plan" [class.primary]="plan.popular">{{ plan.ctaText || 'Comenzar' }}</a>
+          <div class="btn-plan-soldout"><i class="fas fa-ban"></i> Sin cupos</div>
         </div>
       </div>
     </div>
@@ -321,10 +355,14 @@
 <!-- CTA -->
 <section class="cta-section">
   <div class="container text-center">
-    <h2 class="cta-title">Empieza a automatizar tu negocio hoy</h2>
-    <p class="cta-desc">Crea tu cuenta gratis, configura tu bot y empieza a recibir clientes por WhatsApp.</p>
+    <h2 class="cta-title">¿Ya tienes una cuenta?</h2>
+    <p class="cta-desc">Accede a tu panel para gestionar tu bot, flujos y clientes.</p>
     <a routerLink="/admin/login" class="btn-cta">
-      <i class="fas fa-rocket"></i> Crear mi cuenta gratis
+      <i class="fas fa-sign-in-alt"></i> Iniciar sesión
     </a>
+    <div class="cta-soldout-note">
+      <i class="fas fa-info-circle"></i>
+      El registro de nuevos negocios está temporalmente cerrado.
+    </div>
   </div>
 </section>

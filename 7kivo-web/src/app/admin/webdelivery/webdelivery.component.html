@@ -14,12 +14,11 @@
 
   <ng-container *ngIf="!loading && flows.length > 0">
 
-    <!-- Header -->
+    <!-- Header: título + tabs por flujo -->
     <div class="wd-header">
       <div>
         <h1 class="wd-title"><i class="fas fa-store"></i> WebDelivery</h1>
-        <!-- Tabs por flujo/tienda -->
-        <div class="wd-tabs">
+        <div class="wd-tabs" *ngIf="flows.length > 1">
           <button *ngFor="let f of flows"
             class="wd-tab" [class.active]="selectedFlow?.id === f.id"
             (click)="selectFlow(f)">
@@ -27,278 +26,372 @@
           </button>
         </div>
       </div>
-      <div class="wd-header-right">
-        <!-- URL de la tienda -->
-        <div class="wd-url-chip" *ngIf="selectedFlow">
-          <i class="fas fa-link"></i>
-          <span class="wd-url-text">{{ getStoreUrl(selectedFlow) }}</span>
-          <button class="wd-url-copy" (click)="copyUrl(selectedFlow)" title="Copiar URL">
-            <i class="fas fa-copy"></i>
+    </div>
+
+    <!-- Tabs de sección: Productos | Configuración de web -->
+    <div class="wd-section-tabs">
+      <button class="wd-stab" [class.active]="activeSection === 'productos'" (click)="activeSection = 'productos'">
+        <i class="fas fa-box-open"></i> Productos
+      </button>
+      <button class="wd-stab" [class.active]="activeSection === 'config'" (click)="activeSection = 'config'">
+        <i class="fas fa-sliders-h"></i> Configuración de web
+      </button>
+    </div>
+
+    <!-- ===================== SECCIÓN: PRODUCTOS ===================== -->
+    <div *ngIf="activeSection === 'productos'">
+
+      <!-- Barra superior: búsqueda + nuevo producto -->
+      <div class="wd-prod-topbar" *ngIf="!showForm">
+        <div class="wd-search-wrap">
+          <i class="fas fa-search wd-search-icon"></i>
+          <input type="text" [(ngModel)]="filterText" placeholder="Buscar producto..." class="wd-search" />
+          <button class="wd-search-clear" *ngIf="filterText" (click)="filterText = ''">
+            <i class="fas fa-times"></i>
           </button>
         </div>
         <button class="wd-btn-new" (click)="openNew()">
           <i class="fas fa-plus"></i> Nuevo producto
         </button>
       </div>
-    </div>
 
-    <!-- Logo de la tienda -->
-    <div class="wd-store-logo-row" *ngIf="selectedFlow">
-      <div class="wd-store-logo-placeholder" *ngIf="!storeLogoPreview">
-        <i class="fas fa-store"></i>
-      </div>
-      <img *ngIf="storeLogoPreview" [src]="storeLogoPreview" class="wd-store-logo-img" alt="Logo tienda" />
-      <div class="wd-store-logo-info">
-        <label>Logo de la tienda</label>
-        <small>Se mostrará en la página pública del catálogo</small>
-        <div class="wd-store-logo-actions">
-          <label class="wd-logo-btn">
-            <input type="file" accept="image/*" (change)="onStoreLogoSelected($event)" style="display:none" />
-            <i class="fas fa-upload"></i> {{ storeLogoPreview ? 'Cambiar' : 'Subir logo' }}
-          </label>
-          <button *ngIf="storeLogoFile" class="wd-logo-btn" (click)="saveStoreLogo()" [disabled]="savingLogo">
-            <i class="fas fa-save"></i> {{ savingLogo ? 'Guardando...' : 'Guardar' }}
-          </button>
-          <button *ngIf="storeLogoPreview && !storeLogoFile" class="wd-logo-btn wd-logo-btn-remove" (click)="removeStoreLogo()">
-            <i class="fas fa-trash"></i> Quitar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Color y diseño -->
-    <div class="wd-color-section" *ngIf="selectedFlow && !showForm">
-      <div class="wd-color-left">
-        <h3 class="wd-color-title"><i class="fas fa-palette"></i> Color de la tienda</h3>
-        <p class="wd-color-hint">Define el color principal que se usará en botones, categorías y carrito de la página pública.</p>
-        <div class="wd-color-picker-row">
-          <input type="color" [(ngModel)]="storeColor" (ngModelChange)="onColorChange()" class="wd-color-input" />
-          <span class="wd-color-hex">{{ storeColor }}</span>
-          <button class="wd-color-save-btn" (click)="saveStoreColor()"
-                  [disabled]="!colorChanged || savingColor">
-            <i class="fas fa-spinner fa-spin" *ngIf="savingColor"></i>
-            <i class="fas fa-check"           *ngIf="!savingColor"></i>
-            {{ savingColor ? 'Guardando...' : 'Aplicar' }}
-          </button>
-        </div>
-        <!-- Paleta de sugerencias -->
-        <div class="wd-color-presets">
-          <span class="wd-preset-label">Sugerencias:</span>
-          <button *ngFor="let c of colorPresets" class="wd-preset-swatch"
-                  [style.background]="c.hex" [title]="c.name"
-                  [class.active]="storeColor === c.hex"
-                  (click)="storeColor = c.hex; onColorChange()"></button>
-        </div>
+      <!-- Pills de categorías -->
+      <div class="wd-cat-pills" *ngIf="!showForm && storeCategories.length > 0">
+        <button class="wd-cat-pill" [class.active]="filterCategory === ''" (click)="filterCategory = ''">Todas</button>
+        <button *ngFor="let c of storeCategories" class="wd-cat-pill"
+          [class.active]="filterCategory === c" (click)="filterCategory = c">{{ c }}</button>
+        <span class="wd-count" *ngIf="filterText || filterCategory">{{ filteredItems.length }} resultado{{ filteredItems.length !== 1 ? 's' : '' }}</span>
       </div>
 
-      <!-- Preview -->
-      <div class="wd-preview-panel">
-        <span class="wd-preview-label">Vista previa</span>
-        <div class="wd-preview-mock">
-          <!-- Header mock -->
-          <div class="wd-pm-header">
-            <div class="wd-pm-logo-box">
-              <img *ngIf="storeLogoPreview" [src]="storeLogoPreview" class="wd-pm-logo" alt="" />
-              <i *ngIf="!storeLogoPreview" class="fas fa-store wd-pm-logo-icon"></i>
+      <!-- ==================== FORMULARIO ==================== -->
+      <div *ngIf="showForm" class="wd-form-wrap">
+        <div class="wd-form">
+
+          <div class="wd-form-header">
+            <h2>{{ editingId ? 'Editar producto' : 'Nuevo producto' }}</h2>
+            <button class="wd-form-close" (click)="closeForm()"><i class="fas fa-times"></i></button>
+          </div>
+
+          <div class="wf-group wf-full">
+            <label class="wf-label">Foto del producto <span class="wf-opt">(opcional)</span></label>
+            <div class="wf-img-area" *ngIf="!imagePreview" (click)="imgInput.click()">
+              <input #imgInput type="file" accept="image/*" (change)="onImageSelected($event)" style="display:none" />
+              <i class="fas fa-camera"></i>
+              <span>Click para subir foto</span>
+              <small>JPG, PNG — máx. 5 MB</small>
+            </div>
+            <div class="wf-img-preview" *ngIf="imagePreview">
+              <img [src]="imagePreview" alt="Preview" />
+              <button class="wf-img-remove" (click)="clearImage()"><i class="fas fa-times"></i> Quitar</button>
             </div>
           </div>
-          <!-- Cats mock -->
-          <div class="wd-pm-cats">
-            <span class="wd-pm-cat active" [style.background]="storeColor" [style.color]="'#fff'">Todas</span>
-            <span class="wd-pm-cat">Comida</span>
-            <span class="wd-pm-cat">Bebidas</span>
-          </div>
-          <!-- Cards mock -->
-          <div class="wd-pm-grid">
-            <div class="wd-pm-card" *ngFor="let p of items.slice(0,4)">
-              <div class="wd-pm-card-img">
-                <img *ngIf="p.imagen" [src]="p.imagen" alt="" />
-                <i *ngIf="!p.imagen" class="fas fa-image"></i>
-              </div>
-              <div class="wd-pm-card-body">
-                <span class="wd-pm-name">{{ p.nombre | slice:0:14 }}</span>
-                <span class="wd-pm-price" [style.color]="storeColor">${{ p.precio?.toFixed(2) }}</span>
-                <div class="wd-pm-add" [style.background]="storeColor">+</div>
-              </div>
+
+          <div class="wf-row">
+            <div class="wf-group">
+              <label class="wf-label" for="wd-nombre">Nombre <span class="wf-req">*</span></label>
+              <input id="wd-nombre" type="text" [(ngModel)]="form.nombre" class="wf-input"
+                placeholder="Ej: Hamburguesa clásica" />
             </div>
-            <!-- Cards placeholder si no hay productos -->
-            <div class="wd-pm-card wd-pm-card-empty" *ngIf="items.length === 0">
-              <div class="wd-pm-card-img"><i class="fas fa-image"></i></div>
-              <div class="wd-pm-card-body">
-                <span class="wd-pm-name">Producto</span>
-                <span class="wd-pm-price" [style.color]="storeColor">$5.99</span>
-                <div class="wd-pm-add" [style.background]="storeColor">+</div>
-              </div>
-            </div>
-            <div class="wd-pm-card wd-pm-card-empty" *ngIf="items.length === 0">
-              <div class="wd-pm-card-img"><i class="fas fa-image"></i></div>
-              <div class="wd-pm-card-body">
-                <span class="wd-pm-name">Producto</span>
-                <span class="wd-pm-price" [style.color]="storeColor">$3.50</span>
-                <div class="wd-pm-add" [style.background]="storeColor">+</div>
+            <div class="wf-group">
+              <label class="wf-label">Categoría <span class="wf-opt">(opcional)</span></label>
+              <div class="wf-cat-row">
+                <select [(ngModel)]="form.categoria" class="wf-input wf-select">
+                  <option value="">Sin categoría</option>
+                  <option *ngFor="let c of storeCategories" [value]="c">{{ c }}</option>
+                </select>
+                <button type="button" class="wf-cat-add-btn" (click)="showCategoryModal = true" title="Gestionar categorías">
+                  <i class="fas fa-tags"></i>
+                </button>
               </div>
             </div>
           </div>
-          <!-- Cart bar mock -->
-          <div class="wd-pm-cart" [style.background]="storeColor">
-            <i class="fas fa-shopping-basket"></i> Ver pedido &nbsp;·&nbsp; $9.49
+
+          <div class="wf-group wf-full">
+            <label class="wf-label">Descripción <span class="wf-opt">(opcional)</span></label>
+            <textarea [(ngModel)]="form.descripcion" class="wf-input wf-textarea" rows="2"
+              placeholder="Ingredientes, detalles, presentación..."></textarea>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Filtros -->
-    <div class="wd-filters" *ngIf="items.length > 0 && !showForm">
-      <input type="text" [(ngModel)]="filterText" placeholder="Buscar..." class="wd-search" />
-      <select [(ngModel)]="filterCategory" class="wd-cat-filter">
-        <option value="">Todas las categorías</option>
-        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
-      </select>
-      <span class="wd-count">{{ filteredItems.length }} producto{{ filteredItems.length !== 1 ? 's' : '' }}</span>
-    </div>
-
-    <!-- ==================== FORMULARIO ==================== -->
-    <div *ngIf="showForm" class="wd-form-wrap">
-      <div class="wd-form">
-
-        <div class="wd-form-header">
-          <h2>{{ editingId ? 'Editar producto' : 'Nuevo producto' }}</h2>
-          <button class="wd-form-close" (click)="closeForm()"><i class="fas fa-times"></i></button>
-        </div>
-
-        <!-- Imagen opcional -->
-        <div class="wf-group wf-full">
-          <label class="wf-label">Foto del producto <span class="wf-opt">(opcional)</span></label>
-          <div class="wf-img-area" *ngIf="!imagePreview" (click)="imgInput.click()">
-            <input #imgInput type="file" accept="image/*" (change)="onImageSelected($event)" style="display:none" />
-            <i class="fas fa-camera"></i>
-            <span>Click para subir foto</span>
-            <small>JPG, PNG — máx. 5 MB</small>
-          </div>
-          <div class="wf-img-preview" *ngIf="imagePreview">
-            <img [src]="imagePreview" alt="Preview" />
-            <button class="wf-img-remove" (click)="clearImage()"><i class="fas fa-times"></i> Quitar</button>
-          </div>
-        </div>
-
-        <!-- Nombre y Categoría -->
-        <div class="wf-row">
-          <div class="wf-group">
-            <label class="wf-label" for="wd-nombre">Nombre <span class="wf-req">*</span></label>
-            <input id="wd-nombre" type="text" [(ngModel)]="form.nombre" class="wf-input"
-              placeholder="Ej: Hamburguesa clásica" />
-          </div>
-          <div class="wf-group">
-            <label class="wf-label">Categoría <span class="wf-opt">(opcional)</span></label>
-            <input type="text" [(ngModel)]="form.categoria" class="wf-input"
-              placeholder="Ej: Comida, Bebidas..." list="wf-cats" />
-            <datalist id="wf-cats">
-              <option *ngFor="let c of categories" [value]="c"></option>
-            </datalist>
-          </div>
-        </div>
-
-        <!-- Descripción -->
-        <div class="wf-group wf-full">
-          <label class="wf-label">Descripción <span class="wf-opt">(opcional)</span></label>
-          <textarea [(ngModel)]="form.descripcion" class="wf-input wf-textarea" rows="2"
-            placeholder="Ingredientes, detalles, presentación..."></textarea>
-        </div>
-
-        <!-- Precio y Stock -->
-        <div class="wf-row">
-          <div class="wf-group">
-            <label class="wf-label">Precio <span class="wf-req">*</span></label>
-            <div class="wf-price-wrap">
-              <span class="wf-currency">$</span>
-              <input type="number" [(ngModel)]="form.precio" class="wf-input wf-price"
-                min="0" step="0.01" placeholder="0.00" />
+          <div class="wf-row">
+            <div class="wf-group">
+              <label class="wf-label">Precio <span class="wf-req">*</span></label>
+              <div class="wf-price-wrap">
+                <span class="wf-currency">$</span>
+                <input type="number" [(ngModel)]="form.precio" class="wf-input wf-price"
+                  min="0" step="0.01" placeholder="0.00" />
+              </div>
+            </div>
+            <div class="wf-group">
+              <label class="wf-label">Existencias</label>
+              <div class="wf-stock-row">
+                <label class="wf-toggle-small">
+                  <input type="checkbox" [(ngModel)]="form.stockLimitado" />
+                  <span class="wf-toggle-track"></span>
+                  <span>{{ form.stockLimitado ? 'Limitadas' : 'Ilimitadas' }}</span>
+                </label>
+                <input *ngIf="form.stockLimitado" type="number" [(ngModel)]="form.stock"
+                  class="wf-input wf-stock-input" min="0" step="1" placeholder="Cantidad" />
+              </div>
             </div>
           </div>
-          <div class="wf-group">
-            <label class="wf-label">Existencias</label>
-            <div class="wf-stock-row">
+
+          <div class="wf-group wf-full">
+            <label class="wf-toggle-row">
               <label class="wf-toggle-small">
-                <input type="checkbox" [(ngModel)]="form.stockLimitado" />
+                <input type="checkbox" [(ngModel)]="form.disponible" />
                 <span class="wf-toggle-track"></span>
-                <span>{{ form.stockLimitado ? 'Limitadas' : 'Ilimitadas' }}</span>
               </label>
-              <input *ngIf="form.stockLimitado" type="number" [(ngModel)]="form.stock"
-                class="wf-input wf-stock-input" min="0" step="1" placeholder="Cantidad" />
+              <span class="wf-toggle-desc">{{ form.disponible ? 'Disponible para pedir' : 'No disponible' }}</span>
+            </label>
+          </div>
+
+          <div class="wf-actions">
+            <button class="wf-btn-cancel" (click)="closeForm()" [disabled]="saving">Cancelar</button>
+            <button class="wf-btn-save" (click)="save()" [disabled]="saving || uploadingImage">
+              <i class="fas fa-spinner fa-spin" *ngIf="saving || uploadingImage"></i>
+              <i class="fas fa-save" *ngIf="!saving && !uploadingImage"></i>
+              {{ uploadingImage ? 'Subiendo foto...' : saving ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear producto') }}
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==================== GRID DE PRODUCTOS ==================== -->
+      <ng-container *ngIf="!showForm">
+
+        <div *ngIf="items.length === 0" class="wd-empty">
+          <i class="fas fa-box-open"></i>
+          <p>Esta tienda no tiene productos. Agrega el primero.</p>
+          <button class="wd-btn-new" (click)="openNew()"><i class="fas fa-plus"></i> Agregar producto</button>
+        </div>
+
+        <div class="wd-grid" *ngIf="filteredItems.length > 0">
+          <div *ngFor="let item of filteredItems" class="wd-card" [class.wd-disabled]="item.disponible === false">
+
+            <div class="wd-card-img">
+              <img *ngIf="item.imagen" [src]="item.imagen" [alt]="item.nombre" />
+              <div *ngIf="!item.imagen" class="wd-no-img"><i class="fas fa-image"></i></div>
+              <span class="wd-badge-off" *ngIf="item.disponible === false">No disponible</span>
+              <span class="wd-badge-stock" *ngIf="item.stockLimitado">
+                <i class="fas fa-boxes"></i> {{ item.stock ?? 0 }}
+              </span>
             </div>
+
+            <div class="wd-card-body">
+              <div class="wd-card-cat" *ngIf="item.categoria">{{ item.categoria }}</div>
+              <h3 class="wd-card-name">{{ item.nombre }}</h3>
+              <p class="wd-card-desc" *ngIf="item.descripcion">{{ item.descripcion }}</p>
+              <div class="wd-card-price">${{ item.precio?.toFixed ? item.precio.toFixed(2) : item.precio }}</div>
+            </div>
+
+            <div class="wd-card-actions">
+              <label class="wf-toggle-small wd-toggle-inline">
+                <input type="checkbox" [checked]="item.disponible !== false" (change)="toggleDisponible(item)" />
+                <span class="wf-toggle-track"></span>
+                <span class="wd-toggle-label">{{ item.disponible === false ? 'Inactivo' : 'Activo' }}</span>
+              </label>
+              <div class="wd-card-btns">
+                <button class="wd-btn-edit" (click)="openEdit(item)"><i class="fas fa-pen"></i></button>
+                <button class="wd-btn-del"  (click)="confirmDelete(item)"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <!-- Disponible -->
-        <div class="wf-group wf-full">
-          <label class="wf-toggle-row">
-            <label class="wf-toggle-small">
-              <input type="checkbox" [(ngModel)]="form.disponible" />
-              <span class="wf-toggle-track"></span>
-            </label>
-            <span class="wf-toggle-desc">{{ form.disponible ? 'Disponible para pedir' : 'No disponible' }}</span>
-          </label>
-        </div>
+      </ng-container>
 
-        <!-- Acciones -->
-        <div class="wf-actions">
-          <button class="wf-btn-cancel" (click)="closeForm()" [disabled]="saving">Cancelar</button>
-          <button class="wf-btn-save" (click)="save()" [disabled]="saving || uploadingImage">
-            <i class="fas fa-spinner fa-spin" *ngIf="saving || uploadingImage"></i>
-            <i class="fas fa-save" *ngIf="!saving && !uploadingImage"></i>
-            {{ uploadingImage ? 'Subiendo foto...' : saving ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear producto') }}
-          </button>
-        </div>
-
-      </div>
     </div>
 
-    <!-- ==================== GRID DE PRODUCTOS ==================== -->
-    <ng-container *ngIf="!showForm">
+    <!-- ===================== SECCIÓN: CONFIGURACIÓN ===================== -->
+    <div *ngIf="activeSection === 'config'" class="wd-config-section">
 
-      <div *ngIf="items.length === 0" class="wd-empty">
-        <i class="fas fa-box-open"></i>
-        <p>Esta tienda no tiene productos. Agrega el primero.</p>
-        <button class="wd-btn-new" (click)="openNew()"><i class="fas fa-plus"></i> Agregar producto</button>
-      </div>
-
-      <div class="wd-grid" *ngIf="filteredItems.length > 0">
-        <div *ngFor="let item of filteredItems" class="wd-card" [class.wd-disabled]="item.disponible === false">
-
-          <div class="wd-card-img">
-            <img *ngIf="item.imagen" [src]="item.imagen" [alt]="item.nombre" />
-            <div *ngIf="!item.imagen" class="wd-no-img"><i class="fas fa-image"></i></div>
-            <span class="wd-badge-off" *ngIf="item.disponible === false">No disponible</span>
-            <span class="wd-badge-stock" *ngIf="item.stockLimitado">
-              <i class="fas fa-boxes"></i> {{ item.stock ?? 0 }}
-            </span>
-          </div>
-
-          <div class="wd-card-body">
-            <div class="wd-card-cat" *ngIf="item.categoria">{{ item.categoria }}</div>
-            <h3 class="wd-card-name">{{ item.nombre }}</h3>
-            <p class="wd-card-desc" *ngIf="item.descripcion">{{ item.descripcion }}</p>
-            <div class="wd-card-price">${{ item.precio?.toFixed ? item.precio.toFixed(2) : item.precio }}</div>
-          </div>
-
-          <div class="wd-card-actions">
-            <label class="wf-toggle-small wd-toggle-inline">
-              <input type="checkbox" [checked]="item.disponible !== false" (change)="toggleDisponible(item)" />
-              <span class="wf-toggle-track"></span>
-              <span class="wd-toggle-label">{{ item.disponible === false ? 'Inactivo' : 'Activo' }}</span>
-            </label>
-            <div class="wd-card-btns">
-              <button class="wd-btn-edit" (click)="openEdit(item)"><i class="fas fa-pen"></i></button>
-              <button class="wd-btn-del"  (click)="confirmDelete(item)"><i class="fas fa-trash"></i></button>
-            </div>
-          </div>
-
+      <!-- URL de la tienda -->
+      <div class="wd-config-block" *ngIf="selectedFlow">
+        <h3 class="wd-config-block-title"><i class="fas fa-link"></i> Enlace de la tienda</h3>
+        <div class="wd-url-chip">
+          <i class="fas fa-link"></i>
+          <span class="wd-url-text">{{ getStoreUrl(selectedFlow) }}</span>
+          <button class="wd-url-copy" (click)="copyUrl(selectedFlow)" title="Copiar URL">
+            <i class="fas fa-copy"></i> Copiar
+          </button>
         </div>
       </div>
 
-    </ng-container>
+      <!-- Categorías -->
+      <div class="wd-config-block" *ngIf="selectedFlow">
+        <h3 class="wd-config-block-title"><i class="fas fa-tags"></i> Categorías de productos</h3>
+
+        <div class="wd-cat-tags" *ngIf="storeCategories.length > 0">
+          <div *ngFor="let c of storeCategories" class="wd-cat-tag">
+            <span>{{ c }}</span>
+            <button class="wd-cat-tag-del" (click)="removeCategory(c)" title="Eliminar">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <p class="wd-cat-empty-hint" *ngIf="storeCategories.length === 0">
+          Sin categorías. Agrega la primera para organizar tu tienda.
+        </p>
+
+        <div class="wd-cat-add-row">
+          <input type="text" [(ngModel)]="newCategoryInput" class="wf-input wd-cat-add-input"
+            placeholder="Ej: Combos, Bebidas, Postres..."
+            (keydown.enter)="addCategory()" maxlength="40" />
+          <button class="wd-cat-add-btn" (click)="addCategory()"
+            [disabled]="!newCategoryInput.trim() || savingCategory">
+            <i class="fas fa-spinner fa-spin" *ngIf="savingCategory"></i>
+            <i class="fas fa-plus" *ngIf="!savingCategory"></i>
+            Agregar
+          </button>
+        </div>
+      </div>
+
+      <!-- Logo de la tienda -->
+      <div class="wd-config-block" *ngIf="selectedFlow">
+        <h3 class="wd-config-block-title"><i class="fas fa-image"></i> Logo de la tienda</h3>
+        <div class="wd-store-logo-row">
+          <div class="wd-store-logo-placeholder" *ngIf="!storeLogoPreview">
+            <i class="fas fa-store"></i>
+          </div>
+          <img *ngIf="storeLogoPreview" [src]="storeLogoPreview" class="wd-store-logo-img" alt="Logo tienda" />
+          <div class="wd-store-logo-info">
+            <label>Imagen que aparece en la cabecera del catálogo público</label>
+            <small>Se mostrará en la página pública del catálogo</small>
+            <div class="wd-store-logo-actions">
+              <label class="wd-logo-btn">
+                <input type="file" accept="image/*" (change)="onStoreLogoSelected($event)" style="display:none" />
+                <i class="fas fa-upload"></i> {{ storeLogoPreview ? 'Cambiar' : 'Subir logo' }}
+              </label>
+              <button *ngIf="storeLogoFile" class="wd-logo-btn" (click)="saveStoreLogo()" [disabled]="savingLogo">
+                <i class="fas fa-save"></i> {{ savingLogo ? 'Guardando...' : 'Guardar' }}
+              </button>
+              <button *ngIf="storeLogoPreview && !storeLogoFile" class="wd-logo-btn wd-logo-btn-remove" (click)="removeStoreLogo()">
+                <i class="fas fa-trash"></i> Quitar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color y diseño -->
+      <div class="wd-config-block" *ngIf="selectedFlow">
+        <h3 class="wd-config-block-title"><i class="fas fa-palette"></i> Color de la tienda</h3>
+        <div class="wd-color-section">
+          <div class="wd-color-left">
+            <p class="wd-color-hint">Define el color principal que se usará en botones, categorías y carrito de la página pública.</p>
+            <div class="wd-color-picker-row">
+              <input type="color" [(ngModel)]="storeColor" (ngModelChange)="onColorChange()" class="wd-color-input" />
+              <span class="wd-color-hex">{{ storeColor }}</span>
+              <button class="wd-color-save-btn" (click)="saveStoreColor()"
+                      [disabled]="!colorChanged || savingColor">
+                <i class="fas fa-spinner fa-spin" *ngIf="savingColor"></i>
+                <i class="fas fa-check"           *ngIf="!savingColor"></i>
+                {{ savingColor ? 'Guardando...' : 'Aplicar' }}
+              </button>
+            </div>
+            <div class="wd-color-presets">
+              <span class="wd-preset-label">Sugerencias:</span>
+              <button *ngFor="let c of colorPresets" class="wd-preset-swatch"
+                      [style.background]="c.hex" [title]="c.name"
+                      [class.active]="storeColor === c.hex"
+                      (click)="storeColor = c.hex; onColorChange()"></button>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="wd-preview-panel">
+            <span class="wd-preview-label">Vista previa</span>
+            <div class="wd-preview-mock">
+              <div class="wd-pm-header">
+                <div class="wd-pm-logo-box">
+                  <img *ngIf="storeLogoPreview" [src]="storeLogoPreview" class="wd-pm-logo" alt="" />
+                  <i *ngIf="!storeLogoPreview" class="fas fa-store wd-pm-logo-icon"></i>
+                </div>
+              </div>
+              <div class="wd-pm-cats">
+                <span class="wd-pm-cat active" [style.background]="storeColor" [style.color]="'#fff'">Todas</span>
+                <span class="wd-pm-cat">Comida</span>
+                <span class="wd-pm-cat">Bebidas</span>
+              </div>
+              <div class="wd-pm-grid">
+                <div class="wd-pm-card" *ngFor="let p of items.slice(0,4)">
+                  <div class="wd-pm-card-img">
+                    <img *ngIf="p.imagen" [src]="p.imagen" alt="" />
+                    <i *ngIf="!p.imagen" class="fas fa-image"></i>
+                  </div>
+                  <div class="wd-pm-card-body">
+                    <span class="wd-pm-name">{{ p.nombre | slice:0:14 }}</span>
+                    <span class="wd-pm-price" [style.color]="storeColor">${{ p.precio?.toFixed(2) }}</span>
+                    <div class="wd-pm-add" [style.background]="storeColor">+</div>
+                  </div>
+                </div>
+                <div class="wd-pm-card wd-pm-card-empty" *ngIf="items.length === 0">
+                  <div class="wd-pm-card-img"><i class="fas fa-image"></i></div>
+                  <div class="wd-pm-card-body">
+                    <span class="wd-pm-name">Producto</span>
+                    <span class="wd-pm-price" [style.color]="storeColor">$5.99</span>
+                    <div class="wd-pm-add" [style.background]="storeColor">+</div>
+                  </div>
+                </div>
+                <div class="wd-pm-card wd-pm-card-empty" *ngIf="items.length === 0">
+                  <div class="wd-pm-card-img"><i class="fas fa-image"></i></div>
+                  <div class="wd-pm-card-body">
+                    <span class="wd-pm-name">Producto</span>
+                    <span class="wd-pm-price" [style.color]="storeColor">$3.50</span>
+                    <div class="wd-pm-add" [style.background]="storeColor">+</div>
+                  </div>
+                </div>
+              </div>
+              <div class="wd-pm-cart" [style.background]="storeColor">
+                <i class="fas fa-shopping-basket"></i> Ver pedido &nbsp;·&nbsp; $9.49
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
 
   </ng-container>
+
+  <!-- Modal categorías -->
+  <div class="wd-modal-overlay" *ngIf="showCategoryModal" (click)="showCategoryModal = false">
+    <div class="wd-modal wd-cat-modal" (click)="$event.stopPropagation()">
+      <div class="wd-cat-modal-header">
+        <h3><i class="fas fa-tags"></i> Categorías</h3>
+        <button class="wd-form-close" (click)="showCategoryModal = false"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Tags existentes -->
+      <div class="wd-cat-tags" *ngIf="storeCategories.length > 0">
+        <div *ngFor="let c of storeCategories" class="wd-cat-tag">
+          <span>{{ c }}</span>
+          <button class="wd-cat-tag-del" (click)="removeCategory(c)" title="Eliminar">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <p class="wd-cat-empty-hint" *ngIf="storeCategories.length === 0">
+        Sin categorías aún. Agrega la primera.
+      </p>
+
+      <!-- Agregar nueva -->
+      <div class="wd-cat-add-row">
+        <input type="text" [(ngModel)]="newCategoryInput" class="wf-input"
+          placeholder="Ej: Combos, Bebidas, Postres..."
+          (keydown.enter)="addCategory()" maxlength="40" />
+        <button class="wd-cat-add-btn" (click)="addCategory()"
+          [disabled]="!newCategoryInput.trim() || savingCategory">
+          <i class="fas fa-spinner fa-spin" *ngIf="savingCategory"></i>
+          <i class="fas fa-plus" *ngIf="!savingCategory"></i>
+          Agregar
+        </button>
+        <button class="wf-btn-cancel wd-cat-modal-close" (click)="showCategoryModal = false">Listo</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal confirmar eliminación -->
   <div class="wd-modal-overlay" *ngIf="deleteTarget" (click)="deleteTarget = null">

@@ -7,6 +7,7 @@ import { SaOrganizationsComponent } from './sa-organizations/sa-organizations.co
 import { SaOrgDetailComponent } from './sa-org-detail/sa-org-detail.component';
 import { SaBillingComponent } from './sa-billing/sa-billing.component';
 import { SaPlansComponent } from './sa-plans/sa-plans.component';
+import { SaClientsComponent } from './sa-clients/sa-clients.component';
 
 const routes: Routes = [
   {
@@ -18,7 +19,8 @@ const routes: Routes = [
       { path: 'organizaciones', component: SaOrganizationsComponent },
       { path: 'organizaciones/:orgId', component: SaOrgDetailComponent },
       { path: 'facturacion', component: SaBillingComponent },
-      { path: 'planes', component: SaPlansComponent }
+      { path: 'planes', component: SaPlansComponent },
+      { path: 'clientes', component: SaClientsComponent }
     ]
   }
 ];

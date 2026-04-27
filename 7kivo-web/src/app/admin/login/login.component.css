@@ -224,27 +224,41 @@
   font-size: 0.85rem;
 }
 
-.btn-register-toggle {
+.btn-register-soldout {
   width: 100%;
-  padding: 14px;
-  background: transparent;
-  border: 2px solid #334155;
+  padding: 13px 16px;
+  background: rgba(255,255,255,.03);
+  border: 1.5px solid #334155;
   border-radius: 12px;
-  color: #94a3b8;
-  font-size: 0.95rem;
+  cursor: not-allowed;
+  opacity: .6;
+  box-sizing: border-box;
+}
+.soldout-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: .9rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
-
-.btn-register-toggle:hover {
-  border-color: #10b981;
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.05);
+.soldout-top i { color: #64748b !important; }
+.soldout-top span:first-of-type { flex: 1; }
+.soldout-tag {
+  background: #ef4444;
+  color: #fff;
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  padding: 2px 7px;
+  border-radius: 6px;
 }
-
-.btn-register-toggle i {
-  margin-right: 8px;
+.btn-register-soldout small {
+  display: block;
+  font-size: .74rem;
+  color: #475569;
+  line-height: 1.4;
 }
 
 .login-footer {

@@ -68,10 +68,12 @@ export class FirebaseService {
     });
   }
 
-  watchUserExtraPermissions(uid: string, callback: (perms: string[]) => void): Unsubscribe {
+  watchUserExtraPermissions(uid: string, callback: (perms: string[], revoked: string[]) => void): Unsubscribe {
     return onSnapshot(doc(this.db, 'users', uid), (snap) => {
-      const perms = snap.exists() ? (snap.data()?.['extraPermissions'] ?? []) : [];
-      callback(perms);
+      const data = snap.exists() ? snap.data() : {};
+      const perms = data?.['extraPermissions'] ?? [];
+      const revoked = data?.['revokedPermissions'] ?? [];
+      callback(perms, revoked);
     });
   }
 
@@ -420,12 +422,49 @@ export class FirebaseService {
     await updateDoc(ref, { [`tempPermissions.${key}`]: value ?? deleteField() });
   }
 
+  async blockAdminUser(adminId: string, uid: string, blockedUntil: Date | null): Promise<void> {
+    const data: any = {
+      blocked: true,
+      blockedUntil: blockedUntil ? Timestamp.fromDate(blockedUntil) : null
+    };
+    await Promise.all([
+      updateDoc(doc(this.db, this.orgPath(), 'admins', adminId), data),
+      updateDoc(doc(this.db, 'users', uid), data)
+    ]);
+  }
+
+  async unblockAdminUser(adminId: string, uid: string): Promise<void> {
+    const data = { blocked: false, blockedUntil: null };
+    await Promise.all([
+      updateDoc(doc(this.db, this.orgPath(), 'admins', adminId), data),
+      updateDoc(doc(this.db, 'users', uid), data)
+    ]);
+  }
+
+  async clearExpiredBlock(uid: string): Promise<void> {
+    await updateDoc(doc(this.db, 'users', uid), { blocked: false, blockedUntil: null });
+  }
+
   async grantUserExtraPermission(uid: string, key: string): Promise<void> {
     await updateDoc(doc(this.db, 'users', uid), { extraPermissions: arrayUnion(key) });
   }
 
   async revokeUserExtraPermission(uid: string, key: string): Promise<void> {
     await updateDoc(doc(this.db, 'users', uid), { extraPermissions: arrayRemove(key) });
+  }
+
+  async revokeRolePermission(adminId: string, uid: string, key: string): Promise<void> {
+    await Promise.all([
+      updateDoc(doc(this.db, this.orgPath(), 'admins', adminId), { revokedPermissions: arrayUnion(key) }),
+      updateDoc(doc(this.db, 'users', uid), { revokedPermissions: arrayUnion(key) })
+    ]);
+  }
+
+  async restoreRolePermission(adminId: string, uid: string, key: string): Promise<void> {
+    await Promise.all([
+      updateDoc(doc(this.db, this.orgPath(), 'admins', adminId), { revokedPermissions: arrayRemove(key) }),
+      updateDoc(doc(this.db, 'users', uid), { revokedPermissions: arrayRemove(key) })
+    ]);
   }
 
   async deleteAdmin(adminId: string): Promise<void> {
@@ -1512,6 +1551,15 @@ export class FirebaseService {
   async deletePlatformBilling(billingId: string): Promise<void> {
     const docRef = doc(this.db, 'platformBilling', billingId);
     await deleteDoc(docRef);
+  }
+
+  async getPlatformClients(): Promise<{ name: string; logo: string }[]> {
+    const snap = await getDoc(doc(this.db, 'platformConfig', 'clients'));
+    return snap.exists() ? (snap.data()?.['clients'] ?? []) : [];
+  }
+
+  async savePlatformClients(clients: { name: string; logo: string }[]): Promise<void> {
+    await setDoc(doc(this.db, 'platformConfig', 'clients'), { clients, updatedAt: serverTimestamp() }, { merge: true });
   }
 
   async getPlatformPlans(): Promise<any | null> {

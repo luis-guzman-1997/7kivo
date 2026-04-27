@@ -48,6 +48,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   };
 
   flows: FlowOption[] = [];
+  webstoreFlows: FlowOption[] = [];
+  webFlowSaving: string | null = null;
 
   // Flow assignment
   flowPanelAdminId: string | null = null;
@@ -146,6 +148,117 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   extraPermPanel: string | null = null;
   extraPermSaving: string | null = null;
 
+  searchQuery = '';
+  filterRole = '';
+  expandedId: string | null = null;
+
+  blockUntilDate = '';
+  blockSaving: string | null = null;
+
+  revokePermPanel: string | null = null;
+  revokePermSaving: string | null = null;
+
+  get filteredAdmins(): any[] {
+    return this.admins.filter(a => {
+      const matchRole = !this.filterRole || a.role === this.filterRole;
+      const q = this.searchQuery.toLowerCase();
+      const matchSearch = !q ||
+        (a.name || '').toLowerCase().includes(q) ||
+        (a.email || '').toLowerCase().includes(q);
+      return matchRole && matchSearch;
+    }).sort((a, b) => {
+      const score = (u: any) => this.isOnline(u.uid) ? 2 : (u.active !== false ? 1 : 0);
+      return score(b) - score(a);
+    });
+  }
+
+  getInitials(name: string): string {
+    if (!name) return '?';
+    const parts = name.trim().split(' ').filter(Boolean);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : name.substring(0, 2).toUpperCase();
+  }
+
+  toggleExpand(id: string): void {
+    this.expandedId = this.expandedId === id ? null : id;
+  }
+
+  toggleRevokePermPanel(id: string): void {
+    this.revokePermPanel = this.revokePermPanel === id ? null : id;
+  }
+
+  getRolePerms(role: string): string[] {
+    return ROLE_PERMISSIONS[role] || [];
+  }
+
+  isRevoked(admin: any, key: string): boolean {
+    return (admin.revokedPermissions || []).includes(key);
+  }
+
+  async toggleRevokedPerm(admin: any, key: string): Promise<void> {
+    if (!admin.uid) return;
+    this.revokePermSaving = admin.id + key;
+    const revoked = this.isRevoked(admin, key);
+    try {
+      if (revoked) {
+        await this.firebaseService.restoreRolePermission(admin.id, admin.uid, key);
+        admin.revokedPermissions = (admin.revokedPermissions || []).filter((k: string) => k !== key);
+      } else {
+        await this.firebaseService.revokeRolePermission(admin.id, admin.uid, key);
+        admin.revokedPermissions = [...(admin.revokedPermissions || []), key];
+      }
+    } catch (e) { console.error('Error toggling revoked perm:', e); }
+    finally { this.revokePermSaving = null; }
+  }
+
+  isBlocked(admin: any): boolean {
+    if (!admin.blocked) return false;
+    const until = admin.blockedUntil?.toDate?.() ?? (admin.blockedUntil ? new Date(admin.blockedUntil) : null);
+    return !until || until > new Date();
+  }
+
+  blockUntilLabel(admin: any): string {
+    if (!admin.blockedUntil) return 'Permanente';
+    const until = admin.blockedUntil?.toDate?.() ?? new Date(admin.blockedUntil);
+    return 'Hasta ' + until.toLocaleString('es-SV', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
+  get blockUntilMin(): string {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 5);
+    return d.toISOString().slice(0, 16);
+  }
+
+  async blockAdmin(admin: any, temporary: boolean): Promise<void> {
+    if (!admin.uid) return;
+    let blockedUntil: Date | null = null;
+    if (temporary) {
+      if (!this.blockUntilDate) return;
+      blockedUntil = new Date(this.blockUntilDate);
+      if (blockedUntil <= new Date()) return;
+    }
+    this.blockSaving = admin.id;
+    try {
+      await this.firebaseService.blockAdminUser(admin.id, admin.uid, blockedUntil);
+      admin.blocked = true;
+      admin.blockedUntil = blockedUntil;
+      this.blockUntilDate = '';
+    } catch (e) { console.error('Error blocking admin:', e); }
+    finally { this.blockSaving = null; }
+  }
+
+  async unblockAdmin(admin: any): Promise<void> {
+    if (!admin.uid) return;
+    this.blockSaving = admin.id;
+    try {
+      await this.firebaseService.unblockAdminUser(admin.id, admin.uid);
+      admin.blocked = false;
+      admin.blockedUntil = null;
+    } catch (e) { console.error('Error unblocking admin:', e); }
+    finally { this.blockSaving = null; }
+  }
+
   toggleExtraPermPanel(adminId: string): void {
     this.extraPermPanel = this.extraPermPanel === adminId ? null : adminId;
   }
@@ -154,18 +267,37 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     return (admin.extraPermissions || []).includes(key);
   }
 
+  hasWebFlow(admin: any, flowId: string): boolean {
+    return (admin.assignedWebFlows || []).includes(flowId);
+  }
+
+  async toggleWebFlow(admin: any, flowId: string): Promise<void> {
+    const current: string[] = admin.assignedWebFlows ? [...admin.assignedWebFlows] : [];
+    const idx = current.indexOf(flowId);
+    if (idx >= 0) current.splice(idx, 1); else current.push(flowId);
+    this.webFlowSaving = admin.id + flowId;
+    try {
+      await this.firebaseService.updateAdmin(admin.id, { assignedWebFlows: current });
+      admin.assignedWebFlows = current;
+    } catch (err) { console.error('Error saving web flow assignment:', err); }
+    finally { this.webFlowSaving = null; }
+  }
+
   async toggleExtraPerm(admin: any, key: string): Promise<void> {
     if (!admin.uid) return;
     this.extraPermSaving = admin.id + key;
     const has = this.hasExtraPerm(admin, key);
     try {
+      let updated: string[];
       if (has) {
         await this.firebaseService.revokeUserExtraPermission(admin.uid, key);
-        admin.extraPermissions = (admin.extraPermissions || []).filter((k: string) => k !== key);
+        updated = (admin.extraPermissions || []).filter((k: string) => k !== key);
       } else {
         await this.firebaseService.grantUserExtraPermission(admin.uid, key);
-        admin.extraPermissions = [...(admin.extraPermissions || []), key];
+        updated = [...(admin.extraPermissions || []), key];
       }
+      await this.firebaseService.updateAdmin(admin.id, { extraPermissions: updated });
+      admin.extraPermissions = updated;
     } catch (e) { console.error('Error toggling extra perm:', e); }
     this.extraPermSaving = null;
   }
@@ -192,7 +324,9 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     try {
       const all = await this.firebaseService.getFlows();
       this.flows = all.map((f: any) => ({ id: f.id, name: f.name, menuLabel: f.menuLabel, active: f.active !== false, notifyDelivery: !!f.notifyDelivery }));
-    } catch { this.flows = []; }
+      this.webstoreFlows = all.filter((f: any) => f.webStoreEnabled === true)
+        .map((f: any) => ({ id: f.id, name: f.name, menuLabel: f.menuLabel, active: f.active !== false, notifyDelivery: false }));
+    } catch { this.flows = []; this.webstoreFlows = []; }
   }
 
   ngOnDestroy(): void {

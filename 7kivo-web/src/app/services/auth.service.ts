@@ -44,6 +44,7 @@ export class AuthService {
   private botPausedReasonSubject = new BehaviorSubject<string | null>(null);
   private orgIndustrySubject = new BehaviorSubject<string>('general');
   private extraPermissionsSubject = new BehaviorSubject<string[]>([]);
+  private revokedPermissionsSubject = new BehaviorSubject<string[]>([]);
   private localSessionToken = '';
   private unsubSessionWatch: (() => void) | null = null;
   private unsubExtraPerms: (() => void) | null = null;
@@ -96,6 +97,19 @@ export class AuthService {
     try {
       const userData = await this.firebaseService.getUserOrg(user.uid);
       if (userData?.organizationId) {
+        // Verificar bloqueo
+        if (userData.blocked) {
+          const until = userData.blockedUntil?.toDate?.();
+          if (!until || until > new Date()) {
+            this.isAdminSubject.next(false);
+            this.userRoleSubject.next('');
+            signOut(this.auth);
+            return;
+          }
+          // Bloqueo expirado — limpiar automáticamente
+          await this.firebaseService.clearExpiredBlock(user.uid);
+        }
+
         this.firebaseService.setOrgId(userData.organizationId);
         this.userRoleSubject.next(userData.role || 'viewer');
 
@@ -104,8 +118,11 @@ export class AuthService {
           this.firebaseService.getOrganization(userData.organizationId)
         ]);
         if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
-        this.unsubExtraPerms = this.firebaseService.watchUserExtraPermissions(user.uid, (perms) => {
-          this.ngZone.run(() => this.extraPermissionsSubject.next(perms));
+        this.unsubExtraPerms = this.firebaseService.watchUserExtraPermissions(user.uid, (perms, revoked) => {
+          this.ngZone.run(() => {
+            this.extraPermissionsSubject.next(perms);
+            this.revokedPermissionsSubject.next(revoked);
+          });
         });
         this.orgNameSubject.next(orgConfig?.orgName || orgConfig?.schoolName || userData.organizationId);
         this.orgLogoSubject.next(orgConfig?.orgLogo || '');
@@ -152,6 +169,7 @@ export class AuthService {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
     if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
     this.extraPermissionsSubject.next([]);
+    this.revokedPermissionsSubject.next([]);
     this.localSessionToken = '';
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
@@ -186,6 +204,7 @@ export class AuthService {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
     if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
     this.extraPermissionsSubject.next([]);
+    this.revokedPermissionsSubject.next([]);
     this.localSessionToken = '';
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
@@ -240,9 +259,11 @@ export class AuthService {
     if (this.isSuperAdminSubject.value) return true;
     const role = this.userRoleSubject.value || 'viewer';
     const perms = ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS['viewer'];
-    if (perms.includes(section)) return true;
+    if (perms.includes(section)) {
+      const revoked = this.revokedPermissionsSubject.value;
+      return !revoked.includes(section);
+    }
     const raw = this.extraPermissionsSubject.value;
-    // Normalize: accept both string[] and Record<string,any> for safety
     const extra: string[] = Array.isArray(raw)
       ? raw
       : (raw && typeof raw === 'object' ? Object.keys(raw) : []);

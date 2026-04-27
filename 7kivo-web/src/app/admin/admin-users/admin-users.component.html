@@ -1,52 +1,35 @@
 <div class="admin-users-page">
 
-  <!-- Bot setup pending — bloquea agregar equipo -->
+  <!-- Bot setup pending -->
   <div class="setup-pending-banner" *ngIf="!botReady">
-    <div class="setup-banner-icon">
-      <i class="fab fa-whatsapp"></i>
-    </div>
+    <div class="setup-banner-icon"><i class="fab fa-whatsapp"></i></div>
     <div class="setup-banner-body">
       <strong>Tu bot de WhatsApp aún no está activo</strong>
       <span>El equipo de 7kivo está configurando tu servicio. Una vez que el bot esté en línea, podrás invitar miembros a tu equipo.</span>
     </div>
   </div>
 
+  <!-- Header -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Mi Equipo</h1>
-      <p class="page-subtitle">Gestiona los miembros de tu organización y sus niveles de acceso</p>
+      <p class="page-subtitle">Gestiona los miembros y sus niveles de acceso</p>
     </div>
-    <div class="online-summary" *ngIf="onlineCount > 0">
-      <span class="online-dot"></span>
-      {{ onlineCount }} conectado{{ onlineCount !== 1 ? 's' : '' }} ahora
-    </div>
-    <button class="btn-add" (click)="toggleForm()" [disabled]="(!showForm && !canAddAdmin) || !botReady">
-      <i class="fas" [class.fa-plus]="!showForm" [class.fa-times]="showForm"></i>
-      {{ showForm ? 'Cancelar' : 'Nuevo Usuario' }}
-    </button>
-    <span class="plan-limit-hint" *ngIf="!canAddAdmin && !showForm && botReady">Límite del plan: {{ adminLimit }} usuario{{ adminLimit > 1 ? 's' : '' }}</span>
-    <span class="setup-lock-hint" *ngIf="!botReady && !showForm">
-      <i class="fas fa-lock"></i> Disponible cuando el bot esté activo
-    </span>
-  </div>
-
-  <!-- Roles Reference -->
-  <div class="roles-reference">
-    <h4><i class="fas fa-shield-alt"></i> Roles disponibles</h4>
-    <div class="roles-grid">
-      <div class="role-card-ref" *ngFor="let r of rolesForSelector">
-        <span class="role-badge" [class]="'role-' + r.value">{{ r.label }}</span>
-        <span class="role-desc">{{ r.desc }}</span>
-        <div class="role-perms">
-          <span class="perm-tag" *ngFor="let p of getRolePermissions(r.value)">{{ getPermissionLabel(p) }}</span>
-        </div>
+    <div class="header-right">
+      <div class="online-summary" *ngIf="onlineCount > 0">
+        <span class="online-dot"></span>
+        {{ onlineCount }} conectado{{ onlineCount !== 1 ? 's' : '' }}
       </div>
+      <button class="btn-add" (click)="toggleForm()" [disabled]="(!showForm && !canAddAdmin) || !botReady">
+        <i class="fas" [class.fa-plus]="!showForm" [class.fa-times]="showForm"></i>
+        {{ showForm ? 'Cancelar' : 'Nuevo usuario' }}
+      </button>
     </div>
   </div>
 
   <!-- Create Form -->
   <div class="create-form" *ngIf="showForm && botReady">
-    <h3><i class="fas fa-user-plus"></i> Crear Nuevo Usuario</h3>
+    <h3><i class="fas fa-user-plus"></i> Crear nuevo usuario</h3>
     <form (ngSubmit)="createAdmin()">
       <div class="form-row">
         <div class="form-group-admin">
@@ -68,138 +51,238 @@
           <select [(ngModel)]="newAdmin.role" name="role">
             <option *ngFor="let r of rolesForSelector" [value]="r.value">{{ r.label }}</option>
           </select>
-          <span class="role-hint" *ngIf="newAdmin.role">
-            {{ getRoleDesc(newAdmin.role) }}
-          </span>
+          <span class="role-hint" *ngIf="newAdmin.role">{{ getRoleDesc(newAdmin.role) }}</span>
         </div>
       </div>
       <div class="form-row" *ngIf="newAdmin.role === 'delivery' || newAdmin.role === 'delivery_multi'">
         <div class="form-group-admin">
           <label>Número WhatsApp del Delivery</label>
-          <input type="tel" [(ngModel)]="newAdmin.whatsappPhone" name="whatsappPhone"
-                 placeholder="Ej: 50378901234 (con código de país)" />
-          <span class="role-hint">Este número se mostrará al cliente cuando tome un pedido</span>
+          <input type="tel" [(ngModel)]="newAdmin.whatsappPhone" name="whatsappPhone" placeholder="Ej: 50378901234" />
+          <span class="role-hint">Se mostrará al cliente cuando tome un pedido</span>
         </div>
         <div class="form-group-admin">
           <label>Vehículo</label>
           <div class="vehicle-options">
-            <button type="button" *ngFor="let v of vehicleOptions"
-                    class="vehicle-btn"
-                    [class.selected]="newAdmin.vehicleType === v.value"
-                    (click)="newAdmin.vehicleType = v.value"
-                    [title]="v.label">
-              <i class="fas" [class]="v.icon"></i>
-              <span>{{ v.label }}</span>
+            <button type="button" *ngFor="let v of vehicleOptions" class="vehicle-btn"
+              [class.selected]="newAdmin.vehicleType === v.value" (click)="newAdmin.vehicleType = v.value" [title]="v.label">
+              <i class="fas" [class]="v.icon"></i><span>{{ v.label }}</span>
             </button>
           </div>
         </div>
       </div>
-
-      <div class="form-message error" *ngIf="formError">
-        <i class="fas fa-exclamation-circle"></i> {{ formError }}
-      </div>
-      <div class="form-message success" *ngIf="formSuccess">
-        <i class="fas fa-check-circle"></i> {{ formSuccess }}
-      </div>
-
+      <div class="form-message error" *ngIf="formError"><i class="fas fa-exclamation-circle"></i> {{ formError }}</div>
+      <div class="form-message success" *ngIf="formSuccess"><i class="fas fa-check-circle"></i> {{ formSuccess }}</div>
       <button type="submit" class="btn-submit" [disabled]="formLoading">
-        <span *ngIf="!formLoading"><i class="fas fa-save"></i> Crear Usuario</span>
-        <span *ngIf="formLoading"><i class="fas fa-spinner fa-spin"></i> Creando...</span>
+        <i class="fas fa-spinner fa-spin" *ngIf="formLoading"></i>
+        <i class="fas fa-save" *ngIf="!formLoading"></i>
+        {{ formLoading ? 'Creando...' : 'Crear usuario' }}
       </button>
     </form>
   </div>
 
-  <!-- Loading -->
-  <div *ngIf="loading" class="loading-state">
-    <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
+  <!-- Filter bar -->
+  <div class="au-filterbar" *ngIf="!loading && admins.length > 0">
+    <div class="au-search-wrap">
+      <i class="fas fa-search au-search-icon"></i>
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Buscar por nombre o correo..."
+        class="au-search-input" />
+      <button class="au-search-clear" *ngIf="searchQuery" (click)="searchQuery = ''">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <select [(ngModel)]="filterRole" class="au-role-select">
+      <option value="">Todos los roles</option>
+      <option *ngFor="let r of availableRoles" [value]="r.value">{{ r.label }}</option>
+    </select>
+    <span class="au-filter-count" *ngIf="filterRole || searchQuery">
+      {{ filteredAdmins.length }} resultado{{ filteredAdmins.length !== 1 ? 's' : '' }}
+    </span>
+    <span class="au-total">{{ admins.length }} usuario{{ admins.length !== 1 ? 's' : '' }}</span>
   </div>
 
-  <!-- Admins List -->
-  <div class="admins-grid" *ngIf="!loading">
-    <div *ngIf="admins.length === 0" class="empty-state">
-      <i class="fas fa-user-shield"></i>
-      <p>No hay usuarios registrados</p>
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Cargando usuarios...</div>
+
+  <!-- User list -->
+  <div class="au-list" *ngIf="!loading">
+
+    <div *ngIf="filteredAdmins.length === 0 && admins.length > 0" class="au-empty-filter">
+      <i class="fas fa-search"></i>
+      <p>Sin resultados para "{{ searchQuery || filterRole }}"</p>
+      <button (click)="searchQuery=''; filterRole=''">Limpiar filtros</button>
+    </div>
+    <div *ngIf="admins.length === 0" class="au-empty-filter">
+      <i class="fas fa-users"></i><p>No hay usuarios registrados</p>
     </div>
 
-    <div class="admin-card" *ngFor="let admin of admins"
-         [class.inactive]="!admin.active"
-         [class.owner-card]="isOwner(admin)"
-         [class.card-online]="isOnline(admin.uid)">
+    <div *ngFor="let admin of filteredAdmins"
+         class="au-row"
+         [class.au-inactive]="!admin.active"
+         [class.au-owner-row]="isOwner(admin)"
+         [class.au-online-row]="isOnline(admin.uid)">
 
-      <!-- Banner de conectado -->
-      <div class="online-banner" *ngIf="isOnline(admin.uid)">
-        <span class="online-banner-dot"></span>
-        Conectado ahora
+      <!-- Online banner -->
+      <div class="au-online-banner" *ngIf="isOnline(admin.uid)">
+        <span class="online-banner-dot"></span> En línea ahora
       </div>
 
-      <div class="admin-card-header">
-        <div class="admin-avatar" [class.avatar-owner]="isOwner(admin)" [class.avatar-online]="isOnline(admin.uid)">
-          <i class="fas" [class.fa-crown]="isOwner(admin)" [class.fa-user]="!isOwner(admin)"></i>
-          <span class="presence-dot" [class.presence-online]="isOnline(admin.uid)" [class.presence-offline]="!isOnline(admin.uid)"></span>
+      <div class="au-row-main">
+        <!-- Avatar -->
+        <div class="au-avatar" [class.au-avatar-owner]="isOwner(admin)" [class.au-avatar-online]="isOnline(admin.uid)">
+          {{ getInitials(admin.name) }}
+          <span class="au-presence-dot"
+            [class.au-dot-online]="isOnline(admin.uid)"
+            [class.au-dot-offline]="!isOnline(admin.uid)"></span>
         </div>
-        <div class="admin-info">
-          <h4>{{ admin.name }}</h4>
-          <span class="admin-email">{{ admin.email }}</span>
-          <span class="last-seen--off" *ngIf="!isOnline(admin.uid) && lastSeenLabel(admin.uid)">
-            <i class="fas fa-clock"></i> {{ lastSeenLabel(admin.uid) }}
-          </span>
+
+        <!-- Info -->
+        <div class="au-info">
+          <div class="au-name-row">
+            <span class="au-name">{{ admin.name }}</span>
+            <span class="role-badge" [class]="'role-' + admin.role">{{ getRoleLabel(admin.role) }}</span>
+            <span class="au-status-chip" [class.au-chip-active]="admin.active && !isBlocked(admin)" [class.au-chip-off]="!admin.active" [class.au-chip-blocked]="isBlocked(admin)">
+              {{ isBlocked(admin) ? 'Bloqueado' : (admin.active ? 'Activo' : 'Inactivo') }}
+            </span>
+          </div>
+          <div class="au-meta-row">
+            <span class="au-email"><i class="fas fa-envelope"></i> {{ admin.email }}</span>
+            <span class="au-seen" *ngIf="!isOnline(admin.uid) && lastSeenLabel(admin.uid)">
+              <i class="fas fa-clock"></i> {{ lastSeenLabel(admin.uid) }}
+            </span>
+            <span class="au-seen au-seen-online" *ngIf="isOnline(admin.uid)">
+              <i class="fas fa-circle"></i> Conectado
+            </span>
+            <span class="au-seen" *ngIf="isDeliveryRole(admin) && admin.whatsappPhone">
+              <i class="fab fa-whatsapp" style="color:#25d366"></i> {{ admin.whatsappPhone }}
+            </span>
+          </div>
+          <!-- Extra perms chips -->
+          <div class="au-perm-chips" *ngIf="(admin.extraPermissions || []).length > 0">
+            <span *ngFor="let p of (admin.extraPermissions || [])" class="au-perm-chip">{{ p }}</span>
+          </div>
         </div>
-        <span class="role-badge" [class]="'role-' + admin.role">
-          {{ getRoleLabel(admin.role) }}
-        </span>
+
+        <!-- Quick actions -->
+        <div class="au-actions" *ngIf="canManage(admin)">
+          <button class="au-icon-btn" [class.au-btn-warn]="admin.active" [class.au-btn-ok]="!admin.active"
+            (click)="toggleActive(admin)" [title]="admin.active ? 'Desactivar' : 'Activar'">
+            <i class="fas" [class.fa-ban]="admin.active" [class.fa-check-circle]="!admin.active"></i>
+          </button>
+          <button class="au-icon-btn" (click)="toggleExpand(admin.id)"
+            [class.au-btn-active]="expandedId === admin.id" title="Gestionar">
+            <i class="fas fa-sliders-h"></i>
+          </button>
+        </div>
+        <div class="au-actions" *ngIf="isOwner(admin)">
+          <span class="au-owner-lock"><i class="fas fa-lock"></i> Propietario</span>
+        </div>
       </div>
-      <div class="admin-card-body">
-        <div class="admin-meta">
-          <span><i class="fas fa-calendar"></i> {{ formatDate(admin.createdAt) }}</span>
-          <span [class]="admin.active ? 'status-active' : 'status-inactive'">
-            <i class="fas fa-circle"></i> {{ admin.active ? 'Activo' : 'Inactivo' }}
-          </span>
+
+      <!-- Expanded management panel -->
+      <div class="au-expand" *ngIf="expandedId === admin.id && canManage(admin)">
+
+        <!-- Change name / email / password / phone inline forms -->
+        <div class="au-form-inline" *ngIf="changeNameAdmin?.id === admin.id">
+          <label><i class="fas fa-user-edit"></i> Nuevo nombre</label>
+          <div class="au-form-row">
+            <input type="text" [(ngModel)]="changeNameValue" placeholder="Nombre completo" [name]="'name-'+admin.id" (keyup.enter)="saveChangeName()" />
+            <button class="au-save-btn" (click)="saveChangeName()" [disabled]="changeNameSaving">
+              <i class="fas fa-spinner fa-spin" *ngIf="changeNameSaving"></i>
+              <i class="fas fa-check" *ngIf="!changeNameSaving"></i>
+            </button>
+            <button class="au-cancel-btn" (click)="cancelChangeName()"><i class="fas fa-times"></i></button>
+          </div>
+          <span class="au-form-error" *ngIf="changeNameError">{{ changeNameError }}</span>
         </div>
-        <div class="admin-meta" *ngIf="isDeliveryRole(admin) && admin.whatsappPhone">
-          <span><i class="fab fa-whatsapp" style="color:#25d366"></i> {{ admin.whatsappPhone }}</span>
+
+        <div class="au-form-inline" *ngIf="changePwAdmin?.uid === admin.uid">
+          <label><i class="fas fa-key"></i> Nueva contraseña</label>
+          <div class="au-form-row">
+            <input type="password" [(ngModel)]="changePwValue" placeholder="Mínimo 6 caracteres" [name]="'pw-'+admin.uid" (keyup.enter)="saveChangePassword()" />
+            <button class="au-save-btn" (click)="saveChangePassword()" [disabled]="changePwSaving">
+              <i class="fas fa-spinner fa-spin" *ngIf="changePwSaving"></i>
+              <i class="fas fa-check" *ngIf="!changePwSaving"></i>
+            </button>
+            <button class="au-cancel-btn" (click)="cancelChangePassword()"><i class="fas fa-times"></i></button>
+          </div>
+          <span class="au-form-error" *ngIf="changePwError">{{ changePwError }}</span>
         </div>
-        <!-- Vehicle type selector (delivery) -->
-        <div class="vehicle-selector" *ngIf="isDeliveryRole(admin) && canManage(admin)">
-          <span class="vehicle-label"><i class="fas fa-route"></i> Vehículo:</span>
+
+        <div class="au-form-inline" *ngIf="changePhoneAdmin?.id === admin.id">
+          <label><i class="fas fa-phone"></i> Número WhatsApp del Delivery</label>
+          <div class="au-form-row">
+            <input type="tel" [(ngModel)]="changePhoneValue" placeholder="Ej: 50378901234" [name]="'phone-'+admin.id" (keyup.enter)="saveChangePhone()" />
+            <button class="au-save-btn" (click)="saveChangePhone()" [disabled]="changePhoneSaving">
+              <i class="fas fa-spinner fa-spin" *ngIf="changePhoneSaving"></i>
+              <i class="fas fa-check" *ngIf="!changePhoneSaving"></i>
+            </button>
+            <button class="au-cancel-btn" (click)="cancelChangePhone()"><i class="fas fa-times"></i></button>
+          </div>
+          <span class="au-form-error" *ngIf="changePhoneError">{{ changePhoneError }}</span>
+        </div>
+
+        <!-- Manage buttons row -->
+        <div class="au-manage-row"
+          *ngIf="changeNameAdmin?.id !== admin.id && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id">
+          <button class="au-manage-btn" (click)="startChangeName(admin)" *ngIf="canChangeName">
+            <i class="fas fa-user-edit"></i> Nombre
+          </button>
+          <button class="au-manage-btn" (click)="startChangePassword(admin)">
+            <i class="fas fa-key"></i> Contraseña
+          </button>
+          <button class="au-manage-btn" (click)="startChangePhone(admin)" *ngIf="isDeliveryRole(admin)">
+            <i class="fas fa-phone"></i> N° WA
+          </button>
+          <button class="au-manage-btn au-manage-del" (click)="deleteAdmin(admin)">
+            <i class="fas fa-trash"></i> Eliminar
+          </button>
+        </div>
+
+        <div class="au-divider"></div>
+
+        <!-- Rol -->
+        <div class="au-section">
+          <span class="au-section-label"><i class="fas fa-user-tag"></i> Cambiar rol</span>
+          <select class="au-select" [ngModel]="admin.role" (ngModelChange)="changeRole(admin, $event)">
+            <option *ngFor="let r of rolesForSelector" [value]="r.value">{{ r.label }}</option>
+          </select>
+        </div>
+
+        <!-- Vehículo (delivery) -->
+        <div class="au-section" *ngIf="isDeliveryRole(admin)">
+          <span class="au-section-label"><i class="fas fa-route"></i> Vehículo</span>
           <div class="vehicle-options">
-            <button *ngFor="let v of vehicleOptions"
-                    class="vehicle-btn"
-                    [class.selected]="(admin.vehicleType || 'motorcycle') === v.value"
-                    [disabled]="savingVehicleId === admin.id"
-                    (click)="setVehicleType(admin, v.value)"
-                    [title]="v.label">
-              <i class="fas" [class]="v.icon"></i>
-              <span>{{ v.label }}</span>
+            <button *ngFor="let v of vehicleOptions" type="button" class="vehicle-btn"
+              [class.selected]="(admin.vehicleType || 'motorcycle') === v.value"
+              [disabled]="savingVehicleId === admin.id"
+              (click)="setVehicleType(admin, v.value)" [title]="v.label">
+              <i class="fas" [class]="v.icon"></i><span>{{ v.label }}</span>
             </button>
           </div>
         </div>
-        <!-- Parámetros Delivery Múltiple (owner/SA only) -->
-        <div class="dm-params" *ngIf="admin.role === 'delivery_multi' && canAssignFlows">
-          <span class="dm-params-label"><i class="fas fa-sliders-h"></i> Parámetros</span>
-          <label class="dm-param-row">
-            <span>Tomar pedidos de marketing</span>
-            <button class="dm-toggle" [class.dm-on]="admin.canSeePromoOrders !== false" (click)="toggleCanSeePromoOrders(admin)">
-              <span class="dm-toggle-knob"></span>
-            </button>
-            <span class="dm-toggle-label">{{ admin.canSeePromoOrders !== false ? 'Sí' : 'No' }}</span>
-          </label>
+
+        <!-- Parámetros Delivery Múltiple -->
+        <div class="au-section" *ngIf="admin.role === 'delivery_multi' && canAssignFlows">
+          <span class="au-section-label"><i class="fas fa-sliders-h"></i> Pedidos de marketing</span>
+          <button class="dm-toggle" [class.dm-on]="admin.canSeePromoOrders !== false" (click)="toggleCanSeePromoOrders(admin)">
+            <span class="dm-toggle-knob"></span>
+          </button>
+          <span class="dm-toggle-label">{{ admin.canSeePromoOrders !== false ? 'Sí' : 'No' }}</span>
         </div>
 
-        <!-- Flow assignment (delivery, owner/SA only) -->
-        <div class="flow-assign-section" *ngIf="isDeliveryRole(admin) && canAssignFlows">
+        <!-- Flujos asignados (delivery) -->
+        <div class="au-section au-section-col" *ngIf="isDeliveryRole(admin) && canAssignFlows">
           <button class="flow-assign-toggle" (click)="toggleFlowPanel(admin)">
             <i class="fas fa-project-diagram"></i>
-            Flujos asignados
-            <span class="fa-badge">{{ (admin.assignedFlows?.length || 0) }}</span>
+            Flujos de notificación
+            <span class="fa-badge">{{ admin.assignedFlows?.length || 0 }}</span>
             <i class="fas fa-chevron-down fa-toggle-icon" [class.rotated]="flowPanelAdminId === admin.id"></i>
           </button>
           <div class="flow-assign-panel" *ngIf="flowPanelAdminId === admin.id">
             <p class="fa-hint" *ngIf="flows.length === 0">No hay flujos creados.</p>
             <label *ngFor="let flow of flows" class="fa-flow-row" [class.fa-flow-inactive]="!flow.active">
-              <input type="checkbox"
-                     [checked]="isFlowAssigned(admin, flow.id)"
-                     [disabled]="flowAssignSaving === admin.id"
-                     (change)="toggleFlowAssignment(admin, flow.id)" />
+              <input type="checkbox" [checked]="isFlowAssigned(admin, flow.id)"
+                [disabled]="flowAssignSaving === admin.id" (change)="toggleFlowAssignment(admin, flow.id)" />
               <span class="fa-flow-name">{{ flow.name }}</span>
               <span class="fa-flow-label">{{ flow.menuLabel }}</span>
               <span class="fa-flow-status" *ngIf="!flow.active">inactivo</span>
@@ -207,125 +290,106 @@
           </div>
         </div>
 
-        <!-- Accesos extra (solo owner/admin pueden editar) -->
-        <div class="flow-assign-section" *ngIf="authService.isOwnerOrAdmin">
-          <button class="flow-assign-toggle" (click)="toggleExtraPermPanel(admin.id)">
+        <!-- Bloqueo de acceso -->
+        <div class="au-section au-section-col" *ngIf="authService.isOwnerOrAdmin">
+          <span class="au-section-label au-label-danger"><i class="fas fa-ban"></i> Bloqueo de acceso</span>
+
+          <!-- Actualmente bloqueado -->
+          <div class="au-block-active" *ngIf="isBlocked(admin)">
+            <div class="au-block-info">
+              <i class="fas fa-lock"></i>
+              <span>{{ blockUntilLabel(admin) }}</span>
+            </div>
+            <button class="au-manage-btn au-unblock-btn" (click)="unblockAdmin(admin)"
+              [disabled]="blockSaving === admin.id">
+              <i class="fas fa-spinner fa-spin" *ngIf="blockSaving === admin.id"></i>
+              <i class="fas fa-lock-open" *ngIf="blockSaving !== admin.id"></i>
+              Desbloquear
+            </button>
+          </div>
+
+          <!-- Opciones de bloqueo -->
+          <div class="au-block-opts" *ngIf="!isBlocked(admin)">
+            <button class="au-manage-btn au-block-perm-btn" (click)="blockAdmin(admin, false)"
+              [disabled]="blockSaving === admin.id">
+              <i class="fas fa-ban"></i> Bloquear permanentemente
+            </button>
+            <div class="au-block-temp-row">
+              <input type="datetime-local" [(ngModel)]="blockUntilDate" [min]="blockUntilMin"
+                class="au-datetime-input" placeholder="Fecha y hora" />
+              <button class="au-manage-btn au-block-temp-btn" (click)="blockAdmin(admin, true)"
+                [disabled]="!blockUntilDate || blockSaving === admin.id">
+                <i class="fas fa-clock"></i> Bloqueo temporal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="au-divider"></div>
+
+        <!-- Restringir permisos del rol -->
+        <div class="au-section au-section-col" *ngIf="authService.isOwnerOrAdmin && getRolePerms(admin.role).length > 0">
+          <button class="flow-assign-toggle" (click)="toggleRevokePermPanel(admin.id)">
             <i class="fas fa-shield-alt"></i>
-            Accesos extra
-            <span class="fa-badge">{{ (admin.extraPermissions?.length || 0) }}</span>
-            <i class="fas fa-chevron-down fa-toggle-icon" [class.rotated]="extraPermPanel === admin.id"></i>
+            Restringir permisos del rol
+            <span class="fa-badge fa-badge-warn" *ngIf="(admin.revokedPermissions?.length || 0) > 0">
+              {{ admin.revokedPermissions.length }} restringido{{ admin.revokedPermissions.length !== 1 ? 's' : '' }}
+            </span>
+            <i class="fas fa-chevron-down fa-toggle-icon" [class.rotated]="revokePermPanel === admin.id"></i>
           </button>
-          <div class="flow-assign-panel" *ngIf="extraPermPanel === admin.id">
-            <p class="fa-hint">Otorga acceso a secciones adicionales del panel.</p>
-            <label *ngFor="let opt of EXTRA_PERM_OPTIONS" class="fa-flow-row">
+          <div class="flow-assign-panel" *ngIf="revokePermPanel === admin.id">
+            <p class="fa-hint">Desmarca para quitar el acceso aunque el rol lo tenga.</p>
+            <label *ngFor="let key of getRolePerms(admin.role)" class="fa-flow-row"
+              [class.fa-perm-revoked]="isRevoked(admin, key)">
               <input type="checkbox"
-                     [checked]="hasExtraPerm(admin, opt.key)"
-                     [disabled]="extraPermSaving === admin.id + opt.key"
-                     (change)="toggleExtraPerm(admin, opt.key)" />
-              <span class="fa-flow-name">{{ opt.label }}</span>
+                [checked]="!isRevoked(admin, key)"
+                [disabled]="revokePermSaving === admin.id + key"
+                (change)="toggleRevokedPerm(admin, key)" />
+              <span class="fa-flow-name">{{ getPermissionLabel(key) }}</span>
+              <span class="fa-revoked-tag" *ngIf="isRevoked(admin, key)">restringido</span>
             </label>
           </div>
         </div>
 
-        <!-- Role change -->
-        <div class="role-change" *ngIf="canManage(admin)">
-          <label>Cambiar rol:</label>
-          <select [ngModel]="admin.role" (ngModelChange)="changeRole(admin, $event)">
-            <option *ngFor="let r of rolesForSelector" [value]="r.value">{{ r.label }}</option>
-          </select>
+        <!-- Accesos extra -->
+        <div class="au-section au-section-col" *ngIf="authService.isOwnerOrAdmin">
+          <button class="flow-assign-toggle" (click)="toggleExtraPermPanel(admin.id)">
+            <i class="fas fa-shield-alt"></i>
+            Accesos extra
+            <span class="fa-badge">{{ admin.extraPermissions?.length || 0 }}</span>
+            <i class="fas fa-chevron-down fa-toggle-icon" [class.rotated]="extraPermPanel === admin.id"></i>
+          </button>
+          <div class="flow-assign-panel" *ngIf="extraPermPanel === admin.id">
+            <p class="fa-hint">Otorga acceso a secciones adicionales del panel.</p>
+            <ng-container *ngFor="let opt of EXTRA_PERM_OPTIONS">
+              <label class="fa-flow-row">
+                <input type="checkbox" [checked]="hasExtraPerm(admin, opt.key)"
+                  [disabled]="extraPermSaving === admin.id + opt.key"
+                  (change)="toggleExtraPerm(admin, opt.key)" />
+                <span class="fa-flow-name">{{ opt.label }}</span>
+              </label>
+              <div *ngIf="opt.key === 'webdelivery' && hasExtraPerm(admin, 'webdelivery') && webstoreFlows.length > 0"
+                   class="fa-webflow-sub">
+                <p class="fa-sub-hint"><i class="fas fa-store"></i> ¿Qué tiendas puede gestionar?</p>
+                <label *ngFor="let flow of webstoreFlows" class="fa-flow-row fa-flow-sub">
+                  <input type="checkbox" [checked]="hasWebFlow(admin, flow.id)"
+                    [disabled]="webFlowSaving === admin.id + flow.id"
+                    (change)="toggleWebFlow(admin, flow.id)" />
+                  <span class="fa-flow-name">{{ flow.menuLabel || flow.name }}</span>
+                  <span class="fa-flow-status" *ngIf="!flow.active">inactiva</span>
+                </label>
+              </div>
+            </ng-container>
+          </div>
         </div>
-      </div>
-      <div class="admin-card-actions" *ngIf="canManage(admin)">
-        <button class="btn-card" [class.btn-deactivate]="admin.active" [class.btn-activate]="!admin.active"
-                (click)="toggleActive(admin)">
-          <i class="fas" [class.fa-ban]="admin.active" [class.fa-check]="!admin.active"></i>
-          {{ admin.active ? 'Desactivar' : 'Activar' }}
-        </button>
-        <button class="btn-card btn-pw" (click)="startChangeName(admin)"
-                *ngIf="canChangeName && changeNameAdmin?.id !== admin.id && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id">
-          <i class="fas fa-user-edit"></i> Nombre
-        </button>
-        <button class="btn-card btn-pw" (click)="startChangePassword(admin)"
-                *ngIf="changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id && changeNameAdmin?.id !== admin.id">
-          <i class="fas fa-key"></i> Contraseña
-        </button>
-        <button class="btn-card btn-pw" (click)="startChangePhone(admin)"
-                *ngIf="isDeliveryRole(admin) && changePwAdmin?.uid !== admin.uid && changePhoneAdmin?.id !== admin.id && changeNameAdmin?.id !== admin.id">
-          <i class="fas fa-phone"></i> Número WA
-        </button>
-        <button class="btn-card btn-delete" (click)="deleteAdmin(admin)">
-          <i class="fas fa-trash"></i> Eliminar
-        </button>
-      </div>
 
-      <!-- Inline phone change form (delivery) -->
-      <div class="change-pw-form" *ngIf="changePhoneAdmin?.id === admin.id">
-        <label><i class="fas fa-phone"></i> Número WhatsApp del Delivery</label>
-        <div class="change-pw-row">
-          <input type="tel" [(ngModel)]="changePhoneValue" placeholder="Ej: 50378901234"
-                 [name]="'phone-' + admin.id" (keyup.enter)="saveChangePhone()" />
-          <button class="btn-card btn-save-pw" (click)="saveChangePhone()" [disabled]="changePhoneSaving">
-            <i class="fas fa-spinner fa-spin" *ngIf="changePhoneSaving"></i>
-            <i class="fas fa-check" *ngIf="!changePhoneSaving"></i>
-            {{ changePhoneSaving ? '' : 'Guardar' }}
-          </button>
-          <button class="btn-card btn-cancel-pw" (click)="cancelChangePhone()" [disabled]="changePhoneSaving">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <span class="pw-error" *ngIf="changePhoneError"><i class="fas fa-exclamation-circle"></i> {{ changePhoneError }}</span>
-      </div>
-
-      <!-- Inline name change form -->
-      <div class="change-pw-form" *ngIf="changeNameAdmin?.id === admin.id">
-        <label><i class="fas fa-user-edit"></i> Nuevo nombre</label>
-        <div class="change-pw-row">
-          <input type="text" [(ngModel)]="changeNameValue" placeholder="Nombre completo"
-                 [name]="'name-' + admin.id" (keyup.enter)="saveChangeName()" />
-          <button class="btn-card btn-save-pw" (click)="saveChangeName()" [disabled]="changeNameSaving">
-            <i class="fas fa-spinner fa-spin" *ngIf="changeNameSaving"></i>
-            <i class="fas fa-check" *ngIf="!changeNameSaving"></i>
-            {{ changeNameSaving ? '' : 'Guardar' }}
-          </button>
-          <button class="btn-card btn-cancel-pw" (click)="cancelChangeName()" [disabled]="changeNameSaving">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <span class="pw-error" *ngIf="changeNameError"><i class="fas fa-exclamation-circle"></i> {{ changeNameError }}</span>
-      </div>
-
-      <!-- Inline password change form -->
-      <div class="change-pw-form" *ngIf="changePwAdmin?.uid === admin.uid">
-        <label><i class="fas fa-key"></i> Nueva contraseña</label>
-        <div class="change-pw-row">
-          <input type="password" [(ngModel)]="changePwValue" placeholder="Mínimo 6 caracteres"
-                 [name]="'pw-' + admin.uid" (keyup.enter)="saveChangePassword()" />
-          <button class="btn-card btn-save-pw" (click)="saveChangePassword()" [disabled]="changePwSaving">
-            <i class="fas fa-spinner fa-spin" *ngIf="changePwSaving"></i>
-            <i class="fas fa-check" *ngIf="!changePwSaving"></i>
-            {{ changePwSaving ? '' : 'Guardar' }}
-          </button>
-          <button class="btn-card btn-cancel-pw" (click)="cancelChangePassword()" [disabled]="changePwSaving">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <span class="pw-error" *ngIf="changePwError"><i class="fas fa-exclamation-circle"></i> {{ changePwError }}</span>
-      </div>
-
-      <div class="admin-card-actions owner-protected" *ngIf="isOwner(admin)">
-        <span class="owner-label"><i class="fas fa-lock"></i> Cuenta protegida (dueño)</span>
       </div>
     </div>
   </div>
 
   <!-- Global notices -->
-  <div class="pw-global-notice" *ngIf="changePwNotice">
-    <i class="fas fa-check-circle"></i> {{ changePwNotice }}
-  </div>
-  <div class="pw-global-notice" *ngIf="changePhoneNotice">
-    <i class="fas fa-check-circle"></i> {{ changePhoneNotice }}
-  </div>
-  <div class="pw-global-notice" *ngIf="changeNameNotice">
-    <i class="fas fa-check-circle"></i> {{ changeNameNotice }}
-  </div>
+  <div class="pw-global-notice" *ngIf="changePwNotice"><i class="fas fa-check-circle"></i> {{ changePwNotice }}</div>
+  <div class="pw-global-notice" *ngIf="changePhoneNotice"><i class="fas fa-check-circle"></i> {{ changePhoneNotice }}</div>
+  <div class="pw-global-notice" *ngIf="changeNameNotice"><i class="fas fa-check-circle"></i> {{ changeNameNotice }}</div>
+
 </div>

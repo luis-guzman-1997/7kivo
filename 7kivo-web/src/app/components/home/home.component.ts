@@ -27,6 +27,7 @@ export class HomeComponent implements OnInit {
   plans: any[] = DEFAULT_PLANS;
   plansSectionTitle = 'Un plan para cada etapa de tu negocio';
   plansSectionDesc = 'Elige el plan que se adapte a tus necesidades. Actualiza en cualquier momento.';
+  clients: { name: string; logo: string }[] = [];
 
   constructor(
     private router: Router,
@@ -43,12 +44,14 @@ export class HomeComponent implements OnInit {
       }
       return;
     }
-
     const slug = localStorage.getItem('orgLoginSlug');
     if (slug) {
       this.router.navigate(['/admin/login', slug]);
       return;
     }
+    try {
+      this.clients = await this.firebaseService.getPlatformClients();
+    } catch { /* silent */ }
 
     try {
       const data = await this.firebaseService.getPlatformPlans();
@@ -62,4 +65,3 @@ export class HomeComponent implements OnInit {
     }
   }
 }
-

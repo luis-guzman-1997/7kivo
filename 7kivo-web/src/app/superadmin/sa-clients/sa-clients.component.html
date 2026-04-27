@@ -1,0 +1,73 @@
+<div class="sac-page">
+
+  <div class="toast" *ngIf="notice"><i class="fas fa-check-circle"></i> {{ notice }}</div>
+
+  <div class="sac-header">
+    <h1><i class="fas fa-star"></i> Clientes Exclusivos</h1>
+    <p>Gestiona los logos que aparecen en el carrusel de la landing page.</p>
+  </div>
+
+  <div *ngIf="loading" class="sac-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Agregar nuevo -->
+    <div class="sac-add-card">
+      <h3><i class="fas fa-plus-circle"></i> Agregar cliente</h3>
+      <div class="sac-add-body">
+
+        <!-- Logo -->
+        <div class="sac-logo-area" *ngIf="!newLogoPreview" (click)="logoInput.click()">
+          <input #logoInput type="file" accept="image/*" (change)="onLogoSelected($event)" style="display:none" />
+          <i class="fas fa-image"></i>
+          <span>Subir logo</span>
+          <small>JPG, PNG — máx. 3 MB</small>
+        </div>
+        <div class="sac-logo-preview" *ngIf="newLogoPreview">
+          <img [src]="newLogoPreview" alt="Preview" />
+          <button class="sac-logo-clear" (click)="clearLogo()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Nombre -->
+        <div class="sac-name-row">
+          <input type="text" [(ngModel)]="newName" placeholder="Nombre del negocio" class="sac-input"
+            (keydown.enter)="addClient()" maxlength="60" />
+          <button class="sac-btn-add" (click)="addClient()"
+            [disabled]="!newName.trim() || uploadingLogo">
+            <i class="fas fa-spinner fa-spin" *ngIf="uploadingLogo"></i>
+            <i class="fas fa-plus" *ngIf="!uploadingLogo"></i>
+            {{ uploadingLogo ? 'Subiendo...' : 'Agregar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista -->
+    <div class="sac-list" *ngIf="clients.length > 0">
+      <div *ngFor="let c of clients; let i = index" class="sac-row">
+        <div class="sac-row-logo">
+          <img *ngIf="c.logo" [src]="c.logo" [alt]="c.name" />
+          <div *ngIf="!c.logo" class="sac-placeholder">{{ c.name.charAt(0) }}</div>
+        </div>
+        <span class="sac-row-name">{{ c.name }}</span>
+        <div class="sac-row-actions">
+          <button class="sac-icon-btn" (click)="moveUp(i)" [disabled]="i === 0" title="Subir">
+            <i class="fas fa-chevron-up"></i>
+          </button>
+          <button class="sac-icon-btn" (click)="moveDown(i)" [disabled]="i === clients.length - 1" title="Bajar">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <button class="sac-icon-btn sac-btn-del" (click)="removeClient(i)" title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sac-empty" *ngIf="clients.length === 0">
+      <i class="fas fa-star"></i>
+      <p>Sin clientes registrados. Agrega el primero.</p>
+    </div>
+
+  </ng-container>
+</div>

@@ -513,7 +513,8 @@ const handleInteractiveResponse = async (phoneNumber, buttonId) => {
       sendPushToDeliveries({
         title: '🛵 Nuevo pedido promo',
         body: `${campaign.name} — ${promoClientName}`,
-        url: '/admin/inbox'
+        url: '/admin/inbox',
+        promoOnly: true
       }).catch(() => {});
       await sendTextMessage('¡Pedido recibido! 🛵 En breve un repartidor te contactará.', phoneNumber);
       clearSession(phoneNumber);
@@ -1429,7 +1430,8 @@ const completeFlow = async (phoneNumber, flow) => {
         sendPushToDeliveries({
           title: "Nueva solicitud",
           body: `${flow.name} — ${clientName}`,
-          url: "/admin/inbox"
+          url: "/admin/inbox",
+          flowId: flow.id
         }).catch(() => {});
       }
     } catch (error) {

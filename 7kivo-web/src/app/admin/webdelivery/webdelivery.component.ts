@@ -40,9 +40,15 @@ export class WebDeliveryComponent implements OnInit {
 
   filterCategory = '';
   filterText = '';
-  categories: string[] = [];
+
+  storeCategories: string[] = [];
+  newCategoryInput = '';
+  savingCategory = false;
+  showCategoryModal = false;
 
   deleteTarget: any = null;
+
+  activeSection: 'productos' | 'config' = 'productos';
 
   storeLogoFile: File | null = null;
   storeLogoPreview = '';
@@ -86,7 +92,22 @@ export class WebDeliveryComponent implements OnInit {
     this.loading = true;
     try {
       const all = await this.firebaseService.getFlows();
-      this.flows = all.filter((f: any) => f.webStoreEnabled === true);
+      let webFlows = all.filter((f: any) => f.webStoreEnabled === true);
+
+      const role = this.authService.userRole;
+      const fullAccess = role === 'owner' || role === 'admin' || role === 'editor' || role === 'superadmin';
+      if (!fullAccess) {
+        const uid = this.authService.currentUser?.uid;
+        if (uid) {
+          const adminDoc = await this.firebaseService.getAdminByUid(uid);
+          const assigned: string[] = adminDoc?.assignedWebFlows || [];
+          if (assigned.length > 0) {
+            webFlows = webFlows.filter((f: any) => assigned.includes(f.id));
+          }
+        }
+      }
+
+      this.flows = webFlows;
       if (this.flows.length > 0) await this.selectFlow(this.flows[0]);
     } catch {
       this.error = 'Error al cargar flujos';
@@ -104,6 +125,8 @@ export class WebDeliveryComponent implements OnInit {
     this.storeLogoPreview = flow.storeImage || '';
     this.storeColor = flow.storeColor || '#2e7d32';
     this.colorChanged = false;
+    this.storeCategories = flow.storeCategories || [];
+    this.newCategoryInput = '';
     await this.loadItems();
     // Sync público automático para que la tienda web refleje el estado actual
     this.firebaseService.syncPublicStore(flow.id).catch(() => {});
@@ -113,8 +136,6 @@ export class WebDeliveryComponent implements OnInit {
     if (!this.selectedFlow) return;
     try {
       this.items = await this.firebaseService.getWebDeliveryItems(this.selectedFlow.id);
-      const cats = [...new Set<string>(this.items.map((i: any) => i.categoria || '').filter(Boolean))];
-      this.categories = cats.sort();
     } catch {
       this.error = 'Error al cargar productos';
       setTimeout(() => this.error = '', 3000);
@@ -259,6 +280,30 @@ export class WebDeliveryComponent implements OnInit {
       this.error = 'Error al eliminar';
       setTimeout(() => this.error = '', 3000);
     }
+  }
+
+  async addCategory(): Promise<void> {
+    const cat = this.newCategoryInput.trim();
+    if (!cat || this.storeCategories.includes(cat)) return;
+    this.savingCategory = true;
+    try {
+      const updated = [...this.storeCategories, cat];
+      await this.firebaseService.updateFlow(this.selectedFlow.id, { storeCategories: updated });
+      this.selectedFlow.storeCategories = updated;
+      this.storeCategories = updated;
+      this.newCategoryInput = '';
+    } catch { this.error = 'Error al guardar categoría'; setTimeout(() => this.error = '', 3000); }
+    finally { this.savingCategory = false; }
+  }
+
+  async removeCategory(cat: string): Promise<void> {
+    const updated = this.storeCategories.filter(c => c !== cat);
+    try {
+      await this.firebaseService.updateFlow(this.selectedFlow.id, { storeCategories: updated });
+      this.selectedFlow.storeCategories = updated;
+      this.storeCategories = updated;
+      if (this.filterCategory === cat) this.filterCategory = '';
+    } catch { this.error = 'Error al eliminar categoría'; setTimeout(() => this.error = '', 3000); }
   }
 
   onStoreLogoSelected(event: Event): void {

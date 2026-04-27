@@ -8,6 +8,7 @@ import { SaOrganizationsComponent } from './sa-organizations/sa-organizations.co
 import { SaOrgDetailComponent } from './sa-org-detail/sa-org-detail.component';
 import { SaBillingComponent } from './sa-billing/sa-billing.component';
 import { SaPlansComponent } from './sa-plans/sa-plans.component';
+import { SaClientsComponent } from './sa-clients/sa-clients.component';
 
 @NgModule({
   declarations: [
@@ -16,7 +17,8 @@ import { SaPlansComponent } from './sa-plans/sa-plans.component';
     SaOrganizationsComponent,
     SaOrgDetailComponent,
     SaBillingComponent,
-    SaPlansComponent
+    SaPlansComponent,
+    SaClientsComponent
   ],
   imports: [
     CommonModule,

@@ -66,9 +66,14 @@
       <span>o</span>
     </div>
 
-    <button class="btn-register-toggle" (click)="showRegister = true">
-      <i class="fas fa-building"></i> Crear nueva organización
-    </button>
+    <div class="btn-register-soldout">
+      <div class="soldout-top">
+        <i class="fas fa-building"></i>
+        <span>Crear nueva organización</span>
+        <span class="soldout-tag">SOLD OUT</span>
+      </div>
+      <small>Sin cupos disponibles. No estamos aceptando nuevos registros por el momento.</small>
+    </div>
 
     <div class="login-footer">
       <a routerLink="/">
