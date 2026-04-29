@@ -326,7 +326,7 @@ const takeDeliveryCase = async (req, res) => {
     const myName = deliveryName ? `Soy *${deliveryName}*` : "Soy tu repartidor";
     let msg = `¡Hola${clientGreeting}! 👋\n\n${myName}. Acabo de tomar tu solicitud y seguiré en contacto contigo por este chat. 🚗`;
     if (deliveryCode) {
-      msg += `\n\n*Tu código de confirmación es: ${deliveryCode}*\n\nGuárdalo: te lo pediré al entregar para confirmar que soy yo quien te entrega. ✅\n\n⚠️ Si alguien te escribe desde otro número, no confíes y avísanos.`;
+      msg += `\n\n*Tu código de confirmación es: ${deliveryCode}*\n\nGuárdalo: te lo pediré al finalizar tu solicitud para confirmar que soy yo quien la atiende. ✅\n\n⚠️ Si alguien te escribe desde otro número, no confíes y avísanos.\n\nAl finalizar el proceso te pediré este código.`;
     } else {
       msg += `\n\nTe pediré un código de confirmación al momento de la entrega.`;
     }
@@ -356,7 +356,7 @@ const resolveDeliveryCase = async (req, res) => {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
-    const msg = `¡Tu pedido ha sido completado${clientName ? ', ' + clientName : ''}! 🎉✅\n\n💚 Gracias por confiar en nosotros.\n\n💬 Si tienes alguna duda o comentario, escríbenos y selecciona la opción *Quejas y Sugerencias* del menú. 👍`;
+    const msg = `¡Tu solicitud ha sido completada${clientName ? ', ' + clientName : ''}! 🎉✅\n\n💚 Gracias por confiar en nosotros.\n\n💬 Si tienes alguna duda o comentario, escríbenos y selecciona la opción *Quejas y Sugerencias* del menú. 👍`;
 
     try {
       await sendTextMessage(msg, phone);

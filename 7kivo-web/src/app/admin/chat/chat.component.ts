@@ -940,7 +940,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (!this.selectedConversation || this.resendingCode || !this.deliveryCode) return;
     this.showResendCodeModal = false;
     this.resendingCode = true;
-    const msg = `🔑 Tu código de confirmación es: *${this.deliveryCode}*\n\nTe lo voy a pedir al momento de la entrega para confirmar que soy yo quien te entrega. ✅`;
+    const msg = `🔑 Tu código de confirmación es: *${this.deliveryCode}*\n\nTe lo voy a pedir al momento de finalizar tu solicitud para confirmar que soy yo quien la atiende. ✅\n\nAl finalizar el proceso te pediré este código.`;
     try {
       await fetch(`${this.botApiUrl}/api/${this.orgId}/send-message`, {
         method: 'POST',
