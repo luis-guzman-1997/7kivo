@@ -1542,3 +1542,160 @@
 .fe-catalog-url-text { font-size:0.78rem; color:#5b21b6; word-break:break-all; flex:1; }
 .fe-btn-copy-url { background:#8b5cf6; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
 .fe-btn-copy-url:hover { background:#7c3aed; }
+
+/* ==================== VISTA PREVIA WHATSAPP ==================== */
+.fe-preview-toggle {
+  display: flex; align-items: center; gap: 7px; padding: 9px 16px;
+  background: white; color: #059669; border: 2px solid #d1fae5;
+  border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0; font-family: inherit; transition: all 0.2s;
+}
+.fe-preview-toggle:hover { border-color: #6ee7b7; }
+.fe-preview-toggle.active { background: #ecfdf5; border-color: #6ee7b7; }
+.fe-preview-toggle i { color: #25d366; }
+
+/* Área de trabajo: editor + preview lado a lado */
+.fe-workarea { display: flex; gap: 24px; align-items: flex-start; }
+.fe-workarea .fe-editor-col { flex: 1 1 auto; min-width: 0; }
+.fe-preview-col { flex: 0 0 340px; position: sticky; top: 16px; }
+
+/* Mockup de teléfono */
+.fe-phone {
+  background: #e5ddd5;
+  border-radius: 22px;
+  border: 8px solid #111827;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  display: flex; flex-direction: column;
+  height: 600px;
+}
+.fe-phone-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: #075e54; color: white; padding: 12px 14px;
+  flex-shrink: 0;
+}
+.fe-phone-bar > i { font-size: 0.95rem; opacity: 0.9; }
+.fe-phone-avatar {
+  width: 34px; height: 34px; border-radius: 50%; background: #cbd5e1;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  color: #475569; flex-shrink: 0;
+}
+.fe-phone-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.fe-phone-name { display: flex; flex-direction: column; line-height: 1.2; font-weight: 600; font-size: 0.9rem; }
+.fe-phone-name small { font-weight: 400; font-size: 0.72rem; opacity: 0.85; }
+
+.fe-phone-body {
+  flex: 1; overflow-y: auto; padding: 14px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  background-image: linear-gradient(rgba(229,221,213,0.6), rgba(229,221,213,0.6));
+}
+.fe-phone-body::-webkit-scrollbar { width: 5px; }
+.fe-phone-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 4px; }
+
+.fe-msg { display: flex; }
+.fe-msg-bot { justify-content: flex-start; }
+.fe-msg-user { justify-content: flex-end; }
+.fe-bubble {
+  max-width: 82%; padding: 7px 10px; border-radius: 8px;
+  font-size: 0.82rem; line-height: 1.4; color: #111827;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.08); word-wrap: break-word;
+}
+.fe-msg-bot .fe-bubble { background: #ffffff; border-top-left-radius: 2px; }
+.fe-msg-user .fe-bubble { background: #dcf8c6; border-top-right-radius: 2px; }
+.fe-bubble-hint { color: #6b7280; font-style: italic; background: #d4edb4 !important; }
+.fe-bubble code { background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 4px; font-size: 0.78rem; }
+.fe-ph { color: #9ca3af; }
+.fe-bubble-media img { max-width: 100%; border-radius: 6px; display: block; }
+.fe-bubble-link { color: #1d4ed8; }
+
+/* Botones / listas estilo WhatsApp */
+.fe-wa-buttons { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+.fe-wa-btn {
+  text-align: center; color: #00a5f4; background: #fff;
+  border-top: 1px solid #eee; padding: 7px; font-size: 0.8rem; font-weight: 500;
+  border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.fe-wa-listbtn {
+  margin-top: 8px; text-align: center; color: #00a5f4; font-weight: 500;
+  padding: 7px; font-size: 0.8rem; border-top: 1px solid #eee;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.fe-wa-listpreview { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.fe-wa-listitem { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: #374151; padding: 2px 0; }
+.fe-wa-listitem i { color: #9ca3af; font-size: 0.7rem; }
+
+.fe-preview-empty {
+  margin: auto; text-align: center; color: #6b7280; padding: 20px;
+}
+.fe-preview-empty i { font-size: 2rem; opacity: 0.4; margin-bottom: 10px; }
+.fe-preview-empty p { font-size: 0.82rem; margin: 0; }
+
+.fe-preview-note {
+  font-size: 0.72rem; color: #94a3b8; margin: 10px 4px 0;
+  display: flex; align-items: flex-start; gap: 6px; line-height: 1.4;
+}
+
+/* Responsive: preview debajo del editor en pantallas chicas */
+@media (max-width: 1100px) {
+  .fe-workarea { flex-direction: column; }
+  .fe-preview-col { flex-basis: auto; width: 100%; max-width: 360px; position: static; }
+}
+
+/* ==================== ASISTENTE PASO A PASO ==================== */
+.fe-guide {
+  position: relative;
+  background: linear-gradient(135deg, #f5f3ff, #faf5ff);
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.fe-guide-close {
+  position: absolute; top: 10px; right: 12px;
+  background: transparent; border: none; color: #a78bfa; cursor: pointer;
+  font-size: 0.9rem; padding: 4px;
+}
+.fe-guide-close:hover { color: #7c3aed; }
+.fe-guide-rail {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  margin-bottom: 12px; padding-right: 24px;
+}
+.fe-guide-step {
+  display: flex; align-items: center; gap: 8px;
+  background: transparent; border: none; cursor: pointer;
+  padding: 6px 10px; border-radius: 10px; font-family: inherit;
+  color: #6b7280; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+}
+.fe-guide-step:hover { background: rgba(139,92,246,0.08); }
+.fe-guide-step.active { background: #ede9fe; color: #6d28d9; }
+.fe-guide-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #e5e7eb; color: #6b7280; font-size: 0.78rem; flex-shrink: 0;
+}
+.fe-guide-step.active .fe-guide-num { background: #8b5cf6; color: white; }
+.fe-guide-step.done .fe-guide-num { background: #10b981; color: white; }
+.fe-guide-sep { flex: 1; min-width: 14px; height: 2px; background: #e5e7eb; border-radius: 2px; }
+.fe-guide-body {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  flex-wrap: wrap;
+}
+.fe-guide-hint { margin: 0; color: #4b5563; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; }
+.fe-guide-hint i { color: #8b5cf6; }
+.fe-guide-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.fe-guide-back, .fe-guide-next, .fe-guide-publish {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 9px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; font-family: inherit; border: none; transition: all 0.2s;
+}
+.fe-guide-back { background: white; border: 1px solid #e2e8f0; color: #64748b; }
+.fe-guide-back:hover { border-color: #cbd5e1; }
+.fe-guide-next { background: #8b5cf6; color: white; }
+.fe-guide-next:hover { background: #7c3aed; }
+.fe-guide-publish { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+.fe-guide-publish:hover:not(:disabled) { opacity: 0.92; }
+.fe-guide-publish:disabled { opacity: 0.6; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .fe-guide-label { display: none; }
+  .fe-guide-body { flex-direction: column; align-items: stretch; }
+}

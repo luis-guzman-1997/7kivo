@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, RoleInfo } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -44,6 +44,19 @@ export class DashboardComponent implements OnInit {
     return r === 'delivery' || r === 'delivery_multi';
   }
 
+  // Guía de rol: qué puede hacer el usuario según su perfil
+  get roleInfo(): RoleInfo {
+    return this.authService.getRoleInfo();
+  }
+  roleGuideDismissed = false;
+
+  dismissRoleGuide(): void {
+    this.roleGuideDismissed = true;
+    try {
+      localStorage.setItem('roleGuideDismissed_' + this.authService.userRole, '1');
+    } catch {}
+  }
+
   // Onboarding
   showOnboarding = false;
   step1Done = false;
@@ -58,6 +71,9 @@ export class DashboardComponent implements OnInit {
     this.planLimits = this.authService.getPlanLimits();
     this.botEnabled = this.authService.botEnabled;
     this.orgId = this.firebaseService.getOrgId();
+    try {
+      this.roleGuideDismissed = localStorage.getItem('roleGuideDismissed_' + this.authService.userRole) === '1';
+    } catch {}
 
     const now = new Date();
     this.todayLabel = now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

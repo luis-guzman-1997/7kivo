@@ -510,6 +510,10 @@
         <input type="checkbox" [(ngModel)]="currentFlow.active" />
         <span [class.fe-active-on]="currentFlow.active">{{ currentFlow.active ? 'Activo' : 'Inactivo' }}</span>
       </label>
+      <button class="fe-preview-toggle" (click)="togglePreview()" [class.active]="showPreview" title="Mostrar/ocultar vista previa de WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+        <span>{{ showPreview ? 'Ocultar vista previa' : 'Vista previa' }}</span>
+      </button>
       <button class="fe-save-btn" (click)="saveFlow()" [disabled]="saving">
         <i class="fas fa-save" *ngIf="!saving"></i>
         <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
@@ -517,11 +521,41 @@
       </button>
     </div>
 
-    <!-- Editor (full width) -->
+    <!-- ===== Asistente paso a paso (flujos nuevos) ===== -->
+    <div class="fe-guide" *ngIf="isNewFlow && showGuide">
+      <button class="fe-guide-close" (click)="dismissGuide()" title="Ocultar guía"><i class="fas fa-times"></i></button>
+      <div class="fe-guide-rail">
+        <ng-container *ngFor="let stage of guideStages; let i = index">
+          <button class="fe-guide-step" [class.active]="guideStep === i" [class.done]="isGuideStageDone(stage.key)" (click)="guideGoTo(i)">
+            <span class="fe-guide-num">
+              <i class="fas fa-check" *ngIf="isGuideStageDone(stage.key)"></i>
+              <span *ngIf="!isGuideStageDone(stage.key)">{{ i + 1 }}</span>
+            </span>
+            <span class="fe-guide-label">{{ stage.title }}</span>
+          </button>
+          <span class="fe-guide-sep" *ngIf="i < guideStages.length - 1"></span>
+        </ng-container>
+      </div>
+      <div class="fe-guide-body">
+        <p class="fe-guide-hint"><i class="fas" [ngClass]="guideStages[guideStep].icon"></i> {{ guideStages[guideStep].hint }}</p>
+        <div class="fe-guide-actions">
+          <button class="fe-guide-back" *ngIf="guideStep > 0" (click)="guidePrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
+          <button class="fe-guide-next" *ngIf="guideStep < guideStages.length - 1" (click)="guideNext()">Siguiente <i class="fas fa-arrow-right"></i></button>
+          <button class="fe-guide-publish" *ngIf="guideStep === guideStages.length - 1" (click)="saveFlow()" [disabled]="saving">
+            <i class="fas fa-paper-plane"></i> Publicar flujo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Área de trabajo: editor + vista previa -->
+    <div class="fe-workarea" [class.with-preview]="showPreview">
+
+    <!-- Editor -->
     <div class="fe-editor-col">
 
         <!-- Bloque: Menú -->
-        <div class="fe-block">
+        <div class="fe-block" id="fe-menu-block">
           <div class="fe-block-title"><i class="fas fa-tag"></i> Cómo aparece en el menú del bot</div>
           <div class="fe-row-3">
             <div class="fe-field">
@@ -1225,5 +1259,96 @@
         </div>
 
     </div>
+    <!-- /fe-editor-col -->
+
+    <!-- ===== Vista previa de WhatsApp en vivo ===== -->
+    <div class="fe-preview-col" *ngIf="showPreview">
+      <div class="fe-phone">
+        <div class="fe-phone-bar">
+          <i class="fas fa-arrow-left"></i>
+          <div class="fe-phone-avatar">
+            <img *ngIf="authService.orgLogo" [src]="authService.orgLogo" alt="" />
+            <i *ngIf="!authService.orgLogo" class="fas fa-robot"></i>
+          </div>
+          <div class="fe-phone-name">
+            {{ authService.orgName || 'Tu negocio' }}
+            <small>en línea</small>
+          </div>
+        </div>
+        <div class="fe-phone-body">
+
+          <!-- El usuario elige esta opción del menú -->
+          <div class="fe-msg fe-msg-user" *ngIf="currentFlow.menuLabel">
+            <div class="fe-bubble">{{ currentFlow.menuLabel }}</div>
+          </div>
+
+          <!-- Pasos del flujo -->
+          <ng-container *ngFor="let step of currentFlow.steps; let i = index">
+
+            <!-- Pre-mensaje de texto -->
+            <div class="fe-msg fe-msg-bot" *ngIf="step.preMessageType === 'text' && step.preMessage">
+              <div class="fe-bubble" [innerHTML]="waFormat(step.preMessage)"></div>
+            </div>
+            <!-- Pre-mensaje de imagen -->
+            <div class="fe-msg fe-msg-bot" *ngIf="step.preMessageType === 'image' && (step._preMessageImagePreview || step.preMessageImage)">
+              <div class="fe-bubble fe-bubble-media">
+                <img [src]="step._preMessageImagePreview || step.preMessageImage" alt="" />
+              </div>
+            </div>
+            <!-- Pre-mensaje de enlace -->
+            <div class="fe-msg fe-msg-bot" *ngIf="step.preMessageType === 'link' && step.preMessageLinkUrl">
+              <div class="fe-bubble fe-bubble-link">
+                <i class="fas fa-link"></i> {{ step.preMessageLinkLabel || step.preMessageLinkUrl }}
+              </div>
+            </div>
+
+            <!-- Mensaje principal del paso -->
+            <div class="fe-msg fe-msg-bot" *ngIf="step.prompt || step.type !== 'message'">
+              <div class="fe-bubble">
+                <span *ngIf="step.prompt" [innerHTML]="waFormat(previewResolve(step.prompt))"></span>
+                <span *ngIf="!step.prompt" class="fe-ph">(sin texto)</span>
+
+                <!-- Botones -->
+                <div class="fe-wa-buttons" *ngIf="step.type === 'select_buttons' && previewOptions(step).length">
+                  <div class="fe-wa-btn" *ngFor="let opt of previewOptions(step).slice(0,3)">{{ opt }}</div>
+                </div>
+
+                <!-- Lista / servicios / catálogo -->
+                <div class="fe-wa-listbtn" *ngIf="step.type === 'select_list' || step.type === 'select_services' || step.type === 'browse_collection'">
+                  <i class="fas fa-list-ul"></i> {{ step.buttonText || 'Ver opciones' }}
+                </div>
+                <div class="fe-wa-listpreview" *ngIf="(step.type === 'select_list' || step.type === 'select_services') && previewOptions(step).length">
+                  <div class="fe-wa-listitem" *ngFor="let opt of previewOptions(step).slice(0,4)">
+                    <i class="far fa-circle"></i> {{ opt }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pista de respuesta esperada del usuario -->
+            <div class="fe-msg fe-msg-user" *ngIf="previewReplyHint(step)">
+              <div class="fe-bubble fe-bubble-hint">{{ previewReplyHint(step) }}</div>
+            </div>
+
+          </ng-container>
+
+          <!-- Mensaje de confirmación -->
+          <div class="fe-msg fe-msg-bot" *ngIf="currentFlow.completionMessage">
+            <div class="fe-bubble" [innerHTML]="waFormat(previewResolve(currentFlow.completionMessage))"></div>
+          </div>
+
+          <!-- Estado vacío -->
+          <div class="fe-preview-empty" *ngIf="!currentFlow.steps.length && !currentFlow.completionMessage">
+            <i class="fas fa-comments"></i>
+            <p>Agrega pasos al flujo para ver aquí cómo se verá la conversación en WhatsApp.</p>
+          </div>
+
+        </div>
+      </div>
+      <p class="fe-preview-note"><i class="fas fa-info-circle"></i> Vista aproximada. Los datos entre ⟨ ⟩ se reemplazan con la respuesta real del cliente.</p>
+    </div>
+
+    </div>
+    <!-- /fe-workarea -->
   </div>
 </div>

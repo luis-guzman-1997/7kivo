@@ -64,7 +64,8 @@ const getWACredentials = async () => {
       const credentials = {
         version: fsConfig.version || process.env.VERSION_META_WHATSAPP || "v21.0",
         phoneId: fsConfig.phoneNumberId,
-        token: fsConfig.token
+        token: fsConfig.token,
+        wabaId: fsConfig.wabaId || process.env.WABA_ID || ""
       };
       waConfigCacheMap[orgId] = { data: credentials, ts: now };
       return credentials;
@@ -76,8 +77,69 @@ const getWACredentials = async () => {
   return {
     version: process.env.VERSION_META_WHATSAPP || "v21.0",
     phoneId: process.env.PHONE_NUMBER_WHATSAPP,
-    token: process.env.TOKEN_META_WHATSAPP
+    token: process.env.TOKEN_META_WHATSAPP,
+    wabaId: process.env.WABA_ID || ""
   };
+};
+
+// ── Lista las plantillas (templates) de la WABA, opcionalmente filtra por estado ──
+const listMessageTemplates = async () => {
+  const { version, token, wabaId } = await getWACredentials();
+  if (!wabaId) throw new Error("WABA ID no configurado para esta organización");
+  if (!token) throw new Error("Token de WhatsApp no configurado");
+
+  const templates = [];
+  let url = `https://graph.facebook.com/${version}/${wabaId}/message_templates`;
+  let params = { limit: 100, fields: "name,status,category,language,components" };
+
+  // Paginar hasta traer todas
+  for (let i = 0; i < 20 && url; i++) {
+    const res = await axios.get(url, {
+      params,
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = res.data || {};
+    (data.data || []).forEach((t) => templates.push(t));
+    url = data.paging?.next || null;
+    params = undefined; // el "next" ya trae los query params embebidos
+  }
+  return templates;
+};
+
+// ── Envía un mensaje de plantilla (funciona fuera de la ventana de 24h) ──
+// components: array tal cual lo espera la Cloud API, ej:
+//   [{ type:"body", parameters:[{ type:"text", text:"Juan" }] }]
+const sendTemplateMessage = async (templateName, languageCode, components, phoneNumber) => {
+  try {
+    if (!phoneNumber) throw new Error("phoneNumber es requerido para enviar plantilla");
+    if (!templateName) throw new Error("templateName es requerido");
+
+    const { version, phoneId, token } = await getWACredentials();
+    const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
+    const template = {
+      name: templateName,
+      language: { code: languageCode || "es" }
+    };
+    if (Array.isArray(components) && components.length > 0) {
+      template.components = components;
+    }
+    const body = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "template",
+      template
+    };
+    const config = {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    };
+    return await axios.post(url, body, config);
+  } catch (error) {
+    const errData = error?.response?.data;
+    console.log("Error al enviar plantilla:", errData);
+    const errMsg = errData?.error?.message || (typeof errData === "string" ? errData : null) || error?.message || "Failed to send template";
+    throw new Error(errMsg);
+  }
 };
 
 const sendTextMessage = async (text, phoneNumber) => {
@@ -396,4 +458,6 @@ module.exports = {
   sendImageMessage,
   sendAudioMessage,
   sendCtaUrlMessage,
+  listMessageTemplates,
+  sendTemplateMessage,
 };

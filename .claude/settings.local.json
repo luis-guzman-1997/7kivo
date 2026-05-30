@@ -26,7 +26,20 @@
       "Bash(grep -v \"Use \\\\`node\")",
       "Bash(awk '{print $NF}')",
       "Bash(node -e \"require\\('./src/controllers/catalogController'\\)\")",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(git -C \"C:\\\\Users\\\\PC\\\\Desktop\\\\7kivo\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\PC\\\\Desktop\\\\7kivo\" diff)",
+      "Bash(git -C \"C:\\\\Users\\\\PC\\\\Desktop\\\\7kivo\" add 7kivo-bot/src/controllers/chatController.js 7kivo-web/src/app/admin/chat/chat.component.ts)",
+      "Bash(git -C 'C:\\\\Users\\\\PC\\\\Desktop\\\\7kivo' commit -m ' *)",
+      "Bash(cmd /c \"dir /b /s 7kivo-bot\\\\src 2>nul\")",
+      "Bash(cmd /c \"dir /b 7kivo-bot\")",
+      "Bash(cmd /c \"dir /b 7kivo-web\")",
+      "Bash(cmd /c \"dir /b Logos\")",
+      "mcp__ide__getDiagnostics",
+      "Bash(node --check src/models/messageModel.js)",
+      "Bash(node --check src/controllers/adminController.js)",
+      "Bash(node --check src/routes/route.js)",
+      "Bash(node --check src/services/campaignService.js)"
     ]
   }
 }

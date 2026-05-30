@@ -25,32 +25,32 @@
     <nav class="sidebar-nav">
       <!-- Items only available once bot is enabled -->
       <ng-container *ngIf="botEnabled">
-        <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item-admin">
+        <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item-admin" title="Resumen general de tu actividad y estado del bot">
           <i class="fas fa-tachometer-alt"></i>
           <span>Dashboard</span>
         </a>
 
         <!-- Comunicación -->
         <div class="nav-section-label">Comunicación</div>
-        <a *ngIf="authService.hasPermission('chat')" routerLink="/admin/chat" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.hasPermission('chat')" routerLink="/admin/chat" routerLinkActive="active" class="nav-item-admin" title="Conversa en tiempo real con tus clientes de WhatsApp">
           <i class="fas fa-comments"></i>
           <span>Chat WhatsApp</span>
         </a>
-        <a *ngIf="authService.hasPermission('inbox')" routerLink="/admin/bandeja" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.hasPermission('inbox')" routerLink="/admin/bandeja" routerLinkActive="active" class="nav-item-admin" title="Conversaciones pendientes y solicitudes recibidas por el bot">
           <i class="fas fa-inbox"></i>
           <span>Bandeja de Entrada</span>
         </a>
-        <a *ngIf="authService.hasPermission('campaigns')" routerLink="/admin/campanas" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.hasPermission('campaigns')" routerLink="/admin/campanas" routerLinkActive="active" class="nav-item-admin" title="Envía mensajes masivos a tus contactos">
           <i class="fas fa-bullhorn"></i>
           <span>Campañas</span>
         </a>
-        <a *ngIf="authService.orgIndustry === 'delivery' && authService.hasPermission('delivery_map')" routerLink="/admin/mapa-delivery" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.orgIndustry === 'delivery' && authService.hasPermission('delivery_map')" routerLink="/admin/mapa-delivery" routerLinkActive="active" class="nav-item-admin" title="Ubica en el mapa los pedidos y repartidores en curso">
           <i class="fas fa-map-marked-alt"></i>
           <span>Mapa Delivery</span>
         </a>
 
         <!-- WebDelivery: visible a cualquier rol con el permiso (incluye delivery con acceso extra) -->
-        <a *ngIf="authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="nav-item-admin" title="Gestiona los pedidos de tu tienda en línea">
           <i class="fas fa-store"></i>
           <span>WebDelivery</span>
         </a>
@@ -58,15 +58,15 @@
         <!-- Bot -->
         <ng-container *ngIf="!isDeliveryRole">
           <div class="nav-section-label">Bot</div>
-          <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin">
+          <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin" title="Diseña el menú y los flujos de conversación del bot">
             <i class="fas fa-sitemap"></i>
             <span>Flujos del Bot</span>
           </a>
-          <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/citas" routerLinkActive="active" class="nav-item-admin">
+          <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/citas" routerLinkActive="active" class="nav-item-admin" title="Consulta y administra las citas agendadas">
             <i class="fas fa-calendar-check"></i>
             <span>Citas</span>
           </a>
-          <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin">
+          <a *ngIf="authService.hasPermission('collections')" routerLink="/admin/colecciones" routerLinkActive="active" class="nav-item-admin" title="Administra los registros que captura el bot (clientes, pedidos, etc.)">
             <i class="fas fa-database"></i>
             <span>Base de Datos</span>
           </a>
@@ -76,15 +76,15 @@
       <!-- Configuración (always accessible) -->
       <ng-container *ngIf="!isDeliveryRole">
         <div class="nav-section-label">Configuración</div>
-        <a *ngIf="authService.hasPermission('bot_config')" routerLink="/admin/bot" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.hasPermission('bot_config')" routerLink="/admin/bot" routerLinkActive="active" class="nav-item-admin" title="Personaliza los mensajes y respuestas automáticas del bot">
           <i class="fas fa-robot"></i>
           <span>Mensajería Bot</span>
         </a>
-        <a *ngIf="authService.hasPermission('settings')" routerLink="/admin/configuracion" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.hasPermission('settings')" routerLink="/admin/configuracion" routerLinkActive="active" class="nav-item-admin" title="Datos de tu negocio: nombre, industria, horarios y contacto">
           <i class="fas fa-sliders-h"></i>
           <span>Mi Organización</span>
         </a>
-        <a *ngIf="authService.hasPermission('users')" routerLink="/admin/administradores" routerLinkActive="active" class="nav-item-admin">
+        <a *ngIf="authService.hasPermission('users')" routerLink="/admin/administradores" routerLinkActive="active" class="nav-item-admin" title="Invita y administra a los miembros de tu equipo">
           <i class="fas fa-users"></i>
           <span>Mi Equipo</span>
         </a>

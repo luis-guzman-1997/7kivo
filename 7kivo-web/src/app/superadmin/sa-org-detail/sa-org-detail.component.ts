@@ -465,6 +465,7 @@ export class SaOrgDetailComponent implements OnInit {
       token: this.orgWhatsApp?.token || '',
       phoneNumberId: this.orgWhatsApp?.phoneNumberId || '',
       verifyToken: this.orgWhatsApp?.verifyToken || '',
+      wabaId: this.orgWhatsApp?.wabaId || '',
       botApiUrl: this.orgDetail?.botApiUrl || '',
       waPhone: this.orgDetail?.waPhone || ''
     };
@@ -513,7 +514,8 @@ export class SaOrgDetailComponent implements OnInit {
       await this.firebaseService.saveWhatsAppConfigByOrgId(this.selectedOrg.id, {
         token: this.editWA.token,
         phoneNumberId: this.editWA.phoneNumberId,
-        verifyToken: this.editWA.verifyToken
+        verifyToken: this.editWA.verifyToken,
+        wabaId: (this.editWA.wabaId || '').trim()
       });
       if (this.editWA.botApiUrl !== undefined) {
         const waPhone = (this.editWA.waPhone || '').replace(/\D/g, '');
@@ -521,7 +523,7 @@ export class SaOrgDetailComponent implements OnInit {
         await this.firebaseService.savePublicOrgInfo(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl, waPhone });
         this.orgDetail = { ...this.orgDetail, botApiUrl: this.editWA.botApiUrl, waPhone };
       }
-      this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken };
+      this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken, wabaId: (this.editWA.wabaId || '').trim() };
       this.editingWA = false;
       this.showNotice('WhatsApp configurado');
     } catch (err) {

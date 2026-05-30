@@ -586,7 +586,8 @@ export class InboxComponent implements OnInit, OnDestroy {
     const fields: { label: string; value: string }[] = [];
     const skip = ['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
                    'flowId', 'flowName', 'phoneNumber', 'confirmed', 'assignedTo', 'resolvedBy',
-                   'deliveryCode', 'cancelCount', 'assignedAt'];
+                   'deliveryCode', 'cancelCount', 'assignedAt', 'startLat', 'startLng',
+                   'unattendedNotified', 'unattendedAt'];
 
     const collection = tab?.collection || this.selectedTab?.collection || '';
     const colDef = this.collectionDefsMap[collection];

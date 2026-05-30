@@ -99,7 +99,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   resolveCodeError = '';
   deliverySubmission: any = null;
   deliveryFlow: any = null;
-  showDeliveryDetail = false;
+  showDeliveryDetail = true;
   showPromoBanner = false;
 
   // ── Promo order mode ──
@@ -114,6 +114,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   private routeSub: any = null;
   private currentLat: number | null = null;
   private currentLng: number | null = null;
+  private vvResizeHandler: (() => void) | null = null;
 
   get orgId(): string { return this.firebaseService.getOrgId(); }
 
@@ -139,6 +140,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     this.chatLiveAllowed = this.authService.getPlanLimits().chatLive;
+    this.setupVisualViewport();
     await this.loadConfig();
 
     // Delivery (single y multi): inicialización de caso activo
@@ -262,6 +264,21 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
     if (this.routeSub) this.routeSub.unsubscribe();
     this.stopRecordingCleanup();
+    if (this.vvResizeHandler && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.vvResizeHandler);
+    }
+    document.documentElement.style.removeProperty('--vvh');
+  }
+
+  private setupVisualViewport(): void {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    this.vvResizeHandler = () => {
+      const h = window.visualViewport!.height;
+      document.documentElement.style.setProperty('--vvh', h + 'px');
+      setTimeout(() => { if (this.selectedConversation) this.scrollToBottom(); }, 80);
+    };
+    window.visualViewport.addEventListener('resize', this.vvResizeHandler);
+    this.vvResizeHandler();
   }
 
   private startLocationTracking(): void {
@@ -1075,40 +1092,64 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
-  getDeliverySubmissionFields(): { label: string; value: string }[] {
+  getDeliverySubmissionFields(): { label: string; value: string; type: 'text' | 'image' | 'list' }[] {
     if (!this.deliverySubmission) return [];
 
-    // If flow definition is available, use it to filter, order and label fields
-    const steps: any[] = this.deliveryFlow?.steps || [];
-    const panelSteps = steps.filter(s =>
-      s.fieldKey && s.showInPanel !== false &&
-      s.type !== 'message' && s.type !== 'browse_collection'
-    );
-
-    if (panelSteps.length > 0) {
-      const fields: { label: string; value: string }[] = [];
-      for (const step of panelSteps) {
-        const val = this.deliverySubmission[step.fieldKey];
-        if (val === null || val === undefined || val === '') continue;
-        if (typeof val === 'object') continue;
-        fields.push({ label: step.fieldLabel || step.fieldKey, value: String(val) });
+    const formatVal = (val: any): { value: string; type: 'text' | 'image' | 'list' } | null => {
+      if (val === null || val === undefined || val === '') return null;
+      // Firestore Timestamp
+      if (typeof val === 'object' && (val.seconds !== undefined || typeof val.toDate === 'function')) {
+        const d: Date = val.toDate ? val.toDate() : new Date(val.seconds * 1000);
+        return { value: d.toLocaleString('es', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }), type: 'text' };
       }
-      return fields;
+      if (Array.isArray(val)) {
+        if (val.length === 0) return null;
+        const lines = val.map((item: any) => {
+          if (typeof item === 'object' && item !== null) {
+            return Object.entries(item)
+              .filter(([, v]) => v !== null && v !== undefined && v !== '')
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(', ');
+          }
+          return String(item);
+        }).filter(Boolean);
+        return lines.length ? { value: lines.join('\n'), type: 'list' } : null;
+      }
+      if (typeof val === 'object') {
+        const lines = Object.entries(val)
+          .filter(([, v]) => v !== null && v !== undefined && v !== '')
+          .map(([k, v]) => `${k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}: ${v}`);
+        return lines.length ? { value: lines.join('\n'), type: 'list' } : null;
+      }
+      const str = String(val);
+      if (!str.trim()) return null;
+      if (/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(str) ||
+          /^https:\/\/firebasestorage\.googleapis\.com\/.+/i.test(str)) {
+        return { value: str, type: 'image' };
+      }
+      return { value: str, type: 'text' };
+    };
+
+    // Build label map from flow steps (for display names)
+    const steps: any[] = this.deliveryFlow?.steps || [];
+    const labelMap = new Map<string, string>();
+    for (const s of steps) {
+      if (s.fieldKey && s.fieldLabel) labelMap.set(s.fieldKey, s.fieldLabel);
     }
 
-    // Fallback: show all non-system fields
-    const skip = ['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
-                   'flowId', 'flowName', 'phoneNumber', 'confirmed', 'assignedTo', 'resolvedBy',
-                   'deliveryCode', 'cancelCount', 'assignedAt', 'startLat', 'startLng',
-                   'unattendedNotified', 'unattendedAt'];
-    const fields: { label: string; value: string }[] = [];
+    // System fields to always hide
+    const skip = new Set(['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
+      'flowId', 'flowName', 'phoneNumber', 'confirmed', 'assignedTo', 'resolvedBy',
+      'deliveryCode', 'cancelCount', 'assignedAt', 'startLat', 'startLng',
+      'unattendedNotified', 'unattendedAt']);
+
+    const fields: { label: string; value: string; type: 'text' | 'image' | 'list' }[] = [];
     for (const [key, val] of Object.entries(this.deliverySubmission)) {
-      if (skip.includes(key) || val === null || val === undefined || val === '') continue;
-      if (typeof val === 'object') continue;
-      if (key.startsWith('_')) continue;
-      if (key.endsWith('Id')) continue;
-      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
-      fields.push({ label, value: String(val) });
+      if (skip.has(key) || key.startsWith('_') || key.endsWith('Id')) continue;
+      const formatted = formatVal(val);
+      if (!formatted) continue;
+      const label = labelMap.get(key) || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+      fields.push({ label, ...formatted });
     }
     return fields;
   }

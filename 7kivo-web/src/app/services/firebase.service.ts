@@ -3,7 +3,7 @@ import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore, Firestore, collection, doc, getDocs, getDoc, addDoc,
   updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp,
-  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp, runTransaction, deleteField, arrayUnion, arrayRemove
+  QueryConstraint, DocumentData, onSnapshot, limit, Unsubscribe, writeBatch, Timestamp, runTransaction, deleteField, arrayUnion, arrayRemove, getCountFromServer
 } from 'firebase/firestore';
 import {
   getStorage, FirebaseStorage, ref, uploadBytes, getDownloadURL, deleteObject, listAll
@@ -275,6 +275,22 @@ export class FirebaseService {
     const data = await response.json();
     if (!data.ok) throw new Error(data.error || 'Error al enviar campaña');
     return data;
+  }
+
+  // Lista las plantillas de WhatsApp aprobadas en Meta (vía el bot)
+  async getApprovedTemplates(botApiUrl: string, orgId: string): Promise<any[]> {
+    if (!botApiUrl) throw new Error('URL del bot no configurada');
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error('Sesión no válida');
+    const base = botApiUrl.replace(/\/$/, '');
+    const response = await fetch(`${base}/api/campaigns/templates?orgId=${encodeURIComponent(orgId)}&status=APPROVED`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${idToken}` }
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'Error al obtener plantillas');
+    return data.templates || [];
   }
 
   // ==================== ORG CONFIG ====================
@@ -1931,6 +1947,20 @@ export class FirebaseService {
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() }))
       .filter((f: any) => f.notifyDelivery === true && f.active !== false);
+  }
+
+  // Cuenta (aproximada) de registros de una colección, para mostrar destinatarios estimados
+  async countCollectionRecipients(orgId: string, collectionId: string): Promise<number> {
+    try {
+      const defRef = doc(this.db, 'organizations', orgId, '_collections', collectionId);
+      const defSnap = await getDoc(defRef);
+      if (!defSnap.exists()) return 0;
+      const slug = (defSnap.data() as any).slug || collectionId;
+      const snap = await getCountFromServer(collection(this.db, 'organizations', orgId, slug));
+      return snap.data().count;
+    } catch {
+      return 0;
+    }
   }
 
   async getOrgCollectionDefs(orgId: string): Promise<any[]> {

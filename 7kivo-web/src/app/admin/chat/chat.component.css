@@ -1655,23 +1655,38 @@
 /* ── Delivery order detail panel ── */
 .delivery-order-panel {
   background: #fffbeb;
-  border-bottom: 1px solid #fde68a;
+  border-bottom: 2px solid #fde68a;
 }
 .delivery-order-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  justify-content: space-between;
+  padding: 9px 16px;
   font-size: 0.82rem;
   font-weight: 600;
   color: #92400e;
   cursor: pointer;
   user-select: none;
 }
-.delivery-order-header i.fas:first-child { color: #d97706; }
-.delivery-order-header i.fas:last-child { margin-left: auto; font-size: 0.72rem; color: #b45309; }
+.delivery-order-header-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.delivery-order-header-left i { color: #d97706; }
+.delivery-order-header > i.fas { font-size: 0.72rem; color: #b45309; }
+.delivery-order-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px 6px;
+  font-size: 0.72rem;
+  color: #a16207;
+  border-bottom: 1px solid #fde68a;
+}
+.delivery-order-meta i { font-size: 0.7rem; }
 .delivery-order-body {
-  padding: 6px 14px 12px;
+  padding: 4px 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -1679,22 +1694,59 @@
 .delivery-order-field {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   padding: 8px 0;
-  border-bottom: 1px solid #fde68a;
+  border-bottom: 1px solid #fef3c7;
 }
 .delivery-order-field:last-child { border-bottom: none; }
 .delivery-order-label {
-  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .05em;
   color: #b45309;
 }
+.delivery-order-label i { font-size: 0.5rem; color: #d97706; }
 .delivery-order-value {
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   color: #1c1917;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+  padding-left: 12px;
+}
+.delivery-field-img {
+  max-width: 180px;
+  max-height: 160px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 12px;
+  border: 1px solid #fde68a;
+  object-fit: cover;
+}
+.delivery-field-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 12px;
+}
+.delivery-field-list-item {
+  font-size: 0.84rem;
+  color: #1c1917;
+  background: #fef9c3;
+  border-left: 3px solid #fbbf24;
+  padding: 3px 8px;
+  border-radius: 0 4px 4px 0;
+  line-height: 1.4;
+}
+.delivery-order-empty {
+  font-size: 0.8rem;
+  color: #a16207;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }

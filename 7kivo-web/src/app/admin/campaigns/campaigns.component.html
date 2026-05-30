@@ -113,6 +113,12 @@
           <!-- Message preview -->
           <p class="card-message-preview">{{ c.message }}</p>
 
+          <!-- Template badge -->
+          <div class="card-template-badge" *ngIf="c.channelMode === 'template'">
+            <i class="fas fa-file-alt"></i>
+            Plantilla: <strong>{{ c.templateName }}</strong>
+          </div>
+
           <!-- Keyword badge -->
           <div class="card-keyword-badge" *ngIf="c.actionKeywordEnabled">
             <i class="fas fa-hand-pointer"></i>
@@ -224,8 +230,31 @@
           <input type="text" [(ngModel)]="form.name" placeholder="Ej: Promoción de marzo" maxlength="100" />
         </div>
 
-        <!-- Message -->
+        <!-- Channel mode -->
         <div class="fp-group">
+          <label>Tipo de mensaje</label>
+          <div class="recipient-source-tabs">
+            <button [class.rsource-active]="form.channelMode === 'freeform'"
+              (click)="form.channelMode = 'freeform'" type="button">
+              <i class="fas fa-comment-dots"></i> Mensaje libre
+            </button>
+            <button [class.rsource-active]="form.channelMode === 'template'"
+              (click)="setTemplateMode()" type="button">
+              <i class="fas fa-file-alt"></i> Plantilla (Meta)
+            </button>
+          </div>
+          <p class="channel-hint channel-hint-warn" *ngIf="form.channelMode === 'freeform'">
+            <i class="fas fa-exclamation-triangle"></i>
+            Solo llega a contactos que te escribieron en las últimas 24 h.
+          </p>
+          <p class="channel-hint channel-hint-ok" *ngIf="form.channelMode === 'template'">
+            <i class="fas fa-check-circle"></i>
+            Las plantillas aprobadas se pueden enviar en cualquier momento.
+          </p>
+        </div>
+
+        <!-- Message (free-form) -->
+        <div class="fp-group" *ngIf="form.channelMode === 'freeform'">
           <label>Mensaje <span class="req">*</span>
             <span class="char-count" [class.char-warn]="form.message?.length > 3500">
               {{ form.message?.length || 0 }}/4096
@@ -239,9 +268,54 @@
           </div>
         </div>
 
+        <!-- Template selector -->
+        <div class="fp-group" *ngIf="form.channelMode === 'template'">
+          <label>Plantilla aprobada <span class="req">*</span></label>
+          <div *ngIf="loadingTemplates" class="collection-hint">
+            <i class="fas fa-spinner fa-spin"></i> Cargando plantillas desde Meta...
+          </div>
+          <div *ngIf="templatesError" class="fp-error">
+            <i class="fas fa-exclamation-circle"></i> {{ templatesError }}
+          </div>
+          <select *ngIf="!loadingTemplates && !templatesError" [(ngModel)]="form.templateName" (ngModelChange)="onTemplateChange()">
+            <option value="">— Seleccionar plantilla —</option>
+            <option *ngFor="let t of templates" [value]="t.name">{{ t.name }} · {{ t.language }} · {{ t.category }}</option>
+          </select>
+          <p class="collection-hint" *ngIf="!loadingTemplates && !templatesError && templates.length === 0">
+            <i class="fas fa-info-circle"></i> No hay plantillas aprobadas. Créalas y apruébalas en Meta Business Manager.
+          </p>
+
+          <!-- Variables -->
+          <div class="template-vars" *ngIf="selectedTemplate && form.templateVariables.length > 0">
+            <label class="sub-label">Variables de la plantilla</label>
+            <div class="template-var-row" *ngFor="let v of form.templateVariables; let i = index">
+              <span class="var-tag">{{ varLabel(i) }}</span>
+              <ng-container *ngIf="form.type === 'reminder'">
+                <select [(ngModel)]="v.source" class="var-source-select">
+                  <option value="static">Texto fijo</option>
+                  <option value="field">Campo</option>
+                </select>
+                <select *ngIf="v.source === 'field'" [(ngModel)]="v.field" class="var-field-select">
+                  <option value="">— campo —</option>
+                  <option *ngFor="let f of currentCollectionFields" [value]="f.key">{{ f.label || f.key }}</option>
+                </select>
+                <input *ngIf="v.source !== 'field'" type="text" [(ngModel)]="v.value" placeholder="Valor fijo" />
+              </ng-container>
+              <input *ngIf="form.type !== 'reminder'" type="text" [(ngModel)]="v.value" placeholder="Valor para {{ varLabel(i) }}" />
+            </div>
+          </div>
+
+          <!-- Live preview -->
+          <div class="template-preview" *ngIf="selectedTemplate">
+            <label class="sub-label"><i class="fas fa-eye"></i> Vista previa</label>
+            <div class="template-preview-bubble">{{ templatePreview }}</div>
+          </div>
+        </div>
+
         <!-- Image -->
-        <div class="fp-group">
-          <label>Imagen (opcional, máx. 5 MB)</label>
+        <div class="fp-group" *ngIf="form.channelMode === 'freeform' || (form.channelMode === 'template' && form.templateHeaderImage)">
+          <label *ngIf="form.channelMode === 'freeform'">Imagen (opcional, máx. 5 MB)</label>
+          <label *ngIf="form.channelMode === 'template'">Imagen de encabezado <span class="req">*</span> <small style="font-weight:400;color:#94a3b8">(requerida por la plantilla)</small></label>
           <div class="img-upload-area" *ngIf="!formImagePreview">
             <label class="img-upload-label">
               <input type="file" accept="image/*" (change)="onImageSelected($event)" style="display:none" />
@@ -285,12 +359,37 @@
                 <span>Todos los días a la misma hora</span>
               </div>
             </label>
+            <label class="type-opt" [class.type-selected]="form.type === 'weekly'">
+              <input type="radio" [(ngModel)]="form.type" value="weekly" name="campType" />
+              <div class="type-opt-body">
+                <i class="fas fa-calendar-week"></i>
+                <strong>Semanal</strong>
+                <span>Días fijos de la semana</span>
+              </div>
+            </label>
+            <label class="type-opt" [class.type-selected]="form.type === 'monthly'">
+              <input type="radio" [(ngModel)]="form.type" value="monthly" name="campType" />
+              <div class="type-opt-body">
+                <i class="fas fa-calendar-check"></i>
+                <strong>Mensual</strong>
+                <span>Un día fijo de cada mes</span>
+              </div>
+            </label>
             <label class="type-opt" [class.type-selected]="form.type === 'interval'">
               <input type="radio" [(ngModel)]="form.type" value="interval" name="campType" />
               <div class="type-opt-body">
                 <i class="fas fa-redo"></i>
                 <strong>Recurrente</strong>
                 <span>Cada X horas</span>
+              </div>
+            </label>
+            <label class="type-opt type-opt-reminder" [class.type-selected]="form.type === 'reminder'">
+              <input type="radio" [(ngModel)]="form.type" value="reminder" name="campType"
+                (change)="form.recipientSource = 'collection'" />
+              <div class="type-opt-body">
+                <i class="fas fa-bell"></i>
+                <strong>Recordatorio</strong>
+                <span>Según una fecha de cada registro</span>
               </div>
             </label>
           </div>
@@ -308,26 +407,90 @@
               <input type="number" [(ngModel)]="form.dailyMinute" min="0" max="59" class="time-input" placeholder="MM" />
             </div>
           </div>
-          <div class="type-config" *ngIf="form.type === 'interval'">
-            <label class="sub-label">Intervalo (horas)</label>
-            <div class="interval-row">
-              <input type="number" [(ngModel)]="form.intervalHours" min="1" max="720" class="interval-input" />
-              <span class="interval-unit">horas</span>
-              <div class="interval-presets">
-                <button type="button" (click)="form.intervalHours = 1">1h</button>
-                <button type="button" (click)="form.intervalHours = 4">4h</button>
-                <button type="button" (click)="form.intervalHours = 8">8h</button>
-                <button type="button" (click)="form.intervalHours = 12">12h</button>
-                <button type="button" (click)="form.intervalHours = 24">24h</button>
+          <div class="type-config" *ngIf="form.type === 'weekly'">
+            <label class="sub-label">Días de la semana <span class="req">*</span></label>
+            <div class="weekday-selector">
+              <button type="button" *ngFor="let wd of weekDays"
+                class="weekday-chip" [class.weekday-active]="isWeekDaySelected(wd.value)"
+                (click)="toggleWeekDay(wd.value)" [title]="wd.name">{{ wd.label }}</button>
+            </div>
+            <label class="sub-label" style="margin-top:14px">Hora de envío</label>
+            <div class="time-inputs">
+              <input type="number" [(ngModel)]="form.weeklyHour" min="0" max="23" class="time-input" placeholder="HH" />
+              <span class="time-sep">:</span>
+              <input type="number" [(ngModel)]="form.weeklyMinute" min="0" max="59" class="time-input" placeholder="MM" />
+            </div>
+          </div>
+          <div class="type-config" *ngIf="form.type === 'monthly'">
+            <div class="monthly-grid">
+              <div class="monthly-field">
+                <label class="sub-label">Día del mes</label>
+                <select [(ngModel)]="form.monthlyDay" class="monthly-day-select">
+                  <option *ngFor="let d of monthDays" [ngValue]="d">Día {{ d }}</option>
+                </select>
+                <div class="monthly-presets">
+                  <button type="button" [class.preset-active]="form.monthlyDay === 1" (click)="form.monthlyDay = 1">Día 1</button>
+                  <button type="button" [class.preset-active]="form.monthlyDay === 15" (click)="form.monthlyDay = 15">Día 15</button>
+                  <button type="button" [class.preset-active]="form.monthlyDay === 31" (click)="form.monthlyDay = 31">Último</button>
+                </div>
+              </div>
+              <div class="monthly-field">
+                <label class="sub-label">Hora de envío</label>
+                <div class="time-inputs">
+                  <input type="number" [(ngModel)]="form.monthlyHour" min="0" max="23" class="time-input" placeholder="HH" />
+                  <span class="time-sep">:</span>
+                  <input type="number" [(ngModel)]="form.monthlyMinute" min="0" max="59" class="time-input" placeholder="MM" />
+                </div>
               </div>
             </div>
+            <p class="collection-hint">
+              <i class="fas fa-info-circle"></i> "Último" (día 31) se ajusta automáticamente al último día en meses más cortos (feb, abr…).
+            </p>
+          </div>
+          <div class="type-config" *ngIf="form.type === 'reminder'">
+            <p class="collection-hint" *ngIf="!form.collectionId" style="margin-top:0">
+              <i class="fas fa-arrow-down"></i> Primero selecciona la colección en "Destinatarios" (más abajo).
+            </p>
+            <ng-container *ngIf="form.collectionId">
+              <label class="sub-label">Campo de fecha <span class="req">*</span></label>
+              <select [(ngModel)]="form.reminderDateField">
+                <option value="">— Seleccionar campo —</option>
+                <option *ngFor="let f of currentCollectionFields" [value]="f.key">{{ f.label || f.key }}</option>
+              </select>
+            </ng-container>
+            <label class="sub-label" style="margin-top:14px">¿Cuándo enviar?</label>
+            <div class="reminder-offset-row">
+              <input *ngIf="reminderDir !== 'same'" type="number" [(ngModel)]="reminderDays"
+                (ngModelChange)="updateReminderOffset()" min="0" max="365" class="time-input" />
+              <span *ngIf="reminderDir !== 'same'">días</span>
+              <select [(ngModel)]="reminderDir" (ngModelChange)="updateReminderOffset()" class="reminder-dir-select">
+                <option value="before">antes</option>
+                <option value="same">el mismo día</option>
+                <option value="after">después</option>
+              </select>
+              <span *ngIf="reminderDir !== 'same'">de la fecha</span>
+            </div>
+            <label class="sub-label" style="margin-top:14px">Hora de envío</label>
+            <div class="time-inputs">
+              <input type="number" [(ngModel)]="form.reminderHour" min="0" max="23" class="time-input" placeholder="HH" />
+              <span class="time-sep">:</span>
+              <input type="number" [(ngModel)]="form.reminderMinute" min="0" max="59" class="time-input" placeholder="MM" />
+            </div>
+            <p class="collection-hint">
+              <i class="fas fa-info-circle"></i> Cada día el bot revisa la colección y envía a los registros cuya fecha cumple la regla. Una sola vez por registro.
+            </p>
+          </div>
+
+          <!-- Próximo envío (previsualización) -->
+          <div class="next-run-preview" *ngIf="form.type !== 'immediate' && form.type !== 'reminder'">
+            <i class="fas fa-clock"></i> Próximo envío: <strong>{{ formNextRunPreview }}</strong>
           </div>
         </div>
 
         <!-- Recipients -->
         <div class="fp-group">
           <label>Destinatarios <span class="req">*</span></label>
-          <div class="recipient-source-tabs">
+          <div class="recipient-source-tabs" *ngIf="form.type !== 'reminder'">
             <button [class.rsource-active]="form.recipientSource === 'manual'"
               (click)="form.recipientSource = 'manual'" type="button">
               <i class="fas fa-list"></i> Números manuales
@@ -337,6 +500,9 @@
               <i class="fas fa-database"></i> Desde colección
             </button>
           </div>
+          <p class="channel-hint channel-hint-ok" *ngIf="form.type === 'reminder'">
+            <i class="fas fa-bell"></i> Los recordatorios se envían a los registros de una colección.
+          </p>
 
           <div *ngIf="form.recipientSource === 'manual'" class="recipient-manual">
             <textarea [(ngModel)]="form.manualPhones" rows="5"
@@ -373,7 +539,7 @@
         </div>
 
         <!-- Opt-out toggle -->
-        <div class="fp-group">
+        <div class="fp-group" *ngIf="form.channelMode === 'freeform'">
           <label>Opt-out</label>
           <label class="optout-toggle">
             <input type="checkbox" [(ngModel)]="form.includeOptOut" />
@@ -386,7 +552,7 @@
         </div>
 
         <!-- Acción de pedido (solo orgs delivery) -->
-        <div class="fp-group" *ngIf="isDeliveryOrg">
+        <div class="fp-group" *ngIf="isDeliveryOrg && form.channelMode === 'freeform'">
           <label><i class="fas fa-motorcycle"></i> Acción de pedido delivery</label>
           <label class="optout-toggle">
             <input type="checkbox" [(ngModel)]="form.actionKeywordEnabled" />
@@ -413,7 +579,7 @@
         </div>
 
         <!-- Datos del negocio (solo orgs delivery) -->
-        <div class="fp-group" *ngIf="isDeliveryOrg">
+        <div class="fp-group" *ngIf="isDeliveryOrg && form.channelMode === 'freeform'">
           <label><i class="fas fa-store"></i> Datos del negocio promo</label>
           <p class="optout-desc">Esta información aparecerá en la bandeja del delivery para que sepa a qué negocio debe ir.</p>
           <div class="promo-biz-grid">
@@ -437,7 +603,7 @@
         </div>
 
         <!-- Asignación de usuarios delivery -->
-        <div class="fp-group" *ngIf="isDeliveryOrg && form.actionKeywordEnabled">
+        <div class="fp-group" *ngIf="isDeliveryOrg && form.channelMode === 'freeform' && form.actionKeywordEnabled">
           <label><i class="fas fa-users"></i> ¿Quién puede tomar este pedido?</label>
           <label class="optout-toggle">
             <input type="checkbox" [(ngModel)]="form.restrictToUsers"

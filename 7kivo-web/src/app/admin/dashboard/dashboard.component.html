@@ -22,6 +22,23 @@
     <i class="fas fa-spinner fa-spin"></i> Cargando datos...
   </div>
 
+  <!-- Guía de rol: qué puede hacer el usuario según su perfil -->
+  <div class="role-guide" *ngIf="!loading && !roleGuideDismissed">
+    <button class="role-guide-close" (click)="dismissRoleGuide()" title="Ocultar">
+      <i class="fas fa-times"></i>
+    </button>
+    <div class="role-guide-head">
+      <span class="role-guide-badge" [class]="'role-' + authService.userRole">{{ roleInfo.label }}</span>
+      <h3>¿Qué puedes hacer aquí?</h3>
+    </div>
+    <p class="role-guide-summary">{{ roleInfo.summary }}</p>
+    <ul class="role-guide-list">
+      <li *ngFor="let item of roleInfo.can">
+        <i class="fas fa-check-circle"></i> {{ item }}
+      </li>
+    </ul>
+  </div>
+
   <!-- ==================== DELIVERY DASHBOARD ==================== -->
   <div *ngIf="!loading && isDelivery">
 

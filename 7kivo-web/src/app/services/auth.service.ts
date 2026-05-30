@@ -24,6 +24,69 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
   delivery_multi: ['dashboard', 'inbox', 'chat']
 };
 
+// Guía de uso por rol: etiqueta visible, resumen y lista de "qué puedes hacer".
+// Se usa en el dashboard (tarjeta de bienvenida) y como referencia de onboarding.
+export interface RoleInfo {
+  label: string;
+  summary: string;
+  can: string[];
+}
+
+export const ROLE_INFO: Record<string, RoleInfo> = {
+  owner: {
+    label: 'Propietario',
+    summary: 'Control total de tu organización: configuración, flujos del bot, equipo y datos.',
+    can: [
+      'Configurar tu organización y datos del negocio',
+      'Crear y editar los flujos y el menú del bot',
+      'Gestionar tu equipo y sus permisos',
+      'Ver chats, bandeja, campañas y bases de datos'
+    ]
+  },
+  admin: {
+    label: 'Gerente',
+    summary: 'Gestiona el día a día del bot y el equipo, sin acceso a los datos de la organización.',
+    can: [
+      'Crear y editar los flujos y el menú del bot',
+      'Gestionar tu equipo y sus permisos',
+      'Ver chats, bandeja, campañas y bases de datos'
+    ]
+  },
+  editor: {
+    label: 'Operador',
+    summary: 'Atiende conversaciones y administra las bases de datos del negocio.',
+    can: [
+      'Responder chats y la bandeja de entrada',
+      'Crear y editar registros en las bases de datos',
+      'Gestionar pedidos en WebDelivery'
+    ]
+  },
+  viewer: {
+    label: 'Agente',
+    summary: 'Atiende las conversaciones de los clientes en chat y bandeja.',
+    can: [
+      'Responder el chat de WhatsApp',
+      'Revisar y atender la bandeja de entrada'
+    ]
+  },
+  delivery: {
+    label: 'Repartidor',
+    summary: 'Toma y atiende los pedidos de entrega asignados.',
+    can: [
+      'Ver y tomar pedidos disponibles',
+      'Atender el chat del pedido activo'
+    ]
+  },
+  delivery_multi: {
+    label: 'Repartidor',
+    summary: 'Toma y atiende varios pedidos de entrega a la vez.',
+    can: [
+      'Ver y tomar pedidos disponibles',
+      'Atender el chat de los pedidos activos'
+    ]
+  }
+};
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth: Auth;
@@ -253,6 +316,11 @@ export class AuthService {
 
   get userRole(): string {
     return this.userRoleSubject.value;
+  }
+
+  getRoleInfo(role?: string): RoleInfo {
+    const r = role || this.userRoleSubject.value || 'viewer';
+    return ROLE_INFO[r] || ROLE_INFO['viewer'];
   }
 
   hasPermission(section: string): boolean {

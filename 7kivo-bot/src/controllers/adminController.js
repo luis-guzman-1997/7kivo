@@ -1,5 +1,7 @@
 const { admin, db } = require('../config/firebase');
 const { runCampaign } = require('../services/campaignService');
+const { listMessageTemplates } = require('../models/messageModel');
+const { runWithOrgId } = require('../config/requestContext');
 
 // Emails que tienen permisos de superadmin (deben coincidir con SUPER_ADMIN_EMAILS del frontend)
 const SUPER_ADMIN_EMAILS = ['admin@7kivo.com'];
@@ -117,4 +119,36 @@ async function sendCampaign(req, res) {
   }
 }
 
-module.exports = { setUserPassword, sendCampaign };
+/**
+ * GET /api/campaigns/templates?orgId=...&status=APPROVED
+ * Header: Authorization: Bearer <idToken>
+ *
+ * Lista las plantillas de WhatsApp de la organización (sincronizadas desde Meta).
+ */
+async function listCampaignTemplates(req, res) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!idToken) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    const claims = await getTokenClaims(idToken);
+    if (!claims) return res.status(401).json({ ok: false, error: 'Token inválido o expirado' });
+
+    const orgId = req.query.orgId || req.body?.orgId;
+    if (!orgId) return res.status(400).json({ ok: false, error: 'orgId es requerido' });
+
+    const statusFilter = (req.query.status || '').toUpperCase();
+
+    const templates = await runWithOrgId(orgId, () => listMessageTemplates());
+    const filtered = statusFilter
+      ? templates.filter(t => (t.status || '').toUpperCase() === statusFilter)
+      : templates;
+
+    return res.json({ ok: true, templates: filtered });
+  } catch (err) {
+    console.error('Error listando plantillas:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+}
+
+module.exports = { setUserPassword, sendCampaign, listCampaignTemplates };

@@ -377,6 +377,10 @@
             <label>Verify Token</label>
             <span class="mono">{{ orgWhatsApp?.verifyToken || '—' }}</span>
           </div>
+          <div class="detail-item">
+            <label>WABA ID <small style="color:#6b7280">(plantillas)</small></label>
+            <span class="mono">{{ orgWhatsApp?.wabaId || '—' }}</span>
+          </div>
         </div>
       </div>
 
@@ -398,6 +402,10 @@
             <label>Verify Token</label>
             <input type="text" [(ngModel)]="editWA.verifyToken" placeholder="mi_token_verificacion" />
           </div>
+        </div>
+        <div class="form-group">
+          <label>WABA ID <small style="color:#6b7280">(WhatsApp Business Account ID — necesario para plantillas)</small></label>
+          <input type="text" [(ngModel)]="editWA.wabaId" placeholder="1234567890123456" />
         </div>
         <div class="form-group">
           <label>Número WhatsApp del Bot <small style="color:#6b7280">(sin +, ej: 50370123456)</small></label>

@@ -412,6 +412,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* Visual Viewport API actualiza --vvh desde el componente chat para keyboard móvil */
+  height: calc(var(--vvh, 100dvh) - 65px);
 }
 .on-chat-page .admin-content app-chat {
   flex: 1;

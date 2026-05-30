@@ -105,6 +105,9 @@ export class FlowBuilderComponent implements OnInit {
   cancelHintImageFile: File | null = null;
   cancelHintImagePreview = '';
 
+  // Vista previa de WhatsApp en vivo
+  showPreview = true;
+
   readonly ORDER_FIELDS = [
     { key: 'orderCode',  label: 'Código de pedido' },
     { key: 'orderItems', label: 'Resumen de ítems' },
@@ -474,6 +477,8 @@ export class FlowBuilderComponent implements OnInit {
     this.expandedStepAdvanced.clear();
     this.cancelHintImageFile = null;
     this.cancelHintImagePreview = '';
+    this.showGuide = true;
+    this.guideStep = 0;
   }
 
   openEditFlow(flow: Flow): void {
@@ -573,14 +578,10 @@ export class FlowBuilderComponent implements OnInit {
   }
 
   async saveFlow(): Promise<void> {
-    if (!this.currentFlow.name.trim()) {
-      this.error = 'El nombre del flujo es requerido';
-      setTimeout(() => this.error = '', 3000);
-      return;
-    }
-    if (!this.currentFlow.menuLabel.trim()) {
-      this.error = 'La etiqueta del menú es requerida';
-      setTimeout(() => this.error = '', 3000);
+    const validationError = this.validateFlow();
+    if (validationError) {
+      this.error = validationError;
+      setTimeout(() => this.error = '', 4000);
       return;
     }
 
@@ -826,6 +827,140 @@ export class FlowBuilderComponent implements OnInit {
 
   getStepTypeInfo(type: string): any {
     return this.stepTypes.find(t => t.value === type) || this.stepTypes[0];
+  }
+
+  // ==================== VISTA PREVIA WHATSAPP ====================
+
+  togglePreview(): void {
+    this.showPreview = !this.showPreview;
+  }
+
+  // Convierte el formato de WhatsApp (*negrita*, _cursiva_, ~tachado~) a HTML seguro.
+  waFormat(text: string): string {
+    if (!text) return '';
+    let out = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    out = out.replace(/\*([^*\n]+)\*/g, '<b>$1</b>');
+    out = out.replace(/_([^_\n]+)_/g, '<i>$1</i>');
+    out = out.replace(/~([^~\n]+)~/g, '<s>$1</s>');
+    out = out.replace(/```([^`]+)```/g, '<code>$1</code>');
+    out = out.replace(/\n/g, '<br>');
+    return out;
+  }
+
+  // Reemplaza variables {campo} por datos de ejemplo para la vista previa.
+  previewResolve(template: string): string {
+    if (!template) return '';
+    const map: Record<string, string> = {};
+    for (const s of this.currentFlow.steps) {
+      if (s.fieldKey) map[s.fieldKey] = s.fieldLabel || s.fieldKey;
+    }
+    return template
+      .replace(/\{phoneNumber\}/g, '+503 7000-0000')
+      .replace(/\{(\w+)\}/g, (m, k) => (map[k] ? '⟨' + map[k] + '⟩' : m));
+  }
+
+  // Opciones (botones/lista) que mostrará un paso en la vista previa.
+  previewOptions(step: FlowStep): string[] {
+    if (step.type === 'select_services') {
+      return this.scheduleServices.map(s => s.title || s.name).filter(Boolean);
+    }
+    if (step.type === 'select_buttons' || step.type === 'select_list') {
+      if (step.optionsSource === 'collection' && step.sourceCollection) {
+        const field = step.optionsTitleField || step.displayField;
+        return this.getCollectionPreview(step.sourceCollection)
+          .slice(0, 5)
+          .map(it => this.getPreviewItemField(it, field))
+          .filter(Boolean);
+      }
+      return (step.customOptions || [])
+        .map(o => o.label || o.value)
+        .filter(Boolean);
+    }
+    return [];
+  }
+
+  // Texto guía de lo que el usuario debe responder en cada tipo de paso.
+  previewReplyHint(step: FlowStep): string {
+    switch (step.type) {
+      case 'text_input':       return 'Escribe tu respuesta…';
+      case 'number_input':     return 'Escribe un número…';
+      case 'image_input':      return '📎 Adjunta una imagen o documento';
+      case 'location_input':   return '📍 Comparte tu ubicación';
+      case 'appointment_slot': return '📅 Elige fecha y hora';
+      case 'auth_lookup':      return 'Escribe tu código…';
+      default: return '';
+    }
+  }
+
+  // ==================== ASISTENTE PASO A PASO ====================
+  // Guía de creación visible para flujos nuevos (sin id).
+  showGuide = true;
+  guideStep = 0;
+
+  readonly guideStages = [
+    { key: 'basics',     anchor: 'fe-menu-block',       icon: 'fa-tag',          title: 'Datos básicos',    hint: 'Ponle nombre a tu flujo y define cómo aparece en el menú del bot.' },
+    { key: 'steps',      anchor: 'fe-steps-block',      icon: 'fa-comments',     title: 'Preguntas',        hint: 'Agrega los pasos: qué le va a preguntar el bot al cliente.' },
+    { key: 'completion', anchor: 'fe-completion-block', icon: 'fa-check-circle', title: 'Mensaje final',    hint: 'Escribe el mensaje de confirmación que recibe el cliente al terminar.' },
+    { key: 'publish',    anchor: 'fe-menu-block',       icon: 'fa-paper-plane',  title: 'Revisar y publicar', hint: 'Revisa la vista previa a la derecha y publica tu flujo.' }
+  ];
+
+  get isNewFlow(): boolean {
+    return !this.currentFlow.id;
+  }
+
+  // Estado de avance de cada etapa de la guía.
+  get guideStatus(): { basics: boolean; steps: boolean; completion: boolean } {
+    return {
+      basics: !!(this.currentFlow.name?.trim() && this.currentFlow.menuLabel?.trim()),
+      steps: this.currentFlow.steps.length > 0,
+      completion: !!this.currentFlow.completionMessage?.trim()
+    };
+  }
+
+  isGuideStageDone(key: string): boolean {
+    if (key === 'publish') {
+      const s = this.guideStatus;
+      return s.basics && s.steps;
+    }
+    return (this.guideStatus as any)[key] === true;
+  }
+
+  guideGoTo(i: number): void {
+    this.guideStep = Math.max(0, Math.min(i, this.guideStages.length - 1));
+    const anchor = this.guideStages[this.guideStep].anchor;
+    setTimeout(() => {
+      const el = document.getElementById(anchor);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
+  guideNext(): void { this.guideGoTo(this.guideStep + 1); }
+  guidePrev(): void { this.guideGoTo(this.guideStep - 1); }
+  dismissGuide(): void { this.showGuide = false; }
+
+  // Validación de coherencia del flujo antes de publicar.
+  validateFlow(): string {
+    if (!this.currentFlow.name.trim()) return 'Ponle un nombre a tu flujo.';
+    if (!this.currentFlow.menuLabel.trim()) return 'Define la etiqueta del menú.';
+    if (this.currentFlow.steps.length === 0) return 'Agrega al menos un paso al flujo.';
+    const keys = new Set<string>();
+    for (let i = 0; i < this.currentFlow.steps.length; i++) {
+      const s = this.currentFlow.steps[i];
+      if (!s.prompt?.trim()) return `El paso ${i + 1} no tiene mensaje. Escribe qué dirá el bot.`;
+      if ((s.type === 'select_buttons' || s.type === 'select_list') &&
+          (!s.optionsSource || s.optionsSource === 'custom')) {
+        const opts = (s.customOptions || []).filter(o => (o.label || o.value || '').trim());
+        if (opts.length === 0) return `El paso ${i + 1} es de opciones pero no tiene ninguna definida.`;
+      }
+      if (s.fieldKey) {
+        if (keys.has(s.fieldKey)) return `El campo "${s.fieldKey}" está repetido en dos pasos. Usa nombres distintos.`;
+        keys.add(s.fieldKey);
+      }
+    }
+    return '';
   }
 
   fieldKeyFromLabel(label: string): string {
