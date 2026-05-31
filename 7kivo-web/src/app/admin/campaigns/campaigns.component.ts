@@ -126,15 +126,21 @@ export class CampaignsComponent implements OnInit {
     }
   }
 
-  // Traduce el error técnico de Meta/bot a un mensaje claro y accionable
+  // Traduce el error técnico de Meta/bot a un mensaje claro y accionable.
+  // El orden importa: primero los errores específicos de WABA (código 100), luego permisos.
   private friendlyTemplateError(raw: string): string {
     const r = (raw || '').toLowerCase();
-    if (r.includes('management') || r.includes('missing permission') || r.includes('#10') || r.includes('#200') || r.includes('código 200'))
-      return 'El token de WhatsApp no tiene permiso para gestionar plantillas (whatsapp_business_management). Pide a un administrador que regenere el token en Meta con ese permiso.';
-    if (r.includes('no configurado') || r.includes('waba id'))
+    if (r.includes('no configurado'))
       return 'Falta configurar el WABA ID de esta organización. Lo configura un administrador en el panel de superadmin.';
-    if (r.includes('does not exist') || r.includes('subcode 33') || r.includes('código 100') || r.includes('cannot be loaded'))
+    // El ID existe pero no es una cuenta WhatsApp Business (no tiene el campo message_templates)
+    if (r.includes('nonexisting field') || r.includes('message_templates'))
+      return 'El ID configurado no es una cuenta de WhatsApp Business (WABA). Probablemente se puso el ID del negocio, de la App o del número. Corrige el WABA ID en el panel de superadmin.';
+    // El ID no existe o no es accesible por el token
+    if (r.includes('does not exist') || r.includes('subcode 33') || r.includes('cannot be loaded') || r.includes('código 100') || r.includes('(#100)'))
       return 'El WABA ID configurado no es válido o el token no tiene acceso a esa cuenta de WhatsApp. Verifica el WABA ID en Meta.';
+    // Errores de permiso real de Meta
+    if (r.includes('missing permission') || r.includes('(#200)') || r.includes('(#10)') || r.includes('permission denied'))
+      return 'El token de WhatsApp no tiene permiso para gestionar plantillas (whatsapp_business_management). Pide a un administrador que regenere el token en Meta con ese permiso.';
     if (r.includes('url del bot') || r.includes('sesión'))
       return 'No se pudo contactar al bot. Verifica que esté configurado y en línea.';
     return raw || 'No se pudieron cargar las plantillas.';

@@ -293,6 +293,21 @@ export class FirebaseService {
     return data.templates || [];
   }
 
+  // Prueba credenciales de WhatsApp (token + WABA) contra Meta, sin guardar. Devuelve el cuerpo tal cual.
+  async testWhatsAppTemplates(botApiUrl: string, creds: { token: string; wabaId: string; version?: string }): Promise<any> {
+    if (!botApiUrl) throw new Error('URL del bot no configurada');
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error('Sesión no válida');
+    const base = botApiUrl.replace(/\/$/, '');
+    const response = await fetch(`${base}/api/campaigns/test-wa`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify(creds)
+    });
+    return response.json();
+  }
+
   // ==================== ORG CONFIG ====================
 
   async getOrgConfig(): Promise<any | null> {

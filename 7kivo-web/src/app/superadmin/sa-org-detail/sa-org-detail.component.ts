@@ -40,6 +40,8 @@ export class SaOrgDetailComponent implements OnInit {
 
   testingApi = false;
   apiTestResult: { ok: boolean; error?: string } | null = null;
+  testingWA = false;
+  waTestResult: { ok: boolean; total?: number; approved?: number; error?: string } | null = null;
 
   logoFile: File | null = null;
   logoPreview = '';
@@ -473,7 +475,26 @@ export class SaOrgDetailComponent implements OnInit {
     this.apiTestResult = null;
   }
 
-  cancelEditWA(): void { this.editingWA = false; this.apiTestResult = null; }
+  cancelEditWA(): void { this.editingWA = false; this.apiTestResult = null; this.waTestResult = null; }
+
+  // Prueba el token + WABA ID escritos en el formulario (sin guardarlos) contra Meta
+  async testWhatsApp(): Promise<void> {
+    const botApiUrl = (this.editWA.botApiUrl || this.orgDetail?.botApiUrl || '').trim();
+    if (!botApiUrl) { this.waTestResult = { ok: false, error: 'Configura primero la URL del bot' }; return; }
+    if (!this.editWA.token || !this.editWA.wabaId) { this.waTestResult = { ok: false, error: 'Ingresa el token y el WABA ID' }; return; }
+    this.testingWA = true;
+    this.waTestResult = null;
+    try {
+      this.waTestResult = await this.firebaseService.testWhatsAppTemplates(botApiUrl, {
+        token: this.editWA.token.trim(),
+        wabaId: (this.editWA.wabaId || '').trim()
+      });
+    } catch (err: any) {
+      this.waTestResult = { ok: false, error: err?.message || 'No se pudo contactar al bot (¿URL correcta / en línea?)' };
+    } finally {
+      this.testingWA = false;
+    }
+  }
 
   async testBotApi(): Promise<void> {
     const url = this.orgDetail?.botApiUrl?.trim();

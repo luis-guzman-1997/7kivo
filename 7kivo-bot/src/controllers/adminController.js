@@ -1,6 +1,6 @@
 const { admin, db } = require('../config/firebase');
 const { runCampaign } = require('../services/campaignService');
-const { listMessageTemplates } = require('../models/messageModel');
+const { listMessageTemplates, listTemplatesWithCreds } = require('../models/messageModel');
 const { runWithOrgId } = require('../config/requestContext');
 
 // Emails que tienen permisos de superadmin (deben coincidir con SUPER_ADMIN_EMAILS del frontend)
@@ -151,4 +151,34 @@ async function listCampaignTemplates(req, res) {
   }
 }
 
-module.exports = { setUserPassword, sendCampaign, listCampaignTemplates };
+/**
+ * POST /api/campaigns/test-wa
+ * Body: { token, wabaId, version? }
+ * Header: Authorization: Bearer <idToken>
+ *
+ * Prueba credenciales de WhatsApp (token + WABA) contra Meta SIN guardarlas.
+ * Devuelve siempre 200; el resultado va en el cuerpo (ok true/false).
+ */
+async function testWhatsAppConfig(req, res) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!idToken) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    const claims = await getTokenClaims(idToken);
+    if (!claims) return res.status(401).json({ ok: false, error: 'Token inválido o expirado' });
+
+    const { token, wabaId, version } = req.body || {};
+    if (!token || !wabaId) {
+      return res.json({ ok: false, error: 'Falta el token o el WABA ID' });
+    }
+
+    const templates = await listTemplatesWithCreds({ token, wabaId, version });
+    const approved = templates.filter(t => (t.status || '').toUpperCase() === 'APPROVED').length;
+    return res.json({ ok: true, total: templates.length, approved });
+  } catch (err) {
+    return res.json({ ok: false, error: err.message });
+  }
+}
+
+module.exports = { setUserPassword, sendCampaign, listCampaignTemplates, testWhatsAppConfig };

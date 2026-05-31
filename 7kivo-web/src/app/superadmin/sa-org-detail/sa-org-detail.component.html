@@ -406,6 +406,20 @@
         <div class="form-group">
           <label>WABA ID <small style="color:#6b7280">(WhatsApp Business Account ID — necesario para plantillas)</small></label>
           <input type="text" [(ngModel)]="editWA.wabaId" placeholder="1234567890123456" />
+          <div class="wa-test-row">
+            <button type="button" class="btn-test-wa" (click)="testWhatsApp()" [disabled]="testingWA">
+              <i class="fas" [class.fa-spinner]="testingWA" [class.fa-spin]="testingWA" [class.fa-vial]="!testingWA"></i>
+              {{ testingWA ? 'Probando...' : 'Probar plantillas' }}
+            </button>
+            <span class="wa-test-result" *ngIf="waTestResult"
+              [class.wa-ok]="waTestResult.ok" [class.wa-fail]="!waTestResult.ok">
+              <i class="fas" [class.fa-check-circle]="waTestResult.ok" [class.fa-times-circle]="!waTestResult.ok"></i>
+              <ng-container *ngIf="waTestResult.ok">
+                Conexión OK · {{ waTestResult.total }} plantilla(s), {{ waTestResult.approved }} aprobada(s)
+              </ng-container>
+              <ng-container *ngIf="!waTestResult.ok">{{ waTestResult.error }}</ng-container>
+            </span>
+          </div>
           <div class="wa-perm-note">
             <i class="fas fa-exclamation-triangle"></i>
             <div>

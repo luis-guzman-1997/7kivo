@@ -82,14 +82,14 @@ const getWACredentials = async () => {
   };
 };
 
-// ── Lista las plantillas (templates) de la WABA, opcionalmente filtra por estado ──
-const listMessageTemplates = async () => {
-  const { version, token, wabaId } = await getWACredentials();
+// ── Lista plantillas usando credenciales explícitas (para probar sin guardar) ──
+const listTemplatesWithCreds = async ({ version, token, wabaId }) => {
   if (!wabaId) throw new Error("WABA ID no configurado para esta organización");
   if (!token) throw new Error("Token de WhatsApp no configurado");
 
+  const ver = version || process.env.VERSION_META_WHATSAPP || "v21.0";
   const templates = [];
-  let url = `https://graph.facebook.com/${version}/${wabaId}/message_templates`;
+  let url = `https://graph.facebook.com/${ver}/${wabaId}/message_templates`;
   let params = { limit: 100, fields: "name,status,category,language,components" };
 
   try {
@@ -115,6 +115,12 @@ const listMessageTemplates = async () => {
     }
     throw new Error(error.message || "No se pudieron listar las plantillas");
   }
+};
+
+// ── Lista las plantillas de la WABA configurada en la org actual ──
+const listMessageTemplates = async () => {
+  const creds = await getWACredentials();
+  return listTemplatesWithCreds(creds);
 };
 
 // ── Envía un mensaje de plantilla (funciona fuera de la ventana de 24h) ──
@@ -470,5 +476,6 @@ module.exports = {
   sendAudioMessage,
   sendCtaUrlMessage,
   listMessageTemplates,
+  listTemplatesWithCreds,
   sendTemplateMessage,
 };

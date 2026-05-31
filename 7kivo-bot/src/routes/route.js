@@ -18,7 +18,7 @@ const {
   notifyDeliveries
 } = require("../controllers/chatController");
 
-const { setUserPassword, sendCampaign, listCampaignTemplates } = require("../controllers/adminController");
+const { setUserPassword, sendCampaign, listCampaignTemplates, testWhatsAppConfig } = require("../controllers/adminController");
 const { getCatalogData, createOrder } = require("../controllers/catalogController");
 
 const { getOrgId } = require("../config/orgConfig");
@@ -76,6 +76,7 @@ router.post("/api/:orgId/orders", withOrgContext(createOrder));
 router.post("/api/admin/set-password", setUserPassword);
 router.post("/api/campaigns/send", withOrgContext(sendCampaign));
 router.get("/api/campaigns/templates", listCampaignTemplates);
+router.post("/api/campaigns/test-wa", testWhatsAppConfig);
 
 // Appointments
 router.post("/api/appointments/cancel-gcal", async (req, res) => {
