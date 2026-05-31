@@ -436,6 +436,91 @@
           <label>Número WhatsApp del Bot <small style="color:#6b7280">(sin +, ej: 50370123456)</small></label>
           <input type="text" [(ngModel)]="editWA.waPhone" placeholder="50370123456" />
         </div>
+
+        <!-- Crear plantilla de WhatsApp -->
+        <div class="create-tpl-section">
+          <button type="button" class="btn-toggle-tpl" *ngIf="!showCreateTemplate" (click)="openCreateTemplate()">
+            <i class="fas fa-plus-circle"></i> Crear plantilla de WhatsApp
+          </button>
+
+          <div class="create-tpl-box" *ngIf="showCreateTemplate">
+            <div class="ctpl-header">
+              <strong><i class="fas fa-file-circle-plus"></i> Nueva plantilla</strong>
+              <button type="button" class="btn-close-tpl" (click)="closeCreateTemplate()"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="ctpl-row">
+              <div class="form-group">
+                <label>Nombre <small style="color:#6b7280">(minúsculas y _)</small></label>
+                <input type="text" [(ngModel)]="templateForm.name" placeholder="recordatorio_pago" />
+              </div>
+              <div class="form-group">
+                <label>Idioma</label>
+                <select [(ngModel)]="templateForm.language">
+                  <option value="es">Español (es)</option>
+                  <option value="es_MX">Español MX (es_MX)</option>
+                  <option value="en">Inglés (en)</option>
+                  <option value="en_US">Inglés US (en_US)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Categoría</label>
+                <select [(ngModel)]="templateForm.category">
+                  <option value="UTILITY">Utilidad (recordatorios)</option>
+                  <option value="MARKETING">Marketing (promociones)</option>
+                  <option value="AUTHENTICATION">Autenticación (OTP)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Cuerpo del mensaje <small style="color:#6b7280">(usa {{ '{{1}}' }}, {{ '{{2}}' }}… para variables)</small></label>
+              <textarea [(ngModel)]="templateForm.body" (ngModelChange)="onTemplateBodyChange()" rows="4"
+                placeholder="Hola {{ '{{1}}' }}, tu pago de {{ '{{2}}' }} vence el {{ '{{3}}' }}."></textarea>
+            </div>
+
+            <div class="form-group" *ngIf="templateForm.examples.length > 0">
+              <label>Ejemplos para variables <small style="color:#6b7280">(Meta los exige para revisar)</small></label>
+              <div class="ctpl-var-row" *ngFor="let ex of templateForm.examples; let i = index">
+                <span class="ctpl-var-tag">{{ varLabel(i) }}</span>
+                <input type="text" [(ngModel)]="templateForm.examples[i]" placeholder="Ej: Ana / $25.00 / 15 jun" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Pie de página <small style="color:#6b7280">(opcional, máx. 60)</small></label>
+              <input type="text" [(ngModel)]="templateForm.footer" maxlength="60" placeholder="Instituto Canzion" />
+            </div>
+
+            <!-- Preview -->
+            <div class="ctpl-preview">
+              <label>Vista previa</label>
+              <div class="ctpl-bubble">
+                <span class="ctpl-bubble-body">{{ templatePreview || 'Escribe el cuerpo del mensaje…' }}</span>
+                <span class="ctpl-bubble-footer" *ngIf="templateForm.footer">{{ templateForm.footer }}</span>
+              </div>
+            </div>
+
+            <div class="ctpl-actions">
+              <button type="button" class="btn-save" (click)="submitTemplate()" [disabled]="creatingTemplate">
+                <i class="fas" [class.fa-spinner]="creatingTemplate" [class.fa-spin]="creatingTemplate" [class.fa-paper-plane]="!creatingTemplate"></i>
+                {{ creatingTemplate ? 'Enviando…' : 'Enviar a aprobación' }}
+              </button>
+              <span class="wa-test-result" *ngIf="createTemplateResult"
+                [class.wa-ok]="createTemplateResult.ok" [class.wa-fail]="!createTemplateResult.ok">
+                <i class="fas" [class.fa-check-circle]="createTemplateResult.ok" [class.fa-times-circle]="!createTemplateResult.ok"></i>
+                <ng-container *ngIf="createTemplateResult.ok">
+                  Creada «{{ createTemplateResult.name }}» · estado: {{ createTemplateResult.status }}
+                </ng-container>
+                <ng-container *ngIf="!createTemplateResult.ok">{{ createTemplateResult.error }}</ng-container>
+              </span>
+            </div>
+            <p class="ctpl-hint">
+              <i class="fas fa-info-circle"></i> Tras enviarla, Meta la revisa (de minutos a ~24 h). Solo podrás usarla cuando quede <strong>APPROVED</strong>.
+            </p>
+          </div>
+        </div>
+
         <div class="form-actions">
           <button class="btn-save" (click)="saveWA()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
           <button class="btn-cancel" (click)="cancelEditWA()">Cancelar</button>

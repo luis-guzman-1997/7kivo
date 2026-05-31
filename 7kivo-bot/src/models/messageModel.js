@@ -65,7 +65,8 @@ const getWACredentials = async () => {
         version: fsConfig.version || process.env.VERSION_META_WHATSAPP || "v21.0",
         phoneId: fsConfig.phoneNumberId,
         token: fsConfig.token,
-        wabaId: fsConfig.wabaId || process.env.WABA_ID || ""
+        wabaId: fsConfig.wabaId || process.env.WABA_ID || "",
+        appId: fsConfig.appId || process.env.META_APP_ID || ""
       };
       waConfigCacheMap[orgId] = { data: credentials, ts: now };
       return credentials;
@@ -78,7 +79,8 @@ const getWACredentials = async () => {
     version: process.env.VERSION_META_WHATSAPP || "v21.0",
     phoneId: process.env.PHONE_NUMBER_WHATSAPP,
     token: process.env.TOKEN_META_WHATSAPP,
-    wabaId: process.env.WABA_ID || ""
+    wabaId: process.env.WABA_ID || "",
+    appId: process.env.META_APP_ID || ""
   };
 };
 
@@ -121,6 +123,80 @@ const listTemplatesWithCreds = async ({ version, token, wabaId }) => {
 const listMessageTemplates = async () => {
   const creds = await getWACredentials();
   return listTemplatesWithCreds(creds);
+};
+
+// ── Sube una imagen de muestra a Meta (Resumable Upload) y devuelve el handle ──
+// Necesario para crear plantillas con encabezado de imagen. Requiere App ID.
+const uploadSampleMedia = async ({ version, token, appId }, imageUrl) => {
+  if (!appId) throw new Error("Falta el App ID de Meta para subir la imagen de encabezado");
+  const ver = version || process.env.VERSION_META_WHATSAPP || "v21.0";
+
+  // 1) Descargar la imagen
+  const imgRes = await axios.get(imageUrl, { responseType: "arraybuffer" });
+  const buffer = Buffer.from(imgRes.data);
+  const fileType = imgRes.headers["content-type"] || "image/jpeg";
+
+  // 2) Iniciar sesión de subida
+  const startRes = await axios.post(
+    `https://graph.facebook.com/${ver}/${appId}/uploads`,
+    null,
+    { params: { file_name: "header_sample", file_length: buffer.length, file_type: fileType },
+      headers: { Authorization: `OAuth ${token}` } }
+  );
+  const sessionId = startRes.data.id; // "upload:XXXX"
+
+  // 3) Subir los bytes
+  const upRes = await axios.post(
+    `https://graph.facebook.com/${ver}/${sessionId}`,
+    buffer,
+    { headers: { Authorization: `OAuth ${token}`, file_offset: 0, "Content-Type": fileType },
+      maxBodyLength: Infinity, maxContentLength: Infinity }
+  );
+  if (!upRes.data.h) throw new Error("Meta no devolvió el handle de la imagen");
+  return upRes.data.h;
+};
+
+// ── Borra una plantilla por nombre ──
+const deleteTemplateWithCreds = async ({ version, token, wabaId }, name) => {
+  if (!wabaId) throw new Error("WABA ID no configurado");
+  if (!token) throw new Error("Token de WhatsApp no configurado");
+  if (!name) throw new Error("Nombre de plantilla requerido");
+  const ver = version || process.env.VERSION_META_WHATSAPP || "v21.0";
+  try {
+    const res = await axios.delete(`https://graph.facebook.com/${ver}/${wabaId}/message_templates`, {
+      params: { name },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data; // { success: true }
+  } catch (error) {
+    const gErr = error?.response?.data?.error;
+    if (gErr) throw new Error(`Meta: ${gErr.error_user_msg || gErr.message}${gErr.code ? ` (código ${gErr.code})` : ""}`);
+    throw new Error(error.message || "No se pudo borrar la plantilla");
+  }
+};
+
+// ── Crea una plantilla en Meta (queda en PENDING hasta que Meta la apruebe) ──
+const createTemplateWithCreds = async ({ version, token, wabaId }, template) => {
+  if (!wabaId) throw new Error("WABA ID no configurado para esta organización");
+  if (!token) throw new Error("Token de WhatsApp no configurado");
+
+  const ver = version || process.env.VERSION_META_WHATSAPP || "v21.0";
+  const url = `https://graph.facebook.com/${ver}/${wabaId}/message_templates`;
+  try {
+    const res = await axios.post(url, template, {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    });
+    return res.data; // { id, status, category }
+  } catch (error) {
+    const gErr = error?.response?.data?.error;
+    console.log("Error creando plantilla (Graph):", error?.response?.data || error.message);
+    if (gErr) {
+      const code = gErr.code ? ` (código ${gErr.code})` : "";
+      const detail = gErr.error_user_msg || gErr.error_user_title || gErr.message;
+      throw new Error(`Meta: ${detail}${code}`);
+    }
+    throw new Error(error.message || "No se pudo crear la plantilla");
+  }
 };
 
 // ── Envía un mensaje de plantilla (funciona fuera de la ventana de 24h) ──
@@ -477,5 +553,8 @@ module.exports = {
   sendCtaUrlMessage,
   listMessageTemplates,
   listTemplatesWithCreds,
+  createTemplateWithCreds,
+  deleteTemplateWithCreds,
+  uploadSampleMedia,
   sendTemplateMessage,
 };

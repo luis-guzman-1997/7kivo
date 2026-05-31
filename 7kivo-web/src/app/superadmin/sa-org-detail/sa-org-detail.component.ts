@@ -43,6 +43,12 @@ export class SaOrgDetailComponent implements OnInit {
   testingWA = false;
   waTestResult: { ok: boolean; total?: number; approved?: number; error?: string } | null = null;
 
+  // Crear plantilla de WhatsApp (v1)
+  showCreateTemplate = false;
+  creatingTemplate = false;
+  templateForm: any = { name: '', language: 'es', category: 'UTILITY', body: '', footer: '', examples: [] };
+  createTemplateResult: { ok: boolean; status?: string; name?: string; error?: string } | null = null;
+
   logoFile: File | null = null;
   logoPreview = '';
 
@@ -493,6 +499,66 @@ export class SaOrgDetailComponent implements OnInit {
       this.waTestResult = { ok: false, error: err?.message || 'No se pudo contactar al bot (¿URL correcta / en línea?)' };
     } finally {
       this.testingWA = false;
+    }
+  }
+
+  // ── Crear plantilla de WhatsApp ──
+  openCreateTemplate(): void {
+    this.templateForm = { name: '', language: 'es', category: 'UTILITY', body: '', footer: '', examples: [] };
+    this.createTemplateResult = null;
+    this.showCreateTemplate = true;
+  }
+
+  closeCreateTemplate(): void {
+    this.showCreateTemplate = false;
+    this.createTemplateResult = null;
+  }
+
+  // Recalcula los campos de ejemplo según las variables {{n}} del cuerpo
+  onTemplateBodyChange(): void {
+    const count = (String(this.templateForm.body || '').match(/\{\{\s*\d+\s*\}\}/g) || []).length;
+    const existing = this.templateForm.examples || [];
+    this.templateForm.examples = Array.from({ length: count }, (_, i) => existing[i] || '');
+  }
+
+  varLabel(i: number): string { return '{{' + (i + 1) + '}}'; }
+
+  get templatePreview(): string {
+    let text = String(this.templateForm.body || '');
+    (this.templateForm.examples || []).forEach((ex: string, i: number) => {
+      const re = new RegExp(`\\{\\{\\s*${i + 1}\\s*\\}\\}`, 'g');
+      text = text.replace(re, (ex || '').trim() || `{{${i + 1}}}`);
+    });
+    return text;
+  }
+
+  async submitTemplate(): Promise<void> {
+    const botApiUrl = (this.editWA.botApiUrl || this.orgDetail?.botApiUrl || '').trim();
+    if (!botApiUrl) { this.createTemplateResult = { ok: false, error: 'Configura primero la URL del bot' }; return; }
+    if (!this.editWA.token || !this.editWA.wabaId) { this.createTemplateResult = { ok: false, error: 'Ingresa el token y el WABA ID arriba' }; return; }
+    if (!this.templateForm.name?.trim()) { this.createTemplateResult = { ok: false, error: 'El nombre es requerido' }; return; }
+    if (!this.templateForm.body?.trim()) { this.createTemplateResult = { ok: false, error: 'El cuerpo del mensaje es requerido' }; return; }
+    const missingEx = (this.templateForm.examples || []).some((e: string) => !String(e || '').trim());
+    if (missingEx) { this.createTemplateResult = { ok: false, error: 'Completa un ejemplo para cada variable' }; return; }
+
+    this.creatingTemplate = true;
+    this.createTemplateResult = null;
+    try {
+      const res = await this.firebaseService.createTemplate(botApiUrl, {
+        token: this.editWA.token.trim(),
+        wabaId: (this.editWA.wabaId || '').trim(),
+        name: this.templateForm.name.trim(),
+        language: this.templateForm.language || 'es',
+        category: this.templateForm.category || 'UTILITY',
+        body: this.templateForm.body.trim(),
+        footer: (this.templateForm.footer || '').trim(),
+        examples: this.templateForm.examples || []
+      });
+      this.createTemplateResult = res;
+    } catch (err: any) {
+      this.createTemplateResult = { ok: false, error: err?.message || 'No se pudo contactar al bot' };
+    } finally {
+      this.creatingTemplate = false;
     }
   }
 

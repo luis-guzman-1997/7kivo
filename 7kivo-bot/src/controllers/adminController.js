@@ -1,6 +1,6 @@
 const { admin, db } = require('../config/firebase');
 const { runCampaign } = require('../services/campaignService');
-const { listMessageTemplates, listTemplatesWithCreds } = require('../models/messageModel');
+const { listMessageTemplates, listTemplatesWithCreds, createTemplateWithCreds, deleteTemplateWithCreds, uploadSampleMedia } = require('../models/messageModel');
 const { runWithOrgId } = require('../config/requestContext');
 
 // Emails que tienen permisos de superadmin (deben coincidir con SUPER_ADMIN_EMAILS del frontend)
@@ -181,4 +181,109 @@ async function testWhatsAppConfig(req, res) {
   }
 }
 
-module.exports = { setUserPassword, sendCampaign, listCampaignTemplates, testWhatsAppConfig };
+/**
+ * POST /api/campaigns/create-template
+ * Body: { token, wabaId, version?, name, language?, category?, body, footer?, examples? }
+ * Header: Authorization: Bearer <idToken>
+ *
+ * Crea una plantilla en Meta (queda PENDING hasta su aprobación).
+ */
+async function createTemplate(req, res) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!idToken) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    const claims = await getTokenClaims(idToken);
+    if (!claims) return res.status(401).json({ ok: false, error: 'Token inválido o expirado' });
+
+    const { token, wabaId, version, appId, name, language, category, body, footer, examples, header, buttons } = req.body || {};
+    if (!token || !wabaId) return res.json({ ok: false, error: 'Falta el token o el WABA ID' });
+    if (!name || !body) return res.json({ ok: false, error: 'El nombre y el cuerpo del mensaje son requeridos' });
+
+    // Meta exige nombres en minúsculas, sin espacios ni símbolos
+    const safeName = String(name).toLowerCase().trim()
+      .replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 512);
+    if (!safeName) return res.json({ ok: false, error: 'Nombre de plantilla inválido' });
+
+    const components = [];
+
+    // ── HEADER (opcional): texto o imagen ──
+    if (header && header.type === 'text' && String(header.text || '').trim()) {
+      components.push({ type: 'HEADER', format: 'TEXT', text: String(header.text).trim().slice(0, 60) });
+    } else if (header && header.type === 'image') {
+      if (!header.imageUrl) return res.json({ ok: false, error: 'Falta la URL de la imagen de encabezado' });
+      let handle;
+      try {
+        handle = await uploadSampleMedia({ token, version, appId }, header.imageUrl);
+      } catch (upErr) {
+        return res.json({ ok: false, error: `No se pudo subir la imagen de encabezado: ${upErr.message}` });
+      }
+      components.push({ type: 'HEADER', format: 'IMAGE', example: { header_handle: [handle] } });
+    }
+
+    // ── BODY ──
+    const bodyComp = { type: 'BODY', text: String(body) };
+    const ex = (examples || []).map(e => String(e || '')).filter(e => e.length > 0);
+    if (ex.length > 0) bodyComp.example = { body_text: [ex] };
+    components.push(bodyComp);
+
+    // ── FOOTER (opcional) ──
+    if (footer && String(footer).trim()) {
+      components.push({ type: 'FOOTER', text: String(footer).trim().slice(0, 60) });
+    }
+
+    // ── BUTTONS (opcional): quick_reply / url ──
+    if (Array.isArray(buttons) && buttons.length > 0) {
+      const btns = buttons
+        .filter(b => b && b.text && String(b.text).trim())
+        .slice(0, 10)
+        .map(b => {
+          const text = String(b.text).trim().slice(0, 25);
+          if (b.type === 'url' && b.url) {
+            return { type: 'URL', text, url: String(b.url).trim() };
+          }
+          return { type: 'QUICK_REPLY', text };
+        });
+      if (btns.length > 0) components.push({ type: 'BUTTONS', buttons: btns });
+    }
+
+    const template = {
+      name: safeName,
+      language: language || 'es',
+      category: (category || 'UTILITY').toUpperCase(),
+      components
+    };
+
+    const data = await createTemplateWithCreds({ token, wabaId, version }, template);
+    return res.json({ ok: true, id: data.id, status: data.status, category: data.category, name: safeName });
+  } catch (err) {
+    return res.json({ ok: false, error: err.message });
+  }
+}
+
+/**
+ * POST /api/campaigns/delete-template
+ * Body: { token, wabaId, version?, name }
+ * Header: Authorization: Bearer <idToken>
+ */
+async function deleteTemplate(req, res) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!idToken) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    const claims = await getTokenClaims(idToken);
+    if (!claims) return res.status(401).json({ ok: false, error: 'Token inválido o expirado' });
+
+    const { token, wabaId, version, name } = req.body || {};
+    if (!token || !wabaId || !name) return res.json({ ok: false, error: 'Falta token, WABA ID o nombre' });
+
+    await deleteTemplateWithCreds({ token, wabaId, version }, name);
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.json({ ok: false, error: err.message });
+  }
+}
+
+module.exports = { setUserPassword, sendCampaign, listCampaignTemplates, testWhatsAppConfig, createTemplate, deleteTemplate };

@@ -1050,3 +1050,42 @@
 .wa-test-result.wa-ok i { color: #22c55e; }
 .wa-test-result.wa-fail { color: #b91c1c; }
 .wa-test-result.wa-fail i { color: #ef4444; }
+
+/* Crear plantilla de WhatsApp */
+.create-tpl-section { margin-top: 14px; }
+.btn-toggle-tpl {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 9px; border: 1.5px dashed #7c3aed;
+  background: #faf9ff; color: #6d28d9; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.15s; width: 100%; justify-content: center;
+}
+.btn-toggle-tpl:hover { background: #f5f3ff; }
+.create-tpl-box {
+  border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;
+  background: #fcfcfd; display: flex; flex-direction: column; gap: 12px;
+}
+.ctpl-header { display: flex; align-items: center; justify-content: space-between; }
+.ctpl-header strong { font-size: 0.95rem; color: #1e293b; display: flex; align-items: center; gap: 7px; }
+.ctpl-header i { color: #7c3aed; }
+.btn-close-tpl { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px; }
+.btn-close-tpl:hover { color: #1e293b; }
+.ctpl-row { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: 10px; }
+.ctpl-var-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.ctpl-var-tag {
+  flex-shrink: 0; font-family: monospace; font-size: 0.78rem; font-weight: 700;
+  color: #6d28d9; background: #f5f3ff; border: 1px solid #ddd6fe;
+  border-radius: 6px; padding: 6px 9px; min-width: 44px; text-align: center;
+}
+.ctpl-var-row input { flex: 1; }
+.ctpl-preview label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.ctpl-bubble {
+  background: #d9fdd3; border-radius: 10px 10px 10px 2px;
+  padding: 10px 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  display: flex; flex-direction: column; gap: 6px; max-width: 90%;
+}
+.ctpl-bubble-body { font-size: 0.86rem; color: #111b21; line-height: 1.5; white-space: pre-wrap; }
+.ctpl-bubble-footer { font-size: 0.74rem; color: #667781; }
+.ctpl-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ctpl-hint { font-size: 0.78rem; color: #64748b; margin: 0; display: flex; align-items: flex-start; gap: 6px; line-height: 1.45; }
+.ctpl-hint i { color: #7c3aed; margin-top: 2px; }
+@media (max-width: 600px) { .ctpl-row { grid-template-columns: 1fr; } }

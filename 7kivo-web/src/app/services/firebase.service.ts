@@ -308,6 +308,21 @@ export class FirebaseService {
     return response.json();
   }
 
+  // Crea una plantilla en Meta (queda PENDING). Devuelve el cuerpo tal cual.
+  async createTemplate(botApiUrl: string, payload: any): Promise<any> {
+    if (!botApiUrl) throw new Error('URL del bot no configurada');
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error('Sesión no válida');
+    const base = botApiUrl.replace(/\/$/, '');
+    const response = await fetch(`${base}/api/campaigns/create-template`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify(payload)
+    });
+    return response.json();
+  }
+
   // ==================== ORG CONFIG ====================
 
   async getOrgConfig(): Promise<any | null> {
