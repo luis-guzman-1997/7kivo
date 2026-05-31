@@ -43,11 +43,21 @@ export class SaOrgDetailComponent implements OnInit {
   testingWA = false;
   waTestResult: { ok: boolean; total?: number; approved?: number; error?: string } | null = null;
 
-  // Crear plantilla de WhatsApp (v1)
+  // Crear plantilla de WhatsApp
   showCreateTemplate = false;
   creatingTemplate = false;
-  templateForm: any = { name: '', language: 'es', category: 'UTILITY', body: '', footer: '', examples: [] };
+  templateForm: any = {
+    name: '', language: 'es', category: 'UTILITY', body: '', footer: '', examples: [],
+    headerType: 'none', headerText: '', headerImageUrl: '', buttons: []
+  };
   createTemplateResult: { ok: boolean; status?: string; name?: string; error?: string } | null = null;
+
+  // Listado / borrado de plantillas
+  showTemplatesList = false;
+  loadingTemplatesList = false;
+  templatesList: any[] = [];
+  templatesListError = '';
+  deletingTemplate: string | null = null;
 
   logoFile: File | null = null;
   logoPreview = '';
@@ -474,6 +484,7 @@ export class SaOrgDetailComponent implements OnInit {
       phoneNumberId: this.orgWhatsApp?.phoneNumberId || '',
       verifyToken: this.orgWhatsApp?.verifyToken || '',
       wabaId: this.orgWhatsApp?.wabaId || '',
+      appId: this.orgWhatsApp?.appId || '',
       botApiUrl: this.orgDetail?.botApiUrl || '',
       waPhone: this.orgDetail?.waPhone || ''
     };
@@ -504,9 +515,21 @@ export class SaOrgDetailComponent implements OnInit {
 
   // ── Crear plantilla de WhatsApp ──
   openCreateTemplate(): void {
-    this.templateForm = { name: '', language: 'es', category: 'UTILITY', body: '', footer: '', examples: [] };
+    this.templateForm = {
+      name: '', language: 'es', category: 'UTILITY', body: '', footer: '', examples: [],
+      headerType: 'none', headerText: '', headerImageUrl: '', buttons: []
+    };
     this.createTemplateResult = null;
     this.showCreateTemplate = true;
+  }
+
+  addTemplateButton(type: 'quick_reply' | 'url'): void {
+    if ((this.templateForm.buttons || []).length >= 10) return;
+    this.templateForm.buttons.push(type === 'url' ? { type: 'url', text: '', url: '' } : { type: 'quick_reply', text: '' });
+  }
+
+  removeTemplateButton(i: number): void {
+    this.templateForm.buttons.splice(i, 1);
   }
 
   closeCreateTemplate(): void {
@@ -541,24 +564,87 @@ export class SaOrgDetailComponent implements OnInit {
     const missingEx = (this.templateForm.examples || []).some((e: string) => !String(e || '').trim());
     if (missingEx) { this.createTemplateResult = { ok: false, error: 'Completa un ejemplo para cada variable' }; return; }
 
+    // Validaciones de header/botones
+    if (this.templateForm.headerType === 'image' && !this.templateForm.headerImageUrl?.trim()) {
+      this.createTemplateResult = { ok: false, error: 'Ingresa la URL de la imagen de encabezado' }; return;
+    }
+    if (this.templateForm.headerType === 'image' && !this.editWA.appId?.trim()) {
+      this.createTemplateResult = { ok: false, error: 'Para imagen de encabezado necesitas configurar el App ID de Meta arriba' }; return;
+    }
+    const badBtn = (this.templateForm.buttons || []).some((b: any) =>
+      !String(b.text || '').trim() || (b.type === 'url' && !String(b.url || '').trim()));
+    if (badBtn) { this.createTemplateResult = { ok: false, error: 'Completa el texto (y URL) de cada botón' }; return; }
+
+    const header = this.templateForm.headerType === 'text'
+      ? { type: 'text', text: (this.templateForm.headerText || '').trim() }
+      : this.templateForm.headerType === 'image'
+        ? { type: 'image', imageUrl: (this.templateForm.headerImageUrl || '').trim() }
+        : null;
+
     this.creatingTemplate = true;
     this.createTemplateResult = null;
     try {
       const res = await this.firebaseService.createTemplate(botApiUrl, {
         token: this.editWA.token.trim(),
         wabaId: (this.editWA.wabaId || '').trim(),
+        appId: (this.editWA.appId || '').trim(),
         name: this.templateForm.name.trim(),
         language: this.templateForm.language || 'es',
         category: this.templateForm.category || 'UTILITY',
         body: this.templateForm.body.trim(),
         footer: (this.templateForm.footer || '').trim(),
-        examples: this.templateForm.examples || []
+        examples: this.templateForm.examples || [],
+        header,
+        buttons: this.templateForm.buttons || []
       });
       this.createTemplateResult = res;
+      if (res.ok && this.showTemplatesList) this.loadTemplatesList();
     } catch (err: any) {
       this.createTemplateResult = { ok: false, error: err?.message || 'No se pudo contactar al bot' };
     } finally {
       this.creatingTemplate = false;
+    }
+  }
+
+  // ── Listar / borrar plantillas ──
+  async toggleTemplatesList(): Promise<void> {
+    this.showTemplatesList = !this.showTemplatesList;
+    if (this.showTemplatesList && this.templatesList.length === 0) await this.loadTemplatesList();
+  }
+
+  async loadTemplatesList(): Promise<void> {
+    const botApiUrl = (this.editWA.botApiUrl || this.orgDetail?.botApiUrl || '').trim();
+    if (!botApiUrl) { this.templatesListError = 'Configura la URL del bot'; return; }
+    this.loadingTemplatesList = true;
+    this.templatesListError = '';
+    try {
+      this.templatesList = await this.firebaseService.getAllTemplates(botApiUrl, this.selectedOrg.id);
+    } catch (err: any) {
+      this.templatesListError = err?.message || 'No se pudieron cargar las plantillas';
+    } finally {
+      this.loadingTemplatesList = false;
+    }
+  }
+
+  async deleteTemplate(name: string): Promise<void> {
+    if (!confirm(`¿Borrar la plantilla «${name}»? Esta acción no se puede deshacer.`)) return;
+    const botApiUrl = (this.editWA.botApiUrl || this.orgDetail?.botApiUrl || '').trim();
+    this.deletingTemplate = name;
+    try {
+      const res = await this.firebaseService.deleteTemplate(botApiUrl, {
+        token: this.editWA.token.trim(),
+        wabaId: (this.editWA.wabaId || '').trim(),
+        name
+      });
+      if (res.ok) {
+        this.templatesList = this.templatesList.filter(t => t.name !== name);
+      } else {
+        this.templatesListError = res.error || 'No se pudo borrar';
+      }
+    } catch (err: any) {
+      this.templatesListError = err?.message || 'No se pudo borrar';
+    } finally {
+      this.deletingTemplate = null;
     }
   }
 
@@ -602,7 +688,8 @@ export class SaOrgDetailComponent implements OnInit {
         token: this.editWA.token,
         phoneNumberId: this.editWA.phoneNumberId,
         verifyToken: this.editWA.verifyToken,
-        wabaId: (this.editWA.wabaId || '').trim()
+        wabaId: (this.editWA.wabaId || '').trim(),
+        appId: (this.editWA.appId || '').trim()
       });
       if (this.editWA.botApiUrl !== undefined) {
         const waPhone = (this.editWA.waPhone || '').replace(/\D/g, '');
@@ -610,7 +697,7 @@ export class SaOrgDetailComponent implements OnInit {
         await this.firebaseService.savePublicOrgInfo(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl, waPhone });
         this.orgDetail = { ...this.orgDetail, botApiUrl: this.editWA.botApiUrl, waPhone };
       }
-      this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken, wabaId: (this.editWA.wabaId || '').trim() };
+      this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken, wabaId: (this.editWA.wabaId || '').trim(), appId: (this.editWA.appId || '').trim() };
       this.editingWA = false;
       this.showNotice('WhatsApp configurado');
     } catch (err) {

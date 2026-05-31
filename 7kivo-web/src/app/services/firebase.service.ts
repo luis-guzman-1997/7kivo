@@ -323,6 +323,37 @@ export class FirebaseService {
     return response.json();
   }
 
+  // Borra una plantilla por nombre. Devuelve el cuerpo tal cual.
+  async deleteTemplate(botApiUrl: string, payload: any): Promise<any> {
+    if (!botApiUrl) throw new Error('URL del bot no configurada');
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error('Sesión no válida');
+    const base = botApiUrl.replace(/\/$/, '');
+    const response = await fetch(`${base}/api/campaigns/delete-template`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify(payload)
+    });
+    return response.json();
+  }
+
+  // Lista TODAS las plantillas (cualquier estado) para gestión
+  async getAllTemplates(botApiUrl: string, orgId: string): Promise<any[]> {
+    if (!botApiUrl) throw new Error('URL del bot no configurada');
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error('Sesión no válida');
+    const base = botApiUrl.replace(/\/$/, '');
+    const response = await fetch(`${base}/api/campaigns/templates?orgId=${encodeURIComponent(orgId)}`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${idToken}` }
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'Error al obtener plantillas');
+    return data.templates || [];
+  }
+
   // ==================== ORG CONFIG ====================
 
   async getOrgConfig(): Promise<any | null> {

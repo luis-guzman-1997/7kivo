@@ -433,6 +433,10 @@
           </div>
         </div>
         <div class="form-group">
+          <label>App ID de Meta <small style="color:#6b7280">(opcional — solo para plantillas con imagen de encabezado)</small></label>
+          <input type="text" [(ngModel)]="editWA.appId" placeholder="1234567890123456" />
+        </div>
+        <div class="form-group">
           <label>Número WhatsApp del Bot <small style="color:#6b7280">(sin +, ej: 50370123456)</small></label>
           <input type="text" [(ngModel)]="editWA.waPhone" placeholder="50370123456" />
         </div>
@@ -473,6 +477,22 @@
               </div>
             </div>
 
+            <!-- Encabezado -->
+            <div class="form-group">
+              <label>Encabezado <small style="color:#6b7280">(opcional)</small></label>
+              <div class="ctpl-header-tabs">
+                <button type="button" [class.htab-active]="templateForm.headerType === 'none'" (click)="templateForm.headerType = 'none'">Ninguno</button>
+                <button type="button" [class.htab-active]="templateForm.headerType === 'text'" (click)="templateForm.headerType = 'text'">Texto</button>
+                <button type="button" [class.htab-active]="templateForm.headerType === 'image'" (click)="templateForm.headerType = 'image'">Imagen</button>
+              </div>
+              <input *ngIf="templateForm.headerType === 'text'" type="text" [(ngModel)]="templateForm.headerText"
+                maxlength="60" placeholder="Título del mensaje (máx. 60)" style="margin-top:8px" />
+              <div *ngIf="templateForm.headerType === 'image'" style="margin-top:8px">
+                <input type="text" [(ngModel)]="templateForm.headerImageUrl" placeholder="https://…/imagen.jpg (muestra para aprobación)" />
+                <small style="color:#6b7280; display:block; margin-top:4px">Requiere App ID configurado arriba. Se sube una muestra a Meta para la revisión.</small>
+              </div>
+            </div>
+
             <div class="form-group">
               <label>Cuerpo del mensaje <small style="color:#6b7280">(usa {{ '{{1}}' }}, {{ '{{2}}' }}… para variables)</small></label>
               <textarea [(ngModel)]="templateForm.body" (ngModelChange)="onTemplateBodyChange()" rows="4"
@@ -492,12 +512,38 @@
               <input type="text" [(ngModel)]="templateForm.footer" maxlength="60" placeholder="Instituto Canzion" />
             </div>
 
+            <!-- Botones -->
+            <div class="form-group">
+              <label>Botones <small style="color:#6b7280">(opcional, máx. 10)</small></label>
+              <div class="ctpl-btn-row" *ngFor="let b of templateForm.buttons; let i = index">
+                <span class="ctpl-btn-type">{{ b.type === 'url' ? 'URL' : 'Respuesta' }}</span>
+                <input type="text" [(ngModel)]="b.text" maxlength="25" placeholder="Texto del botón" />
+                <input *ngIf="b.type === 'url'" type="text" [(ngModel)]="b.url" placeholder="https://…" />
+                <button type="button" class="btn-rm-btn" (click)="removeTemplateButton(i)"><i class="fas fa-times"></i></button>
+              </div>
+              <div class="ctpl-add-btns">
+                <button type="button" (click)="addTemplateButton('quick_reply')"><i class="fas fa-plus"></i> Respuesta rápida</button>
+                <button type="button" (click)="addTemplateButton('url')"><i class="fas fa-plus"></i> Botón URL</button>
+              </div>
+            </div>
+
             <!-- Preview -->
             <div class="ctpl-preview">
               <label>Vista previa</label>
               <div class="ctpl-bubble">
+                <div class="ctpl-bubble-header-img" *ngIf="templateForm.headerType === 'image'">
+                  <img *ngIf="templateForm.headerImageUrl" [src]="templateForm.headerImageUrl" alt="header" />
+                  <span *ngIf="!templateForm.headerImageUrl"><i class="fas fa-image"></i> Imagen de encabezado</span>
+                </div>
+                <span class="ctpl-bubble-header-text" *ngIf="templateForm.headerType === 'text' && templateForm.headerText">{{ templateForm.headerText }}</span>
                 <span class="ctpl-bubble-body">{{ templatePreview || 'Escribe el cuerpo del mensaje…' }}</span>
                 <span class="ctpl-bubble-footer" *ngIf="templateForm.footer">{{ templateForm.footer }}</span>
+              </div>
+              <div class="ctpl-bubble-buttons" *ngIf="templateForm.buttons.length > 0">
+                <div class="ctpl-pv-btn" *ngFor="let b of templateForm.buttons">
+                  <i class="fas" [class.fa-reply]="b.type !== 'url'" [class.fa-external-link-alt]="b.type === 'url'"></i>
+                  {{ b.text || '(botón)' }}
+                </div>
               </div>
             </div>
 
@@ -518,6 +564,32 @@
             <p class="ctpl-hint">
               <i class="fas fa-info-circle"></i> Tras enviarla, Meta la revisa (de minutos a ~24 h). Solo podrás usarla cuando quede <strong>APPROVED</strong>.
             </p>
+          </div>
+
+          <!-- Mis plantillas (listar / borrar) -->
+          <button type="button" class="btn-toggle-tpl" style="margin-top:10px" (click)="toggleTemplatesList()">
+            <i class="fas" [class.fa-chevron-down]="!showTemplatesList" [class.fa-chevron-up]="showTemplatesList"></i>
+            {{ showTemplatesList ? 'Ocultar plantillas existentes' : 'Ver plantillas existentes' }}
+          </button>
+          <div class="tpl-list-box" *ngIf="showTemplatesList">
+            <div *ngIf="loadingTemplatesList" class="ctpl-hint"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>
+            <div *ngIf="templatesListError && !loadingTemplatesList" class="wa-test-result wa-fail">
+              <i class="fas fa-times-circle"></i> {{ templatesListError }}
+            </div>
+            <div *ngIf="!loadingTemplatesList && !templatesListError && templatesList.length === 0" class="ctpl-hint">
+              No hay plantillas en esta cuenta.
+            </div>
+            <div class="tpl-item" *ngFor="let t of templatesList">
+              <div class="tpl-item-info">
+                <span class="tpl-item-name">{{ t.name }}</span>
+                <span class="tpl-item-meta">{{ t.language }} · {{ t.category }}</span>
+              </div>
+              <span class="tpl-status" [class.ts-approved]="t.status === 'APPROVED'"
+                [class.ts-pending]="t.status === 'PENDING'" [class.ts-rejected]="t.status === 'REJECTED'">{{ t.status }}</span>
+              <button type="button" class="btn-del-tpl" (click)="deleteTemplate(t.name)" [disabled]="deletingTemplate === t.name" title="Borrar">
+                <i class="fas" [class.fa-spinner]="deletingTemplate === t.name" [class.fa-spin]="deletingTemplate === t.name" [class.fa-trash-alt]="deletingTemplate !== t.name"></i>
+              </button>
+            </div>
           </div>
         </div>
 
