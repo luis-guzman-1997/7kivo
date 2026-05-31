@@ -92,18 +92,29 @@ const listMessageTemplates = async () => {
   let url = `https://graph.facebook.com/${version}/${wabaId}/message_templates`;
   let params = { limit: 100, fields: "name,status,category,language,components" };
 
-  // Paginar hasta traer todas
-  for (let i = 0; i < 20 && url; i++) {
-    const res = await axios.get(url, {
-      params,
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = res.data || {};
-    (data.data || []).forEach((t) => templates.push(t));
-    url = data.paging?.next || null;
-    params = undefined; // el "next" ya trae los query params embebidos
+  try {
+    // Paginar hasta traer todas
+    for (let i = 0; i < 20 && url; i++) {
+      const res = await axios.get(url, {
+        params,
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = res.data || {};
+      (data.data || []).forEach((t) => templates.push(t));
+      url = data.paging?.next || null;
+      params = undefined; // el "next" ya trae los query params embebidos
+    }
+    return templates;
+  } catch (error) {
+    // Propagar el motivo REAL de Meta (no el genérico de axios)
+    const gErr = error?.response?.data?.error;
+    console.log("Error listando plantillas (Graph):", error?.response?.data || error.message);
+    if (gErr) {
+      const code = gErr.code ? ` (código ${gErr.code})` : "";
+      throw new Error(`Meta: ${gErr.message}${code}. Verifica el WABA ID y que el token tenga permiso whatsapp_business_management.`);
+    }
+    throw new Error(error.message || "No se pudieron listar las plantillas");
   }
-  return templates;
 };
 
 // ── Envía un mensaje de plantilla (funciona fuera de la ventana de 24h) ──

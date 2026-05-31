@@ -1008,3 +1008,26 @@
   gap: 6px;
 }
 .pp-link:hover { text-decoration: underline; }
+
+/* Aviso de permisos del token (campañas/plantillas) */
+.wa-perm-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 9px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #92400e;
+}
+.wa-perm-note > i { color: #f59e0b; margin-top: 2px; flex-shrink: 0; }
+.wa-perm-note code {
+  background: rgba(146, 64, 14, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}

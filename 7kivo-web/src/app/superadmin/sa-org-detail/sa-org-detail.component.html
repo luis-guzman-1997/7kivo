@@ -406,6 +406,17 @@
         <div class="form-group">
           <label>WABA ID <small style="color:#6b7280">(WhatsApp Business Account ID — necesario para plantillas)</small></label>
           <input type="text" [(ngModel)]="editWA.wabaId" placeholder="1234567890123456" />
+          <div class="wa-perm-note">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+              Para usar <strong>plantillas y campañas proactivas</strong>, el Access Token debe tener
+              <strong>ambos</strong> permisos:
+              <code>whatsapp_business_messaging</code> (enviar) y
+              <code>whatsapp_business_management</code> (plantillas).
+              Genera el token desde un <strong>Usuario del sistema</strong> en Meta Business Settings con la cuenta de WhatsApp (WABA) asignada.
+              Sin el permiso de <em>management</em>, el envío funciona pero las plantillas devuelven error.
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label>Número WhatsApp del Bot <small style="color:#6b7280">(sin +, ej: 50370123456)</small></label>

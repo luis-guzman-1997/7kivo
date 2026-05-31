@@ -48,6 +48,7 @@ export class CampaignsComponent implements OnInit {
   templates: any[] = [];
   loadingTemplates = false;
   templatesError = '';
+  templatesErrorRaw = '';
   selectedTemplate: any = null;
 
   // Días de la semana (orden lunes→domingo) para el selector semanal
@@ -112,13 +113,31 @@ export class CampaignsComponent implements OnInit {
     if (!botApiUrl) return;
     this.loadingTemplates = true;
     this.templatesError = '';
+    this.templatesErrorRaw = '';
     try {
       this.templates = await this.firebaseService.getApprovedTemplates(botApiUrl, this.orgId);
     } catch (err: any) {
-      this.templatesError = err?.message || 'No se pudieron cargar las plantillas';
+      const raw = err?.message || 'Error desconocido';
+      this.templatesError = this.friendlyTemplateError(raw);
+      // Solo mostramos el detalle técnico si difiere del mensaje amigable
+      this.templatesErrorRaw = this.templatesError === raw ? '' : raw;
     } finally {
       this.loadingTemplates = false;
     }
+  }
+
+  // Traduce el error técnico de Meta/bot a un mensaje claro y accionable
+  private friendlyTemplateError(raw: string): string {
+    const r = (raw || '').toLowerCase();
+    if (r.includes('management') || r.includes('missing permission') || r.includes('#10') || r.includes('#200') || r.includes('código 200'))
+      return 'El token de WhatsApp no tiene permiso para gestionar plantillas (whatsapp_business_management). Pide a un administrador que regenere el token en Meta con ese permiso.';
+    if (r.includes('no configurado') || r.includes('waba id'))
+      return 'Falta configurar el WABA ID de esta organización. Lo configura un administrador en el panel de superadmin.';
+    if (r.includes('does not exist') || r.includes('subcode 33') || r.includes('código 100') || r.includes('cannot be loaded'))
+      return 'El WABA ID configurado no es válido o el token no tiene acceso a esa cuenta de WhatsApp. Verifica el WABA ID en Meta.';
+    if (r.includes('url del bot') || r.includes('sesión'))
+      return 'No se pudo contactar al bot. Verifica que esté configurado y en línea.';
+    return raw || 'No se pudieron cargar las plantillas.';
   }
 
   setTemplateMode(): void {

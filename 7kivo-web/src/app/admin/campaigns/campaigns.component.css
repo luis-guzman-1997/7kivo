@@ -363,6 +363,25 @@
 .channel-hint-ok { color: #15803d; }
 .channel-hint-ok i { color: #22c55e; }
 
+/* Templates error banner */
+.templates-error-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; border-radius: 10px;
+  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+}
+.templates-error-banner > i { color: #f59e0b; font-size: 1rem; margin-top: 2px; flex-shrink: 0; }
+.teb-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.teb-body strong { font-size: 0.85rem; color: #92400e; }
+.teb-body span { font-size: 0.8rem; color: #78350f; line-height: 1.45; }
+.teb-raw { font-size: 0.72rem !important; color: #b45309 !important; font-family: monospace; word-break: break-word; }
+.teb-retry {
+  align-self: flex-start; margin-top: 6px; padding: 6px 12px;
+  border: 1px solid #f59e0b; border-radius: 7px; background: white;
+  color: #b45309; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.15s;
+}
+.teb-retry:hover { background: #fffbeb; }
+
 /* Template variables & preview */
 .template-vars { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
 .template-var-row { display: flex; align-items: center; gap: 8px; }

@@ -274,8 +274,16 @@
           <div *ngIf="loadingTemplates" class="collection-hint">
             <i class="fas fa-spinner fa-spin"></i> Cargando plantillas desde Meta...
           </div>
-          <div *ngIf="templatesError" class="fp-error">
-            <i class="fas fa-exclamation-circle"></i> {{ templatesError }}
+          <div *ngIf="templatesError && !loadingTemplates" class="templates-error-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="teb-body">
+              <strong>No se pudieron cargar las plantillas</strong>
+              <span>{{ templatesError }}</span>
+              <span class="teb-raw" *ngIf="templatesErrorRaw">Detalle técnico: {{ templatesErrorRaw }}</span>
+              <button type="button" class="teb-retry" (click)="loadTemplates()">
+                <i class="fas fa-rotate-right"></i> Reintentar
+              </button>
+            </div>
           </div>
           <select *ngIf="!loadingTemplates && !templatesError" [(ngModel)]="form.templateName" (ngModelChange)="onTemplateChange()">
             <option value="">— Seleccionar plantilla —</option>

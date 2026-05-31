@@ -39,7 +39,9 @@
       "Bash(node --check src/models/messageModel.js)",
       "Bash(node --check src/controllers/adminController.js)",
       "Bash(node --check src/routes/route.js)",
-      "Bash(node --check src/services/campaignService.js)"
+      "Bash(node --check src/services/campaignService.js)",
+      "Bash(curl -s -i --max-time 25 'https://api.7kivo.com/api/campaigns/templates?orgId=instituto-canzion-sonsonate&status=APPROVED' -H 'accept: */*' -H 'authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImM5YTBjMWRlYWEyN2JjNjMyNTUzYmM4MWEyMmQ4NzY1MWM3MTMyY2IiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20va2l2bzctYXBwIiwiYXVkIjoia2l2bzctYXBwIiwiYXV0aF90aW1lIjoxNzgwMTYxMDU4LCJ1c2VyX2lkIjoiSDg4V3pGQllsRVBGYVpQTjNMU1FZNVFwY0poMSIsInN1YiI6Ikg4OFd6RkJZbEVQRmFaUE4zTFNRWTVRcGNKaDEiLCJpYXQiOjE3ODAxNjEwNTgsImV4cCI6MTc4MDE2NDY1OCwiZW1haWwiOiJhYmVsQGNhbnppb24uY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImFiZWxAY2Fuemlvbi5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.HancMQNo-A3oamUGq-y5WTIvNHmeNvj10VvYHgOeTTU8CQir6d9d8o2K8CcadEsEYt5C2_1Bn-YT9ZH-dRqvuKOFUOG8ptapN8W-d-GdVjB5Y5fsSkq_sylZqglZU42SPBotAe_f4F10zyxTskVujbY82cxtx1laV4hmGHwtg0lAUy_EpQxNWksVNoN1_FzsalMiOOwWHvHVIEQ7JsoErYcXG0d7o4xpM4SEzCgWqi6bYLXCNN-s0Ow-cOqMUHLMRKlp6_GV80IqiDUHgQV9kY_HBaet0CNflvmDe0N3zSEzILmiYAJqnJLgKKLNUsL6y1b6TC-8P8iQBZzShZD2ag' -H 'origin: http://localhost:4300')",
+      "Bash(node diag-templates.js instituto-canzion-sonsonate)"
     ]
   }
 }
