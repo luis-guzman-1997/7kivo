@@ -116,7 +116,7 @@
           <!-- Template badge -->
           <div class="card-template-badge" *ngIf="c.channelMode === 'template'">
             <i class="fas fa-file-alt"></i>
-            Plantilla: <strong>{{ c.templateName }}</strong>
+            Plantilla: <strong>{{ templateDisplayName(c.templateName) }}</strong>
           </div>
 
           <!-- Keyword badge -->
@@ -270,7 +270,7 @@
 
         <!-- Template selector -->
         <div class="fp-group" *ngIf="form.channelMode === 'template'">
-          <label>Plantilla aprobada <span class="req">*</span></label>
+          <label>Plantilla <span class="req">*</span></label>
           <div *ngIf="loadingTemplates" class="collection-hint">
             <i class="fas fa-spinner fa-spin"></i> Cargando plantillas desde Meta...
           </div>
@@ -287,10 +287,17 @@
           </div>
           <select *ngIf="!loadingTemplates && !templatesError" [(ngModel)]="form.templateName" (ngModelChange)="onTemplateChange()">
             <option value="">— Seleccionar plantilla —</option>
-            <option *ngFor="let t of templates" [value]="t.name">{{ t.name }} · {{ t.language }} · {{ t.category }}</option>
+            <option *ngFor="let t of templates" [value]="t.name" [disabled]="!isTemplateSendable(t)">{{ templateDisplayName(t.name) }} · {{ templateStatusLabel(t) }}</option>
           </select>
           <p class="collection-hint" *ngIf="!loadingTemplates && !templatesError && templates.length === 0">
-            <i class="fas fa-info-circle"></i> No hay plantillas aprobadas. Créalas y apruébalas en Meta Business Manager.
+            <i class="fas fa-info-circle"></i> No hay plantillas. Créalas desde el panel de administración o en Meta Business Manager.
+          </p>
+          <p class="collection-hint template-warning" *ngIf="selectedTemplate && !isTemplateSendable(selectedTemplate)">
+            <i class="fas fa-exclamation-triangle"></i>
+            <ng-container *ngIf="selectedTemplate.name === 'hello_world'; else notApproved">
+              Esta plantilla de prueba de Meta solo funciona desde números de prueba — no se puede enviar desde tu número.
+            </ng-container>
+            <ng-template #notApproved>Esta plantilla aún no está aprobada por Meta. No se podrá enviar hasta que sea aprobada.</ng-template>
           </p>
 
           <!-- Variables -->
@@ -316,7 +323,7 @@
           <!-- Live preview -->
           <div class="template-preview" *ngIf="selectedTemplate">
             <label class="sub-label"><i class="fas fa-eye"></i> Vista previa</label>
-            <div class="template-preview-bubble">{{ templatePreview }}</div>
+            <div class="template-preview-bubble">{{ templatePreview }}<span class="template-preview-footer" *ngIf="templateFooterText">{{ templateFooterText }}</span></div>
           </div>
         </div>
 

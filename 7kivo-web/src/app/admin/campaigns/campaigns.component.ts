@@ -115,7 +115,7 @@ export class CampaignsComponent implements OnInit {
     this.templatesError = '';
     this.templatesErrorRaw = '';
     try {
-      this.templates = await this.firebaseService.getApprovedTemplates(botApiUrl, this.orgId);
+      this.templates = await this.firebaseService.getAllTemplates(botApiUrl, this.orgId);
     } catch (err: any) {
       const raw = err?.message || 'Error desconocido';
       this.templatesError = this.friendlyTemplateError(raw);
@@ -144,6 +144,33 @@ export class CampaignsComponent implements OnInit {
     if (r.includes('url del bot') || r.includes('sesión'))
       return 'No se pudo contactar al bot. Verifica que esté configurado y en línea.';
     return raw || 'No se pudieron cargar las plantillas.';
+  }
+
+  // Nombres amigables para el select; el nombre técnico de Meta no se muestra al usuario
+  private readonly templateDisplayNames: Record<string, string> = {
+    recordatorio_actividad: 'Recordatorio de actividad',
+    recordatorio_parciales: 'Recordatorio de parciales',
+    hello_world: 'Plantilla de prueba (Meta)'
+  };
+
+  templateDisplayName(name: string): string {
+    if (this.templateDisplayNames[name]) return this.templateDisplayNames[name];
+    const clean = String(name || '').replace(/_/g, ' ').trim();
+    return clean ? clean.charAt(0).toUpperCase() + clean.slice(1) : name;
+  }
+
+  // hello_world solo se puede enviar desde los números de prueba de Meta (error 131058)
+  isTemplateSendable(t: any): boolean {
+    return (t?.status || '').toUpperCase() === 'APPROVED' && t?.name !== 'hello_world';
+  }
+
+  templateStatusLabel(t: any): string {
+    if (t?.name === 'hello_world') return '🚫 solo pruebas de Meta';
+    const s = (t?.status || '').toUpperCase();
+    if (s === 'APPROVED') return '✅ aprobada';
+    if (s === 'PENDING') return '⏳ en revisión';
+    if (s === 'REJECTED') return '❌ rechazada';
+    return s.toLowerCase();
   }
 
   setTemplateMode(): void {
@@ -187,6 +214,11 @@ export class CampaignsComponent implements OnInit {
       text = text.replace(re, repl);
     });
     return text;
+  }
+
+  get templateFooterText(): string {
+    const footer = (this.selectedTemplate?.components || []).find((c: any) => c.type === 'FOOTER');
+    return footer?.text || '';
   }
 
   // Campos de la colección seleccionada (todos, para fecha y variables tipo campo)
@@ -464,6 +496,11 @@ export class CampaignsComponent implements OnInit {
     }
     if (this.form.channelMode === 'template') {
       if (!this.form.templateName) return 'Selecciona una plantilla aprobada';
+      if (this.selectedTemplate && !this.isTemplateSendable(this.selectedTemplate)) {
+        return this.selectedTemplate.name === 'hello_world'
+          ? 'La plantilla hello_world solo funciona desde números de prueba de Meta. Selecciona otra plantilla.'
+          : 'Esta plantilla aún no está aprobada por Meta. Espera la aprobación o selecciona otra.';
+      }
       const missing = (this.form.templateVariables || []).some((v: any) =>
         v?.source === 'field' ? !v.field : !String(v?.value || '').trim());
       if (missing) return 'Completa todas las variables de la plantilla';
