@@ -80,7 +80,8 @@
       "WebFetch(domain:laboladeoroquito.com)",
       "WebFetch(domain:sumerlabs.com)",
       "PowerShell(node _diag_order.js)",
-      "PowerShell(node -e \"const admin=require\\('firebase-admin'\\);const sa=require\\('./kivo7.json'\\);admin.initializeApp\\({credential:admin.credential.cert\\(sa\\),projectId:'kivo7-app'}\\);admin.firestore\\(\\).doc\\('organizations/caluco-express/tienda_tony/vD4aR5fIwZUUL1UAn5ro'\\).get\\(\\).then\\(d=>{console.log\\(JSON.stringify\\(d.data\\(\\).necesidad\\)\\);process.exit\\(0\\);}\\)\")"
+      "PowerShell(node -e \"const admin=require\\('firebase-admin'\\);const sa=require\\('./kivo7.json'\\);admin.initializeApp\\({credential:admin.credential.cert\\(sa\\),projectId:'kivo7-app'}\\);admin.firestore\\(\\).doc\\('organizations/caluco-express/tienda_tony/vD4aR5fIwZUUL1UAn5ro'\\).get\\(\\).then\\(d=>{console.log\\(JSON.stringify\\(d.data\\(\\).necesidad\\)\\);process.exit\\(0\\);}\\)\")",
+      "PowerShell(node _diag_impact.js)"
     ]
   }
 }

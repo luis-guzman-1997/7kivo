@@ -1072,6 +1072,18 @@
   word-break: break-word;
 }
 
+/* Pedidos en la tarjeta: detalle enlistado (una línea por producto + total) */
+.dc-field-block { flex-direction: column; align-items: stretch; gap: 4px; }
+.dc-field-lines { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.dc-field-line {
+  font-size: 0.82rem; color: #1c1917; background: #f8fafc;
+  border-left: 3px solid #cbd5e1; padding: 3px 8px;
+  border-radius: 0 4px 4px 0; line-height: 1.4; word-break: break-word;
+}
+.dc-field-total {
+  font-weight: 800; background: #fef3c7; border-left-color: #d97706; color: #92400e;
+}
+
 .dc-card-footer {
   border-top: 1px solid #f1f5f9;
   padding-top: 10px;

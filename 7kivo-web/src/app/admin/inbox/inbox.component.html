@@ -362,9 +362,13 @@
                 <span class="dc-time">{{ formatDate(item.createdAt) }}</span>
               </div>
               <div class="dc-fields">
-                <div *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="dc-field-row">
+                <div *ngFor="let f of getItemFields(item, activeTab).slice(0, 2)" class="dc-field-row" [class.dc-field-block]="isMultiline(f.value)">
                   <span class="dc-field-label">{{ f.label }}</span>
-                  <span class="dc-field-val">{{ f.value.length > 55 ? f.value.substring(0, 55) + '…' : f.value }}</span>
+                  <!-- Pedidos (detalle multilínea): enlistar productos y resaltar total -->
+                  <div *ngIf="isMultiline(f.value)" class="dc-field-lines">
+                    <div class="dc-field-line" *ngFor="let line of f.value.split('\n')" [class.dc-field-total]="line.startsWith('Total:')">{{ line }}</div>
+                  </div>
+                  <span *ngIf="!isMultiline(f.value)" class="dc-field-val">{{ f.value.length > 55 ? f.value.substring(0, 55) + '…' : f.value }}</span>
                 </div>
               </div>
               <div class="dc-card-footer" (click)="$event.stopPropagation()">

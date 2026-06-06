@@ -214,7 +214,16 @@ export class AuthService {
   private async startSessionWatch(uid: string): Promise<void> {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
     const gen = ++this.sessionWatchGen;
-    const token = crypto.randomUUID();
+    // Reutilizar el token de este navegador: evita que recargas, dobles disparos
+    // de onAuthStateChanged o varias pestañas del mismo navegador se desplacen a
+    // sí mismas (escrituras fuera de orden → logout fantasma). Solo un login
+    // desde OTRO navegador/dispositivo genera un token distinto y desplaza.
+    const storageKey = `sessionToken_${uid}`;
+    let token = localStorage.getItem(storageKey) || '';
+    if (!token) {
+      token = crypto.randomUUID();
+      localStorage.setItem(storageKey, token);
+    }
     this.localSessionToken = token;
     await this.firebaseService.updateUserSessionToken(uid, token);
     // Si otra llamada concurrente ya tomó el control, no configurar este listener
@@ -233,6 +242,7 @@ export class AuthService {
     if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
     this.extraPermissionsSubject.next([]);
     this.revokedPermissionsSubject.next([]);
+    this.clearStoredSessionToken();
     this.localSessionToken = '';
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
@@ -263,11 +273,18 @@ export class AuthService {
     });
   }
 
+  // Borra el token de sesión guardado de este navegador (al cerrar/perder la sesión)
+  private clearStoredSessionToken(): void {
+    const uid = this.currentUserSubject.value?.uid;
+    if (uid) { try { localStorage.removeItem(`sessionToken_${uid}`); } catch { /* noop */ } }
+  }
+
   async logout(): Promise<void> {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
     if (this.unsubExtraPerms) { this.unsubExtraPerms(); this.unsubExtraPerms = null; }
     this.extraPermissionsSubject.next([]);
     this.revokedPermissionsSubject.next([]);
+    this.clearStoredSessionToken();
     this.localSessionToken = '';
     this.isSuperAdminSubject.next(false);
     this.orgLogoSubject.next('');
