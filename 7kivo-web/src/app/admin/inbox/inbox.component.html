@@ -14,6 +14,13 @@
   </div>
 
 
+  <!-- Aviso: casos expirados eliminados al cargar -->
+  <div class="expired-notice" *ngIf="expiredNotice">
+    <i class="fas fa-clock"></i>
+    <span>{{ expiredNotice }}</span>
+    <button type="button" (click)="expiredNotice = ''"><i class="fas fa-times"></i></button>
+  </div>
+
   <!-- ── Tabs principales ── -->
   <div class="inbox-main-tabs" *ngIf="isDeliveryOrg">
     <button class="imt-btn" [class.imt-active]="mainSection === 'solicitudes'" (click)="mainSection = 'solicitudes'">
@@ -507,7 +514,7 @@
       <div class="modal-body">
         <div class="detail-row" *ngFor="let field of getItemFields(selectedItem, selectedTab)">
           <label>{{ field.label }}</label>
-          <span [class.detail-long]="field.value.length > 60">{{ field.value }}</span>
+          <span [class.detail-long]="field.value.length > 60" [class.detail-multiline]="isMultiline(field.value)">{{ field.value }}</span>
         </div>
         <div class="detail-row" *ngIf="selectedItem.phoneNumber && !isDelivery">
           <label>Teléfono</label>

@@ -59,6 +59,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   deletingItemId: string | null = null;
+  expiredNotice = '';
 
   private refreshTimer: any = null;
 
@@ -416,7 +417,20 @@ export class InboxComponent implements OnInit, OnDestroy {
   async loadTabSubmissions(tab: FlowTab): Promise<void> {
     tab.loading = true;
     try {
-      const items = await this.firebaseService.getFlowSubmissions(tab.collection);
+      let items = await this.firebaseService.getFlowSubmissions(tab.collection);
+
+      // Casos cuyo tiempo de respuesta venció (el bot ya avisó al cliente):
+      // se eliminan al cargar la vista y se notifica al usuario.
+      const expired = items.filter(i => i.status === 'pending' && i.unattendedNotified === true);
+      if (expired.length > 0) {
+        items = items.filter(i => !expired.includes(i));
+        this.expiredNotice = expired.length === 1
+          ? 'Un pedido no fue aceptado a tiempo y se eliminó. El cliente ya fue notificado.'
+          : `${expired.length} pedidos no fueron aceptados a tiempo y se eliminaron. Los clientes ya fueron notificados.`;
+        Promise.all(expired.map(e => this.firebaseService.deleteCollectionItem(tab.collection, e.id)))
+          .catch(err => console.error('Error eliminando casos expirados:', err));
+      }
+
       tab.submissions = items;
       tab.unreadCount = items.filter(i => i.status === 'pending').length;
       this.applyFilters(tab);
@@ -618,6 +632,10 @@ export class InboxComponent implements OnInit, OnDestroy {
       telefono: 'Teléfono', descripcion: 'Descripción'
     };
     return labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+  }
+
+  isMultiline(value: string): boolean {
+    return typeof value === 'string' && value.includes('\n');
   }
 
   getWhatsAppLink(phone: string): string {

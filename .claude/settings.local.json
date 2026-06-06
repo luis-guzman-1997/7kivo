@@ -78,7 +78,8 @@
       "Bash(python -c ' *)",
       "WebFetch(domain:www.pricesmart.com)",
       "WebFetch(domain:laboladeoroquito.com)",
-      "WebFetch(domain:sumerlabs.com)"
+      "WebFetch(domain:sumerlabs.com)",
+      "PowerShell(node _diag_order.js)"
     ]
   }
 }

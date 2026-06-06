@@ -1965,9 +1965,15 @@ const handleOrderCode = async (phoneNumber, code) => {
   }
 
   // Pre-fill flowData from order + web form data
+  // orderItems: lista con viñetas (una línea por producto) + total, para que el
+  // detalle se lea bien en la bandeja; fallback al texto plano de pedidos viejos.
+  const itemsListText = Array.isArray(order.items) && order.items.length > 0
+    ? order.items.map(i => `• ${i.qty}x ${i.name}`).join('\n')
+      + (order.totalText ? `\nTotal: ${order.totalText}` : '')
+    : (order.itemsText || '');
   const orderFieldValues = {
     orderCode:  code,
-    orderItems: order.itemsText  || '',
+    orderItems: itemsListText,
     orderTotal: order.totalText  || '',
     orderDate:  order.orderDate  || '',
   };
