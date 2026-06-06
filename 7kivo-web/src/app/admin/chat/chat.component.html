@@ -293,12 +293,19 @@
           <i class="fas fa-calendar-alt"></i>
           <span>{{ deliverySubmission.createdAt?.toDate ? (deliverySubmission.createdAt.toDate() | date:'dd/MM/yyyy HH:mm') : '' }}</span>
         </div>
-        <ng-container *ngFor="let f of getDeliverySubmissionFields()">
+        <ng-container *ngFor="let f of getDeliverySubmissionFields(); let fi = index">
           <div class="delivery-order-field" [class.delivery-order-field-list]="f.type === 'list'">
             <span class="delivery-order-label"><i class="fas fa-circle-dot"></i> {{ f.label }}</span>
             <img *ngIf="f.type === 'image'" [src]="f.value" class="delivery-field-img" (click)="openImage(f.value)" alt="{{ f.label }}" />
             <div *ngIf="f.type === 'list'" class="delivery-field-list">
-              <div class="delivery-field-list-item" *ngFor="let line of f.value.split('\n')">{{ line }}</div>
+              <div class="delivery-field-list-item" *ngFor="let line of f.value.split('\n'); let li = index"
+                   [class.delivery-field-total]="line.startsWith('Total:')"
+                   [class.delivery-item-checkable]="isLineCheckable(line)"
+                   [class.delivery-item-checked]="isLineCheckable(line) && isItemChecked(fi, li)"
+                   (click)="isLineCheckable(line) && toggleItemCheck(fi, li)">
+                <i *ngIf="isLineCheckable(line)" [ngClass]="isItemChecked(fi, li) ? 'fas fa-check-square' : 'far fa-square'"></i>
+                {{ line }}
+              </div>
             </div>
             <span *ngIf="f.type === 'text'" class="delivery-order-value">{{ f.value }}</span>
           </div>

@@ -1127,6 +1127,8 @@ export class ChatComponent implements OnInit, OnDestroy {
           /^https:\/\/firebasestorage\.googleapis\.com\/.+/i.test(str)) {
         return { value: str, type: 'image' };
       }
+      // Strings multilínea (ej. detalle de pedido con productos + total) → lista
+      if (str.includes('\n')) return { value: str, type: 'list' };
       return { value: str, type: 'text' };
     };
 
@@ -1141,7 +1143,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const skip = new Set(['id', 'status', 'createdAt', 'updatedAt', 'organizationId', 'schoolId',
       'flowId', 'flowName', 'phoneNumber', 'confirmed', 'assignedTo', 'resolvedBy',
       'deliveryCode', 'cancelCount', 'assignedAt', 'startLat', 'startLng',
-      'unattendedNotified', 'unattendedAt']);
+      'unattendedNotified', 'unattendedAt', 'checkedItems']);
 
     const fields: { label: string; value: string; type: 'text' | 'image' | 'list' }[] = [];
     for (const [key, val] of Object.entries(this.deliverySubmission)) {
@@ -1152,6 +1154,30 @@ export class ChatComponent implements OnInit, OnDestroy {
       fields.push({ label, ...formatted });
     }
     return fields;
+  }
+
+  // ── Checklist del pedido (control de lo que el delivery lleva/enviará) ──
+  // Solo las líneas de producto (empiezan con •) son chequeables; se persiste
+  // en el doc del caso como mapa checkedItems { "<campo>_<línea>": true }.
+  isLineCheckable(line: string): boolean {
+    return line.trim().startsWith('•');
+  }
+
+  isItemChecked(fieldIndex: number, lineIndex: number): boolean {
+    return !!(this.deliverySubmission?.checkedItems || {})[`${fieldIndex}_${lineIndex}`];
+  }
+
+  async toggleItemCheck(fieldIndex: number, lineIndex: number): Promise<void> {
+    if (!this.deliverySubmission || !this.deliverySubmissionId || !this.deliveryCollection) return;
+    const key = `${fieldIndex}_${lineIndex}`;
+    const checked = { ...(this.deliverySubmission.checkedItems || {}) };
+    checked[key] = !checked[key];
+    this.deliverySubmission.checkedItems = checked;
+    try {
+      await this.firebaseService.updateDocument(this.deliveryCollection, this.deliverySubmissionId, { checkedItems: checked });
+    } catch (err) {
+      console.error('Error guardando checklist del pedido:', err);
+    }
   }
 
   // ── Notification sound ──
