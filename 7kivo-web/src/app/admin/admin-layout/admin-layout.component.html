@@ -49,8 +49,8 @@
           <span>Mapa Delivery</span>
         </a>
 
-        <!-- WebDelivery: visible a cualquier rol con el permiso (incluye delivery con acceso extra) -->
-        <a *ngIf="authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="nav-item-admin" title="Gestiona los pedidos de tu tienda en línea">
+        <!-- WebDelivery: solo industria delivery y roles de gestión (owner/admin/editor); repartidores no -->
+        <a *ngIf="authService.orgIndustry === 'delivery' && !isDeliveryRole && authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="nav-item-admin" title="Gestiona los pedidos de tu tienda en línea">
           <i class="fas fa-store"></i>
           <span>WebDelivery</span>
         </a>
@@ -238,7 +238,7 @@
       <a *ngIf="botEnabled && authService.hasPermission('inbox')" routerLink="/admin/bandeja" routerLinkActive="active" class="bn-item">
         <i class="fas fa-inbox"></i><span>Bandeja</span>
       </a>
-      <a *ngIf="botEnabled && authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="bn-item">
+      <a *ngIf="botEnabled && authService.orgIndustry === 'delivery' && !isDeliveryRole && authService.hasPermission('webdelivery')" routerLink="/admin/webdelivery" routerLinkActive="active" class="bn-item">
         <i class="fas fa-store"></i><span>Tienda</span>
       </a>
       <a *ngIf="botEnabled && authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="bn-item">

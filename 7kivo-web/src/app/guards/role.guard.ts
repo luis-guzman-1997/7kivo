@@ -10,6 +10,8 @@ export class RoleGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
     const requiredPermission = route.data['permission'] as string;
+    const requiredIndustry = route.data['industry'] as string | undefined;
+    const forbiddenRoles = (route.data['forbiddenRoles'] as string[]) || [];
 
     return this.authService.loading$.pipe(
       filter(loading => !loading),
@@ -18,6 +20,14 @@ export class RoleGuard implements CanActivate {
         if (!this.authService.isAuthenticated) {
           const slug = localStorage.getItem('orgLoginSlug');
           this.router.navigate(slug ? ['/admin/login', slug] : ['/admin/login']);
+          return false;
+        }
+        if (requiredIndustry && this.authService.orgIndustry !== requiredIndustry) {
+          this.router.navigate(['/admin']);
+          return false;
+        }
+        if (forbiddenRoles.includes(this.authService.userRole)) {
+          this.router.navigate(['/admin']);
           return false;
         }
         if (!requiredPermission || this.authService.hasPermission(requiredPermission)) {

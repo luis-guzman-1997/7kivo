@@ -171,7 +171,7 @@
 
             <div class="wd-card-img">
               <img *ngIf="item.imagen" [src]="item.imagen" [alt]="item.nombre" />
-              <div *ngIf="!item.imagen" class="wd-no-img"><i class="fas fa-image"></i></div>
+              <div *ngIf="!item.imagen" class="wd-no-img"><i class="fas fa-image"></i><span>Foto no disponible</span></div>
               <span class="wd-badge-off" *ngIf="item.disponible === false">No disponible</span>
               <span class="wd-badge-stock" *ngIf="item.stockLimitado">
                 <i class="fas fa-boxes"></i> {{ item.stock ?? 0 }}

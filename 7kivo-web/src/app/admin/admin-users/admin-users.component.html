@@ -361,7 +361,7 @@
           </button>
           <div class="flow-assign-panel" *ngIf="extraPermPanel === admin.id">
             <p class="fa-hint">Otorga acceso a secciones adicionales del panel.</p>
-            <ng-container *ngFor="let opt of EXTRA_PERM_OPTIONS">
+            <ng-container *ngFor="let opt of extraPermOptionsFor(admin)">
               <label class="fa-flow-row">
                 <input type="checkbox" [checked]="hasExtraPerm(admin, opt.key)"
                   [disabled]="extraPermSaving === admin.id + opt.key"

@@ -145,6 +145,12 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     { key: 'delivery_map',label: 'Mapa Delivery' },
   ];
 
+  // Repartidores no pueden recibir WebDelivery (solo se muestra si ya lo tienen, para poder revocarlo)
+  extraPermOptionsFor(admin: any) {
+    if (!this.isDeliveryRole(admin)) return this.EXTRA_PERM_OPTIONS;
+    return this.EXTRA_PERM_OPTIONS.filter(o => o.key !== 'webdelivery' || this.hasExtraPerm(admin, 'webdelivery'));
+  }
+
   extraPermPanel: string | null = null;
   extraPermSaving: string | null = null;
 

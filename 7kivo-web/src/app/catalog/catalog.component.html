@@ -220,7 +220,8 @@
                        (click)="!(p.stockLimitado && p.stock === 0) && addItem(p)">
                     <img *ngIf="p.imagen" [src]="p.imagen" [alt]="p.nombre" loading="lazy" />
                     <div *ngIf="!p.imagen" class="cat-card-no-photo">
-                      <i class="fas fa-utensils"></i>
+                      <i class="fas fa-image"></i>
+                      <span>Foto no disponible</span>
                     </div>
                     <span class="cat-tag-out"  *ngIf="p.stockLimitado && p.stock === 0">Agotado</span>
                     <span class="cat-tag-low"  *ngIf="p.stockLimitado && p.stock > 0 && p.stock <= 5">Últimos {{ p.stock }}</span>

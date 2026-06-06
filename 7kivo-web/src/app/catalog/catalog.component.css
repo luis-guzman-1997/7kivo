@@ -386,7 +386,8 @@
 .cat-card:hover .cat-card-photo img { transform: scale(1.04); }
 .cat-card-tap { cursor: pointer; }
 .cat-card-tap:active { opacity: .75; }
-.cat-card-no-photo { display: flex; align-items: center; justify-content: center; height: 100%; color: #d1d5db; font-size: 2rem; }
+.cat-card-no-photo { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; height: 100%; color: #d1d5db; font-size: 2rem; }
+.cat-card-no-photo span { font-size: .65rem; font-weight: 600; color: #b6bcc6; }
 
 .cat-tag-out, .cat-tag-low {
   position: absolute; bottom: 6px; left: 6px;
