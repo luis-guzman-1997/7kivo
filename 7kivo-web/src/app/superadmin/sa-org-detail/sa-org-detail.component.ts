@@ -244,6 +244,18 @@ export class SaOrgDetailComponent implements OnInit {
     return Math.max(0, (Number(b.totalCost) || 0) - (Number(b.paidAmount) || 0));
   }
 
+  // Ganancia (margen de servicio $0.04/msj). Fallback para meses sin el campo guardado.
+  billingProfit(b: any): number {
+    if (b.serviceProfit != null) return Number(b.serviceProfit) || 0;
+    return (Number(b.sentTotal) || 0) * 0.04;
+  }
+
+  // Costo real pagado a Meta. Fallback: total − ganancia.
+  billingMetaCost(b: any): number {
+    if (b.metaCost != null) return Number(b.metaCost) || 0;
+    return Math.max(0, (Number(b.totalCost) || 0) - this.billingProfit(b));
+  }
+
   // Estado calculado en vivo (el totalCost puede crecer después de un pago)
   billingStatus(b: any): 'paid' | 'partial' | 'pending' {
     const cost = Number(b.totalCost) || 0;

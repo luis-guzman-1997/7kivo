@@ -734,14 +734,6 @@
         <span>Destinatarios</span>
         <strong>{{ costInfo.recipients }}</strong>
       </div>
-      <div class="cost-row" *ngIf="costInfo.isTemplate">
-        <span>Tarifa Meta ({{ costInfo.categoryLabel }})</span>
-        <strong>${{ costInfo.metaRate.toFixed(4) }}</strong>
-      </div>
-      <div class="cost-row">
-        <span>Cargo por servicio</span>
-        <strong>${{ COST_MARGIN.toFixed(2) }}</strong>
-      </div>
       <div class="cost-row">
         <span>Costo por mensaje</span>
         <strong>${{ costInfo.perMessage.toFixed(4) }}</strong>

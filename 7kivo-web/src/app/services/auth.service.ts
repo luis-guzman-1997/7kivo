@@ -155,10 +155,23 @@ export class AuthService {
     if (user) await this.resolveUserOrg(user);
   }
 
+  // Red de seguridad: si la primera lectura tras el login llega antes de que el token
+  // de auth se propague (visto ocasionalmente), reintentar en vez de cerrar sesión.
+  private async getUserOrgWithRetry(uid: string, attempts = 3): Promise<any | null> {
+    for (let i = 0; ; i++) {
+      try {
+        return await this.firebaseService.getUserOrg(uid);
+      } catch (err: any) {
+        if (err?.code !== 'permission-denied' || i >= attempts - 1) throw err;
+        await new Promise(r => setTimeout(r, 500 * (i + 1)));
+      }
+    }
+  }
+
   private async resolveUserOrg(user: User): Promise<void> {
     if (this.unsubSessionWatch) { this.unsubSessionWatch(); this.unsubSessionWatch = null; }
     try {
-      const userData = await this.firebaseService.getUserOrg(user.uid);
+      const userData = await this.getUserOrgWithRetry(user.uid);
       if (userData?.organizationId) {
         // Verificar bloqueo
         if (userData.blocked) {

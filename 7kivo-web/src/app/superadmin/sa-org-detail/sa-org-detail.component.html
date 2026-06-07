@@ -1007,7 +1007,9 @@
 
         <div class="billing-stats">
           <div class="billing-stat"><label>Enviados</label><span>{{ b.sentTotal || 0 }}</span></div>
-          <div class="billing-stat"><label>Costo</label><span>${{ (b.totalCost || 0).toFixed(2) }}</span></div>
+          <div class="billing-stat"><label>Costo cliente</label><span>${{ (b.totalCost || 0).toFixed(2) }}</span></div>
+          <div class="billing-stat"><label>Costo Meta</label><span>${{ billingMetaCost(b).toFixed(2) }}</span></div>
+          <div class="billing-stat billing-stat-profit"><label>Ganancia</label><span>${{ billingProfit(b).toFixed(2) }}</span></div>
           <div class="billing-stat"><label>Abonado</label><span>${{ (b.paidAmount || 0).toFixed(2) }}</span></div>
           <div class="billing-stat billing-stat-saldo" [class.saldo-zero]="billingBalance(b) === 0">
             <label>Saldo</label><span>${{ billingBalance(b).toFixed(2) }}</span>

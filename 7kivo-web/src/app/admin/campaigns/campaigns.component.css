@@ -631,7 +631,14 @@
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .camp-body.with-form { flex-direction: column; }
-  .camp-form-panel { width: 100%; position: static; max-height: none; }
+  /* En pantallas chicas el formulario se abre como panel de pantalla completa;
+     si quedara debajo de la lista, el usuario no ve que se abrió */
+  .camp-form-panel {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; max-height: none; height: 100dvh;
+    border-radius: 0; z-index: 2500;
+  }
+  .form-panel-header { border-radius: 0; }
 }
 @media (max-width: 640px) {
   .camp-page-header { flex-direction: column; }

@@ -1159,7 +1159,8 @@
 .billing-badge.b-paid { background: rgba(5,150,105,0.12); color: #047857; }
 .billing-badge.b-partial { background: rgba(245,158,11,0.14); color: #92400e; }
 .billing-badge.b-pending { background: rgba(239,68,68,0.1); color: #b91c1c; }
-.billing-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+.billing-stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 10px; }
+.billing-stat-profit span { color: #059669; }
 .billing-stat {
   background: #f8fafc; border-radius: 8px; padding: 8px 12px;
   display: flex; flex-direction: column; gap: 2px;
@@ -1200,5 +1201,5 @@
 }
 .btn-marcar-pagado:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (max-width: 640px) {
-  .billing-stats { grid-template-columns: repeat(2, 1fr); }
+  .billing-stats { grid-template-columns: repeat(3, 1fr); }
 }

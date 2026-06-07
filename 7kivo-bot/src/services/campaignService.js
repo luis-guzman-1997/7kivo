@@ -44,6 +44,9 @@ const recordBilling = async (orgId, campaign, sentCount) => {
     const isTemplate = campaign.channelMode === 'template' && !!campaign.templateName;
     const cat = isTemplate ? String(campaign.templateCategory || 'MARKETING').toUpperCase() : 'FREEFORM';
     const cost = sentCount * unitCostFor(campaign);
+    // Desglose para el panel SA: costo real de Meta vs ganancia (margen de servicio)
+    const profit = sentCount * COST_MARGIN;
+    const metaCost = cost - profit;
     const inc = admin.firestore.FieldValue.increment;
     await db.collection('organizations').doc(orgId)
       .collection('billing').doc(month)
@@ -51,6 +54,8 @@ const recordBilling = async (orgId, campaign, sentCount) => {
         month,
         sentTotal: inc(sentCount),
         totalCost: inc(cost),
+        metaCost: inc(metaCost),
+        serviceProfit: inc(profit),
         byCategory: { [cat]: { sent: inc(sentCount), cost: inc(cost) } },
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });

@@ -95,7 +95,13 @@
       "Bash(git -C /c/Users/PC/Desktop/7kivo status --short)",
       "Bash(git -C /c/Users/PC/Desktop/7kivo diff package.json)",
       "Bash(echo \"exit: $?\")",
-      "Read(//c/c/Users/PC/Desktop/7kivo/7kivo-web/**)"
+      "Read(//c/c/Users/PC/Desktop/7kivo/7kivo-web/**)",
+      "Bash(npm view *)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); ks=[k for k in d if k.startswith\\('12.'\\)]; print\\('\\\\n'.join\\(sorted\\(ks\\)[-8:]\\)\\)\")",
+      "PowerShell(node -e \"console.log\\(require\\('C:/Users/PC/Desktop/7kivo/7kivo-web/node_modules/firebase/package.json'\\).version\\)\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('name:', d.get\\('name'\\), '| version:', d.get\\('version'\\), '| exports:', 'SÍ' if d.get\\('exports'\\) else 'NO'\\)\")",
+      "Bash(npm cache *)",
+      "Bash(netstat -ano)"
     ]
   }
 }
