@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { VersionBadgeComponent } from '../components/version-badge/version-badge.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminRoutingModule } from './admin-routing.module';
@@ -47,7 +48,8 @@ import { WaFormatPipe } from './pipes/wa-format.pipe';
   imports: [
     CommonModule,
     FormsModule,
-    AdminRoutingModule
+    AdminRoutingModule,
+    VersionBadgeComponent
   ]
 })
 export class AdminModule {}

@@ -94,7 +94,8 @@
       "Bash(rm -rf /c/Users/PC/Desktop/7kivo/verify-cost-modal.js /c/Users/PC/Desktop/7kivo/verify-cost-recurrent.js /c/Users/PC/Desktop/7kivo/.verify-tmp /c/Users/PC/Desktop/7kivo/verify-shots)",
       "Bash(git -C /c/Users/PC/Desktop/7kivo status --short)",
       "Bash(git -C /c/Users/PC/Desktop/7kivo diff package.json)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Read(//c/c/Users/PC/Desktop/7kivo/7kivo-web/**)"
     ]
   }
 }

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { VersionBadgeComponent } from '../components/version-badge/version-badge.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SuperAdminRoutingModule } from './superadmin-routing.module';
@@ -23,7 +24,8 @@ import { SaClientsComponent } from './sa-clients/sa-clients.component';
   imports: [
     CommonModule,
     FormsModule,
-    SuperAdminRoutingModule
+    SuperAdminRoutingModule,
+    VersionBadgeComponent
   ]
 })
 export class SuperAdminModule {}

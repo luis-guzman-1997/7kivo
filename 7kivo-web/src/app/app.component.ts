@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewInit, HostListener } from '@angu
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SwUpdate } from '@angular/service-worker';
+import { APP_VERSION, APP_BUILT_AT } from '../environments/version';
 
 @Component({
   selector: 'app-root',
@@ -17,11 +18,25 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private readonly sections = ['inicio', 'funcionalidades', 'planes', 'casos', 'nosotros'];
 
+  private updateCheckInterval: any;
+  private onVisible = () => {
+    if (document.visibilityState === 'visible' && this.swUpdate.isEnabled) {
+      this.swUpdate.checkForUpdate().catch(() => {});
+    }
+  };
+
   constructor(private router: Router, private swUpdate: SwUpdate) {
+    console.log(`7kivo v${APP_VERSION} (${APP_BUILT_AT})`);
     if (swUpdate.isEnabled) {
       swUpdate.versionUpdates.pipe(
         filter(e => e.type === 'VERSION_READY')
       ).subscribe(() => window.location.reload());
+      // Sin esto, una pestaña abierta nunca pregunta por versiones nuevas:
+      // chequear cada 5 min y al volver a la pestaña
+      this.updateCheckInterval = setInterval(() => {
+        this.swUpdate.checkForUpdate().catch(() => {});
+      }, 5 * 60 * 1000);
+      document.addEventListener('visibilitychange', this.onVisible);
     }
     this.applyAdminRouteFlags(this.router.url);
     this.router.events.pipe(
@@ -43,6 +58,8 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy(): void {
     if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
+    if (this.updateCheckInterval) clearInterval(this.updateCheckInterval);
+    document.removeEventListener('visibilitychange', this.onVisible);
   }
 
   ngAfterViewInit(): void {
