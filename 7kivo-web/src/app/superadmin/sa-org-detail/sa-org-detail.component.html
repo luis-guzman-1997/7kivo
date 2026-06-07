@@ -129,6 +129,9 @@
       <i class="fas fa-users"></i><span class="tab-label"> Equipo</span>
       <span class="tab-count" *ngIf="orgAdmins.length > 0">{{ orgAdmins.length }}</span>
     </button>
+    <button [class.tab-active]="detailTab === 'billing'" (click)="openBillingTab()" title="Gastos de campañas">
+      <i class="fas fa-dollar-sign"></i><span class="tab-label"> Gastos</span>
+    </button>
   </div>
 
   <div class="notice-bar" *ngIf="notice">
@@ -971,6 +974,82 @@
         </div>
       </div>
       <div *ngIf="orgAdmins.length === 0 && !addingAdmin" class="empty-mini">Sin usuarios registrados</div>
+    </div>
+
+    <!-- TAB: Gastos de campañas -->
+    <div *ngIf="detailTab === 'billing'">
+      <div class="detail-section-header">
+        <h3>Gastos de campañas por mes</h3>
+        <button class="btn-edit-sm" (click)="loadBilling()" [disabled]="loadingBilling">
+          <i class="fas fa-rotate-right"></i> Actualizar
+        </button>
+      </div>
+      <p class="billing-hint">
+        Costo acumulado por envío de plantillas y mensajes de campañas (tarifa Meta + margen de servicio).
+        Registra abonos o marca el mes como pagado.
+      </p>
+
+      <div *ngIf="loadingBilling" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Cargando gastos...</div>
+      <div *ngIf="billingError && !loadingBilling" class="empty-mini">{{ billingError }}</div>
+      <div *ngIf="!loadingBilling && !billingError && billingMonths.length === 0" class="empty-mini">
+        Aún no hay gastos registrados. Se generan automáticamente al enviar campañas.
+      </div>
+
+      <div class="billing-month" *ngFor="let b of billingMonths">
+        <div class="billing-month-header">
+          <strong>{{ monthLabel(b.month) }}</strong>
+          <span class="billing-badge" [class.b-paid]="billingStatus(b) === 'paid'"
+                [class.b-partial]="billingStatus(b) === 'partial'"
+                [class.b-pending]="billingStatus(b) === 'pending'">
+            {{ billingStatusLabel(b) }}
+          </span>
+        </div>
+
+        <div class="billing-stats">
+          <div class="billing-stat"><label>Enviados</label><span>{{ b.sentTotal || 0 }}</span></div>
+          <div class="billing-stat"><label>Costo</label><span>${{ (b.totalCost || 0).toFixed(2) }}</span></div>
+          <div class="billing-stat"><label>Abonado</label><span>${{ (b.paidAmount || 0).toFixed(2) }}</span></div>
+          <div class="billing-stat billing-stat-saldo" [class.saldo-zero]="billingBalance(b) === 0">
+            <label>Saldo</label><span>${{ billingBalance(b).toFixed(2) }}</span>
+          </div>
+        </div>
+
+        <div class="billing-cats" *ngIf="billingCategories(b).length > 0">
+          <span class="billing-cat" *ngFor="let cat of billingCategories(b)">
+            {{ cat.label }}: {{ cat.sent }} msj · ${{ cat.cost.toFixed(2) }}
+          </span>
+        </div>
+
+        <div class="billing-payments" *ngIf="(b.payments || []).length > 0">
+          <label class="billing-payments-title"><i class="fas fa-receipt"></i> Pagos registrados</label>
+          <div class="billing-payment" *ngFor="let p of b.payments">
+            <span class="bp-amount">${{ (p.amount || 0).toFixed(2) }}</span>
+            <span class="bp-note">{{ p.note || 'Abono' }}</span>
+            <span class="bp-date">{{ paymentDate(p) }}</span>
+          </div>
+        </div>
+
+        <!-- Form de abono -->
+        <div class="abono-form" *ngIf="abonoMonth === b.month">
+          <input type="number" [(ngModel)]="abonoAmount" min="0.01" step="0.01" placeholder="Monto $" class="abono-input" />
+          <input type="text" [(ngModel)]="abonoNote" placeholder="Nota (opcional)" class="abono-note" maxlength="100" />
+          <button class="btn-save" (click)="saveAbono(b)" [disabled]="abonoSaving">
+            <i class="fas fa-spinner fa-spin" *ngIf="abonoSaving"></i>
+            {{ abonoSaving ? 'Guardando...' : 'Registrar' }}
+          </button>
+          <button class="btn-cancel" (click)="cancelAbono()" [disabled]="abonoSaving">Cancelar</button>
+          <span class="abono-error" *ngIf="abonoError">{{ abonoError }}</span>
+        </div>
+
+        <div class="billing-actions" *ngIf="abonoMonth !== b.month && billingBalance(b) > 0">
+          <button class="btn-abonar" (click)="openAbono(b)">
+            <i class="fas fa-hand-holding-usd"></i> Registrar abono
+          </button>
+          <button class="btn-marcar-pagado" (click)="markBillingPaid(b)" [disabled]="abonoSaving">
+            <i class="fas fa-check-double"></i> Marcar pagado (${{ billingBalance(b).toFixed(2) }})
+          </button>
+        </div>
+      </div>
     </div>
 
   </div>

@@ -1143,3 +1143,62 @@
 .btn-del-tpl { background: none; border: 1px solid transparent; border-radius: 7px; color: #94a3b8; cursor: pointer; padding: 6px 9px; }
 .btn-del-tpl:hover:not(:disabled) { background: rgba(239,68,68,0.08); color: #dc2626; }
 .btn-del-tpl:disabled { cursor: wait; opacity: 0.6; }
+
+/* ── Gastos de campañas (facturación mensual) ── */
+.billing-hint { font-size: 0.83rem; color: #64748b; margin: 0 0 16px; }
+.billing-month {
+  background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 16px 18px; margin-bottom: 14px;
+}
+.billing-month-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.billing-month-header strong { font-size: 1rem; color: #1e293b; }
+.billing-badge {
+  font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.billing-badge.b-paid { background: rgba(5,150,105,0.12); color: #047857; }
+.billing-badge.b-partial { background: rgba(245,158,11,0.14); color: #92400e; }
+.billing-badge.b-pending { background: rgba(239,68,68,0.1); color: #b91c1c; }
+.billing-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+.billing-stat {
+  background: #f8fafc; border-radius: 8px; padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.billing-stat label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+.billing-stat span { font-size: 1rem; font-weight: 700; color: #1e293b; }
+.billing-stat-saldo span { color: #dc2626; }
+.billing-stat-saldo.saldo-zero span { color: #059669; }
+.billing-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.billing-cat {
+  font-size: 0.74rem; background: rgba(109,40,217,0.07); color: #6d28d9;
+  padding: 3px 10px; border-radius: 14px; font-weight: 600;
+}
+.billing-payments { margin: 10px 0; }
+.billing-payments-title { font-size: 0.76rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 6px; }
+.billing-payments-title i { margin-right: 4px; color: #a78bfa; }
+.billing-payment {
+  display: flex; gap: 10px; align-items: center; font-size: 0.82rem;
+  padding: 4px 0; border-bottom: 1px dashed #f1f5f9;
+}
+.billing-payment:last-child { border-bottom: none; }
+.bp-amount { font-weight: 700; color: #059669; min-width: 70px; }
+.bp-note { color: #475569; flex: 1; }
+.bp-date { color: #94a3b8; font-size: 0.76rem; }
+.abono-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.abono-input { width: 110px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; }
+.abono-note { flex: 1; min-width: 140px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; }
+.abono-error { color: #dc2626; font-size: 0.78rem; width: 100%; }
+.billing-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.btn-abonar {
+  padding: 7px 14px; border: 1px solid #e2e8f0; border-radius: 8px; background: white;
+  color: #475569; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-abonar:hover { border-color: #a78bfa; color: #6d28d9; }
+.btn-marcar-pagado {
+  padding: 7px 14px; border: none; border-radius: 8px; background: #059669;
+  color: white; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-marcar-pagado:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .billing-stats { grid-template-columns: repeat(2, 1fr); }
+}

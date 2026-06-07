@@ -51,6 +51,23 @@ export class CampaignsComponent implements OnInit {
   templatesErrorRaw = '';
   selectedTemplate: any = null;
 
+  // ── Costo por mensaje ──
+  // Tarifas de Meta por mensaje (USD) para El Salvador (región "Rest of Latin America")
+  // según la categoría de la plantilla. Actualizar aquí si Meta cambia el rate card.
+  private readonly META_RATES: Record<string, number> = {
+    MARKETING: 0.0625,
+    UTILITY: 0.0340,
+    AUTHENTICATION: 0.0304
+  };
+  // Margen de servicio que se cobra al cliente por cada mensaje enviado
+  readonly COST_MARGIN = 0.04;
+
+  // Modal de confirmación de costo antes de activar/enviar
+  showCostConfirm = false;
+  costInfo: any = null;
+  private pendingStatus = '';
+  loadingCost = false;
+
   // Días de la semana (orden lunes→domingo) para el selector semanal
   weekDays = [
     { value: 1, label: 'L', name: 'Lunes' },
@@ -214,6 +231,17 @@ export class CampaignsComponent implements OnInit {
       text = text.replace(re, repl);
     });
     return text;
+  }
+
+  // Convierte el formato de WhatsApp (*negrita*, _cursiva_, ~tachado~) a HTML para la vista previa.
+  // Se escapa el HTML primero; Angular sanitiza el innerHTML resultante (strong/em/s son seguros).
+  formatWhatsAppText(text: string): string {
+    const esc = (text || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return esc
+      .replace(/\*([^*\n]+)\*/g, '<strong>$1</strong>')
+      .replace(/_([^_\n]+)_/g, '<em>$1</em>')
+      .replace(/~([^~\n]+)~/g, '<s>$1</s>');
   }
 
   get templateFooterText(): string {
@@ -537,6 +565,8 @@ export class CampaignsComponent implements OnInit {
       channelMode: this.form.channelMode || 'freeform',
       templateName: isTemplate ? this.form.templateName : '',
       templateLang: isTemplate ? (this.form.templateLang || 'es') : '',
+      // Categoría de Meta (MARKETING/UTILITY/AUTHENTICATION) — el bot la usa para calcular el costo
+      templateCategory: isTemplate ? ((this.selectedTemplate?.category || 'MARKETING').toUpperCase()) : '',
       templateVariables: isTemplate
         ? (this.form.templateVariables || []).map((v: any) => ({
             source: v?.source || 'static',
@@ -673,6 +703,62 @@ export class CampaignsComponent implements OnInit {
       return;
     }
     const status = this.form.type === 'once' ? 'scheduled' : (this.form.type === 'immediate' ? 'active' : 'active');
+    // Antes de activar, mostrar el costo estimado y pedir confirmación al cliente
+    this.pendingStatus = status;
+    await this.openCostConfirm();
+  }
+
+  // ── Confirmación de costo ──
+  // Calcula destinatarios + tarifa según el tipo de plantilla y abre el modal.
+  private async openCostConfirm(): Promise<void> {
+    this.loadingCost = true;
+    try {
+      let recipients = 0;
+      if (this.form.recipientSource === 'manual') {
+        recipients = this.parsePhones().length;
+      } else if (this.form.collectionId) {
+        recipients = await this.firebaseService.countCollectionRecipients(this.orgId, this.form.collectionId);
+      }
+      const isTemplate = this.form.channelMode === 'template';
+      const category = isTemplate ? (this.selectedTemplate?.category || 'MARKETING').toUpperCase() : '';
+      const metaRate = isTemplate ? (this.META_RATES[category] ?? this.META_RATES['MARKETING']) : 0;
+      const perMessage = metaRate + this.COST_MARGIN;
+      this.costInfo = {
+        recipients,
+        metaRate,
+        perMessage,
+        total: recipients * perMessage,
+        category,
+        categoryLabel: isTemplate ? this.categoryLabel(category) : 'Mensaje libre (ventana 24h)',
+        isTemplate,
+        recurrent: this.form.type !== 'immediate' && this.form.type !== 'once'
+      };
+      this.showCostConfirm = true;
+    } finally {
+      this.loadingCost = false;
+    }
+  }
+
+  categoryLabel(category: string): string {
+    const m: Record<string, string> = {
+      MARKETING: 'Marketing',
+      UTILITY: 'Utilidad',
+      AUTHENTICATION: 'Autenticación'
+    };
+    return m[category] || category || '—';
+  }
+
+  cancelCostConfirm(): void {
+    this.showCostConfirm = false;
+    this.costInfo = null;
+    this.pendingStatus = '';
+  }
+
+  async confirmCostAndSend(): Promise<void> {
+    if (!this.pendingStatus) return;
+    const status = this.pendingStatus;
+    this.showCostConfirm = false;
+    this.pendingStatus = '';
     await this.doSave(status);
   }
 
@@ -711,6 +797,7 @@ export class CampaignsComponent implements OnInit {
             console.warn('No se pudo disparar el envío inmediato:', sendErr?.message);
           }
           // Recargar para reflejar status completado y contadores
+          delete this.sendsByCampaign[campaignId]; // forzar recarga del historial de envíos
           await this.loadCampaigns();
         }
       }
@@ -783,6 +870,31 @@ export class CampaignsComponent implements OnInit {
 
   toggleExpand(id: string): void {
     this.expandedId = this.expandedId === id ? null : id;
+    if (this.expandedId && !this.sendsByCampaign[id]) this.loadSends(id);
+  }
+
+  // ── Historial de envíos por campaña (campaigns/{id}/sends, escrito por el bot) ──
+  sendsByCampaign: Record<string, any[]> = {};
+  loadingSends: string | null = null;
+
+  async loadSends(campaignId: string): Promise<void> {
+    this.loadingSends = campaignId;
+    try {
+      this.sendsByCampaign[campaignId] = await this.firebaseService.getCampaignSends(this.orgId, campaignId);
+    } catch (err) {
+      console.error('Error cargando envíos:', err);
+      this.sendsByCampaign[campaignId] = [];
+    } finally {
+      this.loadingSends = null;
+    }
+  }
+
+  sendDate(s: any): string {
+    try {
+      const d = s.at?.toDate ? s.at.toDate() : new Date(s.at);
+      if (isNaN(d.getTime())) return s.runDate || '';
+      return d.toLocaleString('es', { dateStyle: 'short', timeStyle: 'short' });
+    } catch { return s.runDate || ''; }
   }
 
   // ── Display helpers ──

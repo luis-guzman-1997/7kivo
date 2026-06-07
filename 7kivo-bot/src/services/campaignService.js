@@ -7,6 +7,58 @@ const SEND_DELAY_MS = 1200; // 1.2 segundos entre mensajes
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Tarifas de Meta por mensaje (USD) para El Salvador (región "Rest of Latin America")
+// + margen de servicio por mensaje. Deben coincidir con META_RATES/COST_MARGIN
+// de campaigns.component.ts en la web.
+const META_RATES = { MARKETING: 0.0625, UTILITY: 0.0340, AUTHENTICATION: 0.0304 };
+const COST_MARGIN = 0.04;
+
+// Costo unitario que se cobra al cliente por un mensaje de esta campaña
+const unitCostFor = (campaign) => {
+  if (campaign.channelMode === 'template' && campaign.templateName) {
+    const cat = String(campaign.templateCategory || 'MARKETING').toUpperCase();
+    return (META_RATES[cat] ?? META_RATES.MARKETING) + COST_MARGIN;
+  }
+  return COST_MARGIN;
+};
+
+// Registra un envío individual en campaigns/{id}/sends (no rompe el envío si falla el log)
+const logSend = async (campaignRef, data) => {
+  try {
+    await campaignRef.collection('sends').add({
+      ...data,
+      at: admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    console.error('logSend error:', err.message);
+  }
+};
+
+// Acumula el gasto del mes en organizations/{orgId}/billing/{YYYY-MM}.
+// Los campos de pago (paidAmount, payments, paymentStatus) los maneja el panel SA;
+// el merge los preserva.
+const recordBilling = async (orgId, campaign, sentCount) => {
+  if (sentCount <= 0) return;
+  try {
+    const month = getTodayLocal().slice(0, 7);
+    const isTemplate = campaign.channelMode === 'template' && !!campaign.templateName;
+    const cat = isTemplate ? String(campaign.templateCategory || 'MARKETING').toUpperCase() : 'FREEFORM';
+    const cost = sentCount * unitCostFor(campaign);
+    const inc = admin.firestore.FieldValue.increment;
+    await db.collection('organizations').doc(orgId)
+      .collection('billing').doc(month)
+      .set({
+        month,
+        sentTotal: inc(sentCount),
+        totalCost: inc(cost),
+        byCategory: { [cat]: { sent: inc(sentCount), cost: inc(cost) } },
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+  } catch (err) {
+    console.error('recordBilling error:', err.message);
+  }
+};
+
 // Construye los "components" de una plantilla a partir de la config de la campaña.
 // `record` opcional: si se pasa, las variables con source:'field' se resuelven por registro.
 const buildTemplateComponents = (campaign, record) => {
@@ -219,6 +271,7 @@ const runCampaign = async (orgId, campaignId) => {
   }
 
   const templateComponents = useTemplate ? buildTemplateComponents(campaign) : null;
+  const unitCost = unitCostFor(campaign);
 
   for (let i = 0; i < toSend.length; i++) {
     const phone = toSend[i];
@@ -237,12 +290,17 @@ const runCampaign = async (orgId, campaignId) => {
         }
       });
       sentCount++;
+      await logSend(campaignRef, { phone, status: 'sent', runDate: today, unitCost });
     } catch (err) {
       console.error(`Campaign ${campaignId}: fallo envío a ${phone}:`, err.message);
       failedCount++;
+      await logSend(campaignRef, { phone, status: 'failed', runDate: today, error: err.message || 'Error desconocido' });
     }
     if (i < toSend.length - 1) await sleep(SEND_DELAY_MS);
   }
+
+  // Acumular el gasto del mes para el control de facturación (panel SA)
+  await recordBilling(orgId, campaign, sentCount);
 
   // Calcular siguiente ejecución o marcar completada
   const updateData = {
@@ -329,6 +387,7 @@ const runReminderCampaign = async (orgId, campaignId) => {
   let sentCount = 0;
   let failedCount = 0;
   let campaignSentToday = campaign.sentTodayDate === today ? (campaign.sentToday || 0) : 0;
+  const unitCost = unitCostFor(campaign);
 
   for (const recDoc of recordsSnap.docs) {
     if (dailyLimit > 0 && orgSentToday >= dailyLimit) break;
@@ -370,12 +429,17 @@ const runReminderCampaign = async (orgId, campaignId) => {
         recordId: recDoc.id
       });
       sentCount++; orgSentToday++; campaignSentToday++;
+      await logSend(campaignRef, { phone: phoneStr, status: 'sent', runDate: today, unitCost, recordId: recDoc.id });
     } catch (err) {
       console.error(`Reminder ${campaignId}: fallo envío a ${phoneStr}:`, err.message);
       failedCount++;
+      await logSend(campaignRef, { phone: phoneStr, status: 'failed', runDate: today, error: err.message || 'Error desconocido', recordId: recDoc.id });
     }
     await sleep(SEND_DELAY_MS);
   }
+
+  // Acumular el gasto del mes para el control de facturación (panel SA)
+  await recordBilling(orgId, campaign, sentCount);
 
   if (sentCount > 0 || failedCount > 0) {
     await campaignRef.update({

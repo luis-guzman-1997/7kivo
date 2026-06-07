@@ -62,6 +62,16 @@ export class SaOrgDetailComponent implements OnInit {
   logoFile: File | null = null;
   logoPreview = '';
 
+  // ── Gastos de campañas (facturación mensual, organizations/{id}/billing) ──
+  billingMonths: any[] = [];
+  loadingBilling = false;
+  billingError = '';
+  abonoMonth: string | null = null; // mes con el formulario de abono abierto
+  abonoAmount: number | null = null;
+  abonoNote = '';
+  abonoSaving = false;
+  abonoError = '';
+
   saving = false;
   notice = '';
 
@@ -209,6 +219,114 @@ export class SaOrgDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/superadmin/organizaciones']);
+  }
+
+  // ── Gastos de campañas ──
+  openBillingTab(): void {
+    this.detailTab = 'billing';
+    if (this.billingMonths.length === 0 && !this.loadingBilling) this.loadBilling();
+  }
+
+  async loadBilling(): Promise<void> {
+    if (!this.selectedOrg) return;
+    this.loadingBilling = true;
+    this.billingError = '';
+    try {
+      this.billingMonths = await this.firebaseService.getOrgBilling(this.selectedOrg.id);
+    } catch (err: any) {
+      this.billingError = err?.message || 'Error al cargar los gastos';
+    } finally {
+      this.loadingBilling = false;
+    }
+  }
+
+  billingBalance(b: any): number {
+    return Math.max(0, (Number(b.totalCost) || 0) - (Number(b.paidAmount) || 0));
+  }
+
+  // Estado calculado en vivo (el totalCost puede crecer después de un pago)
+  billingStatus(b: any): 'paid' | 'partial' | 'pending' {
+    const cost = Number(b.totalCost) || 0;
+    const paid = Number(b.paidAmount) || 0;
+    if (cost > 0 && paid >= cost - 0.005) return 'paid';
+    return paid > 0 ? 'partial' : 'pending';
+  }
+
+  billingStatusLabel(b: any): string {
+    const m = { paid: 'Pagado', partial: 'Abonado', pending: 'Pendiente' };
+    return m[this.billingStatus(b)];
+  }
+
+  monthLabel(month: string): string {
+    const [y, m] = String(month || '').split('-').map(Number);
+    if (!y || !m) return month;
+    const names = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return `${names[m - 1]} ${y}`;
+  }
+
+  // Desglose por categoría de plantilla para mostrar como chips
+  billingCategories(b: any): Array<{ label: string; sent: number; cost: number }> {
+    const names: Record<string, string> = {
+      MARKETING: 'Marketing', UTILITY: 'Utilidad', AUTHENTICATION: 'Autenticación', FREEFORM: 'Mensaje libre'
+    };
+    const by = b.byCategory || {};
+    return Object.keys(by).map(k => ({
+      label: names[k] || k,
+      sent: Number(by[k]?.sent) || 0,
+      cost: Number(by[k]?.cost) || 0
+    }));
+  }
+
+  paymentDate(p: any): string {
+    try { return new Date(p.at).toLocaleString('es', { dateStyle: 'short', timeStyle: 'short' }); }
+    catch { return ''; }
+  }
+
+  openAbono(b: any): void {
+    this.abonoMonth = b.month;
+    this.abonoAmount = null;
+    this.abonoNote = '';
+    this.abonoError = '';
+  }
+
+  cancelAbono(): void {
+    this.abonoMonth = null;
+    this.abonoError = '';
+  }
+
+  async saveAbono(b: any): Promise<void> {
+    const amount = Number(this.abonoAmount);
+    if (!amount || amount <= 0) { this.abonoError = 'Ingresa un monto válido'; return; }
+    this.abonoSaving = true;
+    this.abonoError = '';
+    try {
+      const res = await this.firebaseService.addBillingPayment(this.selectedOrg.id, b.month, {
+        amount, note: this.abonoNote.trim()
+      });
+      Object.assign(b, res);
+      this.abonoMonth = null;
+    } catch (err: any) {
+      this.abonoError = err?.message || 'Error al registrar el abono';
+    } finally {
+      this.abonoSaving = false;
+    }
+  }
+
+  // Registra un abono por el saldo restante y deja el mes como pagado
+  async markBillingPaid(b: any): Promise<void> {
+    const saldo = this.billingBalance(b);
+    if (saldo <= 0) return;
+    this.abonoSaving = true;
+    try {
+      const res = await this.firebaseService.addBillingPayment(this.selectedOrg.id, b.month, {
+        amount: Number(saldo.toFixed(2)), note: 'Pago total'
+      });
+      Object.assign(b, res);
+    } catch (err: any) {
+      this.billingError = err?.message || 'Error al marcar como pagado';
+    } finally {
+      this.abonoSaving = false;
+    }
   }
 
   private syncTeamSlugFromOrg(): void {

@@ -200,6 +200,37 @@
                 <span *ngIf="(c.manualPhones || []).length > 20" class="more-phones">+ {{ (c.manualPhones || []).length - 20 }} más</span>
               </div>
             </div>
+
+            <!-- Historial de envíos (registrado por el bot en cada envío) -->
+            <div class="expanded-section">
+              <div class="exp-title"><i class="fas fa-paper-plane"></i> Historial de envíos
+                <button type="button" class="sends-refresh" (click)="loadSends(c.id)" [disabled]="loadingSends === c.id" title="Actualizar">
+                  <i class="fas fa-rotate-right"></i>
+                </button>
+              </div>
+              <div class="sends-loading" *ngIf="loadingSends === c.id">
+                <i class="fas fa-spinner fa-spin"></i> Cargando envíos...
+              </div>
+              <ng-container *ngIf="loadingSends !== c.id">
+                <div class="sends-empty" *ngIf="(sendsByCampaign[c.id] || []).length === 0">
+                  Aún no hay envíos registrados para esta campaña.
+                </div>
+                <div class="sends-table" *ngIf="(sendsByCampaign[c.id] || []).length > 0">
+                  <div class="send-row send-row-head">
+                    <span>Número</span><span>Estado</span><span>Fecha</span>
+                  </div>
+                  <div class="send-row" *ngFor="let s of sendsByCampaign[c.id]" [title]="s.error || ''">
+                    <span class="send-phone">{{ s.phone }}</span>
+                    <span class="send-status" [class.send-ok]="s.status === 'sent'" [class.send-fail]="s.status === 'failed'">
+                      <i class="fas" [class.fa-check-circle]="s.status === 'sent'" [class.fa-times-circle]="s.status === 'failed'"></i>
+                      {{ s.status === 'sent' ? 'Enviado' : 'Fallido' }}
+                    </span>
+                    <span class="send-date">{{ sendDate(s) }}</span>
+                    <span class="send-error" *ngIf="s.status === 'failed' && s.error">{{ s.error }}</span>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
           </div>
 
           <!-- Activate / re-send button -->
@@ -323,7 +354,7 @@
           <!-- Live preview -->
           <div class="template-preview" *ngIf="selectedTemplate">
             <label class="sub-label"><i class="fas fa-eye"></i> Vista previa</label>
-            <div class="template-preview-bubble">{{ templatePreview }}<span class="template-preview-footer" *ngIf="templateFooterText">{{ templateFooterText }}</span></div>
+            <div class="template-preview-bubble"><span [innerHTML]="formatWhatsAppText(templatePreview)"></span><span class="template-preview-footer" *ngIf="templateFooterText">{{ templateFooterText }}</span></div>
           </div>
         </div>
 
@@ -674,16 +705,67 @@
             <i class="fas fa-save" *ngIf="!saving"></i>
             {{ saving ? 'Guardando...' : 'Guardar borrador' }}
           </button>
-          <button class="btn-fp-activate" (click)="activateCampaign()" [disabled]="saving || limitExceeded">
-            <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
-            <i class="fas fa-play-circle" *ngIf="!saving"></i>
-            {{ saving ? (form.type === 'immediate' ? 'Enviando...' : 'Guardando...') : isResend ? (form.type === 'immediate' ? 'Re-enviar ahora' : 'Re-activar campaña') : (form.type === 'immediate' ? 'Activar y enviar' : 'Activar campaña') }}
+          <button class="btn-fp-activate" (click)="activateCampaign()" [disabled]="saving || loadingCost || limitExceeded">
+            <i class="fas fa-spinner fa-spin" *ngIf="saving || loadingCost"></i>
+            <i class="fas fa-play-circle" *ngIf="!saving && !loadingCost"></i>
+            {{ loadingCost ? 'Calculando costo...' : saving ? (form.type === 'immediate' ? 'Enviando...' : 'Guardando...') : isResend ? (form.type === 'immediate' ? 'Re-enviar ahora' : 'Re-activar campaña') : (form.type === 'immediate' ? 'Activar y enviar' : 'Activar campaña') }}
           </button>
         </div>
 
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- Cost confirmation modal -->
+<div class="modal-overlay" *ngIf="showCostConfirm && costInfo" (click)="cancelCostConfirm()">
+  <div class="modal-box cost-modal" (click)="$event.stopPropagation()">
+    <div class="modal-icon cost-icon"><i class="fas fa-dollar-sign"></i></div>
+    <h3>Confirmar costo de envío</h3>
+    <p>Revisa el costo estimado antes de {{ form.type === 'immediate' ? 'enviar' : 'activar' }} esta campaña.</p>
+
+    <div class="cost-table">
+      <div class="cost-row">
+        <span>Tipo de mensaje</span>
+        <strong>{{ costInfo.isTemplate ? ('Plantilla · ' + costInfo.categoryLabel) : costInfo.categoryLabel }}</strong>
+      </div>
+      <div class="cost-row">
+        <span>Destinatarios</span>
+        <strong>{{ costInfo.recipients }}</strong>
+      </div>
+      <div class="cost-row" *ngIf="costInfo.isTemplate">
+        <span>Tarifa Meta ({{ costInfo.categoryLabel }})</span>
+        <strong>${{ costInfo.metaRate.toFixed(4) }}</strong>
+      </div>
+      <div class="cost-row">
+        <span>Cargo por servicio</span>
+        <strong>${{ COST_MARGIN.toFixed(2) }}</strong>
+      </div>
+      <div class="cost-row">
+        <span>Costo por mensaje</span>
+        <strong>${{ costInfo.perMessage.toFixed(4) }}</strong>
+      </div>
+      <div class="cost-row cost-total">
+        <span>Total estimado{{ costInfo.recurrent ? ' por envío' : '' }}</span>
+        <strong>${{ costInfo.total.toFixed(2) }} USD</strong>
+      </div>
+    </div>
+
+    <p class="cost-note" *ngIf="costInfo.recurrent">
+      <i class="fas fa-redo"></i> Esta campaña es recurrente: el costo se aplicará en cada envío programado.
+    </p>
+    <p class="cost-note" *ngIf="costInfo.recipients === 0">
+      <i class="fas fa-exclamation-triangle"></i> No se encontraron destinatarios. La campaña se activará pero no enviará mensajes.
+    </p>
+
+    <div class="modal-actions">
+      <button class="btn-modal-confirm" (click)="confirmCostAndSend()" [disabled]="saving">
+        <i class="fas fa-check"></i>
+        Acepto el costo, {{ form.type === 'immediate' ? 'enviar' : 'activar' }}
+      </button>
+      <button class="btn-modal-cancel" (click)="cancelCostConfirm()" [disabled]="saving">Cancelar</button>
+    </div>
   </div>
 </div>
 

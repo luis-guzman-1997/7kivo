@@ -81,7 +81,20 @@
       "WebFetch(domain:sumerlabs.com)",
       "PowerShell(node _diag_order.js)",
       "PowerShell(node -e \"const admin=require\\('firebase-admin'\\);const sa=require\\('./kivo7.json'\\);admin.initializeApp\\({credential:admin.credential.cert\\(sa\\),projectId:'kivo7-app'}\\);admin.firestore\\(\\).doc\\('organizations/caluco-express/tienda_tony/vD4aR5fIwZUUL1UAn5ro'\\).get\\(\\).then\\(d=>{console.log\\(JSON.stringify\\(d.data\\(\\).necesidad\\)\\);process.exit\\(0\\);}\\)\")",
-      "PowerShell(node _diag_impact.js)"
+      "PowerShell(node _diag_impact.js)",
+      "Bash(git -C \"C:\\\\Users\\\\PC\\\\Desktop\\\\7kivo\" diff HEAD --stat)",
+      "Bash(curl -s -o /dev/null -w \"root:%{http_code} \" http://localhost:4300/)",
+      "Bash(curl -s http://localhost:4300/)",
+      "Bash(node ..\\\\verify-cost-modal.js)",
+      "Bash(node \"C:\\\\Users\\\\PC\\\\Desktop\\\\7kivo\\\\verify-cost-modal.js\")",
+      "Bash(mkdir -p /c/Users/PC/Desktop/7kivo/.verify-tmp)",
+      "Bash(npm init *)",
+      "Bash(npx playwright *)",
+      "Bash(node *)",
+      "Bash(rm -rf /c/Users/PC/Desktop/7kivo/verify-cost-modal.js /c/Users/PC/Desktop/7kivo/verify-cost-recurrent.js /c/Users/PC/Desktop/7kivo/.verify-tmp /c/Users/PC/Desktop/7kivo/verify-shots)",
+      "Bash(git -C /c/Users/PC/Desktop/7kivo status --short)",
+      "Bash(git -C /c/Users/PC/Desktop/7kivo diff package.json)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }

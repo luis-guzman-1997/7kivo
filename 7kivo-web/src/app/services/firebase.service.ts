@@ -1984,6 +1984,36 @@ export class FirebaseService {
     await deleteDoc(docRef);
   }
 
+  // Log de envíos individuales de una campaña (escrito por el bot en campaigns/{id}/sends)
+  async getCampaignSends(orgId: string, campaignId: string): Promise<any[]> {
+    const colRef = collection(this.db, 'organizations', orgId, 'campaigns', campaignId, 'sends');
+    const q = query(colRef, orderBy('at', 'desc'), limit(500));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // ── Facturación mensual de campañas (organizations/{orgId}/billing/{YYYY-MM}) ──
+  async getOrgBilling(orgId: string): Promise<any[]> {
+    const colRef = collection(this.db, 'organizations', orgId, 'billing');
+    const q = query(colRef, orderBy('month', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // Registra un abono (pago parcial o total) en el mes indicado y recalcula el estado
+  async addBillingPayment(orgId: string, month: string, payment: { amount: number; note?: string }): Promise<any> {
+    const docRef = doc(this.db, 'organizations', orgId, 'billing', month);
+    const snap = await getDoc(docRef);
+    const data: any = snap.exists() ? snap.data() : { month, sentTotal: 0, totalCost: 0 };
+    const payments = Array.isArray(data['payments']) ? [...data['payments']] : [];
+    payments.push({ amount: payment.amount, note: payment.note || '', at: new Date().toISOString() });
+    const paidAmount = payments.reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
+    const totalCost = Number(data['totalCost']) || 0;
+    const paymentStatus = paidAmount >= totalCost - 0.005 ? 'paid' : (paidAmount > 0 ? 'partial' : 'pending');
+    await setDoc(docRef, { month, payments, paidAmount, paymentStatus }, { merge: true });
+    return { payments, paidAmount, paymentStatus };
+  }
+
   async setCampaignKeywordTrigger(orgId: string, campaignId: string, keyword: string, flowId: string, active: boolean): Promise<void> {
     const docRef = doc(this.db, 'organizations', orgId, 'config', 'campaign_keywords');
     const snap = await getDoc(docRef);
