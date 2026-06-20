@@ -37,3 +37,5 @@ yarn-error.log*
 coverage/
 .sass-cache/
 .claude/settings.local.json
+.claude/settings.local.json
+.claude/settings.local.json

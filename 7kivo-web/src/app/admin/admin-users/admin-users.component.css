@@ -234,3 +234,52 @@
   .au-name { font-size:.9rem; }
   .pw-global-notice { left:12px; right:12px; bottom:calc(72px + env(safe-area-inset-bottom, 0px)); max-width:none; }
 }
+
+/* ===== Créditos / comisiones de delivery ===== */
+.au-balance { color:#047857; font-weight:600; }
+.au-balance.au-balance-low { color:#dc2626; }
+.au-balance-pill { display:inline-block; padding:3px 12px; border-radius:20px; font-weight:700;
+  background:rgba(16,185,129,0.12); color:#047857; font-size:.9rem; }
+.au-balance-pill.au-balance-low { background:rgba(239,68,68,0.12); color:#dc2626; }
+
+.commission-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; margin-bottom:16px; overflow:hidden; }
+.commission-head { width:100%; display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; background:none; border:none; cursor:pointer; font-size:.95rem; font-weight:700; color:#1f2937; }
+.commission-head i.fa-coins { color:#f59e0b; margin-right:8px; }
+.commission-body { padding:6px 18px 18px; border-top:1px solid #f1f5f9; }
+.commission-help { font-size:.82rem; color:#6b7280; margin:10px 0 14px; line-height:1.4; }
+.commission-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:7px 0; }
+.commission-row label { font-size:.88rem; color:#374151; font-weight:500; }
+.commission-default { border-top:1px dashed #e5e7eb; margin-top:6px; padding-top:12px; }
+.commission-default label { font-weight:700; }
+.commission-input, .recharge-input { display:flex; align-items:center; gap:4px; border:1px solid #d1d5db;
+  border-radius:8px; padding:4px 10px; background:#f9fafb; }
+.commission-input span, .recharge-input span { color:#6b7280; font-weight:600; }
+.commission-input input { width:80px; border:none; background:none; outline:none; text-align:right; font-size:.9rem; }
+.commission-actions { display:flex; align-items:center; gap:12px; margin-top:16px; }
+.btn-save-commission { background:#7c3aed; color:#fff; border:none; border-radius:8px; padding:9px 16px;
+  font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+.btn-save-commission:disabled { opacity:.6; cursor:default; }
+.commission-notice { color:#059669; font-size:.85rem; font-weight:600; }
+
+/* Modal recarga */
+.recharge-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.55); display:flex; align-items:center;
+  justify-content:center; z-index:1000; padding:16px; }
+.recharge-modal { background:#fff; border-radius:14px; padding:24px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.recharge-modal h3 { margin:0 0 6px; font-size:1.1rem; color:#1f2937; display:flex; align-items:center; gap:8px; }
+.recharge-modal h3 i { color:#047857; }
+.recharge-sub { font-size:.85rem; color:#6b7280; margin:0 0 16px; }
+.recharge-label { display:block; font-size:.82rem; font-weight:600; color:#374151; margin-bottom:6px; }
+.recharge-input input { width:100%; border:none; background:none; outline:none; font-size:1.1rem; font-weight:600; }
+.recharge-error { color:#dc2626; font-size:.83rem; margin-top:10px; }
+.recharge-notice { color:#059669; font-size:.83rem; margin-top:10px; }
+.recharge-source { display:flex; gap:8px; }
+.recharge-source button { flex:1; padding:9px 8px; border:1.5px solid #e5e7eb; border-radius:8px; background:#fff;
+  cursor:pointer; font-size:.8rem; font-weight:600; color:#6b7280; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.recharge-source button i { font-size:1rem; }
+.recharge-source button.rs-active { border-color:#047857; background:rgba(16,185,129,0.08); color:#047857; }
+.recharge-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+.btn-recharge-cancel { background:#f1f5f9; color:#475569; border:none; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer; }
+.btn-recharge-confirm { background:#047857; color:#fff; border:none; border-radius:8px; padding:9px 18px;
+  font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+.btn-recharge-confirm:disabled, .btn-recharge-cancel:disabled { opacity:.6; cursor:default; }

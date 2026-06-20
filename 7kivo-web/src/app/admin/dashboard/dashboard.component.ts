@@ -2,6 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService, RoleInfo } from '../../services/auth.service';
 
+interface AcctRow {
+  uid: string; name: string; balance: number;
+  paid: number; gift: number; commissions: number; refunds: number;
+  ordersToday: number; ordersTotal: number;
+}
+interface AcctTotals {
+  paid: number; gift: number; commissions: number; refunds: number;
+  balance: number; ordersToday: number; ordersTotal: number;
+}
+
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
@@ -39,9 +49,33 @@ export class DashboardComponent implements OnInit {
   deliveryActiveItem: any = null;
   deliveryActiveTab: string = '';
 
+  // ── Contabilidad de deliveries (owner/admin, org delivery) ──
+  acctRows: AcctRow[] = [];
+  acctTotals: AcctTotals = { paid: 0, gift: 0, commissions: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 };
+  ordersByDay: { label: string; count: number }[] = [];
+  private deliveryOrderCounts: Record<string, { today: number; total: number }> = {};
+  private ordersByDayMap: Record<string, number> = {};
+
   get isDelivery(): boolean {
     const r = this.authService.userRole;
     return r === 'delivery' || r === 'delivery_multi';
+  }
+
+  get isManager(): boolean {
+    const r = this.authService.userRole;
+    return r === 'owner' || r === 'admin';
+  }
+
+  get isDeliveryOrg(): boolean {
+    return this.authService.orgIndustry === 'delivery';
+  }
+
+  get showAccounting(): boolean {
+    return this.isManager && this.isDeliveryOrg;
+  }
+
+  get maxOrdersByDay(): number {
+    return Math.max(...this.ordersByDay.map(d => d.count), 1);
   }
 
   // Guía de rol: qué puede hacer el usuario según su perfil
@@ -126,6 +160,24 @@ export class DashboardComponent implements OnInit {
         this.totalRecords += items.length;
         this.newToday += items.filter((it: any) => (it.createdAt?.seconds || 0) >= todayTs).length;
 
+        // Tallado para contabilidad de deliveries
+        if (this.showAccounting) {
+          items.forEach((it: any) => {
+            const created = it.createdAt?.seconds || 0;
+            if (created) {
+              const dk = this.dayKey(created);
+              this.ordersByDayMap[dk] = (this.ordersByDayMap[dk] || 0) + 1;
+            }
+            const uid = it.assignedTo?.uid;
+            if (uid) {
+              if (!this.deliveryOrderCounts[uid]) this.deliveryOrderCounts[uid] = { today: 0, total: 0 };
+              this.deliveryOrderCounts[uid].total++;
+              const ref = it.assignedAt?.seconds || created;
+              if (ref >= todayTs) this.deliveryOrderCounts[uid].today++;
+            }
+          });
+        }
+
         if (items.length > 0) {
           const displayField = col.displayField || col.fields?.[0]?.key || 'id';
           const recent = items.slice(0, 3).map((it: any) => ({
@@ -144,6 +196,12 @@ export class DashboardComponent implements OnInit {
 
       this.recentItems.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       this.recentItems = this.recentItems.slice(0, 8);
+
+      // Contabilidad de deliveries
+      if (this.showAccounting) {
+        const deliveryAdmins = admins.filter((a: any) => a.role === 'delivery' || a.role === 'delivery_multi');
+        await this.loadDeliveryAccounting(deliveryAdmins);
+      }
 
       // Onboarding
       const hasName = !!(infoGeneral?.name?.trim());
@@ -212,6 +270,74 @@ export class DashboardComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  async loadDeliveryAccounting(deliveryAdmins: any[]): Promise<void> {
+    try {
+      const [wallets, ledger] = await Promise.all([
+        this.firebaseService.getDeliveryWallets(),
+        this.firebaseService.getCreditTransactions()
+      ]);
+
+      const byUid: Record<string, AcctRow> = {};
+      const blank = (uid: string, name: string): AcctRow => ({
+        uid, name, balance: wallets[uid] || 0,
+        paid: 0, gift: 0, commissions: 0, refunds: 0, ordersToday: 0, ordersTotal: 0
+      });
+      deliveryAdmins.forEach(a => { byUid[a.uid] = blank(a.uid, a.name || a.email || '—'); });
+
+      ledger.forEach((t: any) => {
+        const uid = t.deliveryUid;
+        if (!uid) return;
+        if (!byUid[uid]) byUid[uid] = blank(uid, t.deliveryName || '—');
+        const row = byUid[uid];
+        const amt = t.amount || 0;
+        if (t.type === 'recharge') {
+          if (t.source === 'paid') row.paid += amt; else row.gift += amt;
+        } else if (t.type === 'debit') {
+          row.commissions += amt;
+        } else if (t.type === 'refund') {
+          row.refunds += amt;
+        }
+      });
+
+      // Pedidos tomados (de las colecciones)
+      Object.values(byUid).forEach(row => {
+        const oc = this.deliveryOrderCounts[row.uid];
+        if (oc) { row.ordersToday = oc.today; row.ordersTotal = oc.total; }
+      });
+
+      this.acctRows = Object.values(byUid).sort((a, b) => b.commissions - a.commissions);
+      this.acctTotals = this.acctRows.reduce((t, r) => ({
+        paid: t.paid + r.paid, gift: t.gift + r.gift, commissions: t.commissions + r.commissions,
+        refunds: t.refunds + r.refunds, balance: t.balance + r.balance,
+        ordersToday: t.ordersToday + r.ordersToday, ordersTotal: t.ordersTotal + r.ordersTotal
+      }), { paid: 0, gift: 0, commissions: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 });
+
+      this.buildOrdersByDay();
+    } catch (err) {
+      console.error('Error loading delivery accounting:', err);
+    }
+  }
+
+  private dayKey(seconds: number): string {
+    const d = new Date(seconds * 1000);
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  }
+
+  private buildOrdersByDay(): void {
+    const days: { label: string; count: number }[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      days.push({
+        label: d.toLocaleDateString('es', { weekday: 'short', day: 'numeric' }),
+        count: this.ordersByDayMap[key] || 0
+      });
+    }
+    this.ordersByDay = days;
   }
 
   getPersonName(item: any): string {

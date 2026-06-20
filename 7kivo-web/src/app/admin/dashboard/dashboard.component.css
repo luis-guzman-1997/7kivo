@@ -485,3 +485,37 @@ a.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,
   margin-top: 2px;
   flex-shrink: 0;
 }
+
+/* ===== Contabilidad de Deliveries ===== */
+.acct-block { margin-bottom: 28px; }
+.acct-title { font-size: 1.15rem; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 9px; margin: 0 0 16px; }
+.acct-title i { color: #e21b22; }
+.acct-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.acct-kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; border-left: 4px solid #94a3b8; }
+.acct-kpi-green  { border-left-color: #10b981; }
+.acct-kpi-amber  { border-left-color: #f59e0b; }
+.acct-kpi-purple { border-left-color: #7c3aed; }
+.acct-kpi-label { font-size: .75rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.acct-kpi-value { font-size: 1.6rem; font-weight: 800; color: #111827; line-height: 1.1; }
+.acct-kpi-sub { font-size: .72rem; color: #9ca3af; }
+
+.acct-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+.acct-card h3 { font-size: .95rem; font-weight: 700; color: #374151; margin: 0 0 16px; }
+
+.acct-bars { display: flex; align-items: flex-end; gap: 10px; height: 140px; padding-top: 8px; }
+.acct-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 5px; }
+.acct-bar-count { font-size: .78rem; font-weight: 700; color: #374151; }
+.acct-bar { width: 70%; max-width: 42px; min-height: 3px; background: linear-gradient(180deg, #e21b22, #9e1016); border-radius: 6px 6px 0 0; transition: height .3s; }
+.acct-bar-label { font-size: .7rem; color: #9ca3af; text-transform: capitalize; }
+
+.acct-table-wrap { overflow-x: auto; }
+.acct-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.acct-table th { text-align: left; padding: 9px 12px; color: #6b7280; font-weight: 600; font-size: .75rem; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; white-space: nowrap; }
+.acct-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #374151; white-space: nowrap; }
+.acct-table .acct-name { font-weight: 600; color: #111827; }
+.acct-green  { color: #059669; font-weight: 600; }
+.acct-amber  { color: #d97706; font-weight: 600; }
+.acct-purple { color: #7c3aed; font-weight: 600; }
+.acct-bal { font-weight: 700; color: #047857; }
+.acct-bal.acct-bal-low { color: #dc2626; }
+.acct-foot { font-size: .76rem; color: #9ca3af; margin: 12px 0 0; line-height: 1.5; }

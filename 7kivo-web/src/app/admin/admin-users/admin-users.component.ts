@@ -84,6 +84,22 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   changeNameError = '';
   changeNameNotice = '';
 
+  // ── Créditos / comisiones de delivery ──
+  walletMap: Record<string, number> = {};       // uid -> saldo
+  deliveryFlows: { collection: string; name: string }[] = [];
+  commissions: Record<string, number> = {};
+  defaultCommission = 0;
+  showCommissionPanel = false;
+  commissionSaving = false;
+  commissionNotice = '';
+
+  rechargeAdmin: any = null;
+  rechargeAmount: number | null = null;
+  rechargeSource: 'paid' | 'gift' = 'paid';
+  rechargeSaving = false;
+  rechargeError = '';
+  rechargeNotice = '';
+
   constructor(
     private firebaseService: FirebaseService,
     public authService: AuthService
@@ -319,7 +335,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadAdmins(), this.loadFlows()]);
+    await Promise.all([this.loadAdmins(), this.loadFlows(), this.loadCreditData()]);
     this.presenceUnsub = this.firebaseService.watchPresence(list => {
       this.presenceMap = {};
       list.forEach(p => { this.presenceMap[p.uid] = p; });
@@ -332,7 +348,106 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       this.flows = all.map((f: any) => ({ id: f.id, name: f.name, menuLabel: f.menuLabel, active: f.active !== false, notifyDelivery: !!f.notifyDelivery }));
       this.webstoreFlows = all.filter((f: any) => f.webStoreEnabled === true)
         .map((f: any) => ({ id: f.id, name: f.name, menuLabel: f.menuLabel, active: f.active !== false, notifyDelivery: false }));
+      // Servicios cobrables: flujos con colección propia + pedidos promo
+      this.deliveryFlows = all
+        .filter((f: any) => f.saveToCollection && !['applicants', 'contacts'].includes(f.saveToCollection))
+        .map((f: any) => ({ collection: f.saveToCollection, name: f.name }));
+      if (!this.deliveryFlows.some(d => d.collection === 'promo')) {
+        this.deliveryFlows.push({ collection: 'promo', name: 'Pedidos promo' });
+      }
     } catch { this.flows = []; this.webstoreFlows = []; }
+  }
+
+  async loadCreditData(): Promise<void> {
+    if (!this.isDeliveryOrg) return;
+    try {
+      this.walletMap = await this.firebaseService.getDeliveryWallets();
+      const cfg = await this.firebaseService.getDeliveryConfig();
+      this.commissions = cfg.commissions || {};
+      this.defaultCommission = cfg.defaultCommission || 0;
+    } catch { /* sin datos aún */ }
+  }
+
+  get currentIsOwner(): boolean {
+    return this.authService.userRole === 'owner';
+  }
+
+  // Gestión de crédito de deliveries: la pueden hacer owner y admin (Gerente).
+  get canManageCredit(): boolean {
+    const r = this.authService.userRole;
+    return r === 'owner' || r === 'admin';
+  }
+
+  balanceFor(admin: any): number {
+    return this.walletMap[admin?.uid] || 0;
+  }
+
+  isLowBalance(admin: any): boolean {
+    // Saldo por debajo de la comisión más alta configurada => no podrá tomar algunos pedidos.
+    const maxComm = Math.max(this.defaultCommission, ...Object.values(this.commissions), 0);
+    return maxComm > 0 && this.balanceFor(admin) < maxComm;
+  }
+
+  async saveCommissions(): Promise<void> {
+    this.commissionSaving = true;
+    this.commissionNotice = '';
+    try {
+      const clean: Record<string, number> = {};
+      for (const f of this.deliveryFlows) {
+        const v = Number(this.commissions[f.collection]);
+        if (!isNaN(v) && v >= 0) clean[f.collection] = v;
+      }
+      const def = Number(this.defaultCommission);
+      await this.firebaseService.saveDeliveryConfig(clean, isNaN(def) || def < 0 ? 0 : def);
+      this.commissions = clean;
+      this.commissionNotice = 'Comisiones guardadas ✓';
+      setTimeout(() => this.commissionNotice = '', 4000);
+    } catch (err) {
+      console.error('Error guardando comisiones:', err);
+      this.commissionNotice = 'Error al guardar';
+    } finally {
+      this.commissionSaving = false;
+    }
+  }
+
+  openRecharge(admin: any): void {
+    this.rechargeAdmin = admin;
+    this.rechargeAmount = null;
+    this.rechargeSource = 'paid';
+    this.rechargeError = '';
+    this.rechargeNotice = '';
+  }
+
+  closeRecharge(): void {
+    this.rechargeAdmin = null;
+  }
+
+  async confirmRecharge(): Promise<void> {
+    const amount = Number(this.rechargeAmount);
+    if (isNaN(amount) || amount <= 0) {
+      this.rechargeError = 'Ingresa un monto válido mayor a 0.';
+      return;
+    }
+    this.rechargeSaving = true;
+    this.rechargeError = '';
+    try {
+      const by = {
+        uid: this.authService.currentUser?.uid || '',
+        name: this.authService.currentUser?.displayName || this.authService.currentUser?.email || ''
+      };
+      const res = await this.firebaseService.rechargeCredit(
+        this.rechargeAdmin.uid, this.rechargeAdmin.name || '', amount, by, this.rechargeSource
+      );
+      this.walletMap[this.rechargeAdmin.uid] = res.balance;
+      const tipo = this.rechargeSource === 'paid' ? 'pagada' : 'de cortesía';
+      this.rechargeNotice = `Recarga ${tipo} de $${amount.toFixed(2)} aplicada. Nuevo saldo: $${res.balance.toFixed(2)}`;
+      setTimeout(() => this.closeRecharge(), 1800);
+    } catch (err) {
+      console.error('Error en recarga:', err);
+      this.rechargeError = 'No se pudo aplicar la recarga. Intenta de nuevo.';
+    } finally {
+      this.rechargeSaving = false;
+    }
   }
 
   ngOnDestroy(): void {

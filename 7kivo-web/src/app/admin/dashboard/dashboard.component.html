@@ -117,6 +117,87 @@
 
   <div *ngIf="!loading && !isDelivery">
 
+    <!-- ===== Contabilidad de Deliveries ===== -->
+    <div class="acct-block" *ngIf="showAccounting && acctRows.length > 0">
+      <h2 class="acct-title"><i class="fas fa-truck-fast"></i> Control de Deliveries</h2>
+
+      <!-- KPIs -->
+      <div class="acct-kpis">
+        <div class="acct-kpi">
+          <span class="acct-kpi-label">Pedidos hoy</span>
+          <span class="acct-kpi-value">{{ acctTotals.ordersToday }}</span>
+          <span class="acct-kpi-sub">{{ acctTotals.ordersTotal }} en total</span>
+        </div>
+        <div class="acct-kpi acct-kpi-green">
+          <span class="acct-kpi-label">Recargado pagado</span>
+          <span class="acct-kpi-value">${{ acctTotals.paid | number:'1.2-2' }}</span>
+          <span class="acct-kpi-sub">ingreso real por crédito</span>
+        </div>
+        <div class="acct-kpi acct-kpi-amber">
+          <span class="acct-kpi-label">Crédito de cortesía</span>
+          <span class="acct-kpi-value">${{ acctTotals.gift | number:'1.2-2' }}</span>
+          <span class="acct-kpi-sub">regalado / promocional</span>
+        </div>
+        <div class="acct-kpi acct-kpi-purple">
+          <span class="acct-kpi-label">Comisiones cobradas</span>
+          <span class="acct-kpi-value">${{ acctTotals.commissions | number:'1.2-2' }}</span>
+          <span class="acct-kpi-sub">ganado por pedidos tomados</span>
+        </div>
+        <div class="acct-kpi">
+          <span class="acct-kpi-label">Saldo en circulación</span>
+          <span class="acct-kpi-value">${{ acctTotals.balance | number:'1.2-2' }}</span>
+          <span class="acct-kpi-sub" *ngIf="acctTotals.refunds > 0">${{ acctTotals.refunds | number:'1.2-2' }} reembolsado</span>
+        </div>
+      </div>
+
+      <!-- Pedidos por día (últimos 7) -->
+      <div class="acct-card">
+        <h3>Pedidos por día (últimos 7)</h3>
+        <div class="acct-bars">
+          <div class="acct-bar-col" *ngFor="let d of ordersByDay">
+            <span class="acct-bar-count">{{ d.count }}</span>
+            <div class="acct-bar" [style.height.%]="(d.count / maxOrdersByDay) * 100"></div>
+            <span class="acct-bar-label">{{ d.label }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla por delivery -->
+      <div class="acct-card">
+        <h3>Detalle por repartidor</h3>
+        <div class="acct-table-wrap">
+          <table class="acct-table">
+            <thead>
+              <tr>
+                <th>Repartidor</th>
+                <th>Pedidos hoy</th>
+                <th>Pedidos total</th>
+                <th>Pagado</th>
+                <th>Cortesía</th>
+                <th>Comisiones</th>
+                <th>Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of acctRows">
+                <td class="acct-name">{{ r.name }}</td>
+                <td>{{ r.ordersToday }}</td>
+                <td>{{ r.ordersTotal }}</td>
+                <td class="acct-green">${{ r.paid | number:'1.2-2' }}</td>
+                <td class="acct-amber">${{ r.gift | number:'1.2-2' }}</td>
+                <td class="acct-purple">${{ r.commissions | number:'1.2-2' }}</td>
+                <td><span class="acct-bal" [class.acct-bal-low]="r.balance <= 0">${{ r.balance | number:'1.2-2' }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="acct-foot">
+          <b>Pagado</b>: crédito que el repartidor pagó · <b>Cortesía</b>: crédito regalado ·
+          <b>Comisiones</b>: lo cobrado por pedidos tomados.
+        </p>
+      </div>
+    </div>
+
     <!-- Onboarding -->
     <div class="onboarding" *ngIf="showOnboarding">
       <div class="onboarding-header">

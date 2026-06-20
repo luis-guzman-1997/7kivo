@@ -548,22 +548,35 @@ export class FirebaseService {
     await this.deleteDocument('admins', adminId);
   }
 
-  // Assign a submission to a delivery agent (transactional — prevents double-take)
+  // Assign a submission to a delivery agent (transactional — prevents double-take
+  // AND cobra la comisión del crédito del delivery de forma atómica).
   async assignSubmission(
     collName: string,
     docId: string,
     agent: { uid: string; name: string; email: string; whatsappPhone?: string; deliveryCode?: string },
     startCoords?: { lat: number; lng: number } | null
-  ): Promise<{ ok: boolean; takenBy?: string }> {
+  ): Promise<{ ok: boolean; takenBy?: string; reason?: string; commission?: number; balance?: number }> {
+    const commission = await this.getCommissionFor(collName);
     const docRef = doc(this.db, this.orgPath(), collName, docId);
+    const walletRef = doc(this.db, this.orgPath(), 'delivery_wallets', agent.uid);
+    const ledgerRef = doc(collection(this.db, this.orgPath(), 'credit_transactions'));
     let takenBy: string | undefined;
+    let reason: string | undefined;
+    let balance = 0;
     const ok = await runTransaction(this.db, async (transaction) => {
       const snap = await transaction.get(docRef);
-      if (!snap.exists()) return false;
+      if (!snap.exists()) { reason = 'not_found'; return false; }
       const data = snap.data();
       if (data['assignedTo'] != null) {
         takenBy = data['assignedTo']?.name || 'otro Delivery';
+        reason = 'taken';
         return false;
+      }
+      // Verificar crédito ANTES de asignar (todas las lecturas antes de escribir).
+      if (commission > 0) {
+        const wSnap = await transaction.get(walletRef);
+        balance = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
+        if (balance < commission) { reason = 'insufficient_credit'; return false; }
       }
       const assignedToData: any = { ...agent };
       if (agent.deliveryCode) {
@@ -577,10 +590,196 @@ export class FirebaseService {
         ...(agent.deliveryCode && { deliveryCode: agent.deliveryCode }),
         ...(startCoords && { startLat: startCoords.lat, startLng: startCoords.lng })
       };
-      transaction.update(docRef, updateData);
+      if (commission > 0) {
+        const newBalance = balance - commission;
+        updateData.commissionCharged = commission;
+        transaction.update(docRef, updateData);
+        transaction.set(walletRef, { uid: agent.uid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+        transaction.set(ledgerRef, {
+          deliveryUid: agent.uid, deliveryName: agent.name || '', type: 'debit',
+          amount: commission, balanceAfter: newBalance, orderId: docId, collection: collName,
+          reason: 'Comisión por tomar pedido', createdAt: serverTimestamp()
+        });
+        balance = newBalance;
+      } else {
+        transaction.update(docRef, updateData);
+      }
       return true;
     });
-    return { ok, takenBy };
+    return { ok, takenBy, reason, commission, balance };
+  }
+
+  // ==================== CRÉDITOS DE DELIVERY ====================
+
+  // Config de comisiones por servicio: { commissions: { [slug]: number }, defaultCommission }
+  async getDeliveryConfig(): Promise<{ commissions: Record<string, number>; defaultCommission: number }> {
+    const snap = await getDoc(doc(this.db, this.orgPath(), 'config', 'delivery'));
+    const data: any = snap.exists() ? snap.data() : {};
+    return { commissions: data.commissions || {}, defaultCommission: data.defaultCommission || 0 };
+  }
+
+  async saveDeliveryConfig(commissions: Record<string, number>, defaultCommission: number): Promise<void> {
+    await setDoc(
+      doc(this.db, this.orgPath(), 'config', 'delivery'),
+      { commissions, defaultCommission, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
+  }
+
+  // Comisión aplicable a un servicio (colección). 'promo' para pedidos promo.
+  async getCommissionFor(collName: string): Promise<number> {
+    const cfg = await this.getDeliveryConfig();
+    const c = cfg.commissions?.[collName];
+    return (typeof c === 'number' && c >= 0) ? c : (cfg.defaultCommission || 0);
+  }
+
+  // Saldos de todos los deliveries → mapa uid -> balance
+  async getDeliveryWallets(): Promise<Record<string, number>> {
+    const snap = await getDocs(collection(this.db, this.orgPath(), 'delivery_wallets'));
+    const out: Record<string, number> = {};
+    snap.docs.forEach(d => { out[d.id] = d.data()['balance'] || 0; });
+    return out;
+  }
+
+  // Recarga manual de crédito (owner) — transaccional + asiento en el ledger.
+  // source: 'paid' = el delivery pagó este crédito | 'gift' = cortesía / crédito regalado.
+  async rechargeCredit(
+    deliveryUid: string, deliveryName: string, amount: number,
+    by: { uid: string; name: string }, source: 'paid' | 'gift' = 'paid'
+  ): Promise<{ ok: boolean; balance: number }> {
+    const walletRef = doc(this.db, this.orgPath(), 'delivery_wallets', deliveryUid);
+    const ledgerRef = doc(collection(this.db, this.orgPath(), 'credit_transactions'));
+    let newBalance = 0;
+    const ok = await runTransaction(this.db, async (transaction) => {
+      const wSnap = await transaction.get(walletRef);
+      const current = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
+      newBalance = current + amount;
+      transaction.set(walletRef, { uid: deliveryUid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+      transaction.set(ledgerRef, {
+        deliveryUid, deliveryName: deliveryName || '', type: 'recharge', source,
+        amount, balanceAfter: newBalance,
+        reason: source === 'paid' ? 'Recarga pagada por el delivery' : 'Crédito de cortesía',
+        createdBy: by, createdAt: serverTimestamp()
+      });
+      return true;
+    });
+    return { ok, balance: newBalance };
+  }
+
+  // Movimientos de crédito (ledger) para contabilidad del dashboard.
+  async getCreditTransactions(max = 2000): Promise<any[]> {
+    const colRef = collection(this.db, this.orgPath(), 'credit_transactions');
+    const snap = await getDocs(query(colRef, orderBy('createdAt', 'desc'), limit(max)));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // Cancel an assigned submission (soft) — keeps the document for history/audit.
+  // Transactional so it doesn't race with a concurrent assign/resolve.
+  async cancelSubmission(
+    collName: string,
+    docId: string,
+    canceller: { uid: string; name: string; email: string },
+    reason?: string
+  ): Promise<{ ok: boolean; refundRequested?: boolean }> {
+    const docRef = doc(this.db, this.orgPath(), collName, docId);
+    let charged = 0;
+    let delUid = '';
+    let delName = '';
+    const ok = await runTransaction(this.db, async (transaction) => {
+      const snap = await transaction.get(docRef);
+      if (!snap.exists()) return false;
+      const d = snap.data();
+      charged = d['commissionCharged'] || 0;
+      delUid = d['assignedTo']?.uid || '';
+      delName = d['assignedTo']?.name || '';
+      const data: any = {
+        status: 'cancelled',
+        cancelledBy: canceller,
+        cancelledAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      if (reason) data.cancelReason = reason;
+      if (charged > 0 && delUid) data.refundRequested = true;
+      transaction.update(docRef, data);
+      return true;
+    });
+    // Si se había cobrado comisión, generar solicitud de reembolso para que el admin la resuelva.
+    let refundRequested = false;
+    if (ok && charged > 0 && delUid) {
+      await this.createRefundRequest({
+        orderId: docId, collection: collName, deliveryUid: delUid, deliveryName: delName,
+        amount: charged, reason: reason || 'Pedido cancelado por administración'
+      });
+      refundRequested = true;
+    }
+    return { ok, refundRequested };
+  }
+
+  // ==================== REEMBOLSOS ====================
+
+  async createRefundRequest(data: {
+    orderId: string; collection: string; deliveryUid: string; deliveryName: string; amount: number; reason: string;
+  }): Promise<void> {
+    await addDoc(collection(this.db, this.orgPath(), 'refund_requests'), {
+      ...data, status: 'pending', adminMessage: '', requestedAt: serverTimestamp()
+    });
+  }
+
+  // Realtime: solicitudes pendientes (para owner/admin)
+  watchPendingRefunds(callback: (reqs: any[]) => void): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'refund_requests');
+    return onSnapshot(colRef, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .filter((r: any) => r.status === 'pending')
+        .sort((a: any, b: any) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
+      callback(list);
+    });
+  }
+
+  // Realtime: reembolsos de un delivery (para que vea el resultado)
+  watchMyRefunds(uid: string, callback: (reqs: any[]) => void): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'refund_requests');
+    return onSnapshot(query(colRef, where('deliveryUid', '==', uid)), (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a: any, b: any) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
+      callback(list);
+    });
+  }
+
+  // Resolver (aprobar/rechazar) una solicitud de reembolso. Aprobar acredita el saldo.
+  async resolveRefundRequest(
+    requestId: string, approve: boolean, adminMessage: string, by: { uid: string; name: string }
+  ): Promise<{ ok: boolean; reason?: string }> {
+    const reqRef = doc(this.db, this.orgPath(), 'refund_requests', requestId);
+    let reason: string | undefined;
+    const ok = await runTransaction(this.db, async (transaction) => {
+      const snap = await transaction.get(reqRef);
+      if (!snap.exists()) { reason = 'not_found'; return false; }
+      const r: any = snap.data();
+      if (r.status !== 'pending') { reason = 'already_resolved'; return false; }
+
+      if (approve) {
+        const walletRef = doc(this.db, this.orgPath(), 'delivery_wallets', r.deliveryUid);
+        const ledgerRef = doc(collection(this.db, this.orgPath(), 'credit_transactions'));
+        const wSnap = await transaction.get(walletRef);
+        const current = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
+        const newBalance = current + (r.amount || 0);
+        transaction.set(walletRef, { uid: r.deliveryUid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+        transaction.set(ledgerRef, {
+          deliveryUid: r.deliveryUid, deliveryName: r.deliveryName || '', type: 'refund',
+          amount: r.amount || 0, balanceAfter: newBalance, orderId: r.orderId, collection: r.collection,
+          reason: 'Reembolso aprobado', createdBy: by, createdAt: serverTimestamp()
+        });
+      }
+      transaction.update(reqRef, {
+        status: approve ? 'approved' : 'rejected',
+        adminMessage: adminMessage || '',
+        resolvedBy: by,
+        resolvedAt: serverTimestamp()
+      });
+      return true;
+    });
+    return { ok, reason };
   }
 
   async isOrgAdmin(email: string): Promise<boolean> {
@@ -1284,19 +1483,47 @@ export class FirebaseService {
     orderId: string,
     agent: { uid: string; name: string; email: string; deliveryCode?: string },
     startCoords?: { lat: number; lng: number } | null
-  ): Promise<{ ok: boolean; takenBy?: string }> {
+  ): Promise<{ ok: boolean; takenBy?: string; reason?: string; commission?: number; balance?: number }> {
+    const commission = await this.getCommissionFor('promo');
     const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return { ok: false };
-    const data = snap.data();
-    if (data['status'] === 'taken') return { ok: false, takenBy: data['assignedTo']?.name || 'otro Delivery' };
-    await updateDoc(ref, {
-      status: 'taken',
-      assignedTo: agent,
-      takenAt: serverTimestamp(),
-      ...(startCoords && { startLat: startCoords.lat, startLng: startCoords.lng })
+    const walletRef = doc(this.db, this.orgPath(), 'delivery_wallets', agent.uid);
+    const ledgerRef = doc(collection(this.db, this.orgPath(), 'credit_transactions'));
+    let takenBy: string | undefined;
+    let reason: string | undefined;
+    let balance = 0;
+    const ok = await runTransaction(this.db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists()) { reason = 'not_found'; return false; }
+      const data = snap.data();
+      if (data['status'] === 'taken') { takenBy = data['assignedTo']?.name || 'otro Delivery'; reason = 'taken'; return false; }
+      if (commission > 0) {
+        const wSnap = await transaction.get(walletRef);
+        balance = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
+        if (balance < commission) { reason = 'insufficient_credit'; return false; }
+      }
+      const updateData: any = {
+        status: 'taken',
+        assignedTo: agent,
+        takenAt: serverTimestamp(),
+        ...(startCoords && { startLat: startCoords.lat, startLng: startCoords.lng })
+      };
+      if (commission > 0) {
+        const newBalance = balance - commission;
+        updateData.commissionCharged = commission;
+        transaction.update(ref, updateData);
+        transaction.set(walletRef, { uid: agent.uid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+        transaction.set(ledgerRef, {
+          deliveryUid: agent.uid, deliveryName: agent.name || '', type: 'debit',
+          amount: commission, balanceAfter: newBalance, orderId, collection: 'promo',
+          reason: 'Comisión por tomar pedido promo', createdAt: serverTimestamp()
+        });
+        balance = newBalance;
+      } else {
+        transaction.update(ref, updateData);
+      }
+      return true;
     });
-    return { ok: true };
+    return { ok, takenBy, reason, commission, balance };
   }
 
   async resolvePromoOrder(orderId: string): Promise<void> {
@@ -1312,9 +1539,22 @@ export class FirebaseService {
 
   async cancelPromoOrder(orderId: string, reason?: string): Promise<void> {
     const ref = doc(this.db, this.orgPath(), 'promo_orders', orderId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const d = snap.data();
+    const charged = d['commissionCharged'] || 0;
+    const delUid = d['assignedTo']?.uid || '';
+    const delName = d['assignedTo']?.name || '';
     const data: any = { status: 'cancelled', cancelledAt: serverTimestamp() };
     if (reason) data['cancelReason'] = reason;
+    if (charged > 0 && delUid) data['refundRequested'] = true;
     await updateDoc(ref, data);
+    if (charged > 0 && delUid) {
+      await this.createRefundRequest({
+        orderId, collection: 'promo', deliveryUid: delUid, deliveryName: delName,
+        amount: charged, reason: reason || 'Pedido promo cancelado'
+      });
+    }
   }
 
   // ==================== DELIVERY HISTORY ====================

@@ -122,6 +122,19 @@ export class InboxComponent implements OnInit, OnDestroy {
   takingCaseId: string | null = null;
   takeError = '';
 
+  // ── Reembolsos ──
+  pendingRefunds: any[] = [];                 // owner/admin
+  myRefunds: any[] = [];                      // delivery
+  refundResolvingId: string | null = null;
+  refundMsg: Record<string, string> = {};
+  private unsubPendingRefunds: (() => void) | null = null;
+  private unsubMyRefunds: (() => void) | null = null;
+
+  get canResolveRefunds(): boolean {
+    const r = this.authService.userRole;
+    return r === 'owner' || r === 'admin';
+  }
+
   // ── Location tracking ──
   private watchId: number | null = null;
   private locationInterval: any = null;
@@ -205,6 +218,13 @@ export class InboxComponent implements OnInit, OnDestroy {
           this.campaigns = campaigns;
         });
       }
+      // Reembolsos en tiempo real
+      if (this.canResolveRefunds) {
+        this.unsubPendingRefunds = this.firebaseService.watchPendingRefunds(list => this.pendingRefunds = list);
+      }
+      if (this.isDelivery && this.currentUserId) {
+        this.unsubMyRefunds = this.firebaseService.watchMyRefunds(this.currentUserId, list => this.myRefunds = list);
+      }
     }
   }
 
@@ -218,6 +238,8 @@ export class InboxComponent implements OnInit, OnDestroy {
     if (this.unsubPromoOrders) this.unsubPromoOrders();
     if (this.unsubCampaigns) this.unsubCampaigns();
     if (this.unsubVehicleType) this.unsubVehicleType();
+    if (this.unsubPendingRefunds) this.unsubPendingRefunds();
+    if (this.unsubMyRefunds) this.unsubMyRefunds();
     this.alertSubs.forEach(s => s.unsubscribe());
   }
 
@@ -487,9 +509,65 @@ export class InboxComponent implements OnInit, OnDestroy {
     t.filteredSubmissions = filtered;
   }
 
+  // ¿La solicitud ya fue tomada por un repartidor y sigue en curso?
+  isAssignedActive(item: any): boolean {
+    return !!item?.assignedTo && item.status !== 'resolved' && item.status !== 'cancelled';
+  }
+
   async deleteSubmission(item: any, tab: FlowTab, event?: Event): Promise<void> {
     event?.stopPropagation();
     const name = this.getPersonName(item);
+
+    // Caso ya tomado: NO se borra el registro — se cancela (soft) y se avisa al cliente.
+    if (this.isAssignedActive(item)) {
+      const who = item.assignedTo?.name || 'un repartidor';
+      if (!confirm(
+        `Esta solicitud ya fue tomada por ${who}.\n\n` +
+        `Se CANCELARÁ (queda registrada en el historial, no se elimina) y se le avisará al cliente.\n\n¿Continuar?`
+      )) return;
+      this.deletingItemId = item.id;
+      try {
+        const canceller = {
+          uid: this.currentUserId,
+          name: this.currentUserName || this.currentUserEmail,
+          email: this.currentUserEmail
+        };
+        const res = await this.firebaseService.cancelSubmission(tab.collection, item.id, canceller, 'Cancelada por administración');
+        if (!res.ok) {
+          // El documento ya no existía: recargar y salir.
+          await this.loadTabSubmissions(tab);
+          return;
+        }
+        // Avisar al cliente por WhatsApp (endpoint ya existente en el bot).
+        const botApiUrl = this.authService.botApiUrl;
+        const orgId = this.firebaseService.getOrgId();
+        if (botApiUrl && item.phoneNumber) {
+          try {
+            await fetch(`${botApiUrl}/api/${orgId}/cancel-delivery-case`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                phone: item.phoneNumber,
+                clientName: name,
+                cancelReason: 'Cancelada por administración'
+              })
+            });
+          } catch { /* silent — no bloquea el flujo */ }
+        }
+        item.status = 'cancelled';
+        item.cancelledBy = canceller;
+        tab.unreadCount = tab.submissions.filter(i => i.status === 'pending').length;
+        this.applyFilters(tab);
+        if (this.selectedItem?.id === item.id) this.closeDetail();
+      } catch (err) {
+        console.error('Error al cancelar solicitud:', err);
+      } finally {
+        this.deletingItemId = null;
+      }
+      return;
+    }
+
+    // Sin asignar (pending/spam): borrado físico, como antes.
     if (!confirm(`¿Eliminar la solicitud de "${name}"?\n\nEsta acción no se puede deshacer.`)) return;
     this.deletingItemId = item.id;
     try {
@@ -658,9 +736,42 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
-      pending: 'Nuevo', read: 'Leído', resolved: 'Resuelto'
+      pending: 'Nuevo', read: 'Leído', resolved: 'Resuelto', cancelled: 'Cancelada'
     };
     return labels[status] || status;
+  }
+
+  // ── Reembolsos ──
+  refundStatusLabel(s: string): string {
+    return ({ pending: 'Pendiente', approved: 'Aprobado', rejected: 'Rechazado' } as Record<string, string>)[s] || s;
+  }
+
+  approveRefund(req: any): void { this.resolveRefund(req, true); }
+
+  rejectRefund(req: any): void {
+    if (!(this.refundMsg[req.id] || '').trim()) {
+      this.refundMsg[req.id] = '';
+      alert('Escribe un mensaje explicando por qué rechazas el reembolso.');
+      return;
+    }
+    this.resolveRefund(req, false);
+  }
+
+  private async resolveRefund(req: any, approve: boolean): Promise<void> {
+    if (this.refundResolvingId) return;
+    this.refundResolvingId = req.id;
+    try {
+      const by = {
+        uid: this.authService.currentUser?.uid || '',
+        name: this.currentUserName || this.currentUserEmail
+      };
+      await this.firebaseService.resolveRefundRequest(req.id, approve, (this.refundMsg[req.id] || '').trim(), by);
+      // El watch en tiempo real quita la solicitud de pendingRefunds automáticamente.
+    } catch (err) {
+      console.error('Error resolviendo reembolso:', err);
+    } finally {
+      this.refundResolvingId = null;
+    }
   }
 
   getTabIcon(type: string): string {
@@ -820,13 +931,13 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   deliveryAvailableCases(tab: FlowTab): any[] {
     return tab.submissions.filter(s =>
-      !s.assignedTo && s.status !== 'resolved'
+      !s.assignedTo && s.status !== 'resolved' && s.status !== 'cancelled'
     );
   }
 
   deliveryMyCases(tab: FlowTab): any[] {
     return tab.submissions.filter(s =>
-      s.assignedTo?.uid === this.currentUserId && s.status !== 'resolved'
+      s.assignedTo?.uid === this.currentUserId && s.status !== 'resolved' && s.status !== 'cancelled'
     );
   }
 
@@ -899,9 +1010,13 @@ export class InboxComponent implements OnInit, OnDestroy {
       const result = await this.firebaseService.assignSubmission(tab.collection, item.id, agent, startCoords);
 
       if (!result.ok) {
-        this.takeError = `Este caso ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
-        setTimeout(() => this.takeError = '', 4000);
-        await this.loadTabSubmissions(tab);
+        if (result.reason === 'insufficient_credit') {
+          this.takeError = `Crédito insuficiente: necesitas $${(result.commission || 0).toFixed(2)} para tomar este pedido. Recarga tu crédito para continuar.`;
+        } else {
+          this.takeError = `Este caso ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
+          await this.loadTabSubmissions(tab);
+        }
+        setTimeout(() => this.takeError = '', 6000);
         return;
       }
 
@@ -977,8 +1092,12 @@ export class InboxComponent implements OnInit, OnDestroy {
       const startCoords = (this.currentLat && this.currentLng) ? { lat: this.currentLat, lng: this.currentLng } : null;
       const result = await this.firebaseService.takePromoOrder(order.id, agent, startCoords);
       if (!result.ok) {
-        this.promoOrderError = `Este pedido ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
-        setTimeout(() => this.promoOrderError = '', 4000);
+        if (result.reason === 'insufficient_credit') {
+          this.promoOrderError = `Crédito insuficiente: necesitas $${(result.commission || 0).toFixed(2)} para tomar este pedido. Recarga tu crédito.`;
+        } else {
+          this.promoOrderError = `Este pedido ya fue tomado por ${result.takenBy || 'otro Delivery'}.`;
+        }
+        setTimeout(() => this.promoOrderError = '', 6000);
         return;
       }
 

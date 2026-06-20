@@ -103,6 +103,39 @@
   <!-- Loading -->
   <div *ngIf="loading" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Cargando usuarios...</div>
 
+  <!-- Comisiones por servicio (owner/admin, org delivery) -->
+  <div class="commission-card" *ngIf="!loading && canManageCredit && isDeliveryOrg">
+    <button class="commission-head" (click)="showCommissionPanel = !showCommissionPanel">
+      <span><i class="fas fa-coins"></i> Comisiones por servicio</span>
+      <i class="fas" [class.fa-chevron-down]="!showCommissionPanel" [class.fa-chevron-up]="showCommissionPanel"></i>
+    </button>
+    <div class="commission-body" *ngIf="showCommissionPanel">
+      <p class="commission-help">
+        Monto que se descuenta del crédito del repartidor cada vez que <b>toma</b> un pedido de ese servicio.
+        Si un servicio no tiene monto, se usa la comisión por defecto.
+      </p>
+      <div class="commission-row" *ngFor="let f of deliveryFlows">
+        <label>{{ f.name }}</label>
+        <div class="commission-input"><span>$</span>
+          <input type="number" min="0" step="0.01" [(ngModel)]="commissions[f.collection]" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="commission-row commission-default">
+        <label>Comisión por defecto</label>
+        <div class="commission-input"><span>$</span>
+          <input type="number" min="0" step="0.01" [(ngModel)]="defaultCommission" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="commission-actions">
+        <button class="btn-save-commission" (click)="saveCommissions()" [disabled]="commissionSaving">
+          <i class="fas" [class.fa-save]="!commissionSaving" [class.fa-spinner]="commissionSaving" [class.fa-spin]="commissionSaving"></i>
+          {{ commissionSaving ? 'Guardando...' : 'Guardar comisiones' }}
+        </button>
+        <span class="commission-notice" *ngIf="commissionNotice">{{ commissionNotice }}</span>
+      </div>
+    </div>
+  </div>
+
   <!-- User list -->
   <div class="au-list" *ngIf="!loading">
 
@@ -154,6 +187,11 @@
             </span>
             <span class="au-seen" *ngIf="isDeliveryRole(admin) && admin.whatsappPhone">
               <i class="fab fa-whatsapp" style="color:#25d366"></i> {{ admin.whatsappPhone }}
+            </span>
+            <span class="au-seen au-balance" *ngIf="isDeliveryRole(admin) && isDeliveryOrg"
+                  [class.au-balance-low]="isLowBalance(admin)"
+                  [title]="isLowBalance(admin) ? 'Saldo bajo: no podrá tomar algunos pedidos' : 'Crédito disponible'">
+              <i class="fas fa-wallet"></i> ${{ balanceFor(admin) | number:'1.2-2' }}
             </span>
           </div>
           <!-- Extra perms chips -->
@@ -268,6 +306,17 @@
             <span class="dm-toggle-knob"></span>
           </button>
           <span class="dm-toggle-label">{{ admin.canSeePromoOrders !== false ? 'Sí' : 'No' }}</span>
+        </div>
+
+        <!-- Crédito (delivery) -->
+        <div class="au-section" *ngIf="isDeliveryRole(admin) && isDeliveryOrg">
+          <span class="au-section-label"><i class="fas fa-wallet"></i> Crédito</span>
+          <span class="au-balance-pill" [class.au-balance-low]="isLowBalance(admin)">
+            ${{ balanceFor(admin) | number:'1.2-2' }}
+          </span>
+          <button class="au-manage-btn" (click)="openRecharge(admin)" *ngIf="canManageCredit">
+            <i class="fas fa-plus-circle"></i> Recargar
+          </button>
         </div>
 
         <!-- Flujos asignados (delivery) -->
@@ -391,5 +440,35 @@
   <div class="pw-global-notice" *ngIf="changePwNotice"><i class="fas fa-check-circle"></i> {{ changePwNotice }}</div>
   <div class="pw-global-notice" *ngIf="changePhoneNotice"><i class="fas fa-check-circle"></i> {{ changePhoneNotice }}</div>
   <div class="pw-global-notice" *ngIf="changeNameNotice"><i class="fas fa-check-circle"></i> {{ changeNameNotice }}</div>
+
+  <!-- Modal de recarga de crédito -->
+  <div class="recharge-overlay" *ngIf="rechargeAdmin" (click)="closeRecharge()">
+    <div class="recharge-modal" (click)="$event.stopPropagation()">
+      <h3><i class="fas fa-wallet"></i> Recargar crédito</h3>
+      <p class="recharge-sub">{{ rechargeAdmin.name }} — saldo actual: <b>${{ balanceFor(rechargeAdmin) | number:'1.2-2' }}</b></p>
+      <label class="recharge-label">Monto a recargar</label>
+      <div class="recharge-input"><span>$</span>
+        <input type="number" min="0" step="0.01" [(ngModel)]="rechargeAmount" placeholder="0.00" autofocus />
+      </div>
+      <label class="recharge-label" style="margin-top:14px;">Origen del crédito</label>
+      <div class="recharge-source">
+        <button type="button" [class.rs-active]="rechargeSource === 'paid'" (click)="rechargeSource = 'paid'">
+          <i class="fas fa-money-bill-wave"></i> Pagado por el delivery
+        </button>
+        <button type="button" [class.rs-active]="rechargeSource === 'gift'" (click)="rechargeSource = 'gift'">
+          <i class="fas fa-gift"></i> Cortesía (regalado)
+        </button>
+      </div>
+      <div class="recharge-error" *ngIf="rechargeError"><i class="fas fa-exclamation-circle"></i> {{ rechargeError }}</div>
+      <div class="recharge-notice" *ngIf="rechargeNotice"><i class="fas fa-check-circle"></i> {{ rechargeNotice }}</div>
+      <div class="recharge-actions">
+        <button class="btn-recharge-cancel" (click)="closeRecharge()" [disabled]="rechargeSaving">Cancelar</button>
+        <button class="btn-recharge-confirm" (click)="confirmRecharge()" [disabled]="rechargeSaving">
+          <i class="fas" [class.fa-check]="!rechargeSaving" [class.fa-spinner]="rechargeSaving" [class.fa-spin]="rechargeSaving"></i>
+          {{ rechargeSaving ? 'Aplicando...' : 'Recargar' }}
+        </button>
+      </div>
+    </div>
+  </div>
 
 </div>

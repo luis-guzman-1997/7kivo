@@ -21,6 +21,45 @@
     <button type="button" (click)="expiredNotice = ''"><i class="fas fa-times"></i></button>
   </div>
 
+  <!-- ── Reembolsos: panel del owner/admin ── -->
+  <div class="refunds-panel" *ngIf="isDeliveryOrg && canResolveRefunds && pendingRefunds.length > 0">
+    <div class="refunds-head">
+      <i class="fas fa-rotate-left"></i>
+      <span>Solicitudes de reembolso</span>
+      <span class="refunds-badge">{{ pendingRefunds.length }}</span>
+    </div>
+    <div class="refund-req" *ngFor="let r of pendingRefunds">
+      <div class="refund-req-info">
+        <span class="refund-del">{{ r.deliveryName || 'Delivery' }}</span>
+        <span class="refund-amt">${{ r.amount | number:'1.2-2' }}</span>
+        <span class="refund-reason" *ngIf="r.reason">{{ r.reason }}</span>
+      </div>
+      <input class="refund-msg-input" type="text" [(ngModel)]="refundMsg[r.id]"
+             placeholder="Mensaje para el delivery (obligatorio si rechazas)" />
+      <div class="refund-req-actions">
+        <button class="btn-refund-reject" (click)="rejectRefund(r)" [disabled]="refundResolvingId === r.id">
+          <i class="fas fa-times"></i> Rechazar
+        </button>
+        <button class="btn-refund-approve" (click)="approveRefund(r)" [disabled]="refundResolvingId === r.id">
+          <i class="fas" [class.fa-check]="refundResolvingId !== r.id" [class.fa-spinner]="refundResolvingId === r.id" [class.fa-spin]="refundResolvingId === r.id"></i>
+          Aprobar (+${{ r.amount | number:'1.2-2' }})
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reembolsos: vista del delivery ── -->
+  <div class="my-refunds" *ngIf="isDeliveryOrg && isDelivery && myRefunds.length > 0">
+    <div class="my-refunds-head"><i class="fas fa-rotate-left"></i> Mis reembolsos</div>
+    <div class="my-refund" *ngFor="let r of myRefunds" [class.mr-approved]="r.status === 'approved'" [class.mr-rejected]="r.status === 'rejected'">
+      <div class="my-refund-row">
+        <span class="my-refund-amt">${{ r.amount | number:'1.2-2' }}</span>
+        <span class="my-refund-status" [ngClass]="'mr-badge-' + r.status">{{ refundStatusLabel(r.status) }}</span>
+      </div>
+      <div class="my-refund-msg" *ngIf="r.adminMessage"><i class="fas fa-comment-dots"></i> {{ r.adminMessage }}</div>
+    </div>
+  </div>
+
   <!-- ── Tabs principales ── -->
   <div class="inbox-main-tabs" *ngIf="isDeliveryOrg">
     <button class="imt-btn" [class.imt-active]="mainSection === 'solicitudes'" (click)="mainSection = 'solicitudes'">
@@ -487,8 +526,10 @@
                 <button *ngIf="isOwner" class="btn-icon btn-delete-inbox"
                         (click)="deleteSubmission(item, activeTab, $event)"
                         [disabled]="deletingItemId === item.id"
-                        title="Eliminar solicitud">
-                  <i class="fas" [class.fa-trash]="deletingItemId !== item.id"
+                        [title]="isAssignedActive(item) ? 'Cancelar solicitud (se avisa al cliente)' : 'Eliminar solicitud'">
+                  <i class="fas"
+                     [class.fa-ban]="isAssignedActive(item) && deletingItemId !== item.id"
+                     [class.fa-trash]="!isAssignedActive(item) && deletingItemId !== item.id"
                      [class.fa-spinner]="deletingItemId === item.id"
                      [class.fa-spin]="deletingItemId === item.id"></i>
                 </button>
@@ -586,10 +627,14 @@
                 class="btn-modal btn-delete-modal"
                 [disabled]="deletingItemId === selectedItem.id"
                 (click)="deleteSubmission(selectedItem, selectedTab)">
-          <i class="fas" [class.fa-trash]="deletingItemId !== selectedItem.id"
+          <i class="fas"
+             [class.fa-ban]="isAssignedActive(selectedItem) && deletingItemId !== selectedItem.id"
+             [class.fa-trash]="!isAssignedActive(selectedItem) && deletingItemId !== selectedItem.id"
              [class.fa-spinner]="deletingItemId === selectedItem.id"
              [class.fa-spin]="deletingItemId === selectedItem.id"></i>
-          {{ deletingItemId === selectedItem.id ? 'Eliminando...' : 'Eliminar' }}
+          {{ deletingItemId === selectedItem.id
+              ? (isAssignedActive(selectedItem) ? 'Cancelando...' : 'Eliminando...')
+              : (isAssignedActive(selectedItem) ? 'Cancelar' : 'Eliminar') }}
         </button>
       </div>
     </div>
