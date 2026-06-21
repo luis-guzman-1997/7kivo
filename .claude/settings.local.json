@@ -115,7 +115,9 @@
       "Bash(\"/c/Program Files/LibreOffice/program/soffice.exe\" --headless --convert-to pdf --outdir . \"Caluco_Express_Triptico_Moderno.pptx\")",
       "Bash(cp \"Caluco_Express_Triptico_Moderno.pptx\" \"C:/Users/PC/Desktop/7kivo/Logos/Caluco_Express_Triptico_Moderno.pptx\")",
       "Bash(cp \"Caluco_Express_Triptico_Moderno.pdf\"  \"C:/Users/PC/Desktop/7kivo/Logos/Caluco_Express_Triptico_Moderno.pdf\")",
-      "Bash(cd *)"
+      "Bash(cd *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://www.7kivo.com/tienda/caluco-express/ucAGJGZggZtO0Mm37Hiz\")",
+      "Bash(curl -s \"https://www.7kivo.com/tienda/caluco-express/ucAGJGZggZtO0Mm37Hiz\")"
     ]
   }
 }

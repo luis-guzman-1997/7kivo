@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "public": "dist/7kivo-web",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],

@@ -633,6 +633,14 @@ export class FirebaseService {
     return (typeof c === 'number' && c >= 0) ? c : (cfg.defaultCommission || 0);
   }
 
+  // Saldo de UN delivery en tiempo real (para que vea su crédito en vivo)
+  watchDeliveryWallet(uid: string, callback: (balance: number) => void): () => void {
+    const ref = doc(this.db, this.orgPath(), 'delivery_wallets', uid);
+    return onSnapshot(ref, (snap) => {
+      callback(snap.exists() ? (snap.data()['balance'] || 0) : 0);
+    });
+  }
+
   // Saldos de todos los deliveries → mapa uid -> balance
   async getDeliveryWallets(): Promise<Record<string, number>> {
     const snap = await getDocs(collection(this.db, this.orgPath(), 'delivery_wallets'));

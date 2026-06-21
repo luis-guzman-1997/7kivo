@@ -1,0 +1,177 @@
+rules_version = '2';
+
+// ============================================================================
+//  7kivo — Reglas de Firestore
+//
+//  Notas importantes:
+//  - El BOT (7kivo-bot) usa el Admin SDK (service account), que IGNORA estas
+//    reglas. Por lo tanto, todas las operaciones del bot siguen funcionando.
+//    Estas reglas solo restringen al CLIENTE WEB (panel admin).
+//  - El cobro de comisión al "tomar" un pedido ocurre en el navegador del
+//    delivery (transacción cliente). Por eso a un delivery se le PERMITE
+//    DISMINUIR su propio saldo (cobro), pero NUNCA aumentarlo (auto-recarga),
+//    ni editar el ledger, ni aprobar sus propios reembolsos.
+//  - La integridad EXACTA del monto cobrado (que coincida con la comisión
+//    configurada) NO es verificable solo con reglas; para a prueba de
+//    manipulación total habría que mover el cobro a una Cloud Function / al bot.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------- Helpers ----------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email in ['admin@7kivo.com'];
+    }
+
+    function hasUserDoc() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Miembro de la org indicada (según su doc en /users)
+    function memberOf(orgId) {
+      return isSignedIn() && hasUserDoc() && userData().organizationId == orgId;
+    }
+
+    // Gerente (owner/admin) de la org indicada
+    function isManager(orgId) {
+      return memberOf(orgId) && (userData().role in ['owner', 'admin']);
+    }
+
+    // Colecciones de crédito con reglas estrictas (se excluyen del acceso genérico)
+    function isCreditColl(coll) {
+      return coll in ['delivery_wallets', 'credit_transactions', 'refund_requests'];
+    }
+
+    // ---------------- users/{uid} ----------------
+    match /users/{uid} {
+      // El propio usuario puede leer su doc; superadmin y gerentes de su org también.
+      allow read: if isSuperAdmin()
+                  || (isSignedIn() && request.auth.uid == uid)
+                  || (hasUserDoc() && isManager(resource.data.organizationId));
+
+      // Crear usuarios: superadmin, o un gerente creando un usuario de SU org.
+      allow create: if isSuperAdmin()
+                    || isManager(request.resource.data.organizationId);
+
+      // Actualizar: superadmin; gerente de la org del usuario;
+      // o el propio usuario para campos propios (p. ej. sessionToken) SIN cambiar
+      // rol/organización. Puede limpiar SU bloqueo solo si ya expiró (no auto-desbloquearse).
+      allow update: if isSuperAdmin()
+                    || isManager(resource.data.organizationId)
+                    || (request.auth.uid == uid
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.organizationId == resource.data.organizationId
+                        && (
+                             request.resource.data.get('blocked', false) == resource.data.get('blocked', false)
+                             || (resource.data.get('blocked', false) == true
+                                 && request.resource.data.get('blocked', false) == false
+                                 && resource.data.get('blockedUntil', request.time) < request.time)
+                           ));
+
+      allow delete: if isSuperAdmin() || isManager(resource.data.organizationId);
+    }
+
+    // ---------------- organizations/{orgId} (doc raíz) ----------------
+    match /organizations/{orgId} {
+      allow read:  if isSuperAdmin() || memberOf(orgId);
+      allow write: if isSuperAdmin() || isManager(orgId);
+
+      // ===== TIENDA PÚBLICA (clientes SIN iniciar sesión) =====
+      // Solo el bucket /public/* es legible por cualquiera (catálogo, info, política).
+      match /public/{doc} {
+        allow read:  if true;
+        allow write: if isSuperAdmin() || memberOf(orgId);   // publica el panel (incl. editor)
+      }
+
+      // Pedidos: el checkout público puede CREAR; leer/editar solo el equipo de la org.
+      match /orders/{orderId} {
+        allow read:   if isSuperAdmin() || memberOf(orgId);
+        allow create: if request.resource.data.status == 'pending';   // cliente sin login
+        allow update, delete: if isSuperAdmin() || memberOf(orgId);
+      }
+
+      // ===== CRÉDITOS: reglas estrictas =====
+
+      // Saldos: delivery_wallets/{deliveryUid}
+      match /delivery_wallets/{walletUid} {
+        allow read: if isSuperAdmin() || isManager(orgId)
+                    || (memberOf(orgId) && request.auth.uid == walletUid);
+
+        // Recargas / reembolsos (suben el saldo): solo gerente o superadmin.
+        allow create: if isSuperAdmin() || isManager(orgId);
+
+        // Update: gerente/SA cualquier cambio; el propio delivery SOLO si su saldo
+        // BAJA (cobro de comisión) y no queda negativo.
+        allow update: if isSuperAdmin() || isManager(orgId)
+                      || (memberOf(orgId) && request.auth.uid == walletUid
+                          && request.resource.data.balance < resource.data.balance
+                          && request.resource.data.balance >= 0);
+
+        allow delete: if isSuperAdmin();
+      }
+
+      // Ledger contable: credit_transactions (INMUTABLE)
+      match /credit_transactions/{txId} {
+        allow read: if isSuperAdmin() || isManager(orgId)
+                    || (memberOf(orgId) && resource.data.deliveryUid == request.auth.uid);
+
+        // 'debit' lo crea el propio delivery al tomar un pedido (para sí mismo).
+        // 'recharge' / 'refund' solo gerente o superadmin.
+        allow create: if isSuperAdmin() || isManager(orgId)
+                      || (memberOf(orgId)
+                          && request.resource.data.type == 'debit'
+                          && request.resource.data.deliveryUid == request.auth.uid);
+
+        // Nunca se modifican ni borran (auditoría).
+        allow update, delete: if false;
+      }
+
+      // Solicitudes de reembolso: refund_requests
+      match /refund_requests/{reqId} {
+        allow read: if isSuperAdmin() || isManager(orgId)
+                    || (memberOf(orgId) && resource.data.deliveryUid == request.auth.uid);
+
+        // Crear: gerente (cancela un pedido), o el delivery para SÍ MISMO; siempre 'pending'.
+        allow create: if (isSuperAdmin() || isManager(orgId)
+                          || (memberOf(orgId) && request.resource.data.deliveryUid == request.auth.uid))
+                      && request.resource.data.status == 'pending';
+
+        // Resolver (aprobar/rechazar): SOLO gerente o superadmin.
+        allow update: if isSuperAdmin() || isManager(orgId);
+
+        allow delete: if false;
+      }
+
+      // ===== Resto de subcolecciones de la org (acceso genérico) =====
+      // Cualquier miembro de la org puede leer/escribir los datos operativos de SU org,
+      // EXCEPTO las colecciones de crédito (gobernadas por las reglas estrictas de arriba).
+      match /{coll}/{docId} {
+        allow read:  if (isSuperAdmin() || memberOf(orgId)) && !isCreditColl(coll);
+        allow write: if (isSuperAdmin() || memberOf(orgId)) && !isCreditColl(coll);
+      }
+      // Documentos anidados más profundos (p. ej. conversations/{phone}/messages/{id})
+      match /{coll}/{docId}/{rest=**} {
+        allow read:  if (isSuperAdmin() || memberOf(orgId)) && !isCreditColl(coll);
+        allow write: if (isSuperAdmin() || memberOf(orgId)) && !isCreditColl(coll);
+      }
+    }
+
+    // ---------------- Plataforma (solo superadmin) ----------------
+    match /platformBilling/{doc=**} {
+      allow read, write: if isSuperAdmin();
+    }
+    match /platformConfig/{doc=**} {
+      allow read:  if isSignedIn();      // config global (claves públicas, etc.)
+      allow write: if isSuperAdmin();
+    }
+  }
+}

@@ -6,6 +6,14 @@
         <span class="unread-total" *ngIf="totalUnread > 0">{{ totalUnread }}</span>
       </h1>
       <p class="page-subtitle" *ngIf="!isDelivery">Consultas y mensajes recibidos desde los flujos del bot</p>
+
+      <!-- Crédito del delivery (en vivo) -->
+      <div class="my-credit" *ngIf="isDelivery && myBalance !== null" [class.my-credit-low]="myBalance <= 0">
+        <i class="fas fa-wallet"></i>
+        <span class="my-credit-label">Mi crédito</span>
+        <span class="my-credit-amount">${{ myBalance | number:'1.2-2' }}</span>
+        <span class="my-credit-hint" *ngIf="myBalance <= 0">Sin saldo — pedí una recarga para tomar pedidos</span>
+      </div>
     </div>
     <button class="btn-refresh" (click)="loadFlows()" [title]="'Recargar'">
       <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
@@ -138,8 +146,8 @@
           <div class="promo-actions">
             <ng-container *ngIf="o.status === 'pending'">
               <button class="btn-take-promo"
-                [disabled]="!!takingPromoOrderId || (isDelivery && hasActiveDeliveryCase)"
-                [title]="isDelivery && hasActiveDeliveryCase ? 'Resuelve tu caso activo antes de tomar otro' : ''"
+                [disabled]="!!takingPromoOrderId || (isDelivery && !isDeliveryMulti && hasActiveDeliveryCase)"
+                [title]="(isDelivery && !isDeliveryMulti && hasActiveDeliveryCase) ? 'Resuelve tu caso activo antes de tomar otro' : ''"
                 (click)="takePromoOrder(o)">
                 <i class="fas fa-spinner fa-spin" *ngIf="takingPromoOrderId === o.id"></i>
                 <i class="fas fa-hand-paper" *ngIf="takingPromoOrderId !== o.id"></i>
@@ -424,7 +432,7 @@
               <span class="dc-dot dc-dot-pending"></span> Disponibles
               <span class="dc-count" *ngIf="deliveryAvailableCases(activeTab).length > 0">{{ deliveryAvailableCases(activeTab).length }}</span>
             </div>
-            <div class="dc-blocked" *ngIf="hasActiveDeliveryCase">
+            <div class="dc-blocked" *ngIf="hasActiveDeliveryCase && !isDeliveryMulti">
               <i class="fas fa-lock"></i> Resuelve tu caso activo antes de tomar otro
             </div>
             <div *ngIf="deliveryAvailableCases(activeTab).length === 0" class="dc-empty">
@@ -444,8 +452,8 @@
               </div>
               <div class="dc-card-footer" (click)="$event.stopPropagation()">
                 <button class="dc-btn dc-btn-take"
-                        [disabled]="!!takingCaseId || hasActiveDeliveryCase || !locationGranted"
-                        [title]="!locationGranted ? 'Activa tu ubicación' : hasActiveDeliveryCase ? 'Resuelve tu caso activo' : ''"
+                        [disabled]="!!takingCaseId || (hasActiveDeliveryCase && !isDeliveryMulti) || !locationGranted"
+                        [title]="!locationGranted ? 'Activa tu ubicación' : (hasActiveDeliveryCase && !isDeliveryMulti) ? 'Resuelve tu caso activo' : ''"
                         (click)="takeCase(item, activeTab)">
                   <i class="fas" [class.fa-hand-paper]="takingCaseId !== item.id" [class.fa-spinner]="takingCaseId === item.id" [class.fa-spin]="takingCaseId === item.id"></i>
                   {{ takingCaseId === item.id ? 'Tomando...' : 'Tomar caso' }}
