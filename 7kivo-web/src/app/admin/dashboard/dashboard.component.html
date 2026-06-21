@@ -121,12 +121,31 @@
     <div class="acct-block" *ngIf="showAccounting && acctRows.length > 0">
       <h2 class="acct-title"><i class="fas fa-truck-fast"></i> Control de Deliveries</h2>
 
+      <!-- Filtro de período -->
+      <div class="acct-filter">
+        <div class="acct-period-btns">
+          <button [class.active]="acctPeriod === 'today'" (click)="setAcctPeriod('today')">Hoy</button>
+          <button [class.active]="acctPeriod === 'week'" (click)="setAcctPeriod('week')">7 días</button>
+          <button [class.active]="acctPeriod === 'month'" (click)="setAcctPeriod('month')">30 días</button>
+          <button [class.active]="acctPeriod === 'all'" (click)="setAcctPeriod('all')">Todo</button>
+        </div>
+        <div class="acct-range">
+          <span>Desde</span>
+          <input type="date" [(ngModel)]="acctFrom" />
+          <span>Hasta</span>
+          <input type="date" [(ngModel)]="acctTo" />
+          <button class="acct-range-apply" (click)="applyCustomRange()" [class.active]="acctPeriod === 'custom'">
+            <i class="fas fa-filter"></i> Aplicar
+          </button>
+        </div>
+      </div>
+
       <!-- KPIs -->
       <div class="acct-kpis">
         <div class="acct-kpi">
-          <span class="acct-kpi-label">Pedidos hoy</span>
-          <span class="acct-kpi-value">{{ acctTotals.ordersToday }}</span>
-          <span class="acct-kpi-sub">{{ acctTotals.ordersTotal }} en total</span>
+          <span class="acct-kpi-label">Pedidos cobrados</span>
+          <span class="acct-kpi-value">{{ acctTotals.orders }}</span>
+          <span class="acct-kpi-sub">en el período seleccionado</span>
         </div>
         <div class="acct-kpi acct-kpi-green">
           <span class="acct-kpi-label">Recargado pagado</span>
@@ -173,8 +192,7 @@
             <thead>
               <tr>
                 <th>Repartidor</th>
-                <th>Pedidos hoy</th>
-                <th>Pedidos total</th>
+                <th>Pedidos</th>
                 <th>Recarga pagada</th>
                 <th>Recarga cortesía</th>
                 <th>Comis. con pagado</th>
@@ -187,8 +205,7 @@
               <ng-container *ngFor="let r of acctRows">
                 <tr>
                   <td class="acct-name">{{ r.name }}</td>
-                  <td>{{ r.ordersToday }}</td>
-                  <td>{{ r.ordersTotal }}</td>
+                  <td>{{ r.orders }}</td>
                   <td class="acct-green">${{ r.paid | number:'1.2-2' }}</td>
                   <td class="acct-amber">${{ r.gift | number:'1.2-2' }}</td>
                   <td class="acct-green">${{ r.commissionsPaid | number:'1.2-2' }}</td>
@@ -203,7 +220,7 @@
                   </td>
                 </tr>
                 <tr *ngIf="expandedAcctUid === r.uid" class="acct-debits-row">
-                  <td colspan="9">
+                  <td colspan="8">
                     <div class="acct-debits">
                       <div class="acct-debit" *ngFor="let d of r.debits">
                         <span class="acct-debit-date">{{ formatDate(d.createdAt) }}</span>

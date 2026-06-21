@@ -554,3 +554,13 @@ a.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,
 .cm-opt-danger:hover:not(:disabled) { border-color:#dc2626; background:#fef2f2; }
 .cm-cancel { width:100%; margin-top:14px; background:#f1f5f9; color:#475569; border:none; border-radius:9px; padding:10px; font-weight:600; cursor:pointer; }
 .cm-loading { text-align:center; color:#7c3aed; font-size:.85rem; margin-top:10px; }
+
+/* Filtro de período (contabilidad) */
+.acct-filter { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px; }
+.acct-period-btns { display:inline-flex; gap:4px; background:#f1f5f9; border-radius:10px; padding:4px; }
+.acct-period-btns button { border:none; background:transparent; color:#64748b; font-size:.82rem; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer; }
+.acct-period-btns button.active { background:#fff; color:#7c3aed; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+.acct-range { display:inline-flex; align-items:center; gap:7px; font-size:.8rem; color:#64748b; flex-wrap:wrap; }
+.acct-range input[type=date] { border:1px solid #e2e8f0; border-radius:8px; padding:6px 9px; font-size:.82rem; color:#334155; }
+.acct-range-apply { border:1px solid #e2e8f0; background:#fff; color:#475569; border-radius:8px; padding:6px 12px; font-size:.8rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+.acct-range-apply.active, .acct-range-apply:hover { border-color:#7c3aed; color:#7c3aed; }

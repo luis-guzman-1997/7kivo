@@ -582,6 +582,19 @@
             <input type="checkbox" [(ngModel)]="currentFlow.notifyDelivery" />
             Visible para Deliveries
           </label>
+
+          <div class="fe-field" style="margin-top:12px;">
+            <label><i class="fas fa-comment-dots"></i> Palabras clave que lo activan
+              <span class="fe-help-tip" title="Si el cliente escribe alguna de estas palabras al iniciar o en el menú, el bot abre este flujo automáticamente.">?</span>
+            </label>
+            <input type="text" [(ngModel)]="keywordsText" placeholder="Ej: viaje, uber, taxi, llevame" />
+            <p class="fe-hint" style="margin-top:6px;">
+              Separá las palabras con coma. Si el cliente escribe alguna (ej. “quiero un <b>viaje</b>”), se abre este flujo.
+            </p>
+            <div class="fe-kw-chips" *ngIf="(currentFlow.keywords || []).length > 0">
+              <span class="fe-kw-chip" *ngFor="let k of currentFlow.keywords">{{ k }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- Bloque: Horario de atención del flujo -->

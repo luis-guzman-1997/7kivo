@@ -6,13 +6,13 @@ interface AcctRow {
   uid: string; name: string; balance: number;
   paid: number; gift: number;
   commissions: number; commissionsPaid: number; commissionsGift: number; refunds: number;
-  ordersToday: number; ordersTotal: number;
+  orders: number;            // pedidos cobrados en el período
   debits: any[];
 }
 interface AcctTotals {
   paid: number; gift: number;
   commissions: number; commissionsPaid: number; commissionsGift: number; refunds: number;
-  balance: number; ordersToday: number; ordersTotal: number;
+  balance: number; orders: number;
 }
 
 @Component({
@@ -54,7 +54,14 @@ export class DashboardComponent implements OnInit {
 
   // ── Contabilidad de deliveries (owner/admin, org delivery) ──
   acctRows: AcctRow[] = [];
-  acctTotals: AcctTotals = { paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 };
+  acctTotals: AcctTotals = { paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, balance: 0, orders: 0 };
+
+  // Filtro de período para la contabilidad por delivery
+  acctPeriod: 'today' | 'week' | 'month' | 'all' | 'custom' = 'month';
+  acctFrom = '';   // yyyy-mm-dd
+  acctTo = '';     // yyyy-mm-dd
+  private allLedger: any[] = [];
+  private wallets: Record<string, number> = {};
   ordersByDay: { label: string; count: number }[] = [];
   private deliveryOrderCounts: Record<string, { today: number; total: number }> = {};
   private ordersByDayMap: Record<string, number> = {};
@@ -287,65 +294,88 @@ export class DashboardComponent implements OnInit {
         this.firebaseService.getDeliveryWallets(),
         this.firebaseService.getCreditTransactions()
       ]);
-
-      const byUid: Record<string, AcctRow> = {};
-      const blank = (uid: string, name: string): AcctRow => ({
-        uid, name, balance: wallets[uid] || 0,
-        paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, ordersToday: 0, ordersTotal: 0,
-        debits: []
-      });
-      this.deliveryAdmins.forEach(a => { byUid[a.uid] = blank(a.uid, a.name || a.email || '—'); });
-
-      ledger.forEach((t: any) => {
-        const uid = t.deliveryUid;
-        if (!uid) return;
-        if (!byUid[uid]) byUid[uid] = blank(uid, t.deliveryName || '—');
-        const row = byUid[uid];
-        const amt = t.amount || 0;
-        if (t.type === 'recharge' || t.type === 'adjustment') {
-          // adjustment: amt viene con signo (+ agrega, − descuenta)
-          if (t.source === 'paid') row.paid += amt; else row.gift += amt;
-        } else if (t.type === 'debit') {
-          let fp: number, fg: number;
-          if (typeof t.fromPaid === 'number' || typeof t.fromGift === 'number') {
-            fp = t.fromPaid || 0; fg = t.fromGift || 0;
-          } else {
-            fp = amt; fg = 0;   // débitos legados (sin split) → atribuidos a pagado
-          }
-          row.commissions += amt;
-          row.commissionsPaid += fp;
-          row.commissionsGift += fg;
-          row.debits.push(t);
-        } else if (t.type === 'reversal') {
-          // comisión anulada: resta del conteo de comisiones
-          row.commissions -= amt;
-          row.commissionsPaid -= (t.fromPaid || 0);
-          row.commissionsGift -= (t.fromGift || 0);
-        } else if (t.type === 'refund') {
-          row.refunds += amt;
-        }
-      });
-
-      // Pedidos tomados (de las colecciones)
-      Object.values(byUid).forEach(row => {
-        const oc = this.deliveryOrderCounts[row.uid];
-        if (oc) { row.ordersToday = oc.today; row.ordersTotal = oc.total; }
-      });
-
-      this.acctRows = Object.values(byUid).sort((a, b) => b.commissions - a.commissions);
-      this.acctTotals = this.acctRows.reduce((t, r) => ({
-        paid: t.paid + r.paid, gift: t.gift + r.gift,
-        commissions: t.commissions + r.commissions,
-        commissionsPaid: t.commissionsPaid + r.commissionsPaid,
-        commissionsGift: t.commissionsGift + r.commissionsGift,
-        refunds: t.refunds + r.refunds, balance: t.balance + r.balance,
-        ordersToday: t.ordersToday + r.ordersToday, ordersTotal: t.ordersTotal + r.ordersTotal
-      }), { paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 });
-
+      this.wallets = wallets;
+      this.allLedger = ledger;
       this.buildOrdersByDay();
+      this.recomputeAccounting();
     } catch (err) {
       console.error('Error loading delivery accounting:', err);
     }
+  }
+
+  // Rango [desde, hasta] en segundos unix según el filtro seleccionado.
+  private periodBounds(): { from: number; to: number } {
+    if (this.acctPeriod === 'all') return { from: 0, to: Infinity };
+    if (this.acctPeriod === 'custom') {
+      const from = this.acctFrom ? new Date(this.acctFrom + 'T00:00:00').getTime() / 1000 : 0;
+      const to = this.acctTo ? new Date(this.acctTo + 'T23:59:59').getTime() / 1000 : Infinity;
+      return { from, to };
+    }
+    const d = new Date();
+    if (this.acctPeriod === 'today') d.setHours(0, 0, 0, 0);
+    else if (this.acctPeriod === 'week') d.setDate(d.getDate() - 7);
+    else if (this.acctPeriod === 'month') d.setDate(d.getDate() - 30);
+    return { from: d.getTime() / 1000, to: Infinity };
+  }
+
+  setAcctPeriod(p: 'today' | 'week' | 'month' | 'all' | 'custom'): void {
+    this.acctPeriod = p;
+    if (p !== 'custom') this.recomputeAccounting();
+  }
+
+  applyCustomRange(): void {
+    this.acctPeriod = 'custom';
+    this.recomputeAccounting();
+  }
+
+  recomputeAccounting(): void {
+    const { from, to } = this.periodBounds();
+    const byUid: Record<string, AcctRow> = {};
+    const blank = (uid: string, name: string): AcctRow => ({
+      uid, name, balance: this.wallets[uid] || 0,
+      paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, orders: 0, debits: []
+    });
+    this.deliveryAdmins.forEach(a => { byUid[a.uid] = blank(a.uid, a.name || a.email || '—'); });
+
+    this.allLedger.forEach((t: any) => {
+      const ts = t.createdAt?.seconds || 0;
+      if (ts < from || ts > to) return;   // fuera del período
+      const uid = t.deliveryUid;
+      if (!uid) return;
+      if (!byUid[uid]) byUid[uid] = blank(uid, t.deliveryName || '—');
+      const row = byUid[uid];
+      const amt = t.amount || 0;
+      if (t.type === 'recharge' || t.type === 'adjustment') {
+        if (t.source === 'paid') row.paid += amt; else row.gift += amt;
+      } else if (t.type === 'debit') {
+        let fp: number, fg: number;
+        if (typeof t.fromPaid === 'number' || typeof t.fromGift === 'number') {
+          fp = t.fromPaid || 0; fg = t.fromGift || 0;
+        } else { fp = amt; fg = 0; }
+        row.commissions += amt;
+        row.commissionsPaid += fp;
+        row.commissionsGift += fg;
+        row.orders += 1;
+        row.debits.push(t);
+      } else if (t.type === 'reversal') {
+        row.commissions -= amt;
+        row.commissionsPaid -= (t.fromPaid || 0);
+        row.commissionsGift -= (t.fromGift || 0);
+        row.orders -= 1;
+      } else if (t.type === 'refund') {
+        row.refunds += amt;
+      }
+    });
+
+    this.acctRows = Object.values(byUid).sort((a, b) => b.commissions - a.commissions);
+    this.acctTotals = this.acctRows.reduce((t, r) => ({
+      paid: t.paid + r.paid, gift: t.gift + r.gift,
+      commissions: t.commissions + r.commissions,
+      commissionsPaid: t.commissionsPaid + r.commissionsPaid,
+      commissionsGift: t.commissionsGift + r.commissionsGift,
+      refunds: t.refunds + r.refunds, balance: t.balance + r.balance,
+      orders: t.orders + r.orders
+    }), { paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, balance: 0, orders: 0 });
   }
 
   private dayKey(seconds: number): string {

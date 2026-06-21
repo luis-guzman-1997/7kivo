@@ -60,6 +60,7 @@ interface Flow {
   saveToCollection: string;
   notifyAdmin: boolean;
   notifyDelivery: boolean;
+  keywords?: string[];   // palabras clave que activan el flujo al escribirlas
   // Horario de atención del flujo
   scheduleEnabled?: boolean;
   scheduleSlots?: { days: number[]; start: string; end: string }[]; // franjas por días
@@ -575,6 +576,17 @@ export class FlowBuilderComponent implements OnInit {
     this.cancelHintImageFile = null;
     this.cancelHintImagePreview = '';
     this.currentFlow.cancelHintImage = '';
+  }
+
+  // Palabras clave como texto (separadas por coma) ↔ array en el flujo
+  get keywordsText(): string {
+    return (this.currentFlow?.keywords || []).join(', ');
+  }
+  set keywordsText(v: string) {
+    this.currentFlow.keywords = (v || '')
+      .split(',')
+      .map(k => k.trim().toLowerCase())
+      .filter(Boolean);
   }
 
   async saveFlow(): Promise<void> {

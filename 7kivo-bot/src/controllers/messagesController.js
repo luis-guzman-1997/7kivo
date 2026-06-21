@@ -363,8 +363,15 @@ const requestMessageFromWhatsapp_UNUSED = async (req, res) => {
 
     if (session.step === "initial" || !session.hasGreeted) {
       if (phoneNumber) {
-        await sendGreeting(phoneNumber, contactName);
-        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        // Si el primer mensaje coincide con palabras clave de un flujo activo, iniciarlo directo.
+        const kwFlowId = await matchActiveFlowByKeyword(userMessage || '');
+        if (kwFlowId) {
+          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+          await startFlow(phoneNumber, kwFlowId);
+        } else {
+          await sendGreeting(phoneNumber, contactName);
+          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        }
       }
     } else {
       if (phoneNumber) {
@@ -2010,6 +2017,29 @@ const handleOrderCode = async (phoneNumber, code) => {
   await executeFlowStep(phoneNumber, flow, firstBotIndex);
 };
 
+// Busca un flujo ACTIVO cuyas palabras clave aparezcan en el mensaje.
+// Devuelve el flowId del match más específico (palabra más larga) o null.
+const matchActiveFlowByKeyword = async (message) => {
+  const lower = (message || '').toLowerCase().trim();
+  if (!lower) return null;
+  try {
+    const flows = await getFlows();
+    let bestId = null, bestLen = 0;
+    for (const f of flows) {
+      if (f.active === false) continue;
+      const kws = Array.isArray(f.keywords) ? f.keywords : [];
+      for (const kw of kws) {
+        const k = String(kw || '').toLowerCase().trim();
+        if (k && lower.includes(k) && k.length > bestLen) { bestId = f.id; bestLen = k.length; }
+      }
+    }
+    return bestId;
+  } catch (e) {
+    console.error('matchActiveFlowByKeyword error:', e.message);
+    return null;
+  }
+};
+
 const handleUserMessage = async (phoneNumber, message, session) => {
   const lowerMessage = message.toLowerCase();
 
@@ -2181,6 +2211,12 @@ const handleUserMessage = async (phoneNumber, message, session) => {
       }
     }
   } else {
+    // ¿El texto coincide con palabras clave de un flujo activo? → iniciarlo
+    const kwFlowId = await matchActiveFlowByKeyword(lowerMessage);
+    if (kwFlowId) {
+      await startFlow(phoneNumber, kwFlowId);
+      return;
+    }
     // Fallback: show menu
     const fallbackText = menuConfig?.fallbackMessage ||
       await getMessage("fallback", "No estoy seguro de qué necesitas. Selecciona una opción:");
