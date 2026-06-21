@@ -28,6 +28,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   isOnInboxPage = false;
   sessionDisplacedAlert = false;
   showAlertPanel = false;
+  myBalance: number | null = null;          // crédito del delivery (en vivo)
+  private unsubWallet: (() => void) | null = null;
   private subs: Subscription[] = [];
 
   constructor(
@@ -44,6 +46,12 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.subs.push(
       this.authService.currentUser$.subscribe(user => {
         this.userEmail = user?.email || '';
+        if (!user) {
+          if (this.unsubWallet) { this.unsubWallet(); this.unsubWallet = null; }
+          this.myBalance = null;
+        } else {
+          this.setupWalletWatch();
+        }
       }),
       this.authService.orgName$.subscribe(name => {
         this.orgName = name;
@@ -53,6 +61,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       }),
       this.authService.userRole$.subscribe(role => {
         this.userRole = role;
+        this.setupWalletWatch();
       }),
       this.authService.botEnabled$.subscribe(val => {
         this.botEnabled = val;
@@ -141,6 +150,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());
+    if (this.unsubWallet) this.unsubWallet();
     this.presenceService.stop();
   }
 
@@ -163,6 +173,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   get isDeliveryRole(): boolean {
     const r = this.authService.userRole;
     return r === 'delivery' || r === 'delivery_multi';
+  }
+
+  // Escucha el saldo del delivery en tiempo real (cuando ya hay uid, rol y org).
+  private setupWalletWatch(): void {
+    const uid = this.authService.currentUser?.uid;
+    if (this.unsubWallet || !this.isDeliveryRole || !uid || !this.firebaseService.isOrgSet) return;
+    this.unsubWallet = this.firebaseService.watchDeliveryWallet(uid, bal => this.myBalance = bal);
   }
 
   get deliveryAlertCount(): number {

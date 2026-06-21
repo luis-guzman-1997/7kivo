@@ -327,8 +327,6 @@ const takeDeliveryCase = async (req, res) => {
     let msg = `¡Hola${clientGreeting}! 👋\n\n${myName}. Acabo de tomar tu solicitud y seguiré en contacto contigo por este chat. 🚗`;
     if (deliveryCode) {
       msg += `\n\n*Tu código de confirmación es: ${deliveryCode}*\n\nGuárdalo: te lo pediré al finalizar tu solicitud para confirmar que soy yo quien la atiende. ✅\n\n⚠️ Si alguien te escribe desde otro número, no confíes y avísanos.\n\nAl finalizar el proceso te pediré este código.`;
-    } else {
-      msg += `\n\nTe pediré un código de confirmación al momento de la entrega.`;
     }
 
     // Switch to admin mode so client media (audio/images) gets forwarded to delivery

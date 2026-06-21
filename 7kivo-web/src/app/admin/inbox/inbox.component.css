@@ -1303,14 +1303,3 @@
 .mr-badge-rejected { background:rgba(239,68,68,0.12); color:#dc2626; }
 .my-refund-msg { font-size:.82rem; color:#6b7280; margin-top:5px; display:flex; gap:6px; align-items:flex-start; }
 .my-refund-msg i { color:#9ca3af; margin-top:2px; }
-
-/* ===== Crédito del delivery (en vivo) ===== */
-.my-credit { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px;
-  background: rgba(16,185,129,0.1); color: #047857; border: 1px solid rgba(16,185,129,0.25);
-  border-radius: 12px; padding: 7px 14px; font-size: 0.92rem; flex-wrap: wrap; }
-.my-credit i { color: #047857 !important; }
-.my-credit-label { font-weight: 600; }
-.my-credit-amount { font-weight: 800; font-size: 1.05rem; }
-.my-credit.my-credit-low { background: rgba(239,68,68,0.1); color: #dc2626; border-color: rgba(239,68,68,0.3); }
-.my-credit.my-credit-low i { color: #dc2626 !important; }
-.my-credit-hint { font-size: 0.8rem; font-weight: 500; opacity: 0.9; }

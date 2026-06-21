@@ -548,8 +548,18 @@ export class FirebaseService {
     await this.deleteDocument('admins', adminId);
   }
 
+  // Lee las dos bolsas del wallet. Saldo legado (sin bolsas) se considera CORTESÍA.
+  private walletPools(w: any): { paid: number; gift: number } {
+    if (!w) return { paid: 0, gift: 0 };
+    if (w.paidBalance !== undefined || w.giftBalance !== undefined) {
+      return { paid: w.paidBalance || 0, gift: w.giftBalance || 0 };
+    }
+    return { paid: 0, gift: w.balance || 0 };
+  }
+
   // Assign a submission to a delivery agent (transactional — prevents double-take
   // AND cobra la comisión del crédito del delivery de forma atómica).
+  // El cobro consume CORTESÍA primero y luego crédito pagado.
   async assignSubmission(
     collName: string,
     docId: string,
@@ -573,10 +583,16 @@ export class FirebaseService {
         return false;
       }
       // Verificar crédito ANTES de asignar (todas las lecturas antes de escribir).
+      let fromPaid = 0, fromGift = 0, newPaid = 0, newGift = 0;
       if (commission > 0) {
         const wSnap = await transaction.get(walletRef);
-        balance = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
+        const pools = this.walletPools(wSnap.exists() ? wSnap.data() : null);
+        balance = pools.paid + pools.gift;
         if (balance < commission) { reason = 'insufficient_credit'; return false; }
+        fromGift = Math.min(pools.gift, commission);   // cortesía primero
+        fromPaid = commission - fromGift;
+        newGift = pools.gift - fromGift;
+        newPaid = pools.paid - fromPaid;
       }
       const assignedToData: any = { ...agent };
       if (agent.deliveryCode) {
@@ -591,13 +607,15 @@ export class FirebaseService {
         ...(startCoords && { startLat: startCoords.lat, startLng: startCoords.lng })
       };
       if (commission > 0) {
-        const newBalance = balance - commission;
+        const newBalance = newPaid + newGift;
         updateData.commissionCharged = commission;
+        updateData.commissionFromPaid = fromPaid;
+        updateData.commissionFromGift = fromGift;
         transaction.update(docRef, updateData);
-        transaction.set(walletRef, { uid: agent.uid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+        transaction.set(walletRef, { uid: agent.uid, paidBalance: newPaid, giftBalance: newGift, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
         transaction.set(ledgerRef, {
           deliveryUid: agent.uid, deliveryName: agent.name || '', type: 'debit',
-          amount: commission, balanceAfter: newBalance, orderId: docId, collection: collName,
+          amount: commission, fromPaid, fromGift, balanceAfter: newBalance, orderId: docId, collection: collName,
           reason: 'Comisión por tomar pedido', createdAt: serverTimestamp()
         });
         balance = newBalance;
@@ -611,17 +629,17 @@ export class FirebaseService {
 
   // ==================== CRÉDITOS DE DELIVERY ====================
 
-  // Config de comisiones por servicio: { commissions: { [slug]: number }, defaultCommission }
-  async getDeliveryConfig(): Promise<{ commissions: Record<string, number>; defaultCommission: number }> {
+  // Config de delivery: comisiones por servicio + si cada servicio pide código de confirmación.
+  async getDeliveryConfig(): Promise<{ commissions: Record<string, number>; defaultCommission: number; requireCode: Record<string, boolean> }> {
     const snap = await getDoc(doc(this.db, this.orgPath(), 'config', 'delivery'));
     const data: any = snap.exists() ? snap.data() : {};
-    return { commissions: data.commissions || {}, defaultCommission: data.defaultCommission || 0 };
+    return { commissions: data.commissions || {}, defaultCommission: data.defaultCommission || 0, requireCode: data.requireCode || {} };
   }
 
-  async saveDeliveryConfig(commissions: Record<string, number>, defaultCommission: number): Promise<void> {
+  async saveDeliveryConfig(commissions: Record<string, number>, defaultCommission: number, requireCode: Record<string, boolean> = {}): Promise<void> {
     await setDoc(
       doc(this.db, this.orgPath(), 'config', 'delivery'),
-      { commissions, defaultCommission, updatedAt: serverTimestamp() },
+      { commissions, defaultCommission, requireCode, updatedAt: serverTimestamp() },
       { merge: true }
     );
   }
@@ -631,6 +649,12 @@ export class FirebaseService {
     const cfg = await this.getDeliveryConfig();
     const c = cfg.commissions?.[collName];
     return (typeof c === 'number' && c >= 0) ? c : (cfg.defaultCommission || 0);
+  }
+
+  // ¿Este servicio pide código de confirmación al cerrar? Default: sí.
+  async isDeliveryCodeRequired(collName: string): Promise<boolean> {
+    const cfg = await this.getDeliveryConfig();
+    return cfg.requireCode?.[collName] !== false;
   }
 
   // Saldo de UN delivery en tiempo real (para que vea su crédito en vivo)
@@ -660,9 +684,11 @@ export class FirebaseService {
     let newBalance = 0;
     const ok = await runTransaction(this.db, async (transaction) => {
       const wSnap = await transaction.get(walletRef);
-      const current = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
-      newBalance = current + amount;
-      transaction.set(walletRef, { uid: deliveryUid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+      const pools = this.walletPools(wSnap.exists() ? wSnap.data() : null);
+      let paid = pools.paid, gift = pools.gift;
+      if (source === 'paid') paid += amount; else gift += amount;
+      newBalance = paid + gift;
+      transaction.set(walletRef, { uid: deliveryUid, paidBalance: paid, giftBalance: gift, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
       transaction.set(ledgerRef, {
         deliveryUid, deliveryName: deliveryName || '', type: 'recharge', source,
         amount, balanceAfter: newBalance,
@@ -672,6 +698,34 @@ export class FirebaseService {
       return true;
     });
     return { ok, balance: newBalance };
+  }
+
+  // Ajuste manual de saldo (owner/admin): suma o resta sobre una bolsa, con motivo.
+  // signedAmount > 0 agrega, < 0 descuenta. bucket: 'paid' | 'gift'.
+  async adjustCredit(
+    deliveryUid: string, deliveryName: string, signedAmount: number,
+    bucket: 'paid' | 'gift', reason: string, by: { uid: string; name: string }
+  ): Promise<{ ok: boolean; balance: number; error?: string }> {
+    const walletRef = doc(this.db, this.orgPath(), 'delivery_wallets', deliveryUid);
+    const ledgerRef = doc(collection(this.db, this.orgPath(), 'credit_transactions'));
+    let newBalance = 0;
+    let error: string | undefined;
+    const ok = await runTransaction(this.db, async (transaction) => {
+      const wSnap = await transaction.get(walletRef);
+      const pools = this.walletPools(wSnap.exists() ? wSnap.data() : null);
+      let paid = pools.paid, gift = pools.gift;
+      if (bucket === 'paid') paid += signedAmount; else gift += signedAmount;
+      if (paid < 0 || gift < 0) { error = 'insufficient'; return false; }
+      newBalance = paid + gift;
+      transaction.set(walletRef, { uid: deliveryUid, paidBalance: paid, giftBalance: gift, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+      transaction.set(ledgerRef, {
+        deliveryUid, deliveryName: deliveryName || '', type: 'adjustment', source: bucket,
+        amount: signedAmount, balanceAfter: newBalance,
+        reason: reason || 'Ajuste manual', createdBy: by, createdAt: serverTimestamp()
+      });
+      return true;
+    });
+    return { ok, balance: newBalance, error };
   }
 
   // Movimientos de crédito (ledger) para contabilidad del dashboard.
@@ -693,11 +747,15 @@ export class FirebaseService {
     let charged = 0;
     let delUid = '';
     let delName = '';
+    let cFromPaid: number | undefined;
+    let cFromGift: number | undefined;
     const ok = await runTransaction(this.db, async (transaction) => {
       const snap = await transaction.get(docRef);
       if (!snap.exists()) return false;
       const d = snap.data();
       charged = d['commissionCharged'] || 0;
+      cFromPaid = d['commissionFromPaid'];
+      cFromGift = d['commissionFromGift'];
       delUid = d['assignedTo']?.uid || '';
       delName = d['assignedTo']?.name || '';
       const data: any = {
@@ -716,7 +774,8 @@ export class FirebaseService {
     if (ok && charged > 0 && delUid) {
       await this.createRefundRequest({
         orderId: docId, collection: collName, deliveryUid: delUid, deliveryName: delName,
-        amount: charged, reason: reason || 'Pedido cancelado por administración'
+        amount: charged, fromPaid: cFromPaid, fromGift: cFromGift,
+        reason: reason || 'Pedido cancelado por administración'
       });
       refundRequested = true;
     }
@@ -726,10 +785,16 @@ export class FirebaseService {
   // ==================== REEMBOLSOS ====================
 
   async createRefundRequest(data: {
-    orderId: string; collection: string; deliveryUid: string; deliveryName: string; amount: number; reason: string;
+    orderId: string; collection: string; deliveryUid: string; deliveryName: string;
+    amount: number; reason: string; fromPaid?: number; fromGift?: number;
   }): Promise<void> {
     await addDoc(collection(this.db, this.orgPath(), 'refund_requests'), {
-      ...data, status: 'pending', adminMessage: '', requestedAt: serverTimestamp()
+      orderId: data.orderId, collection: data.collection,
+      deliveryUid: data.deliveryUid, deliveryName: data.deliveryName,
+      amount: data.amount, reason: data.reason,
+      fromPaid: typeof data.fromPaid === 'number' ? data.fromPaid : null,
+      fromGift: typeof data.fromGift === 'number' ? data.fromGift : null,
+      status: 'pending', adminMessage: '', requestedAt: serverTimestamp()
     });
   }
 
@@ -770,12 +835,22 @@ export class FirebaseService {
         const walletRef = doc(this.db, this.orgPath(), 'delivery_wallets', r.deliveryUid);
         const ledgerRef = doc(collection(this.db, this.orgPath(), 'credit_transactions'));
         const wSnap = await transaction.get(walletRef);
-        const current = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
-        const newBalance = current + (r.amount || 0);
-        transaction.set(walletRef, { uid: r.deliveryUid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+        const pools = this.walletPools(wSnap.exists() ? wSnap.data() : null);
+        // Devolver a la bolsa de la que salió; si es legado (sin split), a cortesía.
+        let addPaid = 0, addGift = 0;
+        if (typeof r.fromPaid === 'number' || typeof r.fromGift === 'number') {
+          addPaid = r.fromPaid || 0; addGift = r.fromGift || 0;
+        } else {
+          addGift = r.amount || 0;
+        }
+        const newPaid = pools.paid + addPaid;
+        const newGift = pools.gift + addGift;
+        const newBalance = newPaid + newGift;
+        transaction.set(walletRef, { uid: r.deliveryUid, paidBalance: newPaid, giftBalance: newGift, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
         transaction.set(ledgerRef, {
           deliveryUid: r.deliveryUid, deliveryName: r.deliveryName || '', type: 'refund',
-          amount: r.amount || 0, balanceAfter: newBalance, orderId: r.orderId, collection: r.collection,
+          amount: r.amount || 0, fromPaid: addPaid, fromGift: addGift, balanceAfter: newBalance,
+          orderId: r.orderId, collection: r.collection,
           reason: 'Reembolso aprobado', createdBy: by, createdAt: serverTimestamp()
         });
       }
@@ -1504,10 +1579,16 @@ export class FirebaseService {
       if (!snap.exists()) { reason = 'not_found'; return false; }
       const data = snap.data();
       if (data['status'] === 'taken') { takenBy = data['assignedTo']?.name || 'otro Delivery'; reason = 'taken'; return false; }
+      let fromPaid = 0, fromGift = 0, newPaid = 0, newGift = 0;
       if (commission > 0) {
         const wSnap = await transaction.get(walletRef);
-        balance = wSnap.exists() ? (wSnap.data()['balance'] || 0) : 0;
+        const pools = this.walletPools(wSnap.exists() ? wSnap.data() : null);
+        balance = pools.paid + pools.gift;
         if (balance < commission) { reason = 'insufficient_credit'; return false; }
+        fromGift = Math.min(pools.gift, commission);   // cortesía primero
+        fromPaid = commission - fromGift;
+        newGift = pools.gift - fromGift;
+        newPaid = pools.paid - fromPaid;
       }
       const updateData: any = {
         status: 'taken',
@@ -1516,13 +1597,15 @@ export class FirebaseService {
         ...(startCoords && { startLat: startCoords.lat, startLng: startCoords.lng })
       };
       if (commission > 0) {
-        const newBalance = balance - commission;
+        const newBalance = newPaid + newGift;
         updateData.commissionCharged = commission;
+        updateData.commissionFromPaid = fromPaid;
+        updateData.commissionFromGift = fromGift;
         transaction.update(ref, updateData);
-        transaction.set(walletRef, { uid: agent.uid, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+        transaction.set(walletRef, { uid: agent.uid, paidBalance: newPaid, giftBalance: newGift, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
         transaction.set(ledgerRef, {
           deliveryUid: agent.uid, deliveryName: agent.name || '', type: 'debit',
-          amount: commission, balanceAfter: newBalance, orderId, collection: 'promo',
+          amount: commission, fromPaid, fromGift, balanceAfter: newBalance, orderId, collection: 'promo',
           reason: 'Comisión por tomar pedido promo', createdAt: serverTimestamp()
         });
         balance = newBalance;
@@ -1560,7 +1643,8 @@ export class FirebaseService {
     if (charged > 0 && delUid) {
       await this.createRefundRequest({
         orderId, collection: 'promo', deliveryUid: delUid, deliveryName: delName,
-        amount: charged, reason: reason || 'Pedido promo cancelado'
+        amount: charged, fromPaid: d['commissionFromPaid'], fromGift: d['commissionFromGift'],
+        reason: reason || 'Pedido promo cancelado'
       });
     }
   }

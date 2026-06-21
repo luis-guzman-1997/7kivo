@@ -144,6 +144,12 @@
       </button>
       <span class="topbar-org">{{ orgName }}</span>
       <div class="topbar-right">
+        <!-- Crédito del delivery (en vivo) -->
+        <div class="topbar-credit" *ngIf="isDeliveryRole && myBalance !== null"
+             [class.topbar-credit-low]="myBalance <= 0" title="Tu crédito disponible">
+          <i class="fas fa-wallet"></i>
+          <span class="tc-amount">${{ myBalance | number:'1.2-2' }}</span>
+        </div>
         <!-- Delivery alert bell -->
         <div class="topbar-bell-wrap" *ngIf="isDeliveryRole">
           <button class="topbar-bell" (click)="showAlertPanel = !showAlertPanel" [class.has-alerts]="deliveryAlertCount > 0" title="Alertas">

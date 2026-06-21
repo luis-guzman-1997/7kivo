@@ -89,6 +89,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   deliveryFlows: { collection: string; name: string }[] = [];
   commissions: Record<string, number> = {};
   defaultCommission = 0;
+  requireCode: Record<string, boolean> = {};   // por servicio: pedir código de confirmación
   showCommissionPanel = false;
   commissionSaving = false;
   commissionNotice = '';
@@ -99,6 +100,16 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   rechargeSaving = false;
   rechargeError = '';
   rechargeNotice = '';
+
+  // Ajuste de saldo (agregar/restar con motivo)
+  adjustAdmin: any = null;
+  adjustDirection: 'add' | 'sub' = 'add';
+  adjustBucket: 'gift' | 'paid' = 'gift';
+  adjustAmount: number | null = null;
+  adjustReason = '';
+  adjustSaving = false;
+  adjustError = '';
+  adjustNotice = '';
 
   constructor(
     private firebaseService: FirebaseService,
@@ -365,7 +376,16 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       const cfg = await this.firebaseService.getDeliveryConfig();
       this.commissions = cfg.commissions || {};
       this.defaultCommission = cfg.defaultCommission || 0;
+      this.requireCode = cfg.requireCode || {};
     } catch { /* sin datos aún */ }
+  }
+
+  isCodeOn(collection: string): boolean {
+    return this.requireCode[collection] !== false;   // default: sí pide código
+  }
+
+  toggleCode(collection: string): void {
+    this.requireCode[collection] = !this.isCodeOn(collection);
   }
 
   get currentIsOwner(): boolean {
@@ -393,13 +413,16 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     this.commissionNotice = '';
     try {
       const clean: Record<string, number> = {};
+      const codes: Record<string, boolean> = {};
       for (const f of this.deliveryFlows) {
         const v = Number(this.commissions[f.collection]);
         if (!isNaN(v) && v >= 0) clean[f.collection] = v;
+        codes[f.collection] = this.isCodeOn(f.collection);
       }
       const def = Number(this.defaultCommission);
-      await this.firebaseService.saveDeliveryConfig(clean, isNaN(def) || def < 0 ? 0 : def);
+      await this.firebaseService.saveDeliveryConfig(clean, isNaN(def) || def < 0 ? 0 : def, codes);
       this.commissions = clean;
+      this.requireCode = codes;
       this.commissionNotice = 'Comisiones guardadas ✓';
       setTimeout(() => this.commissionNotice = '', 4000);
     } catch (err) {
@@ -447,6 +470,60 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       this.rechargeError = 'No se pudo aplicar la recarga. Intenta de nuevo.';
     } finally {
       this.rechargeSaving = false;
+    }
+  }
+
+  openAdjust(admin: any): void {
+    this.adjustAdmin = admin;
+    this.adjustDirection = 'add';
+    this.adjustBucket = 'gift';
+    this.adjustAmount = null;
+    this.adjustReason = '';
+    this.adjustError = '';
+    this.adjustNotice = '';
+  }
+
+  closeAdjust(): void {
+    this.adjustAdmin = null;
+  }
+
+  async confirmAdjust(): Promise<void> {
+    const amount = Number(this.adjustAmount);
+    if (isNaN(amount) || amount <= 0) {
+      this.adjustError = 'Ingresa un monto válido mayor a 0.';
+      return;
+    }
+    if (!this.adjustReason.trim()) {
+      this.adjustError = 'Escribe un motivo para el ajuste.';
+      return;
+    }
+    this.adjustSaving = true;
+    this.adjustError = '';
+    try {
+      const signed = this.adjustDirection === 'sub' ? -amount : amount;
+      const by = {
+        uid: this.authService.currentUser?.uid || '',
+        name: this.authService.currentUser?.displayName || this.authService.currentUser?.email || ''
+      };
+      const res = await this.firebaseService.adjustCredit(
+        this.adjustAdmin.uid, this.adjustAdmin.name || '', signed, this.adjustBucket, this.adjustReason.trim(), by
+      );
+      if (!res.ok) {
+        this.adjustError = res.error === 'insufficient'
+          ? 'El descuento supera el saldo de esa bolsa.'
+          : 'No se pudo aplicar el ajuste.';
+        return;
+      }
+      this.walletMap[this.adjustAdmin.uid] = res.balance;
+      const verbo = this.adjustDirection === 'sub' ? 'Descuento' : 'Recarga';
+      const bolsa = this.adjustBucket === 'paid' ? 'pagado' : 'cortesía';
+      this.adjustNotice = `${verbo} de $${amount.toFixed(2)} (${bolsa}) aplicado. Nuevo saldo: $${res.balance.toFixed(2)}`;
+      setTimeout(() => this.closeAdjust(), 1800);
+    } catch (err) {
+      console.error('Error en ajuste:', err);
+      this.adjustError = 'No se pudo aplicar el ajuste. Intenta de nuevo.';
+    } finally {
+      this.adjustSaving = false;
     }
   }
 

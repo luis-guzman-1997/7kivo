@@ -933,6 +933,11 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   openResolveModal(): void {
+    // Si este caso no usa código de confirmación, resolver directo (sin pedir código).
+    if (!this.deliveryCode || !this.deliveryCode.trim()) {
+      this.resolveDeliveryCase();
+      return;
+    }
     this.resolveConfirmCode = '';
     this.resolveCodeError = '';
     this.showResolveModal = true;

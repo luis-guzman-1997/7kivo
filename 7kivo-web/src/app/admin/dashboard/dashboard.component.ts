@@ -4,11 +4,13 @@ import { AuthService, RoleInfo } from '../../services/auth.service';
 
 interface AcctRow {
   uid: string; name: string; balance: number;
-  paid: number; gift: number; commissions: number; refunds: number;
+  paid: number; gift: number;
+  commissions: number; commissionsPaid: number; commissionsGift: number; refunds: number;
   ordersToday: number; ordersTotal: number;
 }
 interface AcctTotals {
-  paid: number; gift: number; commissions: number; refunds: number;
+  paid: number; gift: number;
+  commissions: number; commissionsPaid: number; commissionsGift: number; refunds: number;
   balance: number; ordersToday: number; ordersTotal: number;
 }
 
@@ -51,7 +53,7 @@ export class DashboardComponent implements OnInit {
 
   // ── Contabilidad de deliveries (owner/admin, org delivery) ──
   acctRows: AcctRow[] = [];
-  acctTotals: AcctTotals = { paid: 0, gift: 0, commissions: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 };
+  acctTotals: AcctTotals = { paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 };
   ordersByDay: { label: string; count: number }[] = [];
   private deliveryOrderCounts: Record<string, { today: number; total: number }> = {};
   private ordersByDayMap: Record<string, number> = {};
@@ -282,7 +284,7 @@ export class DashboardComponent implements OnInit {
       const byUid: Record<string, AcctRow> = {};
       const blank = (uid: string, name: string): AcctRow => ({
         uid, name, balance: wallets[uid] || 0,
-        paid: 0, gift: 0, commissions: 0, refunds: 0, ordersToday: 0, ordersTotal: 0
+        paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, ordersToday: 0, ordersTotal: 0
       });
       deliveryAdmins.forEach(a => { byUid[a.uid] = blank(a.uid, a.name || a.email || '—'); });
 
@@ -292,10 +294,19 @@ export class DashboardComponent implements OnInit {
         if (!byUid[uid]) byUid[uid] = blank(uid, t.deliveryName || '—');
         const row = byUid[uid];
         const amt = t.amount || 0;
-        if (t.type === 'recharge') {
+        if (t.type === 'recharge' || t.type === 'adjustment') {
+          // adjustment: amt viene con signo (+ agrega, − descuenta)
           if (t.source === 'paid') row.paid += amt; else row.gift += amt;
         } else if (t.type === 'debit') {
+          let fp: number, fg: number;
+          if (typeof t.fromPaid === 'number' || typeof t.fromGift === 'number') {
+            fp = t.fromPaid || 0; fg = t.fromGift || 0;
+          } else {
+            fp = amt; fg = 0;   // débitos legados (sin split) → atribuidos a pagado
+          }
           row.commissions += amt;
+          row.commissionsPaid += fp;
+          row.commissionsGift += fg;
         } else if (t.type === 'refund') {
           row.refunds += amt;
         }
@@ -309,10 +320,13 @@ export class DashboardComponent implements OnInit {
 
       this.acctRows = Object.values(byUid).sort((a, b) => b.commissions - a.commissions);
       this.acctTotals = this.acctRows.reduce((t, r) => ({
-        paid: t.paid + r.paid, gift: t.gift + r.gift, commissions: t.commissions + r.commissions,
+        paid: t.paid + r.paid, gift: t.gift + r.gift,
+        commissions: t.commissions + r.commissions,
+        commissionsPaid: t.commissionsPaid + r.commissionsPaid,
+        commissionsGift: t.commissionsGift + r.commissionsGift,
         refunds: t.refunds + r.refunds, balance: t.balance + r.balance,
         ordersToday: t.ordersToday + r.ordersToday, ordersTotal: t.ordersTotal + r.ordersTotal
-      }), { paid: 0, gift: 0, commissions: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 });
+      }), { paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, balance: 0, ordersToday: 0, ordersTotal: 0 });
 
       this.buildOrdersByDay();
     } catch (err) {

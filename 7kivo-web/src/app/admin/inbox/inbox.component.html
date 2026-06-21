@@ -6,14 +6,6 @@
         <span class="unread-total" *ngIf="totalUnread > 0">{{ totalUnread }}</span>
       </h1>
       <p class="page-subtitle" *ngIf="!isDelivery">Consultas y mensajes recibidos desde los flujos del bot</p>
-
-      <!-- Crédito del delivery (en vivo) -->
-      <div class="my-credit" *ngIf="isDelivery && myBalance !== null" [class.my-credit-low]="myBalance <= 0">
-        <i class="fas fa-wallet"></i>
-        <span class="my-credit-label">Mi crédito</span>
-        <span class="my-credit-amount">${{ myBalance | number:'1.2-2' }}</span>
-        <span class="my-credit-hint" *ngIf="myBalance <= 0">Sin saldo — pedí una recarga para tomar pedidos</span>
-      </div>
     </div>
     <button class="btn-refresh" (click)="loadFlows()" [title]="'Recargar'">
       <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>

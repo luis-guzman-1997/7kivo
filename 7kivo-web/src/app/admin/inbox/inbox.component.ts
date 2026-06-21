@@ -130,10 +130,6 @@ export class InboxComponent implements OnInit, OnDestroy {
   private unsubPendingRefunds: (() => void) | null = null;
   private unsubMyRefunds: (() => void) | null = null;
 
-  // ── Crédito del delivery (en vivo) ──
-  myBalance: number | null = null;
-  private unsubWallet: (() => void) | null = null;
-
   get canResolveRefunds(): boolean {
     const r = this.authService.userRole;
     return r === 'owner' || r === 'admin';
@@ -228,7 +224,6 @@ export class InboxComponent implements OnInit, OnDestroy {
       }
       if (this.isDelivery && this.currentUserId) {
         this.unsubMyRefunds = this.firebaseService.watchMyRefunds(this.currentUserId, list => this.myRefunds = list);
-        this.unsubWallet = this.firebaseService.watchDeliveryWallet(this.currentUserId, bal => this.myBalance = bal);
       }
     }
   }
@@ -245,7 +240,6 @@ export class InboxComponent implements OnInit, OnDestroy {
     if (this.unsubVehicleType) this.unsubVehicleType();
     if (this.unsubPendingRefunds) this.unsubPendingRefunds();
     if (this.unsubMyRefunds) this.unsubMyRefunds();
-    if (this.unsubWallet) this.unsubWallet();
     this.alertSubs.forEach(s => s.unsubscribe());
   }
 
@@ -1001,7 +995,8 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.takingCaseId = item.id;
     this.takeError = '';
 
-    const deliveryCode = this.generateDeliveryCode();
+    const needCode = await this.firebaseService.isDeliveryCodeRequired(tab.collection);
+    const deliveryCode = needCode ? this.generateDeliveryCode() : '';
 
     try {
       const agent = {
@@ -1087,7 +1082,8 @@ export class InboxComponent implements OnInit, OnDestroy {
     }
     this.takingPromoOrderId = order.id;
     this.promoOrderError = '';
-    const deliveryCode = this.generateDeliveryCode();
+    const needCode = await this.firebaseService.isDeliveryCodeRequired('promo');
+    const deliveryCode = needCode ? this.generateDeliveryCode() : '';
     try {
       const agent = {
         uid: this.currentUserId,

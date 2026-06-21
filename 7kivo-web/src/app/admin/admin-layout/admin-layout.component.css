@@ -877,3 +877,38 @@
     right: -8px;
   }
 }
+
+/* ===== Crédito del delivery en el topbar (en vivo) ===== */
+.topbar-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: #047857;
+  background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(5,150,105,0.10));
+  border: 1px solid rgba(16,185,129,0.35);
+  box-shadow: 0 1px 3px rgba(16,185,129,0.12);
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.topbar-credit i { font-size: 0.85rem; opacity: 0.9; }
+.topbar-credit .tc-amount { font-variant-numeric: tabular-nums; }
+.topbar-credit.topbar-credit-low {
+  color: #dc2626;
+  background: linear-gradient(135deg, rgba(239,68,68,0.16), rgba(220,38,38,0.10));
+  border-color: rgba(239,68,68,0.4);
+  box-shadow: 0 1px 3px rgba(239,68,68,0.15);
+  animation: tc-pulse 1.8s ease-in-out infinite;
+}
+@keyframes tc-pulse {
+  0%, 100% { box-shadow: 0 1px 3px rgba(239,68,68,0.15); }
+  50%      { box-shadow: 0 0 0 4px rgba(239,68,68,0.12); }
+}
+/* Móvil: mantener visible y compacto (no se oculta como el email) */
+@media (max-width: 480px) {
+  .topbar-credit { padding: 5px 11px; font-size: 0.85rem; }
+}

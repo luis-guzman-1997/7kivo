@@ -519,3 +519,7 @@ a.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,
 .acct-bal { font-weight: 700; color: #047857; }
 .acct-bal.acct-bal-low { color: #dc2626; }
 .acct-foot { font-size: .76rem; color: #9ca3af; margin: 12px 0 0; line-height: 1.5; }
+
+/* Desglose comisiones pagado/cortesía en KPI */
+.acct-kpi-sub .acct-paid { color: #059669; }
+.acct-kpi-sub .acct-gift { color: #d97706; }

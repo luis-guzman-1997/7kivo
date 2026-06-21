@@ -116,8 +116,14 @@
       </p>
       <div class="commission-row" *ngFor="let f of deliveryFlows">
         <label>{{ f.name }}</label>
-        <div class="commission-input"><span>$</span>
-          <input type="number" min="0" step="0.01" [(ngModel)]="commissions[f.collection]" placeholder="0.00" />
+        <div class="commission-controls">
+          <div class="commission-input"><span>$</span>
+            <input type="number" min="0" step="0.01" [(ngModel)]="commissions[f.collection]" placeholder="0.00" />
+          </div>
+          <button type="button" class="code-toggle" [class.on]="isCodeOn(f.collection)" (click)="toggleCode(f.collection)"
+                  [title]="isCodeOn(f.collection) ? 'Pide código de confirmación al cerrar el pedido' : 'Sin código de confirmación'">
+            <i class="fas fa-key"></i> {{ isCodeOn(f.collection) ? 'Con código' : 'Sin código' }}
+          </button>
         </div>
       </div>
       <div class="commission-row commission-default">
@@ -317,6 +323,9 @@
           <button class="au-manage-btn" (click)="openRecharge(admin)" *ngIf="canManageCredit">
             <i class="fas fa-plus-circle"></i> Recargar
           </button>
+          <button class="au-manage-btn" (click)="openAdjust(admin)" *ngIf="canManageCredit">
+            <i class="fas fa-sliders-h"></i> Ajustar
+          </button>
         </div>
 
         <!-- Flujos asignados (delivery) -->
@@ -466,6 +475,52 @@
         <button class="btn-recharge-confirm" (click)="confirmRecharge()" [disabled]="rechargeSaving">
           <i class="fas" [class.fa-check]="!rechargeSaving" [class.fa-spinner]="rechargeSaving" [class.fa-spin]="rechargeSaving"></i>
           {{ rechargeSaving ? 'Aplicando...' : 'Recargar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de ajuste de saldo (agregar/restar con motivo) -->
+  <div class="recharge-overlay" *ngIf="adjustAdmin" (click)="closeAdjust()">
+    <div class="recharge-modal" (click)="$event.stopPropagation()">
+      <h3><i class="fas fa-sliders-h"></i> Ajustar saldo</h3>
+      <p class="recharge-sub">{{ adjustAdmin.name }} — saldo actual: <b>${{ balanceFor(adjustAdmin) | number:'1.2-2' }}</b></p>
+
+      <label class="recharge-label">Operación</label>
+      <div class="recharge-source">
+        <button type="button" [class.rs-active]="adjustDirection === 'add'" (click)="adjustDirection = 'add'">
+          <i class="fas fa-plus"></i> Agregar
+        </button>
+        <button type="button" [class.rs-active]="adjustDirection === 'sub'" (click)="adjustDirection = 'sub'">
+          <i class="fas fa-minus"></i> Descontar
+        </button>
+      </div>
+
+      <label class="recharge-label" style="margin-top:14px;">Bolsa</label>
+      <div class="recharge-source">
+        <button type="button" [class.rs-active]="adjustBucket === 'gift'" (click)="adjustBucket = 'gift'">
+          <i class="fas fa-gift"></i> Cortesía
+        </button>
+        <button type="button" [class.rs-active]="adjustBucket === 'paid'" (click)="adjustBucket = 'paid'">
+          <i class="fas fa-money-bill-wave"></i> Pagado
+        </button>
+      </div>
+
+      <label class="recharge-label" style="margin-top:14px;">Monto</label>
+      <div class="recharge-input"><span>$</span>
+        <input type="number" min="0" step="0.01" [(ngModel)]="adjustAmount" placeholder="0.00" />
+      </div>
+
+      <label class="recharge-label" style="margin-top:14px;">Motivo</label>
+      <input class="adjust-reason" type="text" [(ngModel)]="adjustReason" placeholder="Ej: corrección, bonificación, descuento por error..." />
+
+      <div class="recharge-error" *ngIf="adjustError"><i class="fas fa-exclamation-circle"></i> {{ adjustError }}</div>
+      <div class="recharge-notice" *ngIf="adjustNotice"><i class="fas fa-check-circle"></i> {{ adjustNotice }}</div>
+      <div class="recharge-actions">
+        <button class="btn-recharge-cancel" (click)="closeAdjust()" [disabled]="adjustSaving">Cancelar</button>
+        <button class="btn-recharge-confirm" (click)="confirmAdjust()" [disabled]="adjustSaving">
+          <i class="fas" [class.fa-check]="!adjustSaving" [class.fa-spinner]="adjustSaving" [class.fa-spin]="adjustSaving"></i>
+          {{ adjustSaving ? 'Aplicando...' : 'Aplicar ajuste' }}
         </button>
       </div>
     </div>

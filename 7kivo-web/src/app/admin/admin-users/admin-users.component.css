@@ -283,3 +283,11 @@
 .btn-recharge-confirm { background:#047857; color:#fff; border:none; border-radius:8px; padding:9px 18px;
   font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
 .btn-recharge-confirm:disabled, .btn-recharge-cancel:disabled { opacity:.6; cursor:default; }
+
+.adjust-reason { width:100%; border:1px solid #d1d5db; border-radius:8px; padding:9px 12px; font-size:.9rem; outline:none; box-sizing:border-box; }
+.adjust-reason:focus { border-color:#047857; }
+
+.commission-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.code-toggle { border:1.5px solid #e5e7eb; background:#fff; color:#9ca3af; border-radius:8px; padding:6px 11px; font-size:.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.code-toggle i { font-size:.72rem; }
+.code-toggle.on { border-color:#7c3aed; background:rgba(124,58,237,0.08); color:#7c3aed; }
