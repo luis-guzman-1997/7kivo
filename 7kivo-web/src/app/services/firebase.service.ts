@@ -728,6 +728,51 @@ export class FirebaseService {
     return { ok, balance: newBalance, error };
   }
 
+  // Eliminar/anular una comisión cobrada (debit). Modos:
+  //  'reverse' → devuelve el monto al delivery y deja asiento de anulación (auditable)
+  //  'delete'  → devuelve el monto y borra el cobro del historial
+  //  'void'    → NO devuelve nada; solo quita el cobro del conteo
+  async removeCommission(
+    tx: any, mode: 'reverse' | 'delete' | 'void', by: { uid: string; name: string }
+  ): Promise<{ ok: boolean; balance?: number }> {
+    const refund = mode === 'reverse' || mode === 'delete';
+    let addPaid = 0, addGift = 0;
+    if (refund) {
+      if (typeof tx.fromPaid === 'number' || typeof tx.fromGift === 'number') {
+        addPaid = tx.fromPaid || 0; addGift = tx.fromGift || 0;
+      } else {
+        addGift = tx.amount || 0; // legado sin split → a cortesía
+      }
+    }
+    const walletRef = doc(this.db, this.orgPath(), 'delivery_wallets', tx.deliveryUid);
+    const debitRef = doc(this.db, this.orgPath(), 'credit_transactions', tx.id);
+    const revRef = doc(collection(this.db, this.orgPath(), 'credit_transactions'));
+    let newBalance: number | undefined;
+    const ok = await runTransaction(this.db, async (transaction) => {
+      if (refund) {
+        const wSnap = await transaction.get(walletRef);
+        const pools = this.walletPools(wSnap.exists() ? wSnap.data() : null);
+        const newPaid = pools.paid + addPaid;
+        const newGift = pools.gift + addGift;
+        newBalance = newPaid + newGift;
+        transaction.set(walletRef, { uid: tx.deliveryUid, paidBalance: newPaid, giftBalance: newGift, balance: newBalance, updatedAt: serverTimestamp() }, { merge: true });
+      }
+      if (mode === 'reverse') {
+        transaction.set(revRef, {
+          deliveryUid: tx.deliveryUid, deliveryName: tx.deliveryName || '', type: 'reversal',
+          amount: tx.amount || 0, fromPaid: addPaid, fromGift: addGift,
+          refTransactionId: tx.id, orderId: tx.orderId || null, collection: tx.collection || null,
+          reason: 'Comisión anulada', createdBy: by, createdAt: serverTimestamp()
+        });
+      } else {
+        // 'delete' y 'void' eliminan el cobro del historial
+        transaction.delete(debitRef);
+      }
+      return true;
+    });
+    return { ok, balance: newBalance };
+  }
+
   // Movimientos de crédito (ledger) para contabilidad del dashboard.
   async getCreditTransactions(max = 2000): Promise<any[]> {
     const colRef = collection(this.db, this.orgPath(), 'credit_transactions');

@@ -180,27 +180,78 @@
                 <th>Comis. con pagado</th>
                 <th>Comis. con cortesía</th>
                 <th>Saldo</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let r of acctRows">
-                <td class="acct-name">{{ r.name }}</td>
-                <td>{{ r.ordersToday }}</td>
-                <td>{{ r.ordersTotal }}</td>
-                <td class="acct-green">${{ r.paid | number:'1.2-2' }}</td>
-                <td class="acct-amber">${{ r.gift | number:'1.2-2' }}</td>
-                <td class="acct-green">${{ r.commissionsPaid | number:'1.2-2' }}</td>
-                <td class="acct-amber">${{ r.commissionsGift | number:'1.2-2' }}</td>
-                <td><span class="acct-bal" [class.acct-bal-low]="r.balance <= 0">${{ r.balance | number:'1.2-2' }}</span></td>
-              </tr>
+              <ng-container *ngFor="let r of acctRows">
+                <tr>
+                  <td class="acct-name">{{ r.name }}</td>
+                  <td>{{ r.ordersToday }}</td>
+                  <td>{{ r.ordersTotal }}</td>
+                  <td class="acct-green">${{ r.paid | number:'1.2-2' }}</td>
+                  <td class="acct-amber">${{ r.gift | number:'1.2-2' }}</td>
+                  <td class="acct-green">${{ r.commissionsPaid | number:'1.2-2' }}</td>
+                  <td class="acct-amber">${{ r.commissionsGift | number:'1.2-2' }}</td>
+                  <td><span class="acct-bal" [class.acct-bal-low]="r.balance <= 0">${{ r.balance | number:'1.2-2' }}</span></td>
+                  <td>
+                    <button class="acct-expand-btn" *ngIf="r.debits.length > 0" (click)="toggleAcctExpand(r.uid)"
+                            [title]="'Ver comisiones cobradas'">
+                      <i class="fas" [class.fa-chevron-down]="expandedAcctUid !== r.uid" [class.fa-chevron-up]="expandedAcctUid === r.uid"></i>
+                      {{ r.debits.length }}
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="expandedAcctUid === r.uid" class="acct-debits-row">
+                  <td colspan="9">
+                    <div class="acct-debits">
+                      <div class="acct-debit" *ngFor="let d of r.debits">
+                        <span class="acct-debit-date">{{ formatDate(d.createdAt) }}</span>
+                        <span class="acct-debit-info">{{ d.collection || 'pedido' }}<span *ngIf="d.orderId"> · #{{ d.orderId.slice(0,6) }}</span></span>
+                        <span class="acct-debit-amt">${{ d.amount | number:'1.2-2' }}</span>
+                        <button class="acct-debit-del" (click)="openRemoveCommission(d)" title="Eliminar / anular esta comisión">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
             </tbody>
           </table>
         </div>
         <p class="acct-foot">
           <b>Recarga pagada/cortesía</b>: crédito que entró (pagado por el delivery vs regalado). ·
           <b>Comis. con pagado/cortesía</b>: de cada comisión cobrada, cuánto se cubrió con crédito pagado vs cortesía
-          (se consume la cortesía primero).
+          (se consume la cortesía primero). · Tocá el número en la última columna para ver y eliminar comisiones.
         </p>
+      </div>
+
+      <!-- Modal: eliminar/anular comisión -->
+      <div class="cm-overlay" *ngIf="cmToDelete" (click)="closeRemoveCommission()">
+        <div class="cm-modal" (click)="$event.stopPropagation()">
+          <h3><i class="fas fa-trash"></i> Eliminar comisión</h3>
+          <p class="cm-sub">Comisión de <b>${{ cmToDelete.amount | number:'1.2-2' }}</b> ({{ cmToDelete.deliveryName }}). Elegí qué hacer:</p>
+          <div class="cm-options">
+            <button class="cm-opt" [disabled]="cmDeleting" (click)="confirmRemove('reverse')">
+              <i class="fas fa-rotate-left"></i>
+              <span class="cm-opt-title">Anular y devolver</span>
+              <span class="cm-opt-desc">Devuelve el monto al delivery y deja registro de la anulación (auditable).</span>
+            </button>
+            <button class="cm-opt" [disabled]="cmDeleting" (click)="confirmRemove('delete')">
+              <i class="fas fa-eraser"></i>
+              <span class="cm-opt-title">Borrar definitivo y devolver</span>
+              <span class="cm-opt-desc">Devuelve el monto y borra el cobro del historial por completo.</span>
+            </button>
+            <button class="cm-opt cm-opt-danger" [disabled]="cmDeleting" (click)="confirmRemove('void')">
+              <i class="fas fa-ban"></i>
+              <span class="cm-opt-title">Solo quitar del conteo</span>
+              <span class="cm-opt-desc">Quita la comisión sin devolverle crédito al delivery.</span>
+            </button>
+          </div>
+          <button class="cm-cancel" (click)="closeRemoveCommission()" [disabled]="cmDeleting">Cancelar</button>
+          <div class="cm-loading" *ngIf="cmDeleting"><i class="fas fa-spinner fa-spin"></i> Aplicando...</div>
+        </div>
       </div>
     </div>
 

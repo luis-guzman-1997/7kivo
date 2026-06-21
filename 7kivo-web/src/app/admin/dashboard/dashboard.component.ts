@@ -7,6 +7,7 @@ interface AcctRow {
   paid: number; gift: number;
   commissions: number; commissionsPaid: number; commissionsGift: number; refunds: number;
   ordersToday: number; ordersTotal: number;
+  debits: any[];
 }
 interface AcctTotals {
   paid: number; gift: number;
@@ -57,6 +58,12 @@ export class DashboardComponent implements OnInit {
   ordersByDay: { label: string; count: number }[] = [];
   private deliveryOrderCounts: Record<string, { today: number; total: number }> = {};
   private ordersByDayMap: Record<string, number> = {};
+  private deliveryAdmins: any[] = [];
+
+  // Edición de comisiones
+  expandedAcctUid: string | null = null;
+  cmToDelete: any = null;          // transacción (debit) a eliminar
+  cmDeleting = false;
 
   get isDelivery(): boolean {
     const r = this.authService.userRole;
@@ -201,8 +208,8 @@ export class DashboardComponent implements OnInit {
 
       // Contabilidad de deliveries
       if (this.showAccounting) {
-        const deliveryAdmins = admins.filter((a: any) => a.role === 'delivery' || a.role === 'delivery_multi');
-        await this.loadDeliveryAccounting(deliveryAdmins);
+        this.deliveryAdmins = admins.filter((a: any) => a.role === 'delivery' || a.role === 'delivery_multi');
+        await this.loadDeliveryAccounting();
       }
 
       // Onboarding
@@ -274,7 +281,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  async loadDeliveryAccounting(deliveryAdmins: any[]): Promise<void> {
+  async loadDeliveryAccounting(): Promise<void> {
     try {
       const [wallets, ledger] = await Promise.all([
         this.firebaseService.getDeliveryWallets(),
@@ -284,9 +291,10 @@ export class DashboardComponent implements OnInit {
       const byUid: Record<string, AcctRow> = {};
       const blank = (uid: string, name: string): AcctRow => ({
         uid, name, balance: wallets[uid] || 0,
-        paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, ordersToday: 0, ordersTotal: 0
+        paid: 0, gift: 0, commissions: 0, commissionsPaid: 0, commissionsGift: 0, refunds: 0, ordersToday: 0, ordersTotal: 0,
+        debits: []
       });
-      deliveryAdmins.forEach(a => { byUid[a.uid] = blank(a.uid, a.name || a.email || '—'); });
+      this.deliveryAdmins.forEach(a => { byUid[a.uid] = blank(a.uid, a.name || a.email || '—'); });
 
       ledger.forEach((t: any) => {
         const uid = t.deliveryUid;
@@ -307,6 +315,12 @@ export class DashboardComponent implements OnInit {
           row.commissions += amt;
           row.commissionsPaid += fp;
           row.commissionsGift += fg;
+          row.debits.push(t);
+        } else if (t.type === 'reversal') {
+          // comisión anulada: resta del conteo de comisiones
+          row.commissions -= amt;
+          row.commissionsPaid -= (t.fromPaid || 0);
+          row.commissionsGift -= (t.fromGift || 0);
         } else if (t.type === 'refund') {
           row.refunds += amt;
         }
@@ -352,6 +366,31 @@ export class DashboardComponent implements OnInit {
       });
     }
     this.ordersByDay = days;
+  }
+
+  toggleAcctExpand(uid: string): void {
+    this.expandedAcctUid = this.expandedAcctUid === uid ? null : uid;
+  }
+
+  openRemoveCommission(tx: any): void { this.cmToDelete = tx; }
+  closeRemoveCommission(): void { this.cmToDelete = null; }
+
+  async confirmRemove(mode: 'reverse' | 'delete' | 'void'): Promise<void> {
+    if (!this.cmToDelete || this.cmDeleting) return;
+    this.cmDeleting = true;
+    try {
+      const by = {
+        uid: this.authService.currentUser?.uid || '',
+        name: this.authService.currentUser?.displayName || this.authService.currentUser?.email || ''
+      };
+      await this.firebaseService.removeCommission(this.cmToDelete, mode, by);
+      this.cmToDelete = null;
+      await this.loadDeliveryAccounting();   // refrescar totales y listas
+    } catch (e) {
+      console.error('Error eliminando comisión:', e);
+    } finally {
+      this.cmDeleting = false;
+    }
   }
 
   getPersonName(item: any): string {

@@ -131,8 +131,9 @@ service cloud.firestore {
                           && request.resource.data.type == 'debit'
                           && request.resource.data.deliveryUid == request.auth.uid);
 
-        // Nunca se modifican ni borran (auditoría).
-        allow update, delete: if false;
+        // No se editan. Borrar (anular comisiones cobradas) solo owner/admin.
+        allow update: if false;
+        allow delete: if isSuperAdmin() || isManager(orgId);
       }
 
       // Solicitudes de reembolso: refund_requests
