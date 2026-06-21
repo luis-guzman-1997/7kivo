@@ -283,14 +283,17 @@ const sendAdminAudio = async (req, res) => {
 
 const cancelDeliveryCase = async (req, res) => {
   try {
-    const { phone, clientName, cancelCount, cancelReason, isPromoOrder } = req.body;
+    const { phone, clientName, cancelCount, cancelReason, isPromoOrder, byAdmin } = req.body;
     if (!phone) {
       return res.status(400).json({ ok: false, error: "phone is required" });
     }
 
     const reasonLine = cancelReason ? `\n\n📋 *Motivo:* ${cancelReason}` : '';
     let msg;
-    if (isPromoOrder) {
+    if (byAdmin) {
+      // Cancelación por el equipo/administración: es definitiva, nadie volverá a contactar.
+      msg = `Hola${clientName ? ' ' + clientName : ''} 👋\n\nTu solicitud fue *cancelada* por nuestro equipo.${reasonLine}\n\nNo se realizarán más gestiones sobre este pedido. Si lo necesitás, podés volver a solicitarlo escribiendo *hola*. 🙏`;
+    } else if (isPromoOrder) {
       msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔\n\nEl Delivery asignado canceló tu solicitud. 🚗${reasonLine}\n\n🙏 Gracias por tu comprensión. ¡Te esperamos! 💚`;
     } else if (cancelCount >= 3) {
       msg = `Lo sentimos${clientName ? ' ' + clientName : ''} 😔\n\nEn este momento no tenemos ningún Delivery disponible para atender tu solicitud. 🚗${reasonLine}\n\n🔄 *Puedes volver a solicitarlo:* Escribe *hola* en cualquier momento y vuelve a elegir el servicio. Estaremos atentos para atenderte cuando lo solicites de nuevo. 👍\n\n🙏 Gracias por tu comprensión. ¡Te esperamos! 💚`;

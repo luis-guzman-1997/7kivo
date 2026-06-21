@@ -549,7 +549,8 @@ export class InboxComponent implements OnInit, OnDestroy {
               body: JSON.stringify({
                 phone: item.phoneNumber,
                 clientName: name,
-                cancelReason: 'Cancelada por administración'
+                cancelReason: 'Cancelada por administración',
+                byAdmin: true
               })
             });
           } catch { /* silent — no bloquea el flujo */ }

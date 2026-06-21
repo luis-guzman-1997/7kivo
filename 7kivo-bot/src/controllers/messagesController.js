@@ -27,7 +27,7 @@ const {
   getOrgStatus,
   hasActiveCaseForPhone
 } = require("../services/botMessagesService");
-const { saveMessage, getConversationMode } = require("../services/conversationService");
+const { saveMessage, getConversationMode, setConversationMode } = require("../services/conversationService");
 const { registerCampaignOptOut } = require("../services/campaignService");
 const { createGoogleCalendarEvent, deleteGoogleCalendarEvent } = require("../services/googleCalendarService");
 const { sendPushToDeliveries } = require("../services/pushService");
@@ -1957,6 +1957,11 @@ const handleOrderCode = async (phoneNumber, code) => {
   }
 
   await updateOrder(order.id, { clientPhone: phoneNumber, status: 'confirmed' });
+
+  // El pedido web inicia un flujo del bot: asegurar modo 'bot' para que las
+  // respuestas del cliente NO queden bloqueadas por el gate de modo 'admin'
+  // (si un admin/delivery tomó la conversación antes).
+  await setConversationMode(phoneNumber, 'bot');
 
   const flow = await getFlow(order.flowId);
   if (!flow) {
