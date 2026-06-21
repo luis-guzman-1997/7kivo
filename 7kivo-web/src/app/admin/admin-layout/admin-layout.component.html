@@ -40,6 +40,10 @@
           <i class="fas fa-inbox"></i>
           <span>Bandeja de Entrada</span>
         </a>
+        <a *ngIf="isDeliveryRole && authService.orgIndustry === 'delivery'" routerLink="/admin/creditos" routerLinkActive="active" class="nav-item-admin" title="Tu crédito disponible, reembolsos y movimientos">
+          <i class="fas fa-wallet"></i>
+          <span>Créditos y Reembolsos</span>
+        </a>
         <a *ngIf="authService.hasPermission('campaigns')" routerLink="/admin/campanas" routerLinkActive="active" class="nav-item-admin" title="Envía mensajes masivos a tus contactos">
           <i class="fas fa-bullhorn"></i>
           <span>Campañas</span>

@@ -1,0 +1,55 @@
+<div class="dcr-page">
+  <div class="dcr-header">
+    <h1 class="dcr-title"><i class="fas fa-wallet"></i> Créditos y Reembolsos</h1>
+    <p class="dcr-subtitle">Tu crédito disponible, tus reembolsos y el detalle de tus movimientos.</p>
+  </div>
+
+  <!-- Saldo -->
+  <div class="dcr-balance-card" [class.dcr-balance-low]="isLow">
+    <span class="dcr-balance-label">Crédito disponible</span>
+    <span class="dcr-balance-value" *ngIf="balance !== null">${{ balance | number:'1.2-2' }}</span>
+    <span class="dcr-balance-value" *ngIf="balance === null">—</span>
+    <span class="dcr-balance-hint" *ngIf="isLow">Sin saldo — pedí una recarga a tu administrador para seguir tomando pedidos.</span>
+    <span class="dcr-balance-hint" *ngIf="!isLow && balance !== null">Cada pedido que tomás descuenta una comisión de este saldo.</span>
+  </div>
+
+  <!-- Reembolsos -->
+  <div class="dcr-section">
+    <h2 class="dcr-section-title"><i class="fas fa-rotate-left"></i> Mis reembolsos</h2>
+    <div class="dcr-empty" *ngIf="refunds.length === 0">
+      <i class="fas fa-check-circle"></i> No tenés solicitudes de reembolso.
+    </div>
+    <div class="dcr-refund" *ngFor="let r of refunds"
+         [class.mr-approved]="r.status === 'approved'" [class.mr-rejected]="r.status === 'rejected'">
+      <div class="dcr-refund-row">
+        <span class="dcr-refund-amt">${{ r.amount | number:'1.2-2' }}</span>
+        <span class="dcr-refund-status" [ngClass]="'mr-badge-' + r.status">{{ refundStatusLabel(r.status) }}</span>
+        <span class="dcr-refund-date">{{ formatDate(r.requestedAt) }}</span>
+      </div>
+      <div class="dcr-refund-reason" *ngIf="r.reason">{{ r.reason }}</div>
+      <div class="dcr-refund-msg" *ngIf="r.adminMessage">
+        <i class="fas fa-comment-dots"></i> {{ r.adminMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Movimientos -->
+  <div class="dcr-section">
+    <h2 class="dcr-section-title"><i class="fas fa-list"></i> Movimientos</h2>
+    <div class="dcr-empty" *ngIf="movements.length === 0">
+      <i class="fas fa-inbox"></i> Aún no tenés movimientos.
+    </div>
+    <div class="dcr-move" *ngFor="let m of movements">
+      <div class="dcr-move-icon" [ngClass]="'mv-' + m.type">
+        <i class="fas" [ngClass]="movementIcon(m.type)"></i>
+      </div>
+      <div class="dcr-move-body">
+        <span class="dcr-move-label">{{ movementLabel(m) }}</span>
+        <span class="dcr-move-date">{{ formatDate(m.createdAt) }}</span>
+      </div>
+      <span class="dcr-move-amt" [class.dcr-neg]="movementSigned(m) < 0" [class.dcr-pos]="movementSigned(m) > 0">
+        {{ movementSigned(m) > 0 ? '+' : '' }}${{ movementSigned(m) | number:'1.2-2' }}
+      </span>
+    </div>
+  </div>
+</div>

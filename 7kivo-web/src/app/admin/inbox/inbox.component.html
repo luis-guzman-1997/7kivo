@@ -48,18 +48,6 @@
     </div>
   </div>
 
-  <!-- ── Reembolsos: vista del delivery ── -->
-  <div class="my-refunds" *ngIf="isDeliveryOrg && isDelivery && myRefunds.length > 0">
-    <div class="my-refunds-head"><i class="fas fa-rotate-left"></i> Mis reembolsos</div>
-    <div class="my-refund" *ngFor="let r of myRefunds" [class.mr-approved]="r.status === 'approved'" [class.mr-rejected]="r.status === 'rejected'">
-      <div class="my-refund-row">
-        <span class="my-refund-amt">${{ r.amount | number:'1.2-2' }}</span>
-        <span class="my-refund-status" [ngClass]="'mr-badge-' + r.status">{{ refundStatusLabel(r.status) }}</span>
-      </div>
-      <div class="my-refund-msg" *ngIf="r.adminMessage"><i class="fas fa-comment-dots"></i> {{ r.adminMessage }}</div>
-    </div>
-  </div>
-
   <!-- ── Tabs principales ── -->
   <div class="inbox-main-tabs" *ngIf="isDeliveryOrg">
     <button class="imt-btn" [class.imt-active]="mainSection === 'solicitudes'" (click)="mainSection = 'solicitudes'">

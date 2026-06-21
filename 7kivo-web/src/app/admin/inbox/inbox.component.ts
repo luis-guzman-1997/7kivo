@@ -124,11 +124,9 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   // ── Reembolsos ──
   pendingRefunds: any[] = [];                 // owner/admin
-  myRefunds: any[] = [];                      // delivery
   refundResolvingId: string | null = null;
   refundMsg: Record<string, string> = {};
   private unsubPendingRefunds: (() => void) | null = null;
-  private unsubMyRefunds: (() => void) | null = null;
 
   get canResolveRefunds(): boolean {
     const r = this.authService.userRole;
@@ -222,9 +220,6 @@ export class InboxComponent implements OnInit, OnDestroy {
       if (this.canResolveRefunds) {
         this.unsubPendingRefunds = this.firebaseService.watchPendingRefunds(list => this.pendingRefunds = list);
       }
-      if (this.isDelivery && this.currentUserId) {
-        this.unsubMyRefunds = this.firebaseService.watchMyRefunds(this.currentUserId, list => this.myRefunds = list);
-      }
     }
   }
 
@@ -239,7 +234,6 @@ export class InboxComponent implements OnInit, OnDestroy {
     if (this.unsubCampaigns) this.unsubCampaigns();
     if (this.unsubVehicleType) this.unsubVehicleType();
     if (this.unsubPendingRefunds) this.unsubPendingRefunds();
-    if (this.unsubMyRefunds) this.unsubMyRefunds();
     this.alertSubs.forEach(s => s.unsubscribe());
   }
 

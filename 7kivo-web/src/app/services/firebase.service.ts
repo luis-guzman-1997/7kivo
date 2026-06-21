@@ -809,6 +809,16 @@ export class FirebaseService {
     });
   }
 
+  // Realtime: movimientos de crédito de un delivery (su propio historial)
+  watchMyCreditMovements(uid: string, callback: (items: any[]) => void): () => void {
+    const colRef = collection(this.db, this.orgPath(), 'credit_transactions');
+    return onSnapshot(query(colRef, where('deliveryUid', '==', uid)), (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      callback(list);
+    });
+  }
+
   // Realtime: reembolsos de un delivery (para que vea el resultado)
   watchMyRefunds(uid: string, callback: (reqs: any[]) => void): () => void {
     const colRef = collection(this.db, this.orgPath(), 'refund_requests');
