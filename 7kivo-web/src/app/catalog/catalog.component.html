@@ -45,6 +45,12 @@
 
   </header>
 
+  <!-- ===== AVISO DE LA TIENDA ===== -->
+  <div class="cat-alert" *ngIf="!loading && !error && !orderCode && !checkoutMode && storeAlert">
+    <i class="fas fa-bullhorn"></i>
+    <span>{{ storeAlert }}</span>
+  </div>
+
   <!-- ===== LOADING ===== -->
   <div *ngIf="loading" class="cat-loading">
     <div class="cat-spinner"></div>

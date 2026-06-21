@@ -352,6 +352,31 @@
         </div>
       </div>
 
+      <!-- Aviso de la tienda -->
+      <div class="wd-config-block" *ngIf="selectedFlow">
+        <h3 class="wd-config-block-title"><i class="fas fa-bullhorn"></i> Aviso de la tienda</h3>
+        <p class="wd-color-hint">Mensaje destacado que verán los clientes arriba del catálogo (ej: "🚀 La tienda estará habilitada a partir del 1 de julio").</p>
+        <div class="wd-alert-row">
+          <label class="wd-alert-toggle">
+            <input type="checkbox" [(ngModel)]="storeAlertEnabled" />
+            <span>Mostrar aviso</span>
+          </label>
+        </div>
+        <textarea class="wd-alert-input" rows="2" [(ngModel)]="storeAlert"
+                  placeholder="Ej: 🚀 ¡Inauguramos el 1 de julio! Muy pronto vas a poder pedir aquí."></textarea>
+        <div class="wd-alert-preview" *ngIf="storeAlertEnabled && storeAlert.trim()" [style.background]="storeColor">
+          <i class="fas fa-bullhorn"></i> {{ storeAlert }}
+        </div>
+        <div class="wd-alert-actions">
+          <button class="wd-color-save-btn" (click)="saveStoreAlert()" [disabled]="savingAlert">
+            <i class="fas fa-spinner fa-spin" *ngIf="savingAlert"></i>
+            <i class="fas fa-save" *ngIf="!savingAlert"></i>
+            {{ savingAlert ? 'Guardando...' : 'Guardar aviso' }}
+          </button>
+          <span class="wd-alert-saved" *ngIf="alertSaved"><i class="fas fa-check-circle"></i> Guardado</span>
+        </div>
+      </div>
+
     </div>
 
   </ng-container>

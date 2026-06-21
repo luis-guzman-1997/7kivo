@@ -17,6 +17,7 @@ export class CatalogComponent implements OnInit {
   orgName = '';
   orgLogo = '';
   storeImage = '';
+  storeAlert = '';
   waPhone = '';
   botApiUrl = '';
 
@@ -68,6 +69,7 @@ export class CatalogComponent implements OnInit {
       }
 
       this.storeImage = store.storeImage || '';
+      this.storeAlert = store.storeAlertEnabled ? (store.storeAlert || '') : '';
 
       // Aplicar color de marca como variable CSS
       const color = store.storeColor || '#2e7d32';

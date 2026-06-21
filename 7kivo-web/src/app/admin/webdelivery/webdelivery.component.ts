@@ -58,6 +58,12 @@ export class WebDeliveryComponent implements OnInit {
   colorChanged = false;
   savingColor = false;
 
+  // Aviso/alerta de la tienda (banner para el cliente)
+  storeAlert = '';
+  storeAlertEnabled = false;
+  savingAlert = false;
+  alertSaved = false;
+
   colorPresets = [
     { name: 'Verde',    hex: '#2e7d32' },
     { name: 'Rojo',     hex: '#c62828' },
@@ -125,6 +131,8 @@ export class WebDeliveryComponent implements OnInit {
     this.storeLogoPreview = flow.storeImage || '';
     this.storeColor = flow.storeColor || '#2e7d32';
     this.colorChanged = false;
+    this.storeAlert = flow.storeAlert || '';
+    this.storeAlertEnabled = flow.storeAlertEnabled === true;
     this.storeCategories = flow.storeCategories || [];
     this.newCategoryInput = '';
     await this.loadItems();
@@ -369,6 +377,27 @@ export class WebDeliveryComponent implements OnInit {
       setTimeout(() => this.error = '', 3000);
     } finally {
       this.savingColor = false;
+    }
+  }
+
+  async saveStoreAlert(): Promise<void> {
+    if (!this.selectedFlow) return;
+    this.savingAlert = true;
+    try {
+      const msg = (this.storeAlert || '').trim();
+      await this.firebaseService.updateFlow(this.selectedFlow.id, {
+        storeAlert: msg, storeAlertEnabled: this.storeAlertEnabled && !!msg
+      });
+      this.selectedFlow.storeAlert = msg;
+      this.selectedFlow.storeAlertEnabled = this.storeAlertEnabled && !!msg;
+      await this.firebaseService.syncPublicStore(this.selectedFlow.id);
+      this.alertSaved = true;
+      setTimeout(() => this.alertSaved = false, 2500);
+    } catch {
+      this.error = 'Error al guardar el aviso';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.savingAlert = false;
     }
   }
 

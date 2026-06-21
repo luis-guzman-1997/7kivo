@@ -1874,6 +1874,8 @@ export class FirebaseService {
         storeImage: flow.storeImage || '',
         storeColor: flow.storeColor || '#2e7d32',
         menuLabel:  flow.menuLabel  || flow.name || '',
+        storeAlert: flow.storeAlert || '',
+        storeAlertEnabled: flow.storeAlertEnabled === true,
         webSteps,
         products: items,
         waPhone,
