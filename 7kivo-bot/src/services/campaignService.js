@@ -269,11 +269,12 @@ const runCampaign = async (orgId, campaignId) => {
 
   const useTemplate = campaign.channelMode === 'template' && !!campaign.templateName;
   const hasActionButton = !useTemplate && campaign.actionKeywordEnabled && campaign.actionButtonLabel;
-  let finalMessage = campaign.message;
-  // El opt-out solo se concatena en mensajes libres; en plantillas debe ser un botón aprobado en Meta.
-  if (!useTemplate && !hasActionButton && campaign.includeOptOut) {
-    finalMessage += `\n\n_¿Deseas recibir más información como esta? Responde *SI* o *NO*_`;
-  }
+  const finalMessage = campaign.message;
+  // El opt-out va SIEMPRE en un mensaje APARTE (no concatenado). Solo aplica a
+  // mensajes libres; en plantillas debe ser un botón aprobado en Meta.
+  const optOutText = (!useTemplate && !hasActionButton && campaign.includeOptOut)
+    ? `_¿Deseas recibir más información como esta? Responde *SI* o *NO*_`
+    : null;
 
   const templateComponents = useTemplate ? buildTemplateComponents(campaign) : null;
   const unitCost = unitCostFor(campaign);
@@ -292,6 +293,11 @@ const runCampaign = async (orgId, campaignId) => {
           await sendImageMessage(campaign.imageUrl, finalMessage, phone);
         } else {
           await sendTextMessage(finalMessage, phone);
+        }
+        // Opt-out en mensaje aparte, después del principal.
+        if (optOutText) {
+          await sleep(700);
+          await sendTextMessage(optOutText, phone);
         }
       });
       sentCount++;
