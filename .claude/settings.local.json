@@ -122,7 +122,8 @@
       "Bash(xargs grep -l \"crear\\\\|create\\\\|nueva\\\\|new\")",
       "Bash(sed -i \"s/ && !authService.isConnector//g\" src/app/admin/admin-layout/admin-layout.component.html)",
       "Bash(sed -i \"s/, forbiddenConnections: \\\\['connector'\\\\]//g\" src/app/admin/admin-routing.module.ts)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash([ -f \"$f\" ])"
     ]
   }
 }

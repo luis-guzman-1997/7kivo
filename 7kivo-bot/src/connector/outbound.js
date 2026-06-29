@@ -9,6 +9,15 @@
 
 const { getSock } = require("./sessionManager");
 const { setPendingMenu, getJid } = require("./menuState");
+const { markSent } = require("./botSentTracker");
+
+// Envía por Baileys y registra el id (para distinguir ecos del bot de mensajes
+// manuales del operador en inbound.js).
+const send = async (sock, jid, content) => {
+  const r = await sock.sendMessage(jid, content);
+  markSent(r?.key?.id);
+  return r;
+};
 
 const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
 
@@ -27,7 +36,7 @@ const requireSock = (orgId) => {
 
 const sendText = async (orgId, phone, text) => {
   const sock = requireSock(orgId);
-  return sock.sendMessage(jidFor(orgId, phone), { text: String(text ?? "") });
+  return send(sock, jidFor(orgId, phone), { text: String(text ?? "") });
 };
 
 // Pinta opciones como texto numerado y guarda el mapeo para el puente de menús.
@@ -68,7 +77,7 @@ const sendList = async (orgId, phone, text, sections) => {
 const sendImage = async (orgId, phone, imageUrl, caption) => {
   const sock = requireSock(orgId);
   // Baileys descarga la imagen desde la URL directamente.
-  return sock.sendMessage(jidFor(orgId, phone), {
+  return send(sock, jidFor(orgId, phone), {
     image: { url: imageUrl },
     caption: caption || "",
   });
@@ -76,7 +85,7 @@ const sendImage = async (orgId, phone, imageUrl, caption) => {
 
 const sendAudio = async (orgId, phone, audioUrl) => {
   const sock = requireSock(orgId);
-  return sock.sendMessage(jidFor(orgId, phone), {
+  return send(sock, jidFor(orgId, phone), {
     audio: { url: audioUrl },
     mimetype: "audio/ogg; codecs=opus",
     ptt: true,

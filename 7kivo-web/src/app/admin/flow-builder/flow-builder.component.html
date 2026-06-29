@@ -39,6 +39,18 @@
       </button>
     </div>
 
+    <!-- Conector: leyenda de comandos de control por conversación -->
+    <div class="connector-cmds-help" *ngIf="isConnector && flowsEnabled">
+      <div class="cch-title"><i class="fas fa-hand-paper"></i> Control manual por conversación</div>
+      <p class="cch-intro">Desde tu propio WhatsApp, escribiendo dentro del chat de un cliente:</p>
+      <ul class="cch-list">
+        <li><span class="cch-tag auto">Responder</span> Si le respondes manualmente a un cliente, el bot se pausa en esa conversación y vuelve solo <strong>2 horas después de tu último mensaje</strong> (el tiempo se reinicia cada vez que escribes).</li>
+        <li><span class="cch-tag cmd">/yo</span> El bot deja de responder a ese cliente <strong>de forma permanente</strong>, hasta que tú decidas.</li>
+        <li><span class="cch-tag bot">/bot</span> Le devuelves el control al bot y vuelve a responder automáticamente.</li>
+      </ul>
+      <p class="cch-note"><i class="fas fa-info-circle"></i> Mientras tú atiendes (manual o <b>/yo</b>), los mensajes del cliente no se guardan ni reciben respuesta del bot.</p>
+    </div>
+
     <!-- ========== TABS ========== -->
     <div class="fb-tabs">
       <button class="fb-tab" [class.fb-tab-active]="activeTab === 'menu'" (click)="activeTab = 'menu'">

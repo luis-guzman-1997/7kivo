@@ -14,6 +14,10 @@ const {
   matchMenuChoice,
   setJid,
 } = require("./menuState");
+const { runWithOrgId } = require("../config/requestContext");
+const { wasSentByBot } = require("./botSentTracker");
+
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
 // jid -> phone "limpio" para usar como clave de conversación.
 const jidToPhone = (jid) => {
@@ -124,14 +128,53 @@ const makeFakeRes = () => {
 const handleIncoming = async (orgId, sock, msg) => {
   const remoteJid = msg.key?.remoteJid;
   if (!remoteJid) return;
-  if (msg.key.fromMe) return; // ignorar mensajes propios
   if (remoteJid === "status@broadcast") return;
   if (remoteJid.endsWith("@g.us")) return; // ignorar grupos
   if (remoteJid.endsWith("@newsletter")) return;
 
   const phone = jidToPhone(remoteJid);
   if (!phone) return;
+
+  // ── Mensajes fromMe (el número del conector es compartido) ──
+  if (msg.key.fromMe) {
+    // Eco de un envío del propio bot → ignorar.
+    if (wasSentByBot(msg.key.id)) return;
+    // Mensaje escrito por el OPERADOR desde el teléfono.
+    const { text: opText } = extractContent(msg.message);
+    const cmd = (opText || "").trim().toLowerCase();
+    const { setConversationMode } = require("../services/conversationService");
+    if (cmd === "/yo") {
+      // Toma de control PERMANENTE: el bot no responde hasta /bot.
+      await runWithOrgId(orgId, () => setConversationMode(phone, "admin", { expiresAt: null }));
+    } else if (cmd === "/bot") {
+      // Devuelve el control al bot.
+      await runWithOrgId(orgId, () => setConversationMode(phone, "bot"));
+    } else {
+      // Respuesta manual del operador → toma de control TEMPORAL (2 h).
+      await runWithOrgId(orgId, () => setConversationMode(phone, "admin", { expiresAt: Date.now() + TWO_HOURS_MS }));
+    }
+    return;
+  }
+
   setJid(orgId, phone, remoteJid); // recordar a dónde responder
+
+  // ── Modo de la conversación ──
+  // Si está en 'admin' (/yo permanente o toma temporal vigente): NO guardar ni
+  // responder. Si la toma temporal ya expiró, vuelve a 'bot' y se procesa normal.
+  const dropMessage = await runWithOrgId(orgId, async () => {
+    const { getConversation, setConversationMode } = require("../services/conversationService");
+    const conv = await getConversation(phone);
+    if (conv?.mode === "admin") {
+      const exp = conv.modeExpiresAt;
+      if (exp && Date.now() > exp) {
+        await setConversationMode(phone, "bot"); // expiró la toma temporal
+        return false;
+      }
+      return true; // toma vigente → descartar
+    }
+    return false;
+  });
+  if (dropMessage) return;
 
   const id = msg.key.id || `${Date.now()}`;
   const contactName = msg.pushName || null;

@@ -1732,3 +1732,30 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.25);
 }
 .cfb-switch.on .cfb-knob { transform: translateX(22px); }
+
+/* ── Conector: leyenda de comandos de control ── */
+.connector-cmds-help {
+  margin: -6px 0 18px; padding: 14px 18px;
+  border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;
+}
+.connector-cmds-help .cch-title {
+  font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.connector-cmds-help .cch-title i { color: #2563eb; }
+.connector-cmds-help .cch-intro { font-size: 0.82rem; color: #475569; margin: 0 0 8px; }
+.connector-cmds-help .cch-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.connector-cmds-help .cch-list li { font-size: 0.82rem; color: #334155; line-height: 1.4; }
+.cch-tag {
+  display: inline-block; font-weight: 700; font-size: 0.74rem;
+  padding: 2px 8px; border-radius: 6px; margin-right: 6px;
+  font-family: 'Courier New', monospace;
+}
+.cch-tag.auto { background: #fef3c7; color: #92400e; }
+.cch-tag.cmd { background: #fee2e2; color: #b91c1c; }
+.cch-tag.bot { background: #dcfce7; color: #166534; }
+.connector-cmds-help .cch-note {
+  font-size: 0.78rem; color: #64748b; margin: 10px 0 0;
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.connector-cmds-help .cch-note i { color: #94a3b8; margin-top: 2px; }

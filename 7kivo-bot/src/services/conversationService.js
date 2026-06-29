@@ -69,6 +69,13 @@ const setConversationMode = async (phoneNumber, mode, extra = {}) => {
   if (extra.adminEmail) update.modeAdminEmail = extra.adminEmail;
   if (extra.adminName) update.modeAdminName = extra.adminName;
 
+  // Toma de control TEMPORAL (conector): expira en extra.expiresAt (ms epoch) y
+  // vuelve a 'bot'. Si no se pasa expiresAt (o no es admin) → permanente (null),
+  // que es el comportamiento del takeover desde el panel.
+  update.modeExpiresAt = (mode === "admin" && typeof extra.expiresAt === "number")
+    ? extra.expiresAt
+    : null;
+
   await getConversationRef(cleanPhone).set(update, { merge: true });
 };
 
