@@ -110,6 +110,14 @@ export class SaOrganizationsComponent implements OnInit {
     this.router.navigate([`/superadmin/organizaciones/${org.id}`]);
   }
 
+  // Previsualiza el ID que generará createOrganization (mismo slugify).
+  slugPreview(name: string): string {
+    return (name || '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .substring(0, 30);
+  }
+
   // ── Crear organización ──
   openCreate(): void {
     this.createModalOpen = true;

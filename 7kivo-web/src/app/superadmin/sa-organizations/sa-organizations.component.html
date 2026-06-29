@@ -213,49 +213,66 @@
 
   <!-- Create Organization Modal -->
   <div class="modal-overlay delete-overlay" *ngIf="createModalOpen" (click)="!creating && cancelCreate()">
-    <div class="modal-content import-modal" (click)="$event.stopPropagation()">
-      <div class="delete-header">
-        <i class="fas fa-plus-circle import-icon"></i>
-        <h2>Nueva Organización</h2>
+    <div class="modal-content create-modal" (click)="$event.stopPropagation()">
+      <div class="create-head">
+        <div class="create-head-icon"><i class="fas fa-building-circle-arrow-right"></i></div>
+        <div>
+          <h2>Nueva organización</h2>
+          <p>Configura los datos básicos. El resto se ajusta luego en el detalle.</p>
+        </div>
+        <button class="create-close" (click)="cancelCreate()" [disabled]="creating" title="Cerrar"><i class="fas fa-times"></i></button>
       </div>
-      <div class="delete-body">
-        <div class="load-config-upload">
-          <label class="load-config-label">Nombre de la organización</label>
-          <input type="text" [(ngModel)]="createForm.name" placeholder="Ej: Clínica San José" [disabled]="creating" />
+
+      <div class="create-body">
+        <div class="create-field">
+          <label>Nombre de la organización <span class="req">*</span></label>
+          <input type="text" class="cf-input" [(ngModel)]="createForm.name" placeholder="Ej: Clínica San José" [disabled]="creating" autocomplete="off" />
+          <span class="cf-hint" *ngIf="createForm.name.trim()">ID: <code>{{ slugPreview(createForm.name) }}</code></span>
         </div>
 
-        <div class="load-config-upload">
-          <label class="load-config-label">Rubro</label>
-          <select [(ngModel)]="createForm.industry" [disabled]="creating">
-            <option *ngFor="let ind of industries" [value]="ind.value">{{ ind.label }}</option>
-          </select>
+        <div class="create-field">
+          <label>Rubro</label>
+          <div class="cf-select-wrap">
+            <select class="cf-input" [(ngModel)]="createForm.industry" [disabled]="creating">
+              <option *ngFor="let ind of industries" [value]="ind.value">{{ ind.label }}</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
         </div>
 
-        <div class="load-config-upload">
-          <label class="load-config-label">Canal de WhatsApp</label>
-          <select [(ngModel)]="createForm.connectionType" [disabled]="creating">
-            <option value="meta">Meta Cloud API (oficial)</option>
-            <option value="connector">Conector (vinculación por QR)</option>
-          </select>
-          <p class="import-note">
-            <i class="fas fa-info-circle"></i>
-            <ng-container *ngIf="createForm.connectionType === 'meta'">Requiere token y Phone Number ID de Meta (se configuran después).</ng-container>
-            <ng-container *ngIf="createForm.connectionType === 'connector'">Se vincula escaneando un QR desde el detalle. Sin token de Meta.</ng-container>
-          </p>
+        <div class="create-field">
+          <label>Canal de WhatsApp</label>
+          <div class="channel-cards">
+            <button type="button" class="channel-card" [class.selected]="createForm.connectionType === 'meta'"
+                    (click)="!creating && (createForm.connectionType = 'meta')">
+              <i class="fab fa-whatsapp"></i>
+              <span class="ch-title">Meta Cloud API</span>
+              <span class="ch-desc">Número oficial vía API de Meta. Requiere token y Phone Number ID.</span>
+              <i class="fas fa-circle-check ch-check"></i>
+            </button>
+            <button type="button" class="channel-card" [class.selected]="createForm.connectionType === 'connector'"
+                    (click)="!creating && (createForm.connectionType = 'connector')">
+              <i class="fas fa-qrcode"></i>
+              <span class="ch-title">Conector (QR)</span>
+              <span class="ch-desc">Vincula un WhatsApp normal escaneando un QR. Sin token de Meta.</span>
+              <i class="fas fa-circle-check ch-check"></i>
+            </button>
+          </div>
         </div>
 
-        <div class="load-config-upload">
-          <label class="load-config-label">Descripción <small style="color:#6b7280">(opcional)</small></label>
-          <textarea [(ngModel)]="createForm.description" rows="2" placeholder="Breve descripción" [disabled]="creating"></textarea>
+        <div class="create-field">
+          <label>Descripción <span class="opt">(opcional)</span></label>
+          <textarea class="cf-input" [(ngModel)]="createForm.description" rows="2" placeholder="Breve descripción de la organización" [disabled]="creating"></textarea>
         </div>
 
-        <div class="import-error" *ngIf="createError">
+        <div class="cf-error" *ngIf="createError">
           <i class="fas fa-exclamation-circle"></i> {{ createError }}
         </div>
       </div>
-      <div class="delete-actions">
+
+      <div class="create-actions">
         <button class="btn-cancel" (click)="cancelCreate()" [disabled]="creating">Cancelar</button>
-        <button class="btn-import-confirm" (click)="executeCreate()" [disabled]="creating || !createForm.name.trim()">
+        <button class="btn-create-confirm" (click)="executeCreate()" [disabled]="creating || !createForm.name.trim()">
           <i class="fas fa-spinner fa-spin" *ngIf="creating"></i>
           <i class="fas fa-plus" *ngIf="!creating"></i>
           {{ creating ? 'Creando...' : 'Crear organización' }}

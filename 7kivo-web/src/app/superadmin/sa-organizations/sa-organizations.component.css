@@ -758,3 +758,107 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
 }
 .delete-result h3 { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin: 0; }
 .delete-result p { color: #64748b; font-size: 0.9rem; margin: 0; }
+
+/* ── Create Organization Modal ── */
+.create-modal { max-width: 560px; overflow: hidden; }
+
+.create-head {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+.create-head-icon {
+  width: 44px; height: 44px; flex-shrink: 0;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff; font-size: 1.15rem;
+}
+.create-head h2 { font-size: 1.18rem; font-weight: 700; color: #1e293b; margin: 0 0 3px; }
+.create-head p { font-size: 0.82rem; color: #64748b; margin: 0; line-height: 1.35; }
+.create-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 30px; height: 30px; border: none; border-radius: 8px;
+  background: #f1f5f9; color: #64748b; cursor: pointer; font-size: 0.85rem;
+  transition: background 0.15s;
+}
+.create-close:hover { background: #e2e8f0; color: #334155; }
+
+.create-body { padding: 18px 24px 8px; }
+
+.create-field { margin-bottom: 16px; }
+.create-field > label {
+  display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 7px;
+}
+.create-field .req { color: #ef4444; }
+.create-field .opt { color: #94a3b8; font-weight: 500; }
+
+.cf-input {
+  width: 100%; box-sizing: border-box;
+  padding: 11px 13px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+  font-size: 0.92rem; color: #1e293b; font-family: inherit;
+  background: #fff; transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+}
+.cf-input::placeholder { color: #94a3b8; }
+.cf-input:focus { border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,0.18); }
+.cf-input:disabled { background: #f8fafc; color: #94a3b8; }
+textarea.cf-input { resize: vertical; min-height: 54px; }
+
+.cf-select-wrap { position: relative; }
+.cf-select-wrap select { appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer; }
+.cf-select-wrap i {
+  position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+  color: #94a3b8; font-size: 0.75rem; pointer-events: none;
+}
+
+.cf-hint { display: inline-block; margin-top: 7px; font-size: 0.76rem; color: #94a3b8; }
+.cf-hint code {
+  background: #f1f5f9; color: #6d28d9; padding: 2px 7px; border-radius: 5px;
+  font-size: 0.76rem; font-family: 'Courier New', monospace;
+}
+
+.channel-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.channel-card {
+  position: relative; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 14px 14px 13px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+  background: #fff; font-family: inherit; transition: all 0.15s;
+}
+.channel-card:hover { border-color: #c4b5fd; background: #fafaff; }
+.channel-card > i:first-child { font-size: 1.25rem; color: #7c3aed; }
+.channel-card .ch-title { font-size: 0.9rem; font-weight: 700; color: #1e293b; }
+.channel-card .ch-desc { font-size: 0.76rem; color: #64748b; line-height: 1.35; }
+.channel-card .ch-check {
+  position: absolute; top: 12px; right: 12px; color: #7c3aed;
+  font-size: 1rem; opacity: 0; transition: opacity 0.15s;
+}
+.channel-card.selected {
+  border-color: #7c3aed; background: rgba(124,58,237,0.05);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+}
+.channel-card.selected .ch-check { opacity: 1; }
+
+.cf-error {
+  margin-top: 4px; padding: 10px 13px; border-radius: 9px;
+  background: rgba(239,68,68,0.08); color: #dc2626;
+  font-size: 0.83rem; display: flex; align-items: center; gap: 8px;
+}
+
+.create-actions {
+  padding: 14px 24px 22px; display: flex; gap: 10px; justify-content: flex-end;
+  border-top: 1px solid #f1f5f9; margin-top: 6px;
+}
+.btn-create-confirm {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 22px; border: none; border-radius: 9px; font-size: 0.9rem;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff; cursor: pointer; font-weight: 600; font-family: inherit;
+  transition: opacity 0.2s;
+}
+.btn-create-confirm:hover:not(:disabled) { opacity: 0.9; }
+.btn-create-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@media (max-width: 520px) {
+  .channel-cards { grid-template-columns: 1fr; }
+}
