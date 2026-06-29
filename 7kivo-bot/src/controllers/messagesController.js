@@ -2309,16 +2309,11 @@ const requestMessageMulti = async (req, res) => {
         return res.sendStatus(200);
       }
 
-      // Conector con respuestas automáticas desactivadas: registramos el mensaje
-      // entrante pero NO respondemos nada (las campañas programadas sí salen).
+      // Conector con respuestas automáticas desactivadas: ignoramos por completo
+      // el mensaje entrante (NO se guarda ni se responde). Solo salen campañas.
       const { getConnectorState } = require("../connector/connectionType");
       const _cs = await getConnectorState();
       if (_cs.value === "connector" && _cs.flowsEnabled === false) {
-        const _txt = messageObj?.text?.body?.trim();
-        if (_txt) {
-          const _cn = change?.value?.contacts?.[0]?.profile?.name || null;
-          saveMessage(phoneNumber, _txt, "user", { contactName: _cn }).catch(() => {});
-        }
         return res.sendStatus(200);
       }
 
