@@ -313,6 +313,11 @@ export class CampaignsComponent implements OnInit {
     return this.authService.orgIndustry === 'delivery';
   }
 
+  // Orgs con WhatsApp por conector (Baileys): sin plantillas Meta ni recordatorios.
+  get isConnector(): boolean {
+    return this.authService.connectionType === 'connector';
+  }
+
   // Fecha "hoy" en zona horaria local (El Salvador, UTC-6), igual que el backend
   private todayLocal(): string {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador' }).format(new Date());

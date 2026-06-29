@@ -59,7 +59,7 @@
           <span>WebDelivery</span>
         </a>
 
-        <!-- Bot -->
+        <!-- Bot (no aplica a orgs conector: sin flujos/citas/colecciones) -->
         <ng-container *ngIf="!isDeliveryRole">
           <div class="nav-section-label">Bot</div>
           <a *ngIf="authService.hasPermission('flows')" routerLink="/admin/flujos" routerLinkActive="active" class="nav-item-admin" title="Diseña el menú y los flujos de conversación del bot">
@@ -77,7 +77,7 @@
         </ng-container>
       </ng-container>
 
-      <!-- Configuración (always accessible) -->
+      <!-- Configuración (oculta para orgs conector: solo Dashboard + Campañas) -->
       <ng-container *ngIf="!isDeliveryRole">
         <div class="nav-section-label">Configuración</div>
         <a *ngIf="authService.hasPermission('bot_config')" routerLink="/admin/bot" routerLinkActive="active" class="nav-item-admin" title="Personaliza los mensajes y respuestas automáticas del bot">

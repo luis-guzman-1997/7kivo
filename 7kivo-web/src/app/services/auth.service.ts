@@ -106,6 +106,7 @@ export class AuthService {
   private botBlockedSubject = new BehaviorSubject<boolean>(false);
   private botPausedReasonSubject = new BehaviorSubject<string | null>(null);
   private orgIndustrySubject = new BehaviorSubject<string>('general');
+  private connectionTypeSubject = new BehaviorSubject<'meta' | 'connector'>('meta');
   private extraPermissionsSubject = new BehaviorSubject<string[]>([]);
   private revokedPermissionsSubject = new BehaviorSubject<string[]>([]);
   private localSessionToken = '';
@@ -211,6 +212,7 @@ export class AuthService {
         this.botBlockedSubject.next(orgDoc?.botBlocked === true);
         this.botPausedReasonSubject.next(orgDoc?.botPausedReason || null);
         this.orgIndustrySubject.next(orgConfig?.industry || orgDoc?.industry || 'general');
+        this.connectionTypeSubject.next(orgDoc?.connectionType === 'connector' ? 'connector' : 'meta');
         this.isAdminSubject.next(true);
         this.startSessionWatch(user.uid).catch(err => console.warn('[Auth] Session watch error:', err));
       } else {
@@ -410,6 +412,17 @@ export class AuthService {
     return this.orgIndustrySubject.value;
   }
 
+  connectionType$ = this.connectionTypeSubject.asObservable();
+  get connectionType(): 'meta' | 'connector' {
+    return this.connectionTypeSubject.value;
+  }
+
+  // Getter booleano para usar en plantillas (evita comparaciones de literales
+  // que el verificador de plantillas de Angular marca como TS2367).
+  get isConnector(): boolean {
+    return this.connectionTypeSubject.value === 'connector';
+  }
+
   markSetupComplete(): void {
     this.setupCompleteSubject.next(true);
   }
@@ -449,6 +462,7 @@ export class AuthService {
       this.botBlockedSubject.next(orgDoc?.botBlocked === true);
       this.botPausedReasonSubject.next(orgDoc?.botPausedReason || null);
       this.orgIndustrySubject.next(orgConfig?.industry || orgDoc?.industry || 'general');
+      this.connectionTypeSubject.next(orgDoc?.connectionType === 'connector' ? 'connector' : 'meta');
     } catch (err) {
       console.error('Error setting SA org context:', err);
     }
@@ -459,5 +473,6 @@ export class AuthService {
     this.orgNameSubject.next('');
     this.orgLogoSubject.next('');
     this.botApiUrlSubject.next('');
+    this.connectionTypeSubject.next('meta');
   }
 }

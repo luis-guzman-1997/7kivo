@@ -166,6 +166,15 @@ service cloud.firestore {
       }
     }
 
+    // ---------------- Índice público de slugs de login ----------------
+    // La página /admin/login/:slug se abre SIN sesión y necesita resolver
+    // slug → orgId (nombre/logo). Por eso este doc debe ser legible por todos.
+    // La escritura la hace el panel (superadmin/gerente) al guardar el slug.
+    match /orgPublicSlugs/{slug} {
+      allow read:  if true;
+      allow write: if isSignedIn();
+    }
+
     // ---------------- Plataforma (solo superadmin) ----------------
     match /platformBilling/{doc=**} {
       allow read, write: if isSuperAdmin();

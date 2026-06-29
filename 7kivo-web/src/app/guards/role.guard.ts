@@ -12,6 +12,7 @@ export class RoleGuard implements CanActivate {
     const requiredPermission = route.data['permission'] as string;
     const requiredIndustry = route.data['industry'] as string | undefined;
     const forbiddenRoles = (route.data['forbiddenRoles'] as string[]) || [];
+    const forbiddenConnections = (route.data['forbiddenConnections'] as string[]) || [];
 
     return this.authService.loading$.pipe(
       filter(loading => !loading),
@@ -27,6 +28,10 @@ export class RoleGuard implements CanActivate {
           return false;
         }
         if (forbiddenRoles.includes(this.authService.userRole)) {
+          this.router.navigate(['/admin']);
+          return false;
+        }
+        if (forbiddenConnections.includes(this.authService.connectionType)) {
           this.router.navigate(['/admin']);
           return false;
         }

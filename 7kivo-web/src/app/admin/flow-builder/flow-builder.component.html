@@ -24,6 +24,21 @@
       </div>
     </div>
 
+    <!-- Conector: flujos opcionales -->
+    <div class="connector-flows-banner" *ngIf="isConnector" [class.off]="!flowsEnabled">
+      <div class="cfb-icon"><i class="fas" [class.fa-robot]="flowsEnabled" [class.fa-comment-slash]="!flowsEnabled"></i></div>
+      <div class="cfb-text">
+        <strong>Respuestas automáticas del bot</strong>
+        <span *ngIf="flowsEnabled">Activadas: el bot responde con tu menú y flujos cuando un cliente escribe.</span>
+        <span *ngIf="!flowsEnabled">Desactivadas: el bot <b>no responde</b> a los mensajes entrantes. Solo se envían tus campañas programadas.</span>
+      </div>
+      <button class="cfb-switch" [class.on]="flowsEnabled" [disabled]="savingFlowsToggle"
+              (click)="setFlowsEnabled(!flowsEnabled)" [attr.aria-pressed]="flowsEnabled"
+              [title]="flowsEnabled ? 'Desactivar respuestas automáticas' : 'Activar respuestas automáticas'">
+        <span class="cfb-knob"></span>
+      </button>
+    </div>
+
     <!-- ========== TABS ========== -->
     <div class="fb-tabs">
       <button class="fb-tab" [class.fb-tab-active]="activeTab === 'menu'" (click)="activeTab = 'menu'">

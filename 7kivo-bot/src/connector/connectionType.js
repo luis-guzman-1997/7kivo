@@ -15,24 +15,31 @@ const resolveOrgId = () => {
   return process.env.ORG_ID || process.env.SCHOOL_ID || "_default";
 };
 
-const getConnectionType = async (orgId) => {
+// Estado del canal de la org, cacheado: { value: 'meta'|'connector', flowsEnabled }.
+// flowsEnabled solo es relevante para connector (default true).
+const getConnectorState = async (orgId) => {
   const id = orgId || resolveOrgId();
   const cached = cache[id];
-  if (cached && Date.now() - cached.ts < TTL) return cached.value;
+  if (cached && Date.now() - cached.ts < TTL) return cached;
 
   let value = "meta";
+  let flowsEnabled = true;
   try {
     const { getWhatsAppConfig } = require("../services/botMessagesService");
     const wa = await getWhatsAppConfig();
     if (wa?.connectionType === "connector") value = "connector";
+    if (wa?.flowsEnabled === false) flowsEnabled = false;
   } catch (e) {
-    // ante la duda, Meta (comportamiento actual)
+    // ante la duda, Meta con flujos activos (comportamiento actual)
   }
-  cache[id] = { value, ts: Date.now() };
-  return value;
+  const state = { value, flowsEnabled, ts: Date.now() };
+  cache[id] = state;
+  return state;
 };
 
-const isConnector = async (orgId) => (await getConnectionType(orgId)) === "connector";
+const getConnectionType = async (orgId) => (await getConnectorState(orgId)).value;
+
+const isConnector = async (orgId) => (await getConnectorState(orgId)).value === "connector";
 
 // Invalida el caché (al cambiar el tipo desde el panel).
 const invalidate = (orgId) => {
@@ -40,4 +47,4 @@ const invalidate = (orgId) => {
   else Object.keys(cache).forEach((k) => delete cache[k]);
 };
 
-module.exports = { getConnectionType, isConnector, invalidate };
+module.exports = { getConnectionType, getConnectorState, isConnector, invalidate };

@@ -261,8 +261,8 @@
           <input type="text" [(ngModel)]="form.name" placeholder="Ej: Promoción de marzo" maxlength="100" />
         </div>
 
-        <!-- Channel mode -->
-        <div class="fp-group">
+        <!-- Channel mode (solo Meta: el conector siempre envía mensaje libre) -->
+        <div class="fp-group" *ngIf="!isConnector">
           <label>Tipo de mensaje</label>
           <div class="recipient-source-tabs">
             <button [class.rsource-active]="form.channelMode === 'freeform'"
@@ -283,6 +283,10 @@
             Las plantillas aprobadas se pueden enviar en cualquier momento.
           </p>
         </div>
+        <p class="channel-hint channel-hint-ok" *ngIf="isConnector">
+          <i class="fas fa-check-circle"></i>
+          Conector: puedes enviar mensajes libres a tu lista en cualquier momento.
+        </p>
 
         <!-- Message (free-form) -->
         <div class="fp-group" *ngIf="form.channelMode === 'freeform'">
@@ -429,7 +433,7 @@
                 <span>Cada X horas</span>
               </div>
             </label>
-            <label class="type-opt type-opt-reminder" [class.type-selected]="form.type === 'reminder'">
+            <label class="type-opt type-opt-reminder" *ngIf="!isConnector" [class.type-selected]="form.type === 'reminder'">
               <input type="radio" [(ngModel)]="form.type" value="reminder" name="campType"
                 (change)="form.recipientSource = 'collection'" />
               <div class="type-opt-body">

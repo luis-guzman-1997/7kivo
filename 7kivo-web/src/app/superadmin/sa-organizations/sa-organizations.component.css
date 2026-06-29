@@ -760,13 +760,20 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
 .delete-result p { color: #64748b; font-size: 0.9rem; margin: 0; }
 
 /* ── Create Organization Modal ── */
-.create-modal { max-width: 560px; overflow: hidden; }
+.create-modal {
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* el cuerpo interno hace scroll, no el contenedor */
+}
 
 .create-head {
   display: flex; align-items: flex-start; gap: 14px;
   padding: 22px 24px 18px;
   border-bottom: 1px solid #f1f5f9;
   position: relative;
+  flex-shrink: 0;
 }
 .create-head-icon {
   width: 44px; height: 44px; flex-shrink: 0;
@@ -785,7 +792,7 @@ td { padding: 14px 16px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color
 }
 .create-close:hover { background: #e2e8f0; color: #334155; }
 
-.create-body { padding: 18px 24px 8px; }
+.create-body { padding: 18px 24px 8px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
 
 .create-field { margin-bottom: 16px; }
 .create-field > label {
@@ -847,7 +854,9 @@ textarea.cf-input { resize: vertical; min-height: 54px; }
 
 .create-actions {
   padding: 14px 24px 22px; display: flex; gap: 10px; justify-content: flex-end;
-  border-top: 1px solid #f1f5f9; margin-top: 6px;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  background: #fff;
 }
 .btn-create-confirm {
   display: inline-flex; align-items: center; gap: 8px;

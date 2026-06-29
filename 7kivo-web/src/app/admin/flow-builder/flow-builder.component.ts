@@ -245,6 +245,30 @@ export class FlowBuilderComponent implements OnInit {
     this.planLimit = this.authService.getPlanLimits().flows;
   }
 
+  // ── Flujos opcionales (exclusivo de orgs conector) ──
+  flowsEnabled = true;       // si false: el bot NO responde mensajes entrantes
+  savingFlowsToggle = false;
+
+  get isConnector(): boolean {
+    return this.authService.isConnector;
+  }
+
+  async setFlowsEnabled(enabled: boolean): Promise<void> {
+    if (this.savingFlowsToggle) return;
+    this.savingFlowsToggle = true;
+    try {
+      await this.firebaseService.saveWhatsAppConfigByOrgId(
+        this.firebaseService.getOrgId(),
+        { flowsEnabled: enabled }
+      );
+      this.flowsEnabled = enabled;
+    } catch (e) {
+      console.error('Error guardando flowsEnabled:', e);
+    } finally {
+      this.savingFlowsToggle = false;
+    }
+  }
+
   get canCreateFlow(): boolean {
     return this.flows.length < this.planLimit;
   }
@@ -284,6 +308,10 @@ export class FlowBuilderComponent implements OnInit {
       ]);
       this.flows = flows;
       this.collectionDefs = colDefs;
+      if (this.authService.isConnector) {
+        const wa = await this.firebaseService.getWhatsAppConfigByOrgId(this.firebaseService.getOrgId());
+        this.flowsEnabled = wa?.flowsEnabled !== false; // default: activado
+      }
       if (menuConfig) {
         this.menuConfig = {
           greeting: menuConfig.greeting || '',
