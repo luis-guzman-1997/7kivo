@@ -89,6 +89,7 @@ export class FirebaseService {
     industry?: string;
     description?: string;
     plan?: string;
+    connectionType?: 'meta' | 'connector';
   }): Promise<string> {
     const orgId = orgData.name.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -96,6 +97,7 @@ export class FirebaseService {
       .substring(0, 30);
 
     const orgName = orgData.name;
+    const connectionType = orgData.connectionType === 'connector' ? 'connector' : 'meta';
     const orgDocRef = doc(this.db, 'organizations', orgId);
     const ts = serverTimestamp;
     const orgPath = `organizations/${orgId}`;
@@ -104,8 +106,17 @@ export class FirebaseService {
       name: orgName,
       industry: orgData.industry || 'general',
       description: orgData.description || '',
+      // Canal de WhatsApp: 'meta' (Cloud API oficial) o 'connector' (Baileys/QR).
+      // Espejado aquí en el doc raíz para que el bot lo consulte con índice simple.
+      connectionType,
       createdAt: ts(),
       active: true
+    });
+
+    // Config: whatsapp — guarda el canal desde el inicio (el bot lo lee aquí).
+    await setDoc(doc(this.db, orgPath, 'config', 'whatsapp'), {
+      connectionType,
+      createdAt: ts()
     });
 
     // Config: general

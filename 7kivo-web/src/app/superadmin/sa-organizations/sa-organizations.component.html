@@ -5,6 +5,9 @@
       <p class="page-subtitle">{{ organizations.length }} organizaciones registradas</p>
     </div>
     <div class="page-header-actions">
+      <button class="btn-header-export" (click)="openCreate()" title="Crear una nueva organización">
+        <i class="fas fa-plus"></i> Nueva organización
+      </button>
       <button class="btn-header-import" (click)="openImport()" title="Importar organizaciones desde archivo JSON">
         <i class="fas fa-file-import"></i> Importar
       </button>
@@ -205,6 +208,59 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Create Organization Modal -->
+  <div class="modal-overlay delete-overlay" *ngIf="createModalOpen" (click)="!creating && cancelCreate()">
+    <div class="modal-content import-modal" (click)="$event.stopPropagation()">
+      <div class="delete-header">
+        <i class="fas fa-plus-circle import-icon"></i>
+        <h2>Nueva Organización</h2>
+      </div>
+      <div class="delete-body">
+        <div class="load-config-upload">
+          <label class="load-config-label">Nombre de la organización</label>
+          <input type="text" [(ngModel)]="createForm.name" placeholder="Ej: Clínica San José" [disabled]="creating" />
+        </div>
+
+        <div class="load-config-upload">
+          <label class="load-config-label">Rubro</label>
+          <select [(ngModel)]="createForm.industry" [disabled]="creating">
+            <option *ngFor="let ind of industries" [value]="ind.value">{{ ind.label }}</option>
+          </select>
+        </div>
+
+        <div class="load-config-upload">
+          <label class="load-config-label">Canal de WhatsApp</label>
+          <select [(ngModel)]="createForm.connectionType" [disabled]="creating">
+            <option value="meta">Meta Cloud API (oficial)</option>
+            <option value="connector">Conector (vinculación por QR)</option>
+          </select>
+          <p class="import-note">
+            <i class="fas fa-info-circle"></i>
+            <ng-container *ngIf="createForm.connectionType === 'meta'">Requiere token y Phone Number ID de Meta (se configuran después).</ng-container>
+            <ng-container *ngIf="createForm.connectionType === 'connector'">Se vincula escaneando un QR desde el detalle. Sin token de Meta.</ng-container>
+          </p>
+        </div>
+
+        <div class="load-config-upload">
+          <label class="load-config-label">Descripción <small style="color:#6b7280">(opcional)</small></label>
+          <textarea [(ngModel)]="createForm.description" rows="2" placeholder="Breve descripción" [disabled]="creating"></textarea>
+        </div>
+
+        <div class="import-error" *ngIf="createError">
+          <i class="fas fa-exclamation-circle"></i> {{ createError }}
+        </div>
+      </div>
+      <div class="delete-actions">
+        <button class="btn-cancel" (click)="cancelCreate()" [disabled]="creating">Cancelar</button>
+        <button class="btn-import-confirm" (click)="executeCreate()" [disabled]="creating || !createForm.name.trim()">
+          <i class="fas fa-spinner fa-spin" *ngIf="creating"></i>
+          <i class="fas fa-plus" *ngIf="!creating"></i>
+          {{ creating ? 'Creando...' : 'Crear organización' }}
+        </button>
+      </div>
     </div>
   </div>
 

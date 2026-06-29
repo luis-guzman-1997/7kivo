@@ -5,6 +5,7 @@ const { router } = require("./routes/route");
 const { startInactivityMonitor } = require("./services/inactivityService");
 const { startCampaignScheduler } = require("./services/campaignService");
 const { startUnattendedScheduler } = require("./services/unattendedService");
+const { rehydrateAll } = require("./connector/sessionManager");
 
 const PORT = process.env.PORT || 3005;
 const app = express();
@@ -18,5 +19,7 @@ app.listen(PORT, () => {
   startInactivityMonitor();
   startCampaignScheduler();
   startUnattendedScheduler();
+  // Reconecta las sesiones conector (Baileys) persistidas en Firestore.
+  rehydrateAll();
 });
 

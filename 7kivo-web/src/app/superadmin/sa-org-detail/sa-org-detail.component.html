@@ -345,10 +345,44 @@
       </div>
 
       <div *ngIf="!editingWA">
-        <div class="wa-config-status" [class.wa-ok]="orgWhatsApp?.token" [class.wa-empty]="!orgWhatsApp?.token">
-          <i class="fas" [class.fa-check-circle]="orgWhatsApp?.token" [class.fa-exclamation-circle]="!orgWhatsApp?.token"></i>
-          {{ orgWhatsApp?.token ? 'WhatsApp configurado' : 'Sin configurar — el bot no puede recibir mensajes' }}
+        <div class="wa-config-status" [class.wa-ok]="isConnector ? connector.status === 'connected' : orgWhatsApp?.token" [class.wa-empty]="isConnector ? connector.status !== 'connected' : !orgWhatsApp?.token">
+          <i class="fas" [class.fa-check-circle]="isConnector ? connector.status === 'connected' : orgWhatsApp?.token" [class.fa-exclamation-circle]="isConnector ? connector.status !== 'connected' : !orgWhatsApp?.token"></i>
+          <ng-container *ngIf="!isConnector">{{ orgWhatsApp?.token ? 'WhatsApp configurado (Meta Cloud API)' : 'Sin configurar — el bot no puede recibir mensajes' }}</ng-container>
+          <ng-container *ngIf="isConnector">Canal: Conector (QR) — {{ connectorStatusLabel }}</ng-container>
         </div>
+
+        <!-- Panel de vinculación del conector -->
+        <div *ngIf="isConnector" class="connector-panel">
+          <div class="connector-info" *ngIf="connector.status === 'connected'">
+            <i class="fas fa-circle-check"></i>
+            <div>
+              <strong>WhatsApp vinculado</strong>
+              <div class="mono" *ngIf="connector.me?.id">{{ connector.me?.id }}</div>
+            </div>
+            <button class="btn-edit-sm danger" (click)="unlinkConnector()" [disabled]="connectorLoading">
+              <i class="fas fa-link-slash"></i> Desvincular
+            </button>
+          </div>
+
+          <div class="connector-qr" *ngIf="connector.status === 'qr' && connector.qr">
+            <p>Abre WhatsApp en el teléfono → <strong>Dispositivos vinculados</strong> → <strong>Vincular un dispositivo</strong> y escanea:</p>
+            <img [src]="connector.qr" alt="Código QR de WhatsApp" />
+            <p class="connector-hint">El código se actualiza solo. Estado: {{ connectorStatusLabel }}</p>
+          </div>
+
+          <div class="connector-actions" *ngIf="connector.status !== 'connected'">
+            <button class="btn-test-api" (click)="startConnectorLink()" [disabled]="connectorLoading || !orgDetail?.botApiUrl">
+              <i class="fas" [class.fa-spinner]="connectorLoading" [class.fa-spin]="connectorLoading" [class.fa-qrcode]="!connectorLoading"></i>
+              {{ connector.status === 'qr' ? 'Regenerar QR' : 'Vincular WhatsApp' }}
+            </button>
+            <button class="btn-test-api" (click)="refreshConnectorStatus()" [disabled]="!orgDetail?.botApiUrl">
+              <i class="fas fa-rotate"></i> Actualizar estado
+            </button>
+            <span class="api-test-result error" *ngIf="connector.error"><i class="fas fa-times-circle"></i> {{ connector.error }}</span>
+            <span class="connector-hint" *ngIf="!orgDetail?.botApiUrl">Configura la URL del bot (botón Editar) para poder vincular.</span>
+          </div>
+        </div>
+
         <div class="detail-grid mt-16">
           <div class="detail-item full">
             <label>URL del Bot (API)</label>
@@ -364,34 +398,60 @@
               {{ apiTestResult.ok ? 'API responde correctamente' : apiTestResult.error }}
             </span>
           </div>
-          <div class="detail-item full">
-            <label>Access Token</label>
-            <span class="mono">{{ maskToken(orgWhatsApp?.token) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Phone Number ID</label>
-            <span class="mono">{{ orgWhatsApp?.phoneNumberId || '—' }}</span>
-          </div>
+          <ng-container *ngIf="!isConnector">
+            <div class="detail-item full">
+              <label>Access Token</label>
+              <span class="mono">{{ maskToken(orgWhatsApp?.token) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Phone Number ID</label>
+              <span class="mono">{{ orgWhatsApp?.phoneNumberId || '—' }}</span>
+            </div>
+          </ng-container>
           <div class="detail-item">
             <label>Número WhatsApp del Bot</label>
             <span class="mono">{{ orgDetail?.waPhone || '—' }}</span>
           </div>
-          <div class="detail-item">
-            <label>Verify Token</label>
-            <span class="mono">{{ orgWhatsApp?.verifyToken || '—' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>WABA ID <small style="color:#6b7280">(plantillas)</small></label>
-            <span class="mono">{{ orgWhatsApp?.wabaId || '—' }}</span>
-          </div>
+          <ng-container *ngIf="!isConnector">
+            <div class="detail-item">
+              <label>Verify Token</label>
+              <span class="mono">{{ orgWhatsApp?.verifyToken || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>WABA ID <small style="color:#6b7280">(plantillas)</small></label>
+              <span class="mono">{{ orgWhatsApp?.wabaId || '—' }}</span>
+            </div>
+          </ng-container>
         </div>
       </div>
 
       <div *ngIf="editingWA" class="edit-form">
         <div class="form-group">
+          <label>Canal de WhatsApp</label>
+          <select [(ngModel)]="editWA.connectionType">
+            <option value="meta">Meta Cloud API (oficial)</option>
+            <option value="connector">Conector (vinculación por QR)</option>
+          </select>
+          <small style="color:#6b7280">
+            <strong>Meta</strong>: número oficial conectado a la API de Meta.
+            <strong>Conector</strong>: vincula un WhatsApp normal escaneando un QR (no requiere token de Meta).
+          </small>
+        </div>
+        <div class="form-group">
           <label>URL del Bot (API)</label>
           <input type="text" [(ngModel)]="editWA.botApiUrl" placeholder="https://tu-bot.com" />
         </div>
+
+        <div class="connector-note" *ngIf="editWA.connectionType === 'connector'">
+          <i class="fas fa-circle-info"></i>
+          <div>
+            En modo <strong>Conector</strong> no necesitas token ni Phone Number ID de Meta.
+            Guarda la configuración y luego pulsa <strong>Vincular WhatsApp</strong> para escanear el QR.
+            Los menús de botones se muestran como opciones numeradas y las plantillas/campañas de Meta no están disponibles.
+          </div>
+        </div>
+
+        <ng-container *ngIf="editWA.connectionType !== 'connector'">
         <div class="form-group">
           <label>Access Token (WhatsApp Cloud API)</label>
           <textarea [(ngModel)]="editWA.token" rows="3" placeholder="EAAxxxxxxx..."></textarea>
@@ -439,13 +499,14 @@
           <label>App ID de Meta <small style="color:#6b7280">(opcional — solo para plantillas con imagen de encabezado)</small></label>
           <input type="text" [(ngModel)]="editWA.appId" placeholder="1234567890123456" />
         </div>
+        </ng-container>
         <div class="form-group">
           <label>Número WhatsApp del Bot <small style="color:#6b7280">(sin +, ej: 50370123456)</small></label>
           <input type="text" [(ngModel)]="editWA.waPhone" placeholder="50370123456" />
         </div>
 
-        <!-- Crear plantilla de WhatsApp -->
-        <div class="create-tpl-section">
+        <!-- Crear plantilla de WhatsApp (solo Meta) -->
+        <div class="create-tpl-section" *ngIf="editWA.connectionType !== 'connector'">
           <button type="button" class="btn-toggle-tpl" *ngIf="!showCreateTemplate" (click)="openCreateTemplate()">
             <i class="fas fa-plus-circle"></i> Crear plantilla de WhatsApp
           </button>

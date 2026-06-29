@@ -20,6 +20,7 @@ const {
 
 const { setUserPassword, sendCampaign, listCampaignTemplates, testWhatsAppConfig, createTemplate, deleteTemplate } = require("../controllers/adminController");
 const { getCatalogData, createOrder } = require("../controllers/catalogController");
+const { startConnector, connectorStatus, logoutConnector } = require("../controllers/connectorController");
 
 const { getOrgId } = require("../config/orgConfig");
 const { runWithOrgId } = require("../config/requestContext");
@@ -67,6 +68,11 @@ router.post("/api/send-message", withOrgContext(sendAdminMessage));
 router.post("/api/send-image", withOrgContext(sendAdminImage));
 router.post("/api/take-control", withOrgContext(takeControl));
 router.post("/api/release-to-bot", withOrgContext(releaseToBot));
+
+// Connector (Baileys) — vinculación de WhatsApp por QR
+router.post("/api/:orgId/connector/start", startConnector);
+router.get("/api/:orgId/connector/status", connectorStatus);
+router.post("/api/:orgId/connector/logout", logoutConnector);
 
 // Catalog (public — no auth)
 router.get("/api/:orgId/catalog/:flowId", withOrgContext(getCatalogData));

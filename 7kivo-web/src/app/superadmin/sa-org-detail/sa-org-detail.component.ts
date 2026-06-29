@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FirebaseService } from '../../services/firebase.service';
 import { AuthService } from '../../services/auth.service';
@@ -8,7 +8,12 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './sa-org-detail.component.html',
   styleUrls: ['./sa-org-detail.component.css']
 })
-export class SaOrgDetailComponent implements OnInit {
+export class SaOrgDetailComponent implements OnInit, OnDestroy {
+  // ── Conector (Baileys/QR) ──
+  connector: { status: string; qr: string | null; me: any; error?: string | null } =
+    { status: 'disconnected', qr: null, me: null, error: null };
+  connectorLoading = false;
+  private connectorPolling: any = null;
   selectedOrg: any = null;
   orgDetail: any = null;
   orgWhatsApp: any = null;
@@ -206,6 +211,10 @@ export class SaOrgDetailComponent implements OnInit {
       this.orgGoogleCalendar = gc || {};
       this.orgAdmins = admins;
       this.logoPreview = this.orgDetail.orgLogo || '';
+      // Si la org opera por conector, consulta el estado de la sesión.
+      if ((this.orgWhatsApp?.connectionType || 'meta') === 'connector') {
+        this.refreshConnectorStatus();
+      }
       this.editAudio = {
         enabled: this.orgDetail.deliveryAudioEnabled === true,
         maxSeconds: this.orgDetail.deliveryAudioMaxSeconds || 30
@@ -607,9 +616,108 @@ export class SaOrgDetailComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.stopConnectorPolling();
+  }
+
+  // ── Conector (Baileys) ──
+  get isConnector(): boolean {
+    return (this.orgWhatsApp?.connectionType || 'meta') === 'connector';
+  }
+
+  get connectorStatusLabel(): string {
+    switch (this.connector.status) {
+      case 'connected': return 'Conectado';
+      case 'qr': return 'Escanea el código QR';
+      case 'connecting': return 'Conectando…';
+      case 'logged_out': return 'Desvinculado';
+      default: return 'Desconectado';
+    }
+  }
+
+  private connectorBase(): string | null {
+    const url = (this.orgDetail?.botApiUrl || '').trim();
+    return url ? url.replace(/\/$/, '') : null;
+  }
+
+  async refreshConnectorStatus(): Promise<void> {
+    const base = this.connectorBase();
+    if (!base || !this.selectedOrg) return;
+    try {
+      const res = await fetch(`${base}/api/${this.selectedOrg.id}/connector/status`);
+      const data = await res.json();
+      this.connector = {
+        status: data.status || 'disconnected',
+        qr: data.qr || null,
+        me: data.me || null,
+        error: data.lastError || null
+      };
+      if (this.connector.status === 'connected') this.stopConnectorPolling();
+    } catch {
+      this.connector = { ...this.connector, error: 'No se pudo contactar al bot' };
+    }
+  }
+
+  async startConnectorLink(): Promise<void> {
+    const base = this.connectorBase();
+    if (!base || !this.selectedOrg) {
+      this.showNotice('Configura y guarda primero la URL del bot');
+      return;
+    }
+    this.connectorLoading = true;
+    try {
+      const res = await fetch(`${base}/api/${this.selectedOrg.id}/connector/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      this.connector = {
+        status: data.status || 'connecting',
+        qr: data.qr || null,
+        me: data.me || null,
+        error: data.lastError || null
+      };
+      this.startConnectorPolling();
+    } catch {
+      this.connector = { ...this.connector, error: 'No se pudo iniciar la vinculación' };
+    } finally {
+      this.connectorLoading = false;
+    }
+  }
+
+  private startConnectorPolling(): void {
+    this.stopConnectorPolling();
+    this.connectorPolling = setInterval(() => this.refreshConnectorStatus(), 2500);
+  }
+
+  private stopConnectorPolling(): void {
+    if (this.connectorPolling) {
+      clearInterval(this.connectorPolling);
+      this.connectorPolling = null;
+    }
+  }
+
+  async unlinkConnector(): Promise<void> {
+    const base = this.connectorBase();
+    if (!base || !this.selectedOrg) return;
+    if (!confirm('¿Desvincular el WhatsApp de esta organización? Tendrás que escanear el QR de nuevo.')) return;
+    this.connectorLoading = true;
+    try {
+      await fetch(`${base}/api/${this.selectedOrg.id}/connector/logout`, { method: 'POST' });
+      this.connector = { status: 'logged_out', qr: null, me: null, error: null };
+      this.stopConnectorPolling();
+    } catch {
+      /* best effort */
+    } finally {
+      this.connectorLoading = false;
+    }
+  }
+
   // ── WhatsApp Config ──
   startEditWA(): void {
     this.editWA = {
+      connectionType: this.orgWhatsApp?.connectionType || 'meta',
       token: this.orgWhatsApp?.token || '',
       phoneNumberId: this.orgWhatsApp?.phoneNumberId || '',
       verifyToken: this.orgWhatsApp?.verifyToken || '',
@@ -813,23 +921,29 @@ export class SaOrgDetailComponent implements OnInit {
   async saveWA(): Promise<void> {
     if (!this.selectedOrg) return;
     this.saving = true;
+    const connectionType = this.editWA.connectionType === 'connector' ? 'connector' : 'meta';
     try {
       await this.firebaseService.saveWhatsAppConfigByOrgId(this.selectedOrg.id, {
+        connectionType,
         token: this.editWA.token,
         phoneNumberId: this.editWA.phoneNumberId,
         verifyToken: this.editWA.verifyToken,
         wabaId: (this.editWA.wabaId || '').trim(),
         appId: (this.editWA.appId || '').trim()
       });
+      // Espejar el canal en el doc raíz (para rehidratación/listado del bot).
+      await this.firebaseService.updateOrganization(this.selectedOrg.id, { connectionType });
+      this.selectedOrg.connectionType = connectionType;
       if (this.editWA.botApiUrl !== undefined) {
         const waPhone = (this.editWA.waPhone || '').replace(/\D/g, '');
         await this.firebaseService.saveOrgConfigByOrgId(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl, waPhone });
         await this.firebaseService.savePublicOrgInfo(this.selectedOrg.id, { botApiUrl: this.editWA.botApiUrl, waPhone });
         this.orgDetail = { ...this.orgDetail, botApiUrl: this.editWA.botApiUrl, waPhone };
       }
-      this.orgWhatsApp = { ...this.orgWhatsApp, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken, wabaId: (this.editWA.wabaId || '').trim(), appId: (this.editWA.appId || '').trim() };
+      this.orgWhatsApp = { ...this.orgWhatsApp, connectionType, token: this.editWA.token, phoneNumberId: this.editWA.phoneNumberId, verifyToken: this.editWA.verifyToken, wabaId: (this.editWA.wabaId || '').trim(), appId: (this.editWA.appId || '').trim() };
       this.editingWA = false;
       this.showNotice('WhatsApp configurado');
+      if (connectionType === 'connector') this.refreshConnectorStatus();
     } catch (err) {
       console.error('Error saving WA config:', err);
     } finally {
@@ -861,7 +975,12 @@ export class SaOrgDetailComponent implements OnInit {
           this.firebaseService.getOrgConfigByOrgId(org.id),
           this.firebaseService.getWhatsAppConfigByOrgId(org.id)
         ]);
-        const waReady = !!(config?.botApiUrl && wa?.token && wa?.phoneNumberId);
+        const ct = wa?.connectionType || 'meta';
+        // Conector: basta la URL del bot (la sesión QR se vincula aparte).
+        // Meta: requiere token + phoneNumberId.
+        const waReady = ct === 'connector'
+          ? !!config?.botApiUrl
+          : !!(config?.botApiUrl && wa?.token && wa?.phoneNumberId);
         if (!waReady) {
           this.botToggleError = org.id;
           setTimeout(() => { this.botToggleError = null; }, 4000);

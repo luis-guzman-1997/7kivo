@@ -39,6 +39,25 @@ export class SaOrganizationsComponent implements OnInit {
   slugSaving = false;
   slugError = '';
 
+  // ── Crear organización ──
+  createModalOpen = false;
+  createForm: { name: string; industry: string; description: string; connectionType: 'meta' | 'connector' } =
+    { name: '', industry: 'general', description: '', connectionType: 'meta' };
+  creating = false;
+  createError = '';
+  industries = [
+    { value: 'general', label: 'General' },
+    { value: 'education', label: 'Educación' },
+    { value: 'healthcare', label: 'Salud' },
+    { value: 'retail', label: 'Comercio' },
+    { value: 'services', label: 'Servicios' },
+    { value: 'restaurant', label: 'Restaurante' },
+    { value: 'realestate', label: 'Inmobiliaria' },
+    { value: 'technology', label: 'Tecnología' },
+    { value: 'delivery', label: 'Delivery' },
+    { value: 'other', label: 'Otro' }
+  ];
+
   constructor(
     private firebaseService: FirebaseService,
     private authService: AuthService,
@@ -91,6 +110,41 @@ export class SaOrganizationsComponent implements OnInit {
     this.router.navigate([`/superadmin/organizaciones/${org.id}`]);
   }
 
+  // ── Crear organización ──
+  openCreate(): void {
+    this.createModalOpen = true;
+    this.createForm = { name: '', industry: 'general', description: '', connectionType: 'meta' };
+    this.createError = '';
+    this.creating = false;
+  }
+
+  cancelCreate(): void {
+    this.createModalOpen = false;
+    this.createError = '';
+  }
+
+  async executeCreate(): Promise<void> {
+    const name = this.createForm.name.trim();
+    if (!name) { this.createError = 'El nombre es requerido'; return; }
+    if (this.creating) return;
+    this.creating = true;
+    this.createError = '';
+    try {
+      const orgId = await this.firebaseService.createOrganization({
+        name,
+        industry: this.createForm.industry,
+        description: this.createForm.description.trim(),
+        connectionType: this.createForm.connectionType
+      });
+      this.createModalOpen = false;
+      this.router.navigate([`/superadmin/organizaciones/${orgId}`]);
+    } catch (err: any) {
+      this.createError = err?.message || 'No se pudo crear la organización';
+    } finally {
+      this.creating = false;
+    }
+  }
+
   async toggleActive(org: any): Promise<void> {
     const newVal = org.active === false;
     try {
@@ -110,7 +164,10 @@ export class SaOrganizationsComponent implements OnInit {
           this.firebaseService.getOrgConfigByOrgId(org.id),
           this.firebaseService.getWhatsAppConfigByOrgId(org.id)
         ]);
-        const waReady = !!(config?.botApiUrl && wa?.token && wa?.phoneNumberId);
+        const ct = wa?.connectionType || 'meta';
+        const waReady = ct === 'connector'
+          ? !!config?.botApiUrl
+          : !!(config?.botApiUrl && wa?.token && wa?.phoneNumberId);
         if (!waReady) {
           this.botToggleError = org.id;
           setTimeout(() => { this.botToggleError = null; }, 4000);

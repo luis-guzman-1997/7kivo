@@ -118,7 +118,8 @@
       "Bash(cd *)",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://www.7kivo.com/tienda/caluco-express/ucAGJGZggZtO0Mm37Hiz\")",
       "Bash(curl -s \"https://www.7kivo.com/tienda/caluco-express/ucAGJGZggZtO0Mm37Hiz\")",
-      "Bash(cat)"
+      "Bash(cat)",
+      "Bash(xargs grep -l \"crear\\\\|create\\\\|nueva\\\\|new\")"
     ]
   }
 }

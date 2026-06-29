@@ -1,5 +1,17 @@
 const axios = require("axios");
 const { getOrgId } = require("../config/orgConfig");
+const { isConnector } = require("../connector/connectionType");
+
+// orgId del contexto, tolerante a single-tenant sin contexto.
+const _orgId = () => {
+  try {
+    return getOrgId();
+  } catch {
+    return null;
+  }
+};
+// require perezoso del adaptador de salida del conector (evita ciclos de carga).
+const _out = () => require("../connector/outbound");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("ffmpeg-static");
 const fs = require("fs");
@@ -207,6 +219,12 @@ const sendTemplateMessage = async (templateName, languageCode, components, phone
     if (!phoneNumber) throw new Error("phoneNumber es requerido para enviar plantilla");
     if (!templateName) throw new Error("templateName es requerido");
 
+    // Las plantillas son un concepto exclusivo de Meta (mensajes fuera de la
+    // ventana de 24h). El conector (Baileys) no las soporta.
+    if (await isConnector()) {
+      throw new Error("Las plantillas de Meta no están disponibles en modo conector");
+    }
+
     const { version, phoneId, token } = await getWACredentials();
     const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
     const template = {
@@ -239,6 +257,10 @@ const sendTextMessage = async (text, phoneNumber) => {
   try {
     if (!phoneNumber) {
       throw new Error("phoneNumber es requerido para enviar mensaje");
+    }
+
+    if (await isConnector()) {
+      return _out().sendText(_orgId(), phoneNumber, text);
     }
 
     const { version, phoneId, token } = await getWACredentials();
@@ -279,6 +301,10 @@ const sendInteractiveButtons = async (text, buttons, phoneNumber) => {
     if (!buttons || buttons.length === 0) {
       throw new Error("Debe haber al menos 1 botón");
     }
+    if (await isConnector()) {
+      return _out().sendButtons(_orgId(), phoneNumber, text, buttons);
+    }
+
     if (buttons.length > 3) {
       console.error(`Advertencia: Se intentaron enviar ${buttons.length} botones. WhatsApp solo permite máximo 3. Se enviarán solo los primeros 3.`);
       buttons = buttons.slice(0, 3);
@@ -342,6 +368,10 @@ const sendInteractiveList = async (text, buttonText, sections, phoneNumber) => {
       throw new Error("phoneNumber es requerido para enviar lista");
     }
 
+    if (await isConnector()) {
+      return _out().sendList(_orgId(), phoneNumber, text, sections);
+    }
+
     const { version, phoneId, token } = await getWACredentials();
 
     const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
@@ -383,6 +413,9 @@ const sendInteractiveList = async (text, buttonText, sections, phoneNumber) => {
 const sendInteractiveImageButton = async (imageUrl, text, buttonId, buttonTitle, phoneNumber) => {
   try {
     if (!phoneNumber) throw new Error("phoneNumber es requerido");
+    if (await isConnector()) {
+      return _out().sendImageButton(_orgId(), phoneNumber, imageUrl, text, buttonId, buttonTitle);
+    }
     const { version, phoneId, token } = await getWACredentials();
     const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
     const interactive = {
@@ -424,6 +457,10 @@ const sendImageMessage = async (imageUrl, caption, phoneNumber) => {
       throw new Error("phoneNumber es requerido para enviar imagen");
     }
 
+    if (await isConnector()) {
+      return _out().sendImage(_orgId(), phoneNumber, imageUrl, caption);
+    }
+
     const { version, phoneId, token } = await getWACredentials();
 
     const url = `https://graph.facebook.com/${version}/${phoneId}/messages`;
@@ -460,6 +497,10 @@ const sendAudioMessage = async (audioUrl, phoneNumber, durationSeconds) => {
   try {
     if (!phoneNumber) {
       throw new Error("phoneNumber es requerido para enviar audio");
+    }
+
+    if (await isConnector()) {
+      return _out().sendAudio(_orgId(), phoneNumber, audioUrl);
     }
 
     const { version, phoneId, token } = await getWACredentials();
@@ -514,6 +555,9 @@ const sendAudioMessage = async (audioUrl, phoneNumber, durationSeconds) => {
 const sendCtaUrlMessage = async (text, url, buttonLabel, phoneNumber) => {
   try {
     if (!phoneNumber) throw new Error("phoneNumber es requerido");
+    if (await isConnector()) {
+      return _out().sendCtaUrl(_orgId(), phoneNumber, text, url, buttonLabel);
+    }
     const { version, phoneId, token } = await getWACredentials();
     const body = {
       messaging_product: "whatsapp",

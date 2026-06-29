@@ -1203,3 +1203,52 @@
 @media (max-width: 640px) {
   .billing-stats { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ── Conector (Baileys/QR) ── */
+.connector-panel {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fafafa;
+}
+.connector-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.connector-info i.fa-circle-check { color: #16a34a; font-size: 22px; }
+.connector-info > div { flex: 1; }
+.connector-qr {
+  text-align: center;
+}
+.connector-qr img {
+  width: 240px;
+  height: 240px;
+  max-width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+.connector-hint { color: #6b7280; font-size: 12px; margin-top: 6px; }
+.connector-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.connector-note {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  font-size: 13px;
+}
+.connector-note i { margin-top: 2px; }
+.btn-edit-sm.danger { color: #dc2626; border-color: #fecaca; }
