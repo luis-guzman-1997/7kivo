@@ -61,6 +61,7 @@ interface Flow {
   notifyAdmin: boolean;
   notifyDelivery: boolean;
   keywords?: string[];   // palabras clave que activan el flujo al escribirlas
+  allowMultiple?: boolean;  // permite múltiples solicitudes simultáneas del mismo usuario
   // Horario de atención del flujo
   scheduleEnabled?: boolean;
   scheduleSlots?: { days: number[]; start: string; end: string }[]; // franjas por días
@@ -427,6 +428,7 @@ export class FlowBuilderComponent implements OnInit {
       name: '', description: '', menuLabel: '', menuDescription: '',
       type: 'registration', active: true, order: this.flows?.length || 0,
       steps: [], completionMessage: '', saveToCollection: '', notifyAdmin: false, notifyDelivery: false,
+      allowMultiple: false,
       scheduleEnabled: false,
       scheduleSlots: [{ days: [1,2,3,4,5], start: '07:00', end: '17:00' }],
       scheduleOffMessage: '',

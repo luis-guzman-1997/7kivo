@@ -678,6 +678,16 @@
           </ng-container>
         </div>
 
+        <!-- Bloque: Solicitudes múltiples -->
+        <div class="fe-block">
+          <div class="fe-block-title"><i class="fas fa-layer-group"></i> Solicitudes múltiples</div>
+          <p class="fe-hint">Por defecto, un usuario no puede iniciar una nueva solicitud mientras tenga otra sin resolver. Actívalo para permitir que un mismo usuario tenga varias peticiones de este flujo a la vez.</p>
+          <label class="fe-check">
+            <input type="checkbox" [(ngModel)]="currentFlow.allowMultiple" />
+            Permitir múltiples solicitudes simultáneas
+          </label>
+        </div>
+
         <!-- Bloque: Aviso si no es atendido -->
         <div class="fe-block">
           <div class="fe-block-title"><i class="fas fa-bell-slash"></i> Aviso si no es atendido</div>

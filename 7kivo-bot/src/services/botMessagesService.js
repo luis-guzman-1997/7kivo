@@ -449,10 +449,21 @@ const hasActiveCaseForPhone = async (phoneNumber) => {
       .get();
     if (!promoSnap.empty) return true;
 
+    // Colecciones de flujos que permiten múltiples peticiones: no cuentan como
+    // "caso activo" (ni se bloquean, ni bloquean a otros flujos).
+    const flows = await getFlows();
+    const exemptSlugs = new Set(
+      (flows || [])
+        .filter((f) => f.allowMultiple)
+        .map((f) => f.saveToCollection)
+        .filter(Boolean)
+    );
+
     // 2. Revisar colecciones de flujos
     const colsSnap = await getOrgRef().collection('_collections').get();
     for (const colDoc of colsSnap.docs) {
       const slug = colDoc.data().slug || colDoc.id;
+      if (exemptSlugs.has(slug)) continue;
       const snap = await getOrgRef()
         .collection(slug)
         .where('phoneNumber', '==', String(phoneNumber))
