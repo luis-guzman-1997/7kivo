@@ -86,6 +86,10 @@ export class CampaignsComponent implements OnInit {
   reminderDir: 'before' | 'same' | 'after' = 'before';
   reminderDays = 3;
 
+  // Estado auxiliar para la recurrencia por intervalo (número + unidad)
+  intervalEvery = 1;
+  intervalUnit: 'hours' | 'days' | 'weeks' = 'days';
+
   constructor(
     private firebaseService: FirebaseService,
     private authService: AuthService
@@ -372,6 +376,7 @@ export class CampaignsComponent implements OnInit {
       dailyHour: 9,
       dailyMinute: 0,
       intervalHours: 24,
+      intervalStart: '',
       weeklyDays: [1],
       weeklyHour: 9,
       weeklyMinute: 0,
@@ -408,6 +413,9 @@ export class CampaignsComponent implements OnInit {
     this.selectedCollectionFields = [];
     this.reminderDir = 'before';
     this.reminderDays = 3;
+    this.intervalEvery = 1;
+    this.intervalUnit = 'days';
+    this.updateIntervalHours();
   }
 
   openEdit(campaign: any): void {
@@ -417,7 +425,7 @@ export class CampaignsComponent implements OnInit {
     this.form = {
       name: campaign.name || '',
       message: campaign.message || '',
-      channelMode: campaign.channelMode || 'freeform',
+      channelMode: this.isConnector ? 'freeform' : (campaign.channelMode || 'freeform'),
       templateName: campaign.templateName || '',
       templateLang: campaign.templateLang || 'es',
       templateVariables: Array.isArray(campaign.templateVariables)
@@ -432,6 +440,7 @@ export class CampaignsComponent implements OnInit {
       dailyHour: campaign.dailyHour ?? 9,
       dailyMinute: campaign.dailyMinute ?? 0,
       intervalHours: campaign.intervalHours ?? 24,
+      intervalStart: campaign.intervalStart || '',
       weeklyDays: Array.isArray(campaign.weeklyDays) ? [...campaign.weeklyDays] : [1],
       weeklyHour: campaign.weeklyHour ?? 9,
       weeklyMinute: campaign.weeklyMinute ?? 0,
@@ -465,6 +474,7 @@ export class CampaignsComponent implements OnInit {
     const off = campaign.reminderOffsetDays ?? 0;
     this.reminderDir = off < 0 ? 'before' : off > 0 ? 'after' : 'same';
     this.reminderDays = Math.abs(off) || 3;
+    this.deriveIntervalUnit(this.form.intervalHours);
     this.onCollectionChange();
     if (this.form.channelMode === 'template') this.onTemplateChange();
   }
@@ -553,6 +563,7 @@ export class CampaignsComponent implements OnInit {
       if (!this.form.collectionId) return 'Selecciona una colección';
       if (!this.form.phoneField) return 'Selecciona el campo de teléfono';
     }
+    if (this.form.type === 'reminder' && !this.form.reminderDateField) return 'Selecciona el campo de fecha del recordatorio';
     return '';
   }
 
@@ -560,6 +571,28 @@ export class CampaignsComponent implements OnInit {
     return (this.form.manualPhones || '').split('\n')
       .map((p: string) => p.trim().replace(/\s+/g, ''))
       .filter((p: string) => p.length >= 8);
+  }
+
+  // Recurrencia por intervalo: etiqueta legible de la unidad
+  get intervalUnitLabel(): string {
+    const n = Number(this.intervalEvery) || 1;
+    if (this.intervalUnit === 'weeks') return n === 1 ? 'semana' : 'semanas';
+    if (this.intervalUnit === 'days') return n === 1 ? 'día' : 'días';
+    return n === 1 ? 'hora' : 'horas';
+  }
+
+  // Recalcula intervalHours (canónico) desde número + unidad
+  updateIntervalHours(): void {
+    const factor = this.intervalUnit === 'weeks' ? 168 : this.intervalUnit === 'days' ? 24 : 1;
+    this.form.intervalHours = Math.max(1, Number(this.intervalEvery) || 1) * factor;
+  }
+
+  // Deriva número + unidad desde intervalHours guardado (al editar)
+  private deriveIntervalUnit(hours: number): void {
+    const h = Number(hours) || 24;
+    if (h % 168 === 0) { this.intervalUnit = 'weeks'; this.intervalEvery = h / 168; }
+    else if (h % 24 === 0) { this.intervalUnit = 'days'; this.intervalEvery = h / 24; }
+    else { this.intervalUnit = 'hours'; this.intervalEvery = h; }
   }
 
   buildCampaignData(status: string): any {
@@ -603,7 +636,10 @@ export class CampaignsComponent implements OnInit {
       data.dailyHour = Number(this.form.dailyHour);
       data.dailyMinute = Number(this.form.dailyMinute);
     }
-    if (this.form.type === 'interval') data.intervalHours = Number(this.form.intervalHours);
+    if (this.form.type === 'interval') {
+      data.intervalHours = Number(this.form.intervalHours);
+      data.intervalStart = this.form.intervalStart || '';
+    }
     if (this.form.type === 'weekly') {
       data.weeklyDays = (this.form.weeklyDays || []).map((d: number) => Number(d)).sort((a: number, b: number) => a - b);
       data.weeklyHour = Number(this.form.weeklyHour);
@@ -643,6 +679,8 @@ export class CampaignsComponent implements OnInit {
       return d.toISOString();
     }
     if (this.form.type === 'interval') {
+      // Si hay fecha de inicio, el primer envío es ese día; si no, tras un intervalo.
+      if (this.form.intervalStart) return new Date(this.form.intervalStart).toISOString();
       const d = new Date(now.getTime() + Number(this.form.intervalHours) * 3600000);
       return d.toISOString();
     }
@@ -934,7 +972,12 @@ export class CampaignsComponent implements OnInit {
       const m = String(c.dailyMinute ?? 0).padStart(2, '0');
       return `Todos los días a las ${h}:${m}`;
     }
-    if (c.type === 'interval') return `Cada ${c.intervalHours} hora${c.intervalHours === 1 ? '' : 's'}`;
+    if (c.type === 'interval') {
+      const hrs = Number(c.intervalHours) || 0;
+      if (hrs > 0 && hrs % 168 === 0) { const w = hrs / 168; return `Cada ${w} semana${w === 1 ? '' : 's'}`; }
+      if (hrs > 0 && hrs % 24 === 0) { const d = hrs / 24; return `Cada ${d} día${d === 1 ? '' : 's'}`; }
+      return `Cada ${hrs} hora${hrs === 1 ? '' : 's'}`;
+    }
     if (c.type === 'weekly') {
       const h = String(c.weeklyHour ?? 9).padStart(2, '0');
       const mm = String(c.weeklyMinute ?? 0).padStart(2, '0');
