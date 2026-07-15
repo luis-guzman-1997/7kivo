@@ -123,7 +123,8 @@
       "Bash(sed -i \"s/ && !authService.isConnector//g\" src/app/admin/admin-layout/admin-layout.component.html)",
       "Bash(sed -i \"s/, forbiddenConnections: \\\\['connector'\\\\]//g\" src/app/admin/admin-routing.module.ts)",
       "Bash(echo \"exit=$?\")",
-      "Bash([ -f \"$f\" ])"
+      "Bash([ -f \"$f\" ])",
+      "Bash(xargs grep -l \"delivery_wallets\\\\|credit_transactions\")"
     ]
   }
 }

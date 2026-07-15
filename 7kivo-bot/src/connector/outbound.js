@@ -61,14 +61,13 @@ const sendButtons = async (orgId, phone, text, buttons) =>
   sendOptionsAsText(orgId, phone, text, buttons);
 
 // sections: [{ title, rows: [{ id, title, description }] }]
+// En conector las opciones se pintan como texto numerado; mostramos SOLO el
+// título (incluir la descripción satura el mensaje y se ve mal).
 const sendList = async (orgId, phone, text, sections) => {
   const options = [];
   (sections || []).forEach((sec) => {
     (sec.rows || []).forEach((r) =>
-      options.push({
-        id: r.id,
-        title: r.description ? `${r.title} — ${r.description}` : r.title,
-      })
+      options.push({ id: r.id, title: r.title })
     );
   });
   return sendOptionsAsText(orgId, phone, text, options);
