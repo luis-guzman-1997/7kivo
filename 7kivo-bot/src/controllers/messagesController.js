@@ -21,6 +21,8 @@ const {
   cancelAppointment,
   saveGcEventId,
   lookupCollectionByField,
+  lookupCollectionByTokens,
+  normalizeToken,
   getCampaignKeywordTriggers,
   getCampaignById,
   createPromoOrder,
@@ -1929,7 +1931,28 @@ const handleFlowAuthInput = async (phoneNumber, message, session) => {
     return;
   }
 
-  const record = await lookupCollectionByField(step.lookupCollection, step.authField, userInput);
+  // Modo tokens: búsqueda flexible por nombre/apellido (uno o varios).
+  // Se activa con step.matchMode === 'tokens'. Retrocompatible: sin esa marca,
+  // se mantiene el match exacto de siempre (p. ej. código de alumno).
+  let record = null;
+  if (step.matchMode === 'tokens') {
+    const tokensField = step.tokensField || 'tokens';
+    const inputTokens = userInput.split(/\s+/).map(normalizeToken).filter(Boolean);
+    const matches = await lookupCollectionByTokens(step.lookupCollection, tokensField, inputTokens);
+    if (matches.length > 1) {
+      // Varias coincidencias (p. ej. apellido compartido): pedir más detalle.
+      await sendTextMessage(
+        step.ambiguousMessage ||
+        "Encontré varias personas con ese nombre. Por favor escribe tu *nombre y apellido* completos.",
+        phoneNumber
+      );
+      setSession(phoneNumber, { flowStartTime: Date.now() });
+      return;
+    }
+    record = matches[0] || null;
+  } else {
+    record = await lookupCollectionByField(step.lookupCollection, step.authField, userInput);
+  }
 
   if (record) {
     let response = step.resultTemplate || "Registro encontrado.";

@@ -1,0 +1,1539 @@
+[
+ {
+  "nombre": "Nelson Samuel Deleon Guerrero",
+  "tokens": [
+   "deleon",
+   "guerrero",
+   "nelson",
+   "samuel"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Bajo",
+  "maestro": "Abel Ayala",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "6",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Gisela Lue",
+  "tokens": [
+   "gisela",
+   "lue"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Bajo",
+  "maestro": "Abel Ayala",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "6",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Katherine Ochoa",
+  "tokens": [
+   "katherine",
+   "ochoa"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Bajo",
+  "maestro": "Abel Ayala",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "6",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Abner Jose Rosa Siciliano",
+  "tokens": [
+   "abner",
+   "jose",
+   "rosa",
+   "siciliano"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Bajo",
+  "maestro": "Abel Ayala",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "6",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Freddy Steven Guzman Galicia",
+  "tokens": [
+   "freddy",
+   "galicia",
+   "guzman",
+   "steven"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Bajo",
+  "maestro": "Abel Ayala",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "6",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Miguel Angel Lue",
+  "tokens": [
+   "angel",
+   "lue",
+   "miguel"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Bajo",
+  "maestro": "Abel Ayala",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "6",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Omar Mestizo",
+  "tokens": [
+   "mestizo",
+   "omar"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Bajo",
+  "maestro": "Abel Ayala",
+  "hora_instrumento": "01:15-02:00",
+  "aula": "6",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Julio Cesar Soriano Carias",
+  "tokens": [
+   "carias",
+   "cesar",
+   "julio",
+   "soriano"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "por definir",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Ivan Mejia",
+  "tokens": [
+   "ivan",
+   "mejia"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "por definir",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jhonathan Steven Peñate Martinez",
+  "tokens": [
+   "jhonathan",
+   "martinez",
+   "penate",
+   "steven"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Valeria Mabel Figueroa Pinzon",
+  "tokens": [
+   "figueroa",
+   "mabel",
+   "pinzon",
+   "valeria"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Andrea Magaña",
+  "tokens": [
+   "andrea",
+   "magana"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Eunice Abigail Sigaran Ceron",
+  "tokens": [
+   "abigail",
+   "ceron",
+   "eunice",
+   "sigaran"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Crystal Moran",
+  "tokens": [
+   "crystal",
+   "moran"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Karen Elias",
+  "tokens": [
+   "elias",
+   "karen"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Sahily Daniela Perez Sermeño",
+  "tokens": [
+   "daniela",
+   "perez",
+   "sahily",
+   "sermeno"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jazlyn Sahar Ayala Ochoa",
+  "tokens": [
+   "ayala",
+   "jazlyn",
+   "ochoa",
+   "sahar"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Ana Ruth Cruz De Menendez",
+  "tokens": [
+   "ana",
+   "cruz",
+   "menendez",
+   "ruth"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Dayana Abigail Tobar López",
+  "tokens": [
+   "abigail",
+   "dayana",
+   "lopez",
+   "tobar"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "por definir",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Celina Yohana De Guzman",
+  "tokens": [
+   "celina",
+   "guzman",
+   "yohana"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "por definir",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Yesenia Esmeralda Sermeño Lopez",
+  "tokens": [
+   "esmeralda",
+   "lopez",
+   "sermeno",
+   "yesenia"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "por definir",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Glenda Claribel Lue Cruz",
+  "tokens": [
+   "claribel",
+   "cruz",
+   "glenda",
+   "lue"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Yaquelin Elizabeth Baños Valenzuela",
+  "tokens": [
+   "banos",
+   "elizabeth",
+   "valenzuela",
+   "yaquelin"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Juan Pleitez",
+  "tokens": [
+   "juan",
+   "pleitez"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Astrid Rivera",
+  "tokens": [
+   "astrid",
+   "rivera"
+  ],
+  "programa": "CI",
+  "semestre": "3",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Veronica Sivas",
+  "tokens": [
+   "sivas",
+   "veronica"
+  ],
+  "programa": "CI",
+  "semestre": "3",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Brenda Giron",
+  "tokens": [
+   "brenda",
+   "giron"
+  ],
+  "programa": "CI",
+  "semestre": "3",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jonathan Josue Cortez Hernandez",
+  "tokens": [
+   "cortez",
+   "hernandez",
+   "jonathan",
+   "josue"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Gerson Daniel Lue Cruz",
+  "tokens": [
+   "cruz",
+   "daniel",
+   "gerson",
+   "lue"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Samuel Enrique Hernandez Lopez",
+  "tokens": [
+   "enrique",
+   "hernandez",
+   "lopez",
+   "samuel"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Josue Caleb Genovez Laguardia",
+  "tokens": [
+   "caleb",
+   "genovez",
+   "josue",
+   "laguardia"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "08:45-09:20",
+  "aula": "por definir",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Miguel Xavier Alvarenga Hernandez",
+  "tokens": [
+   "alvarenga",
+   "hernandez",
+   "miguel",
+   "xavier"
+  ],
+  "programa": "Kids",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "por definir",
+  "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jaden Armando Gonzalez Avalos",
+  "tokens": [
+   "armando",
+   "avalos",
+   "gonzalez",
+   "jaden"
+  ],
+  "programa": "Kids",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "por definir",
+  "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jared Mateo Rivera Ramon",
+  "tokens": [
+   "jared",
+   "mateo",
+   "ramon",
+   "rivera"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Gustavo Adolfo Peréz Aguilar",
+  "tokens": [
+   "adolfo",
+   "aguilar",
+   "gustavo",
+   "perez"
+  ],
+  "programa": "CI",
+  "semestre": "4",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jairo Daniel Valencia Lue",
+  "tokens": [
+   "daniel",
+   "jairo",
+   "lue",
+   "valencia"
+  ],
+  "programa": "CI",
+  "semestre": "4",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Luis Alonso Guzman Espinoza",
+  "tokens": [
+   "alonso",
+   "espinoza",
+   "guzman",
+   "luis"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Kevin Alberto Rodriguez Rivera",
+  "tokens": [
+   "alberto",
+   "kevin",
+   "rivera",
+   "rodriguez"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "David Laguardia",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Willian Manahan Ortiz Perez",
+  "tokens": [
+   "manahan",
+   "ortiz",
+   "perez",
+   "willian"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "9",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Oscar Norberto Guevara Flores",
+  "tokens": [
+   "flores",
+   "guevara",
+   "norberto",
+   "oscar"
+  ],
+  "programa": "Kids",
+  "semestre": "1",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "08:45-09:30",
+  "aula": "9",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo A · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Josue Eliel Arevalo Villalta",
+  "tokens": [
+   "arevalo",
+   "eliel",
+   "josue",
+   "villalta"
+  ],
+  "programa": "Kids",
+  "semestre": "4",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "9",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Matias Santiago Guerra Rivera",
+  "tokens": [
+   "guerra",
+   "matias",
+   "rivera",
+   "santiago"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "9",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Ander Didieer Sola Elias",
+  "tokens": [
+   "ander",
+   "didieer",
+   "elias",
+   "sola"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "9",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Nissi Miron",
+  "tokens": [
+   "miron",
+   "nissi"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "9",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Matias Andres Escoto Menendez",
+  "tokens": [
+   "andres",
+   "escoto",
+   "matias",
+   "menendez"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "9",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Eli Nehemias Romero Contreras",
+  "tokens": [
+   "contreras",
+   "eli",
+   "nehemias",
+   "romero"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "9",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Rosalbi Astrid Cortez Rivera",
+  "tokens": [
+   "astrid",
+   "cortez",
+   "rivera",
+   "rosalbi"
+  ],
+  "programa": "CI",
+  "semestre": "?",
+  "instrumento": "Batería",
+  "maestro": "Emerson Blanco",
+  "hora_instrumento": "01:15-02:00",
+  "aula": "9",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Madelyne Sofia Cermeño",
+  "tokens": [
+   "cermeno",
+   "madelyne",
+   "sofia"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Piano",
+  "maestro": "Francisco Henriquez",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "8",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Sigfredo Fernando Henriquez Ruano",
+  "tokens": [
+   "fernando",
+   "henriquez",
+   "ruano",
+   "sigfredo"
+  ],
+  "programa": "CI",
+  "semestre": "2",
+  "instrumento": "Piano",
+  "maestro": "Francisco Henriquez",
+  "hora_instrumento": "08:45-09:30",
+  "aula": "8",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Daniela Escoto",
+  "tokens": [
+   "daniela",
+   "escoto"
+  ],
+  "programa": "Kids",
+  "semestre": "?",
+  "instrumento": "Piano",
+  "maestro": "Francisco Henriquez",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "8",
+  "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Absalon Ernesto Padilla",
+  "tokens": [
+   "absalon",
+   "ernesto",
+   "padilla"
+  ],
+  "programa": "Ministerial",
+  "semestre": "3",
+  "instrumento": "Piano",
+  "maestro": "Francisco Henriquez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "8",
+  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Luciana Cattleya Ascencio Torrento",
+  "tokens": [
+   "ascencio",
+   "cattleya",
+   "luciana",
+   "torrento"
+  ],
+  "programa": "CI",
+  "semestre": "3",
+  "instrumento": "Piano",
+  "maestro": "Francisco Henriquez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "8",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Valeria Mabel Figueroa Pinzon",
+  "tokens": [
+   "figueroa",
+   "mabel",
+   "pinzon",
+   "valeria"
+  ],
+  "programa": "CI",
+  "semestre": "3",
+  "instrumento": "Piano",
+  "maestro": "Francisco Henriquez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "8",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Mateo Alejandro Gutierrez Gonzalez",
+  "tokens": [
+   "alejandro",
+   "gonzalez",
+   "gutierrez",
+   "mateo"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Piano",
+  "maestro": "Francisco Henriquez",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "8",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Elias Hernandez Franco",
+  "tokens": [
+   "elias",
+   "franco",
+   "hernandez"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "7",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Pablo Abraham Guerrero Magaña",
+  "tokens": [
+   "abraham",
+   "guerrero",
+   "magana",
+   "pablo"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "08:45-09:30",
+  "aula": "7",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Fernanda Pinzon",
+  "tokens": [
+   "fernanda",
+   "pinzon"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "7",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Melani Abigail Guardado Pachaca",
+  "tokens": [
+   "abigail",
+   "guardado",
+   "melani",
+   "pachaca"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "7",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "David Alexander Guardado",
+  "tokens": [
+   "alexander",
+   "david",
+   "guardado"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "7",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jose Daniel Reyes Blanco",
+  "tokens": [
+   "blanco",
+   "daniel",
+   "jose",
+   "reyes"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "7",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Kevin Alexis Aguilar",
+  "tokens": [
+   "aguilar",
+   "alexis",
+   "kevin"
+  ],
+  "programa": "Ministerial",
+  "semestre": "1",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "7",
+  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Juan Antonio Estrada Garcia",
+  "tokens": [
+   "antonio",
+   "estrada",
+   "garcia",
+   "juan"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "7",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Sergio Pinzon",
+  "tokens": [
+   "pinzon",
+   "sergio"
+  ],
+  "programa": "Ministerial",
+  "semestre": "4",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "7",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jose Roberto Minero Gomez",
+  "tokens": [
+   "gomez",
+   "jose",
+   "minero",
+   "roberto"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Piano/Guitarra",
+  "maestro": "Gerson Jimenez",
+  "hora_instrumento": "01:15-02:00",
+  "aula": "7",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Karen Marcela Lopez",
+  "tokens": [
+   "karen",
+   "lopez",
+   "marcela"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "5",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Keysi Rivas",
+  "tokens": [
+   "keysi",
+   "rivas"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "5",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Keren Lucia Magaña Laguardia",
+  "tokens": [
+   "keren",
+   "laguardia",
+   "lucia",
+   "magana"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "5",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jonathan Antonio Cáceres",
+  "tokens": [
+   "antonio",
+   "caceres",
+   "jonathan"
+  ],
+  "programa": "Kids",
+  "semestre": "3",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "5",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Esau Adonay Lue Perez",
+  "tokens": [
+   "adonay",
+   "esau",
+   "lue",
+   "perez"
+  ],
+  "programa": "Ministerial",
+  "semestre": "1",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "5",
+  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jenifer Estefany Galvez Masin",
+  "tokens": [
+   "estefany",
+   "galvez",
+   "jenifer",
+   "masin"
+  ],
+  "programa": "Ministerial",
+  "semestre": "1",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "5",
+  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Azucena Abigail Vanegas Rivera",
+  "tokens": [
+   "abigail",
+   "azucena",
+   "rivera",
+   "vanegas"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "5",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jonathan Emanuel Garcia Silvas",
+  "tokens": [
+   "emanuel",
+   "garcia",
+   "jonathan",
+   "silvas"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "12:30-01:15",
+  "aula": "5",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Jonathan Jose Meztizo",
+  "tokens": [
+   "jonathan",
+   "jose",
+   "meztizo"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Teclado",
+  "maestro": "Jeffrey Melgar",
+  "hora_instrumento": "01:15-02:00",
+  "aula": "5",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Daniela Abigail Viana Barrera",
+  "tokens": [
+   "abigail",
+   "barrera",
+   "daniela",
+   "viana"
+  ],
+  "programa": "CI",
+  "semestre": "3",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Genesis Abigail Larin Sanchez",
+  "tokens": [
+   "abigail",
+   "genesis",
+   "larin",
+   "sanchez"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "08:00-08:45",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Donnovan Omar Ramos Alberto",
+  "tokens": [
+   "alberto",
+   "donnovan",
+   "omar",
+   "ramos"
+  ],
+  "programa": "Kids",
+  "semestre": "?",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "08:45-09:30",
+  "aula": "por definir",
+  "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Lissett Karina Benitez",
+  "tokens": [
+   "benitez",
+   "karina",
+   "lissett"
+  ],
+  "programa": "Kids",
+  "semestre": "?",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "08:45-09:30",
+  "aula": "por definir",
+  "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Ever Eduerdo Caceres Sermeño",
+  "tokens": [
+   "caceres",
+   "eduerdo",
+   "ever",
+   "sermeno"
+  ],
+  "programa": "Kids",
+  "semestre": "1",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "por definir",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo A · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Alessia Masiel Figueroa",
+  "tokens": [
+   "alessia",
+   "figueroa",
+   "masiel"
+  ],
+  "programa": "Kids",
+  "semestre": "1",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "por definir",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo A · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Marcela Alejandra Elias Beltran",
+  "tokens": [
+   "alejandra",
+   "beltran",
+   "elias",
+   "marcela"
+  ],
+  "programa": "Kids",
+  "semestre": "3",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "por definir",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Valeria Belen Guerra Rivera",
+  "tokens": [
+   "belen",
+   "guerra",
+   "rivera",
+   "valeria"
+  ],
+  "programa": "Kids",
+  "semestre": "3",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "por definir",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Rohi Miron",
+  "tokens": [
+   "miron",
+   "rohi"
+  ],
+  "programa": "Ministerial",
+  "semestre": "3",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "por definir",
+  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Brenda Sarai Giron Hernández",
+  "tokens": [
+   "brenda",
+   "giron",
+   "hernandez",
+   "sarai"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Guitarra",
+  "maestro": "Josue Gómez",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "por definir",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Claudia Eloisa Masin De Mejia",
+  "tokens": [
+   "claudia",
+   "eloisa",
+   "masin",
+   "mejia"
+  ],
+  "programa": "Ministerial",
+  "semestre": "2",
+  "instrumento": "Piano",
+  "maestro": "Miguel Lue",
+  "hora_instrumento": "07:15-08:00",
+  "aula": "3",
+  "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Sahily Daniela Perez Sermeño",
+  "tokens": [
+   "daniela",
+   "perez",
+   "sahily",
+   "sermeno"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Piano",
+  "maestro": "Miguel Lue",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "3",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Keren Jemima Deleon Peraza",
+  "tokens": [
+   "deleon",
+   "jemima",
+   "keren",
+   "peraza"
+  ],
+  "programa": "Ministerial",
+  "semestre": "3",
+  "instrumento": "Piano",
+  "maestro": "Miguel Lue",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "3",
+  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Amilcar Mauricio Lima",
+  "tokens": [
+   "amilcar",
+   "lima",
+   "mauricio"
+  ],
+  "programa": "CI",
+  "semestre": "1",
+  "instrumento": "Piano",
+  "maestro": "Miguel Lue",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "3",
+  "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "José Angel Fuentes Santamaria",
+  "tokens": [
+   "angel",
+   "fuentes",
+   "jose",
+   "santamaria"
+  ],
+  "programa": "Ministerial",
+  "semestre": "1",
+  "instrumento": "Piano",
+  "maestro": "Miguel Lue",
+  "hora_instrumento": "11:45-12:30",
+  "aula": "3",
+  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ }
+]

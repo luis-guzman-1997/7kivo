@@ -1,6 +1,6 @@
 {
   "name": "7kivo-web",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "7kivo — Plataforma web CMS con panel de administración para gestión de bots WhatsApp",
   "scripts": {
     "ng": "ng",

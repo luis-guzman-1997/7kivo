@@ -1,0 +1,34 @@
+{
+ "name": "Mi horario",
+ "menuLabel": "🔎 Mi horario",
+ "menuDescription": "Consulta tu horario y tu clase de instrumento",
+ "description": "Consulta de horario por nombre",
+ "type": "lookup",
+ "active": true,
+ "order": 99,
+ "saveToCollection": "",
+ "notifyAdmin": false,
+ "notifyDelivery": false,
+ "completionMessage": "¿Necesitas algo más? Escribe *menú* para volver. 🎵",
+ "steps": [
+  {
+   "id": "step_horario",
+   "type": "auth_lookup",
+   "prompt": "🔎 Escribe tu *nombre o apellido* para ver tu horario del sábado:",
+   "matchMode": "tokens",
+   "lookupCollection": "horarios_alumnos",
+   "tokensField": "tokens",
+   "authField": "nombre",
+   "resultTemplate": "🎵 *{nombre}* — {programa} · Semestre {semestre}\n🗓️ Sábado\n\n🎸 *Tu clase de instrumento:*\n{instrumento} · {maestro} · {hora_instrumento} · Aula {aula}\n\n📅 *Resto de tu horario:*\n{horario_general}",
+   "notFoundMessage": "No encontré ese nombre. Escríbelo como aparece en tu inscripción (o solo tu apellido).",
+   "ambiguousMessage": "Encontré a varias personas con ese nombre. Por favor escribe tu *nombre y apellido* completos.",
+   "maxRetries": 3
+  }
+ ],
+ "keywords": [
+  "horario",
+  "horarios",
+  "mi horario",
+  "mihorario"
+ ]
+}

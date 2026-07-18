@@ -437,6 +437,38 @@ const lookupCollectionByField = async (collectionName, fieldKey, value) => {
   }
 };
 
+// Normaliza texto para búsqueda: minúsculas, sin acentos, sin caracteres raros.
+const normalizeToken = (s) =>
+  String(s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Búsqueda flexible por tokens (nombre/apellido). El doc guarda un arreglo
+// `tokensField` con cada palabra normalizada; el usuario puede teclear una o
+// varias. Devuelve TODAS las coincidencias (para desambiguar), o [] si ninguna.
+// Si el input trae varias palabras, exige que el doc contenga TODAS.
+const lookupCollectionByTokens = async (collectionName, tokensField, inputTokens) => {
+  if (!inputTokens || !inputTokens.length) return [];
+  try {
+    const snapshot = await getOrgRef().collection(collectionName)
+      .where(tokensField, 'array-contains', inputTokens[0])
+      .limit(25)
+      .get();
+    if (snapshot.empty) return [];
+    let docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (inputTokens.length > 1) {
+      const strict = docs.filter((d) =>
+        inputTokens.every((t) => Array.isArray(d[tokensField]) && d[tokensField].includes(t))
+      );
+      if (strict.length) docs = strict;
+    }
+    return docs;
+  } catch (error) {
+    console.error(`Error token-looking up in ${collectionName}:`, error);
+    return [];
+  }
+};
+
 // ── Verifica si un teléfono tiene una solicitud/caso activo sin resolver ──
 const hasActiveCaseForPhone = async (phoneNumber) => {
   try {
@@ -527,6 +559,8 @@ module.exports = {
   cancelAppointment,
   saveGcEventId,
   lookupCollectionByField,
+  lookupCollectionByTokens,
+  normalizeToken,
   getCampaignById,
   createPromoOrder,
   getCampaignKeywordTriggers,
