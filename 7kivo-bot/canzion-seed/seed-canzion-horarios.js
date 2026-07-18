@@ -12,7 +12,7 @@
  */
 const path = require("path");
 const fs = require("fs");
-const { db } = require("../src/config/firebase");
+const { db, admin } = require("../src/config/firebase");
 
 const ORG_ID = process.env.CANZION_ORG_ID || "instituto-canzion-sonsonate";
 const COMMIT = process.argv.includes("--commit");
@@ -33,7 +33,29 @@ async function main() {
     return;
   }
 
-  // 0) Idempotencia: borrar solo lo previamente sembrado por este script.
+  // 0.a) Definición de colección para que aparezca en "Base de datos" del panel.
+  const defSlug = COLLECTION;
+  const defs = await orgRef.collection("_collections").where("slug", "==", defSlug).limit(1).get();
+  const def = {
+    name: "Horarios de Alumnos", slug: defSlug,
+    description: "Padrón para el flujo Mi horario (consulta por nombre)",
+    displayField: "nombre",
+    fields: [
+      { key: "nombre", label: "Nombre", type: "text", required: true },
+      { key: "programa", label: "Programa", type: "text", required: false },
+      { key: "semestre", label: "Semestre", type: "text", required: false },
+      { key: "instrumento", label: "Instrumento", type: "text", required: false },
+      { key: "maestro", label: "Maestro", type: "text", required: false },
+      { key: "hora_instrumento", label: "Hora de instrumento", type: "text", required: false },
+      { key: "aula", label: "Aula", type: "text", required: false },
+      { key: "horario_general", label: "Horario general", type: "text", required: false },
+    ],
+  };
+  if (!defs.empty) await orgRef.collection("_collections").doc(defs.docs[0].id).set(def, { merge: true });
+  else await orgRef.collection("_collections").add(def);
+  console.log(`✓ Definición de colección "${defSlug}" lista (visible en el panel).`);
+
+  // 0.b) Idempotencia: borrar solo lo previamente sembrado por este script.
   const prev = await orgRef.collection(COLLECTION).where("_seed", "==", SEED_TAG).get();
   if (!prev.empty) {
     let db1 = db.batch(), k = 0;
@@ -45,10 +67,12 @@ async function main() {
   // 1) Colección horarios_alumnos (un doc por registro; batch de 400)
   let batch = db.batch();
   let n = 0;
+  const now = admin.firestore.FieldValue.serverTimestamp();
   for (const a of alumnos) {
     const { _revisar, ...clean } = a; // no persistir la marca de revisión
     const ref = orgRef.collection(COLLECTION).doc();
-    batch.set(ref, clean);
+    // createdAt/updatedAt: el panel lista con orderBy('createdAt') y excluye docs sin él.
+    batch.set(ref, { ...clean, active: true, createdAt: now, updatedAt: now });
     if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
   }
   await batch.commit();
