@@ -2568,8 +2568,16 @@ const requestMessageMulti = async (req, res) => {
       }
 
       if (session.step === "initial" || !session.hasGreeted) {
-        await sendGreeting(phoneNumber, contactName);
-        setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        // Si el primer mensaje coincide con palabras clave de un flujo activo, iniciarlo directo
+        // (en vez de solo saludar). Mismo comportamiento que el handler legacy requestMessage.
+        const kwFlowId = await matchActiveFlowByKeyword(userMessage || "");
+        if (kwFlowId) {
+          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+          await startFlow(phoneNumber, kwFlowId);
+        } else {
+          await sendGreeting(phoneNumber, contactName);
+          setSession(phoneNumber, { step: "main_menu", hasGreeted: true });
+        }
       } else {
         await handleUserMessage(phoneNumber, userMessage, session);
       }
