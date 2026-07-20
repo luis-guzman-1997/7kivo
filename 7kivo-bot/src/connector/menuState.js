@@ -68,9 +68,23 @@ const setJid = (orgId, phone, jid) => {
 
 const getJid = (orgId, phone) => jidCache[orgId]?.[phone] || null;
 
+// Mapeo LID → número real (MSISDN). WhatsApp direcciona algunos contactos por
+// @lid (un identificador, no el teléfono); el número real llega en msg.key.senderPn
+// en los mensajes ENTRANTES. Lo cacheamos para poder resolverlo también en los
+// mensajes fromMe (operador), donde senderPn es del operador, no del contacto.
+// { [orgId]: { [lidDigits]: phoneDigits } }
+const lidPhone = {};
+const setLidPhone = (orgId, lid, phone) => {
+  if (!lid || !phone) return;
+  if (!lidPhone[orgId]) lidPhone[orgId] = {};
+  lidPhone[orgId][lid] = phone;
+};
+const getLidPhone = (orgId, lid) => lidPhone[orgId]?.[lid] || null;
+
 const clearOrgState = (orgId) => {
   delete pendingMenus[orgId];
   delete jidCache[orgId];
+  delete lidPhone[orgId];
 };
 
 module.exports = {
@@ -80,5 +94,7 @@ module.exports = {
   matchMenuChoice,
   setJid,
   getJid,
+  setLidPhone,
+  getLidPhone,
   clearOrgState,
 };

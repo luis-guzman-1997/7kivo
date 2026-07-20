@@ -13,6 +13,8 @@ const {
   clearPendingMenu,
   matchMenuChoice,
   setJid,
+  setLidPhone,
+  getLidPhone,
 } = require("./menuState");
 const { runWithOrgId } = require("../config/requestContext");
 const { wasSentByBot } = require("./botSentTracker");
@@ -23,6 +25,35 @@ const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 const jidToPhone = (jid) => {
   if (!jid) return "";
   return String(jid).split("@")[0].split(":")[0];
+};
+
+// Resuelve el número REAL (MSISDN) del contacto a partir del msg de Baileys.
+// Con direccionamiento @lid, remoteJid es un LID (no el teléfono): el número real
+// viene en msg.key.senderPn en los mensajes entrantes. Se cachea LID→número para
+// poder resolverlo también en mensajes fromMe (operador). Fallback al valor del
+// jid (comportamiento previo) si no hay forma de resolverlo → sin regresión.
+const resolvePhone = (orgId, msg) => {
+  const remoteJid = msg.key?.remoteJid || "";
+  const raw = jidToPhone(remoteJid);
+  if (!remoteJid.endsWith("@lid")) return raw; // direccionamiento normal (@s.whatsapp.net)
+
+  // Entrante: senderPn trae el número real → usar y cachear.
+  if (!msg.key?.fromMe && msg.key?.senderPn) {
+    const pn = jidToPhone(msg.key.senderPn);
+    if (pn) {
+      setLidPhone(orgId, raw, pn);
+      return pn;
+    }
+  }
+  // fromMe o sin senderPn: intentar el cache LID→número.
+  const cached = getLidPhone(orgId, raw);
+  if (cached) return cached;
+
+  // No se pudo resolver: log para diagnóstico (¿senderPn ausente en este rollout?).
+  console.log(
+    `[connector:${orgId}] @lid sin resolver: lid=${raw} senderPn=${msg.key?.senderPn || "-"} senderLid=${msg.key?.senderLid || "-"} fromMe=${!!msg.key?.fromMe}`
+  );
+  return raw; // fallback: se guarda el LID (como antes)
 };
 
 // Desenvuelve mensajes efímeros / viewOnce que anidan el contenido real.
@@ -132,7 +163,7 @@ const handleIncoming = async (orgId, sock, msg) => {
   if (remoteJid.endsWith("@g.us")) return; // ignorar grupos
   if (remoteJid.endsWith("@newsletter")) return;
 
-  const phone = jidToPhone(remoteJid);
+  const phone = resolvePhone(orgId, msg);
   if (!phone) return;
 
   // ── Mensajes fromMe (el número del conector es compartido) ──
