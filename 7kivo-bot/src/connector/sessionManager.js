@@ -171,7 +171,16 @@ const startSession = async (orgId, { force = false } = {}) => {
       try {
         if (payload.type !== "notify") return;
         const { handleIncoming } = require("./inbound");
+        // Descartar mensajes reentregados anteriores al arranque de esta conexión.
+        // Al reconectar (p.ej. tras un redeploy) WhatsApp reenvía el backlog offline
+        // como 'notify'; reprocesarlo dispara saludos/flujos fantasma. 5s de gracia por skew.
+        const startedAtSec = Math.floor((session.startedAt || 0) / 1000) - 5;
         for (const msg of payload.messages || []) {
+          const tsSec = Number(msg.messageTimestamp) || 0;
+          if (tsSec && startedAtSec && tsSec < startedAtSec) {
+            console.log(`[connector:${orgId}] ignorado mensaje offline reentregado (ts ${tsSec} < ${startedAtSec}).`);
+            continue;
+          }
           await handleIncoming(orgId, sock, msg);
         }
       } catch (e) {
