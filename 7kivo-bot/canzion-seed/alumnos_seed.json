@@ -131,7 +131,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "07:15-08:00",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -147,7 +147,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "07:15-08:00",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -165,7 +165,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "08:00-08:45",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -183,7 +183,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "08:00-08:45",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -199,7 +199,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "08:00-08:45",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -217,7 +217,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "08:00-08:45",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -233,7 +233,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "08:00-08:45",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -249,7 +249,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "10:15-11:00",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -267,7 +267,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "10:15-11:00",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -285,7 +285,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "10:15-11:00",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -303,7 +303,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "10:15-11:00",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -321,8 +321,8 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "11:00-11:45",
-  "aula": "por definir",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "aula": "4",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -338,8 +338,8 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "11:00-11:45",
-  "aula": "por definir",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "aula": "4",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -356,8 +356,8 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "11:00-11:45",
-  "aula": "por definir",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "aula": "4",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -374,7 +374,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "11:45-12:30",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -392,7 +392,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "11:45-12:30",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -408,7 +408,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "11:45-12:30",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -424,7 +424,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "12:30-01:15",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -440,7 +440,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "12:30-01:15",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -456,7 +456,7 @@
   "instrumento": "Canto",
   "maestro": "Abigail De Benitez",
   "hora_instrumento": "12:30-01:15",
-  "aula": "por definir",
+  "aula": "4",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -474,7 +474,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "07:15-08:00",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -492,7 +492,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "07:15-08:00",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -510,7 +510,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "08:00-08:45",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -528,7 +528,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "08:45-09:20",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -546,7 +546,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "09:30-10:15",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -564,7 +564,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "09:30-10:15",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -582,7 +582,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "10:15-11:00",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -600,7 +600,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "11:00-11:45",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -618,7 +618,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "11:00-11:45",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -636,7 +636,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "11:45-12:30",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -654,7 +654,7 @@
   "instrumento": "Batería",
   "maestro": "David Laguardia",
   "hora_instrumento": "12:30-01:15",
-  "aula": "por definir",
+  "aula": "10",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -691,7 +691,7 @@
   "maestro": "Emerson Blanco",
   "hora_instrumento": "08:45-09:30",
   "aula": "9",
-  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo A · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 3\n08:00–08:45  Solfeo A · Mtro. Francisco · Aula 8\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -709,7 +709,7 @@
   "maestro": "Emerson Blanco",
   "hora_instrumento": "09:30-10:15",
   "aula": "9",
-  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 3\n08:00–08:45  Solfeo B · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -761,7 +761,7 @@
   "maestro": "Emerson Blanco",
   "hora_instrumento": "11:00-11:45",
   "aula": "9",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -883,7 +883,7 @@
   "maestro": "Francisco Henriquez",
   "hora_instrumento": "10:15-11:00",
   "aula": "8",
-  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
+  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -988,7 +988,7 @@
   "maestro": "Gerson Jimenez",
   "hora_instrumento": "10:15-11:00",
   "aula": "7",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1006,7 +1006,7 @@
   "maestro": "Gerson Jimenez",
   "hora_instrumento": "11:00-11:45",
   "aula": "7",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1023,7 +1023,7 @@
   "maestro": "Gerson Jimenez",
   "hora_instrumento": "11:00-11:45",
   "aula": "7",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1041,7 +1041,7 @@
   "maestro": "Gerson Jimenez",
   "hora_instrumento": "11:00-11:45",
   "aula": "7",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1058,7 +1058,7 @@
   "maestro": "Gerson Jimenez",
   "hora_instrumento": "11:45-12:30",
   "aula": "7",
-  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "horario_general": "07:15–08:00  Hora libre\n08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n08:45–09:20  Devocional\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:00–11:45  Hora libre\n11:45–12:30  Instrumento I · (ver arriba)",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1076,7 +1076,7 @@
   "maestro": "Gerson Jimenez",
   "hora_instrumento": "12:30-01:15",
   "aula": "7",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1092,7 +1092,7 @@
   "maestro": "Gerson Jimenez",
   "hora_instrumento": "12:30-01:15",
   "aula": "7",
-  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
+  "horario_general": "08:00–08:45  Ministerial IV (Vocación) · Mtra. Raquel · Aula 5\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Hora libre\n11:00–11:45  Instrumento IV · (ver arriba)\n11:45–12:30  Solfeo IV · Mtro. Abel · Aula 6",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1126,7 +1126,7 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "07:15-08:00",
-  "aula": "5",
+  "aula": "2",
   "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1142,7 +1142,7 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "07:15-08:00",
-  "aula": "5",
+  "aula": "2",
   "horario_general": "07:15–08:00  Instrumento II · (ver arriba)\n08:00–08:45  Solfeo II · Mtro. Abel · Aula 6\n08:45–09:20  Devocional\n09:30–10:15  Música y Tecnología 2 · Mtro. Jeffrey · Aula 5\n10:15–11:00  Ministerial II (Ministerio de la Música) · Mtra. Raquel · Aula 2",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1160,7 +1160,7 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "08:00-08:45",
-  "aula": "5",
+  "aula": "2",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1176,9 +1176,9 @@
   "semestre": "3",
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
-  "hora_instrumento": "09:30-10:15",
-  "aula": "5",
-  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "hora_instrumento": "10:15-11:00",
+  "aula": "2",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 3\n08:00–08:45  Solfeo B · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1195,8 +1195,8 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "11:00-11:45",
-  "aula": "5",
-  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "aula": "2",
+  "horario_general": "07:15–08:00  Hora libre\n08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n08:45–09:20  Devocional\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:00–11:45  Hora libre\n11:45–12:30  Instrumento I · (ver arriba)",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1213,8 +1213,8 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "11:00-11:45",
-  "aula": "5",
-  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "aula": "2",
+  "horario_general": "07:15–08:00  Hora libre\n08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n08:45–09:20  Devocional\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:00–11:45  Hora libre\n11:45–12:30  Instrumento I · (ver arriba)",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1231,7 +1231,7 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "11:45-12:30",
-  "aula": "5",
+  "aula": "2",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1249,7 +1249,7 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "12:30-01:15",
-  "aula": "5",
+  "aula": "2",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1266,7 +1266,7 @@
   "instrumento": "Teclado",
   "maestro": "Jeffrey Melgar",
   "hora_instrumento": "01:15-02:00",
-  "aula": "5",
+  "aula": "2",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1284,7 +1284,7 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "07:15-08:00",
-  "aula": "por definir",
+  "aula": "1",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1302,7 +1302,7 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "08:00-08:45",
-  "aula": "por definir",
+  "aula": "1",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1320,7 +1320,7 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "08:45-09:30",
-  "aula": "por definir",
+  "aula": "1",
   "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -1337,7 +1337,7 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "08:45-09:30",
-  "aula": "por definir",
+  "aula": "1",
   "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
@@ -1355,8 +1355,8 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "09:30-10:15",
-  "aula": "por definir",
-  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo A · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
+  "aula": "1",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 3\n08:00–08:45  Solfeo A · Mtro. Francisco · Aula 8\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1372,8 +1372,8 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "09:30-10:15",
-  "aula": "por definir",
-  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo A · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
+  "aula": "1",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 3\n08:00–08:45  Solfeo A · Mtro. Francisco · Aula 8\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1390,8 +1390,8 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "10:15-11:00",
-  "aula": "por definir",
-  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "aula": "1",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 3\n08:00–08:45  Solfeo B · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1408,8 +1408,8 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "10:15-11:00",
-  "aula": "por definir",
-  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 5\n08:00–08:45  Solfeo B · Mtro. Francisco · Aula 8\n09:30–10:15  Instrumento · (ver arriba)",
+  "aula": "1",
+  "horario_general": "07:15–08:00  Ministerial Kids · Mtra. Raquel · Aula 3\n08:00–08:45  Solfeo B · Mtro. Emerson · Aula 9\n08:45–09:20  Devocional\n09:30–10:15  Instrumento · (ver arriba)",
   "_revisar": true,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1424,8 +1424,8 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "11:00-11:45",
-  "aula": "por definir",
-  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
+  "aula": "1",
+  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1442,7 +1442,7 @@
   "instrumento": "Guitarra",
   "maestro": "Josue Gómez",
   "hora_instrumento": "11:45-12:30",
-  "aula": "por definir",
+  "aula": "1",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
@@ -1497,7 +1497,7 @@
   "maestro": "Miguel Lue",
   "hora_instrumento": "10:15-11:00",
   "aula": "3",
-  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
+  "horario_general": "08:00–08:45  Solfeo III · Mtro. Gerson · Aula 7\n08:45–09:20  Devocional\n09:30–10:15  Ensamble Instrumental · Mtro. Gerson · Aula 7\n10:15–11:00  Instrumento III · (ver arriba)\n11:00–11:45  Ministerial III (Liderazgo Ministerial) · Mtra. Raquel · Aula 5",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  },
@@ -1512,7 +1512,7 @@
   "semestre": "1",
   "instrumento": "Piano",
   "maestro": "Miguel Lue",
-  "hora_instrumento": "11:00-11:45",
+  "hora_instrumento": "11:45-12:30",
   "aula": "3",
   "horario_general": "En *Canzion Instrumento* tu única clase es la de instrumento (arriba). 🎸",
   "_revisar": false,
@@ -1532,7 +1532,41 @@
   "maestro": "Miguel Lue",
   "hora_instrumento": "11:45-12:30",
   "aula": "3",
-  "horario_general": "08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:45–12:30  Instrumento I · (ver tu clase de instrumento arriba)",
+  "horario_general": "07:15–08:00  Hora libre\n08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n08:45–09:20  Devocional\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:00–11:45  Hora libre\n11:45–12:30  Instrumento I · (ver arriba)",
+  "_revisar": false,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Rebeca Abigail Nerio Cortez",
+  "tokens": [
+   "abigail",
+   "cortez",
+   "nerio",
+   "rebeca"
+  ],
+  "programa": "Kids",
+  "semestre": "?",
+  "instrumento": "Canto",
+  "maestro": "Abigail De Benitez",
+  "hora_instrumento": "09:30-10:15",
+  "aula": "4",
+  "horario_general": "Consulta tu horario general en recepción (pendiente de confirmar tu semestre).",
+  "_revisar": true,
+  "_seed": "horarios-canzion-2026-02"
+ },
+ {
+  "nombre": "Diego Cortez",
+  "tokens": [
+   "cortez",
+   "diego"
+  ],
+  "programa": "Ministerial",
+  "semestre": "1",
+  "instrumento": "Piano",
+  "maestro": "Miguel Lue",
+  "hora_instrumento": "11:00-11:45",
+  "aula": "3",
+  "horario_general": "07:15–08:00  Hora libre\n08:00–08:45  Solfeo I · Mtro. Miguel · Aula 3\n08:45–09:20  Devocional\n09:30–10:15  Ministerial I (Adoremos 101) · Mtra. Raquel · Aula 5\n10:15–11:00  Música y Tecnología 1 · Mtro. Abel · Aula 6\n11:00–11:45  Hora libre\n11:45–12:30  Instrumento I · (ver arriba)",
   "_revisar": false,
   "_seed": "horarios-canzion-2026-02"
  }
