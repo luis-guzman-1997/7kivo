@@ -1239,6 +1239,27 @@
   gap: 10px;
   margin-top: 12px;
 }
+.connector-share {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #e5e7eb;
+}
+.connector-share-result {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.connector-share-result input {
+  flex: 1;
+  min-width: 220px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 12px;
+  background: #f9fafb;
+  color: #111827;
+}
 .connector-note {
   display: flex;
   gap: 10px;

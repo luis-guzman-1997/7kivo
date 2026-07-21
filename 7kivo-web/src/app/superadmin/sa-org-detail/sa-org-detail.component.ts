@@ -14,6 +14,10 @@ export class SaOrgDetailComponent implements OnInit, OnDestroy {
     { status: 'disconnected', qr: null, me: null, error: null };
   connectorLoading = false;
   private connectorPolling: any = null;
+  // Enlace público para que el cliente escanee el QR desde otra localidad
+  connectorLink: { url: string; expiresAt: number } | null = null;
+  connectorLinkLoading = false;
+  connectorLinkCopied = false;
   selectedOrg: any = null;
   orgDetail: any = null;
   orgWhatsApp: any = null;
@@ -712,6 +716,41 @@ export class SaOrgDetailComponent implements OnInit, OnDestroy {
     } finally {
       this.connectorLoading = false;
     }
+  }
+
+  // Genera un enlace público (token) para compartir la vinculación con el cliente.
+  async generateClientLink(): Promise<void> {
+    const base = this.connectorBase();
+    if (!base || !this.selectedOrg) {
+      this.showNotice('Configura y guarda primero la URL del bot');
+      return;
+    }
+    this.connectorLinkLoading = true;
+    this.connectorLinkCopied = false;
+    try {
+      const res = await fetch(`${base}/api/${this.selectedOrg.id}/connector/link`, { method: 'POST' });
+      const data = await res.json();
+      if (data?.ok && data.token) {
+        this.connectorLink = {
+          url: `${base}/link/${this.selectedOrg.id}?t=${data.token}`,
+          expiresAt: data.expiresAt
+        };
+      } else {
+        this.showNotice(data?.error || 'No se pudo generar el enlace');
+      }
+    } catch {
+      this.showNotice('No se pudo contactar al bot');
+    } finally {
+      this.connectorLinkLoading = false;
+    }
+  }
+
+  copyConnectorLink(): void {
+    if (!this.connectorLink?.url) return;
+    navigator.clipboard?.writeText(this.connectorLink.url).then(
+      () => { this.connectorLinkCopied = true; },
+      () => { /* clipboard no disponible; el usuario puede copiar a mano */ }
+    );
   }
 
   // ── WhatsApp Config ──

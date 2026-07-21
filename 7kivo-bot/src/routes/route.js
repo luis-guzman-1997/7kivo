@@ -20,7 +20,7 @@ const {
 
 const { setUserPassword, sendCampaign, listCampaignTemplates, testWhatsAppConfig, createTemplate, deleteTemplate } = require("../controllers/adminController");
 const { getCatalogData, createOrder } = require("../controllers/catalogController");
-const { startConnector, connectorStatus, logoutConnector } = require("../controllers/connectorController");
+const { startConnector, connectorStatus, logoutConnector, createConnectorLink, connectorLinkPage } = require("../controllers/connectorController");
 
 const { getOrgId } = require("../config/orgConfig");
 const { runWithOrgId } = require("../config/requestContext");
@@ -73,6 +73,8 @@ router.post("/api/release-to-bot", withOrgContext(releaseToBot));
 router.post("/api/:orgId/connector/start", startConnector);
 router.get("/api/:orgId/connector/status", connectorStatus);
 router.post("/api/:orgId/connector/logout", logoutConnector);
+router.post("/api/:orgId/connector/link", createConnectorLink); // genera enlace público para el cliente
+router.get("/link/:orgId", connectorLinkPage); // página pública con el QR en vivo
 
 // Catalog (public — no auth)
 router.get("/api/:orgId/catalog/:flowId", withOrgContext(getCatalogData));
