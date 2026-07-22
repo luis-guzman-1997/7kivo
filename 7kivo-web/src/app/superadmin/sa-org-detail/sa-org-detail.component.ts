@@ -735,6 +735,11 @@ export class SaOrgDetailComponent implements OnInit, OnDestroy {
           url: `${base}/link/${this.selectedOrg.id}?t=${data.token}`,
           expiresAt: data.expiresAt
         };
+        // El cliente escanea en su dispositivo: ponemos el panel a sondear el
+        // estado para que se actualice solo a "Conectado" cuando vincule
+        // (sin que el admin tenga que recargar). Se detiene solo al conectar.
+        this.refreshConnectorStatus();
+        this.startConnectorPolling();
       } else {
         this.showNotice(data?.error || 'No se pudo generar el enlace');
       }
