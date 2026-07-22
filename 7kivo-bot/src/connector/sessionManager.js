@@ -37,6 +37,13 @@ const STATUS = {
   LOGGED_OUT: "logged_out",
 };
 
+// Modo local seguro: cuando LOCAL_DEV está activo, el bot NUNCA abre sesiones de
+// conector (ni rehidrata las de producción). Evita que una instancia local pelee
+// la misma sesión de WhatsApp que Railway (el churn de 440 que contribuye a baneos).
+// Railway NO define LOCAL_DEV → producción funciona igual.
+const isLocalDev = () =>
+  process.env.LOCAL_DEV === "true" || process.env.LOCAL_DEV === "1";
+
 const getSession = (orgId) => sessions[orgId] || null;
 
 const getStatus = (orgId) => {
@@ -61,6 +68,12 @@ const isConnected = (orgId) =>
 // Inicia (o reinicia) la sesión de una org. Idempotente: si ya está conectada
 // o conectando, no hace nada y devuelve el estado actual.
 const startSession = async (orgId, { force = false } = {}) => {
+  // Protección: en local no se conecta a WhatsApp de producción.
+  if (isLocalDev()) {
+    console.log(`[connector:${orgId}] LOCAL_DEV activo → no se abre sesión conector (protección anti-baneo).`);
+    return getStatus(orgId);
+  }
+
   const existing = sessions[orgId];
   if (
     existing &&
@@ -232,6 +245,10 @@ const stopSession = (orgId) => {
 
 // Rehidrata todas las orgs en modo conector al arrancar el proceso.
 const rehydrateAll = async () => {
+  if (isLocalDev()) {
+    console.log("[connector] LOCAL_DEV activo → no se rehidratan sesiones de conector (no toca WhatsApp de producción).");
+    return;
+  }
   try {
     const { db } = require("../config/firebase");
     // connectionType se espeja en el doc raíz de la org (además de en

@@ -2,6 +2,7 @@ const { admin, db } = require('../config/firebase');
 const { runCampaign } = require('../services/campaignService');
 const { listMessageTemplates, listTemplatesWithCreds, createTemplateWithCreds, deleteTemplateWithCreds, uploadSampleMedia } = require('../models/messageModel');
 const { runWithOrgId } = require('../config/requestContext');
+const { isConnector } = require('../connector/connectionType');
 
 // Emails que tienen permisos de superadmin (deben coincidir con SUPER_ADMIN_EMAILS del frontend)
 const SUPER_ADMIN_EMAILS = ['admin@7kivo.com'];
@@ -138,6 +139,11 @@ async function listCampaignTemplates(req, res) {
     if (!orgId) return res.status(400).json({ ok: false, error: 'orgId es requerido' });
 
     const statusFilter = (req.query.status || '').toUpperCase();
+
+    // Orgs en modo conector (QR) no usan plantillas de Meta: evitamos la llamada
+    // a Graph (que falla con "Application has been deleted" si no hay app Meta).
+    const conn = await runWithOrgId(orgId, () => isConnector());
+    if (conn) return res.json({ ok: true, templates: [] });
 
     const templates = await runWithOrgId(orgId, () => listMessageTemplates());
     const filtered = statusFilter
