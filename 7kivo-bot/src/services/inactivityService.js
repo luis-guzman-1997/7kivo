@@ -68,13 +68,20 @@ const checkInactiveSessions = async () => {
 
             const msg = await getMessage("session_expired",
               "Tu sesión se cerró por inactividad. ¡Hasta luego! 👋\n\nEscribe *hola* cuando necesites ayuda.");
-            await sendTextMessage(msg, phone);
-
-            saveMessage(phone, msg, "bot").catch(() => {});
+            // Aviso best-effort: si el conector está caído (sin socket), NO debe
+            // impedir el cierre. Antes el throw saltaba al catch sin limpiar la
+            // sesión → el monitor reintentaba cada 30s en bucle (spam SIN SOCKET).
+            let delivered = true;
+            try {
+              await sendTextMessage(msg, phone);
+            } catch (e) {
+              delivered = false;
+            }
+            if (delivered) saveMessage(phone, msg, "bot").catch(() => {});
 
             recentlyExpired.set(cacheKey, now);
-            await clearSession(phone);
-            console.log(`Session expired for ${orgId}:${phone} (inactive ${Math.round((now - lastTime) / 60000)}min)`);
+            await clearSession(phone); // siempre cerrar, aunque el aviso no saliera
+            console.log(`Session expired for ${orgId}:${phone} (inactive ${Math.round((now - lastTime) / 60000)}min)${delivered ? "" : " [aviso no enviado: conector desconectado]"}`);
           } catch (err) {
             console.error(`Error expiring session ${orgId}:${phone}:`, err.message);
           }
