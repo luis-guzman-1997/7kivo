@@ -8,8 +8,9 @@
 //   como un botón (ver inbound.js).
 
 const { getSock } = require("./sessionManager");
-const { setPendingMenu, getJid } = require("./menuState");
+const { setPendingMenu, getJid, setJid } = require("./menuState");
 const { markSent } = require("./botSentTracker");
+const { loadJid, persistJid } = require("./jidStore");
 
 // Envía por Baileys y registra el id (para distinguir ecos del bot de mensajes
 // manuales del operador en inbound.js).
@@ -21,10 +22,43 @@ const send = async (sock, jid, content) => {
 
 const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
 
-// A dónde responder: el jid exacto del que recibimos (cubre @lid) o, si no lo
-// tenemos cacheado, el formato estándar número@s.whatsapp.net.
-const jidFor = (orgId, phone) =>
-  getJid(orgId, phone) || `${onlyDigits(phone)}@s.whatsapp.net`;
+// A dónde responder. WhatsApp migró contactos a @lid: hay que enviar al jid @lid
+// real, no a "<numero>@s.whatsapp.net" (que acepta pero no entrega). Orden:
+//   1) cache en memoria (el jid del que recibimos en esta sesión),
+//   2) jid persistido en Firestore (de una conversación previa, sobrevive redeploys),
+//   3) resolución en vivo con onWhatsApp (incluye el lid si el contacto está migrado),
+//   4) fallback estándar "<numero>@s.whatsapp.net".
+const resolveJid = async (orgId, phone) => {
+  const cached = getJid(orgId, phone);
+  if (cached) return cached;
+
+  const persisted = await loadJid(orgId, phone);
+  if (persisted) {
+    setJid(orgId, phone, persisted);
+    return persisted;
+  }
+
+  // Sin historial (p.ej. campaña a un número que nunca escribió): preguntar a WA.
+  try {
+    const sock = getSock(orgId);
+    const digits = onlyDigits(phone);
+    if (sock && digits) {
+      const res = await sock.onWhatsApp(digits);
+      const hit = Array.isArray(res) ? res[0] : null;
+      // Preferir el lid (destino real para contactos migrados) sobre el jid clásico.
+      const jid = hit && (hit.lid || hit.jid);
+      if (jid) {
+        setJid(orgId, phone, jid);
+        persistJid(orgId, phone, jid).catch(() => {});
+        return jid;
+      }
+    }
+  } catch (e) {
+    /* si onWhatsApp falla, usamos el fallback */
+  }
+
+  return `${onlyDigits(phone)}@s.whatsapp.net`;
+};
 
 const requireSock = (orgId) => {
   const sock = getSock(orgId);
@@ -36,7 +70,8 @@ const requireSock = (orgId) => {
 
 const sendText = async (orgId, phone, text) => {
   const sock = requireSock(orgId);
-  return send(sock, jidFor(orgId, phone), { text: String(text ?? "") });
+  const jid = await resolveJid(orgId, phone);
+  return send(sock, jid, { text: String(text ?? "") });
 };
 
 // Pinta opciones como texto numerado y guarda el mapeo para el puente de menús.
@@ -75,8 +110,9 @@ const sendList = async (orgId, phone, text, sections) => {
 
 const sendImage = async (orgId, phone, imageUrl, caption) => {
   const sock = requireSock(orgId);
+  const jid = await resolveJid(orgId, phone);
   // Baileys descarga la imagen desde la URL directamente.
-  return send(sock, jidFor(orgId, phone), {
+  return send(sock, jid, {
     image: { url: imageUrl },
     caption: caption || "",
   });
@@ -84,7 +120,8 @@ const sendImage = async (orgId, phone, imageUrl, caption) => {
 
 const sendAudio = async (orgId, phone, audioUrl) => {
   const sock = requireSock(orgId);
-  return send(sock, jidFor(orgId, phone), {
+  const jid = await resolveJid(orgId, phone);
+  return send(sock, jid, {
     audio: { url: audioUrl },
     mimetype: "audio/ogg; codecs=opus",
     ptt: true,

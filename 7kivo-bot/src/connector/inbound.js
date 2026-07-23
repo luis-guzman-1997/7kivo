@@ -187,7 +187,11 @@ const handleIncoming = async (orgId, sock, msg) => {
     return;
   }
 
-  setJid(orgId, phone, remoteJid); // recordar a dónde responder
+  setJid(orgId, phone, remoteJid); // recordar a dónde responder (memoria)
+  // Persistir el jid REAL de destino (cubre @lid) para que sobreviva a los
+  // redeploys: así las respuestas del bot y las campañas entregan al jid correcto
+  // en vez de caer al fallback "<numero>@s.whatsapp.net" que WhatsApp no entrega.
+  require("./jidStore").persistJid(orgId, phone, remoteJid).catch(() => {});
 
   // ── Modo de la conversación ──
   // Si está en 'admin' (/yo permanente o toma temporal vigente): NO guardar ni
