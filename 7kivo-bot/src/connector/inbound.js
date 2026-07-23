@@ -209,7 +209,10 @@ const handleIncoming = async (orgId, sock, msg) => {
     }
     return false;
   });
-  if (dropMessage) return;
+  if (dropMessage) {
+    console.log(`[connector:IN] ${orgId} ${phone} DESCARTADO (conversación en modo admin)`);
+    return;
+  }
 
   const id = msg.key.id || `${Date.now()}`;
   const contactName = msg.pushName || null;
@@ -264,9 +267,18 @@ const handleIncoming = async (orgId, sock, msg) => {
     return; // nada procesable
   }
 
+  console.log(
+    `[connector:IN] ${orgId} phone=${phone} jid=${remoteJid} tipo=${message.type} text=${JSON.stringify(String(text || "").slice(0, 50))} → procesando`
+  );
   const body = buildMetaBody({ phone, id, contactName, message });
   const { requestMessageMulti } = require("../controllers/messagesController");
-  await requestMessageMulti({ params: { orgId }, body, query: {} }, makeFakeRes());
+  try {
+    await requestMessageMulti({ params: { orgId }, body, query: {} }, makeFakeRes());
+    console.log(`[connector:IN] ${orgId} ${phone} procesado OK`);
+  } catch (e) {
+    console.log(`[connector:IN] ${orgId} ${phone} ERROR en requestMessageMulti: ${e.message}`);
+    throw e;
+  }
 };
 
 module.exports = { handleIncoming, jidToPhone };

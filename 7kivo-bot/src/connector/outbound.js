@@ -15,9 +15,15 @@ const { loadJid, persistJid } = require("./jidStore");
 // Envía por Baileys y registra el id (para distinguir ecos del bot de mensajes
 // manuales del operador en inbound.js).
 const send = async (sock, jid, content) => {
-  const r = await sock.sendMessage(jid, content);
-  markSent(r?.key?.id);
-  return r;
+  try {
+    const r = await sock.sendMessage(jid, content);
+    markSent(r?.key?.id);
+    console.log(`[connector:OUT] enviado a ${jid} id=${r?.key?.id || "?"}`);
+    return r;
+  } catch (e) {
+    console.log(`[connector:OUT] ERROR enviando a ${jid}: ${e.message}`);
+    throw e;
+  }
 };
 
 const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
@@ -30,11 +36,15 @@ const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
 //   4) fallback estándar "<numero>@s.whatsapp.net".
 const resolveJid = async (orgId, phone) => {
   const cached = getJid(orgId, phone);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`[connector:OUT] resolveJid ${phone} → ${cached} (memoria)`);
+    return cached;
+  }
 
   const persisted = await loadJid(orgId, phone);
   if (persisted) {
     setJid(orgId, phone, persisted);
+    console.log(`[connector:OUT] resolveJid ${phone} → ${persisted} (Firestore)`);
     return persisted;
   }
 
@@ -50,19 +60,24 @@ const resolveJid = async (orgId, phone) => {
       if (jid) {
         setJid(orgId, phone, jid);
         persistJid(orgId, phone, jid).catch(() => {});
+        console.log(`[connector:OUT] resolveJid ${phone} → ${jid} (onWhatsApp lid=${hit.lid || "-"} jid=${hit.jid || "-"})`);
         return jid;
       }
+      console.log(`[connector:OUT] resolveJid ${phone}: onWhatsApp sin resultado`);
     }
   } catch (e) {
-    /* si onWhatsApp falla, usamos el fallback */
+    console.log(`[connector:OUT] resolveJid ${phone}: onWhatsApp error ${e.message}`);
   }
 
-  return `${onlyDigits(phone)}@s.whatsapp.net`;
+  const fb = `${onlyDigits(phone)}@s.whatsapp.net`;
+  console.log(`[connector:OUT] resolveJid ${phone} → ${fb} (FALLBACK @s.whatsapp.net — puede NO entregar si el contacto está en @lid)`);
+  return fb;
 };
 
 const requireSock = (orgId) => {
   const sock = getSock(orgId);
   if (!sock) {
+    console.log(`[connector:OUT] SIN SOCKET para ${orgId} (sesión no conectada) → no se puede enviar`);
     throw new Error(`Sesión conector de ${orgId} no está conectada`);
   }
   return sock;
